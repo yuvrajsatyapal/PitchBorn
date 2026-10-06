@@ -1,0 +1,684 @@
+{
+ "fetchedAt": "2026-10-06T21:36:31.350Z",
+ "source": "Wikimedia Commons via Wikidata P154",
+ "crests": {
+  "eng-liverpool": {
+   "file": "/crests/eng-liverpool.png",
+   "title": "Logo Liverpool FC (2024).png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_Liverpool_FC_(2024).png",
+   "license": "Public domain",
+   "artist": "Liverpool FC",
+   "restrictions": "trademarked",
+   "width": 520,
+   "height": 199
+  },
+  "eng-middlesbrough": {
+   "file": "/crests/eng-middlesbrough.png",
+   "title": "Middlesbrough Walk (27470064759).jpg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Middlesbrough_Walk_(27470064759).jpg",
+   "license": "CC BY 2.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+   "artist": "Paul Hudson from United Kingdom",
+   "restrictions": "",
+   "width": 2048,
+   "height": 1368
+  },
+  "eng-qpr": {
+   "file": "/crests/eng-qpr.png",
+   "title": "QPr.jpg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:QPr.jpg",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "Martin1994ramos",
+   "restrictions": "",
+   "width": 960,
+   "height": 960
+  },
+  "esp-barcelona": {
+   "file": "/crests/esp-barcelona.png",
+   "title": "Football Club Barcelona Color Update.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Football_Club_Barcelona_Color_Update.png",
+   "license": "CC0",
+   "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+   "artist": "HAMDANI 72",
+   "restrictions": "",
+   "width": 1976,
+   "height": 2000
+  },
+  "esp-celta-de-vigo": {
+   "file": "/crests/esp-celta-de-vigo.svg",
+   "title": "Escudo RC Celta de Vigo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Escudo_RC_Celta_de_Vigo.svg",
+   "license": "CC BY-SA 3.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "artist": "File:Coa Illustration Shield Heater.svg by User:Madboy74 File:Corona real cerrada.svg by User:HansenBCN File:Cross Santiago.svg by User:WarX derivative work by Elisardojm",
+   "restrictions": "",
+   "width": 750,
+   "height": 1019
+  },
+  "esp-getafe": {
+   "file": "/crests/esp-getafe.png",
+   "title": "Getafe CF Logo.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Getafe_CF_Logo.png",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "Yawen",
+   "restrictions": "",
+   "width": 354,
+   "height": 354
+  },
+  "esp-andorra": {
+   "file": "/crests/esp-andorra.svg",
+   "title": "Logo FC Andorra - 2021.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_FC_Andorra_-_2021.svg",
+   "license": "Public domain",
+   "artist": "FC Andorra The original uploader was ΕυστάθιοςΧ at English Wikipedia.",
+   "restrictions": "trademarked",
+   "width": 750,
+   "height": 750
+  },
+  "esp-tenerife": {
+   "file": "/crests/esp-tenerife.png",
+   "title": "Escucdt.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Escucdt.png",
+   "license": "CC BY-SA 3.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "artist": "Cd tenerife",
+   "restrictions": "",
+   "width": 225,
+   "height": 269
+  },
+  "esp-sabadell": {
+   "file": "/crests/esp-sabadell.png",
+   "title": "CE Sabadell FC 1903.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:CE_Sabadell_FC_1903.png",
+   "license": "Public domain",
+   "artist": "Centre d'Esports Sabadell Futbol Club",
+   "restrictions": "",
+   "width": 265,
+   "height": 265
+  },
+  "esp-algeciras": {
+   "file": "/crests/esp-algeciras.png",
+   "title": "Nuevo Mirador detalle (cropped).jpg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Nuevo_Mirador_detalle_(cropped).jpg",
+   "license": "CC BY-SA 3.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "artist": "Falconaumanni",
+   "restrictions": "",
+   "width": 813,
+   "height": 1005
+  },
+  "esp-ue-sant-andreu": {
+   "file": "/crests/esp-ue-sant-andreu.png",
+   "title": "Escut UE Sant Andreu.JPG",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Escut_UE_Sant_Andreu.JPG",
+   "license": "CC BY-SA 3.0",
+   "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+   "artist": "No machine-readable author provided. 1997 assumed (based on copyright claims).",
+   "restrictions": "",
+   "width": 1443,
+   "height": 1447
+  },
+  "fra-marseille": {
+   "file": "/crests/fra-marseille.svg",
+   "title": "Olympique de Marseille 2026 logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Olympique_de_Marseille_2026_logo.svg",
+   "license": "Public domain",
+   "artist": "Olympique de Marseille",
+   "restrictions": "trademarked",
+   "width": 184,
+   "height": 184
+  },
+  "fra-nice": {
+   "file": "/crests/fra-nice.svg",
+   "title": "OGC Nice (simplified logo).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:OGC_Nice_(simplified_logo).svg",
+   "license": "Public domain",
+   "artist": "Unknown authorUnknown author",
+   "restrictions": "trademarked",
+   "width": 100,
+   "height": 118
+  },
+  "fra-brest": {
+   "file": "/crests/fra-brest.svg",
+   "title": "Stade Brestois Logo avant 1985.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Stade_Brestois_Logo_avant_1985.svg",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "Kilyann Le Hen",
+   "restrictions": "",
+   "width": 837,
+   "height": 956
+  },
+  "fra-rennes": {
+   "file": "/crests/fra-rennes.svg",
+   "title": "Stade Rennais (logo 1960).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Stade_Rennais_(logo_1960).svg",
+   "license": "Public domain",
+   "artist": "Stade rennais football club Kilyann Le Hen (vectorisation)",
+   "restrictions": "trademarked",
+   "width": 1472,
+   "height": 1544
+  },
+  "fra-strasbourg": {
+   "file": "/crests/fra-strasbourg.png",
+   "title": "Racing Club de Strasbourg contre Racing Lens décembre 2016 .jpg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Racing_Club_de_Strasbourg_contre_Racing_Lens_d%C3%A9cembre_2016_.jpg",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "KOBI FRANCK",
+   "restrictions": "",
+   "width": 4928,
+   "height": 3280
+  },
+  "fra-angers": {
+   "file": "/crests/fra-angers.svg",
+   "title": "Angers Sporting Club de l'Ouest logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Angers_Sporting_Club_de_l%27Ouest_logo.svg",
+   "license": "Public domain",
+   "artist": "Angers Sporting Club de l'Ouest",
+   "restrictions": "trademarked",
+   "width": 57,
+   "height": 68
+  },
+  "fra-reims": {
+   "file": "/crests/fra-reims.svg",
+   "title": "Stade Reims.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Stade_Reims.svg",
+   "license": "Public domain",
+   "artist": "Stade de Reims",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 1019
+  },
+  "fra-nantes": {
+   "file": "/crests/fra-nantes.svg",
+   "title": "Logo FC Nantes (avec fond) - 2019.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_FC_Nantes_(avec_fond)_-_2019.svg",
+   "license": "Public domain",
+   "artist": "FC Nantes",
+   "restrictions": "",
+   "width": 364,
+   "height": 469
+  },
+  "fra-montpellier": {
+   "file": "/crests/fra-montpellier.svg",
+   "title": "Montpellier Hérault Sport Club (logo, 2000).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Montpellier_H%C3%A9rault_Sport_Club_(logo,_2000).svg",
+   "license": "Public domain",
+   "artist": "Montpellier Hérault Sport Club",
+   "restrictions": "trademarked",
+   "width": 601,
+   "height": 601
+  },
+  "fra-saint-etienne": {
+   "file": "/crests/fra-saint-etienne.png",
+   "title": "Logo AS Saint-Étienne.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_AS_Saint-%C3%89tienne.svg",
+   "license": "Public domain",
+   "artist": "Association Sportive de Saint-Étienne",
+   "restrictions": "trademarked",
+   "width": 414,
+   "height": 566
+  },
+  "fra-annecy": {
+   "file": "/crests/fra-annecy.png",
+   "title": "Logo annecy.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_annecy.png",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "MaLigue2",
+   "restrictions": "",
+   "width": 1024,
+   "height": 1024
+  },
+  "fra-grenoble": {
+   "file": "/crests/fra-grenoble.png",
+   "title": "Logo GF38 (cropped).png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_GF38_(cropped).png",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "Grenoble Foot 38",
+   "restrictions": "",
+   "width": 1394,
+   "height": 1698
+  },
+  "fra-laval": {
+   "file": "/crests/fra-laval.png",
+   "title": "LogoStadeLavalloisMayenneFC 2015.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:LogoStadeLavalloisMayenneFC_2015.png",
+   "license": "Public domain",
+   "artist": "Stade Lavallois Mayenne Football Club",
+   "restrictions": "trademarked",
+   "width": 679,
+   "height": 960
+  },
+  "ger-bayern": {
+   "file": "/crests/ger-bayern.svg",
+   "title": "FC Bayern München logo (2024).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:FC_Bayern_M%C3%BCnchen_logo_(2024).svg",
+   "license": "Public domain",
+   "artist": "FC Bayern Munich",
+   "restrictions": "trademarked",
+   "width": 850,
+   "height": 850
+  },
+  "ger-dortmund": {
+   "file": "/crests/ger-dortmund.svg",
+   "title": "Borussia Dortmund logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Borussia_Dortmund_logo.svg",
+   "license": "Public domain",
+   "artist": "Lispir (Lispir)",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 512
+  },
+  "ger-rb-leipzig": {
+   "file": "/crests/ger-rb-leipzig.png",
+   "title": "2019-07-12 Fußball; Freundschaftsspiel RB Leipzig - FC Zürich 1DX 0881 by Stepro 2.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:2019-07-12_Fu%C3%9Fball;_Freundschaftsspiel_RB_Leipzig_-_FC_Z%C3%BCrich_1DX_0881_by_Stepro_2.png",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "Steffen Prößdorf, edited by User:CennoxX",
+   "restrictions": "trademarked",
+   "width": 3075,
+   "height": 1615
+  },
+  "ger-fsv-mainz": {
+   "file": "/crests/ger-fsv-mainz.svg",
+   "title": "Logo Mainz 05.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_Mainz_05.svg",
+   "license": "Public domain",
+   "artist": "1. FSV Mainz 05",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 477
+  },
+  "ger-stuttgart": {
+   "file": "/crests/ger-stuttgart.svg",
+   "title": "VfB Stuttgart 1893 Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:VfB_Stuttgart_1893_Logo.svg",
+   "license": "Public domain",
+   "artist": "VfB Stuttgart",
+   "restrictions": "trademarked",
+   "width": 352,
+   "height": 383
+  },
+  "ger-mgladbach": {
+   "file": "/crests/ger-mgladbach.svg",
+   "title": "Borussia Mönchengladbach logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Borussia_M%C3%B6nchengladbach_logo.svg",
+   "license": "Public domain",
+   "artist": "Borussia Mönchengladbach",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 817
+  },
+  "ger-werder-bremen": {
+   "file": "/crests/ger-werder-bremen.svg",
+   "title": "SV-Werder-Bremen-Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:SV-Werder-Bremen-Logo.svg",
+   "license": "Public domain",
+   "artist": "Unknown authorUnknown author",
+   "restrictions": "trademarked",
+   "width": 125,
+   "height": 188
+  },
+  "ger-hoffenheim": {
+   "file": "/crests/ger-hoffenheim.png",
+   "title": "TSG Logo-Standard 4c.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:TSG_Logo-Standard_4c.png",
+   "license": "Public domain",
+   "artist": "Template:Lalilu123",
+   "restrictions": "trademarked",
+   "width": 1614,
+   "height": 1928
+  },
+  "ger-koln": {
+   "file": "/crests/ger-koln.svg",
+   "title": "1. FC Koeln Logo 2014–.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:1._FC_Koeln_Logo_2014%E2%80%93.svg",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "artist": "1. FC Köln",
+   "restrictions": "trademarked",
+   "width": 296,
+   "height": 337
+  },
+  "ger-elversberg": {
+   "file": "/crests/ger-elversberg.svg",
+   "title": "SV Elversberg Logo 2021.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:SV_Elversberg_Logo_2021.svg",
+   "license": "Public domain",
+   "artist": "SV Elversberg",
+   "restrictions": "trademarked",
+   "width": 316,
+   "height": 316
+  },
+  "ger-hamburg": {
+   "file": "/crests/ger-hamburg.svg",
+   "title": "Hamburger SV logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Hamburger_SV_logo.svg",
+   "license": "Public domain",
+   "artist": "Hamburger SV",
+   "restrictions": "trademarked",
+   "width": 607,
+   "height": 449
+  },
+  "ger-paderborn": {
+   "file": "/crests/ger-paderborn.svg",
+   "title": "SC Paderborn 07 Logo new.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:SC_Paderborn_07_Logo_new.svg",
+   "license": "Public domain",
+   "artist": "SC Paderborn 07 e.V.",
+   "restrictions": "trademarked",
+   "width": 84,
+   "height": 58
+  },
+  "ger-schalke": {
+   "file": "/crests/ger-schalke.svg",
+   "title": "FC Schalke 04 Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:FC_Schalke_04_Logo.svg",
+   "license": "Public domain",
+   "artist": "FC Schalke 04",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 512
+  },
+  "ger-heidenheim": {
+   "file": "/crests/ger-heidenheim.svg",
+   "title": "1. FC Heidenheim 1846.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:1._FC_Heidenheim_1846.svg",
+   "license": "Public domain",
+   "artist": "1. FC Heidenheim",
+   "restrictions": "trademarked",
+   "width": 459,
+   "height": 566
+  },
+  "ger-bochum": {
+   "file": "/crests/ger-bochum.svg",
+   "title": "VfL Bochum logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:VfL_Bochum_logo.svg",
+   "license": "Public domain",
+   "artist": "VfL Bochum",
+   "restrictions": "trademarked",
+   "width": 170,
+   "height": 179
+  },
+  "ger-holstein-kiel": {
+   "file": "/crests/ger-holstein-kiel.svg",
+   "title": "Holstein Kiel Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Holstein_Kiel_Logo.svg",
+   "license": "Public domain",
+   "artist": "Kieler Sportvereinigung Holstein von 1900 e.V.",
+   "restrictions": "trademarked",
+   "width": 300,
+   "height": 300
+  },
+  "ger-darmstadt": {
+   "file": "/crests/ger-darmstadt.svg",
+   "title": "SV Darmstadt 98 Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:SV_Darmstadt_98_Logo.svg",
+   "license": "Public domain",
+   "artist": "SV Darmstadt 1898 e.V.",
+   "restrictions": "trademarked",
+   "width": 434,
+   "height": 434
+  },
+  "ger-hannover": {
+   "file": "/crests/ger-hannover.svg",
+   "title": "Hannover 96 Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Hannover_96_Logo.svg",
+   "license": "Public domain",
+   "artist": "Hannoverscher Sportverein von 1896",
+   "restrictions": "trademarked",
+   "width": 566,
+   "height": 499
+  },
+  "ger-nurnberg": {
+   "file": "/crests/ger-nurnberg.svg",
+   "title": "1. FC Nürnberg logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:1._FC_N%C3%BCrnberg_logo.svg",
+   "license": "Public domain",
+   "artist": "Unknown authorUnknown author",
+   "restrictions": "trademarked",
+   "width": 316,
+   "height": 316
+  },
+  "ger-dusseldorf": {
+   "file": "/crests/ger-dusseldorf.svg",
+   "title": "Fortuna Düsseldorf.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Fortuna_D%C3%BCsseldorf.svg",
+   "license": "Public domain",
+   "artist": "Fortuna Düsseldorf (SVG created by de:Benutzer:ChristianBier)",
+   "restrictions": "trademarked",
+   "width": 759,
+   "height": 759
+  },
+  "ger-hansa-rostock": {
+   "file": "/crests/ger-hansa-rostock.svg",
+   "title": "F.C. Hansa Rostock Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:F.C._Hansa_Rostock_Logo.svg",
+   "license": "CC BY-SA 3.0 de",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+   "artist": "Fußballclub Hansa Rostock e. V.",
+   "restrictions": "",
+   "width": 551,
+   "height": 551
+  },
+  "ger-braunschweig": {
+   "file": "/crests/ger-braunschweig.png",
+   "title": "600px Giallo e Blu con stemma Eintracht Braunschweig.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:600px_Giallo_e_Blu_con_stemma_Eintracht_Braunschweig.png",
+   "license": "CC BY-SA 3.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "artist": "Skawise",
+   "restrictions": "",
+   "width": 600,
+   "height": 400
+  },
+  "ger-jahn-rburg": {
+   "file": "/crests/ger-jahn-rburg.svg",
+   "title": "Jahn Regensburg logo2014.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Jahn_Regensburg_logo2014.svg",
+   "license": "Public domain",
+   "artist": "Original Version: SSV Jahn Regensburg and seitenwind GmbH Note by User:Schoko13: Ich habe die explizite Erlaubnis des Vereins das neue Logo auf Wikipedia hochzuladen. Diese Erlaubnis wurde an permissions-de@wikimedia.org weitergeleitet! -- This SVG Version: extracted from PDF",
+   "restrictions": "trademarked",
+   "width": 479,
+   "height": 555
+  },
+  "ger-waldhof-mannheim": {
+   "file": "/crests/ger-waldhof-mannheim.svg",
+   "title": "Svwaldhof.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Svwaldhof.svg",
+   "license": "Public domain",
+   "artist": "SV Waldhof Mannheim 07",
+   "restrictions": "trademarked",
+   "width": 280,
+   "height": 400
+  },
+  "ger-osnabruck": {
+   "file": "/crests/ger-osnabruck.svg",
+   "title": "VfL Osnabrueck Logo 2021–.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:VfL_Osnabrueck_Logo_2021%E2%80%93.svg",
+   "license": "Public domain",
+   "artist": "VfL Osnabrück",
+   "restrictions": "trademarked",
+   "width": 316,
+   "height": 316
+  },
+  "ger-alemannia-aachen": {
+   "file": "/crests/ger-alemannia-aachen.svg",
+   "title": "Alemannia Aachen 2010.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Alemannia_Aachen_2010.svg",
+   "license": "Public domain",
+   "artist": "Aachener Turn- und Sportverein Alemannia 1900 e.V.",
+   "restrictions": "trademarked",
+   "width": 140,
+   "height": 166
+  },
+  "ger-wburg-kickers": {
+   "file": "/crests/ger-wburg-kickers.svg",
+   "title": "Würzburger Kickers Logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:W%C3%BCrzburger_Kickers_Logo.svg",
+   "license": "CC BY-SA 3.0 de",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+   "artist": "FC Würzburger Kickers AG",
+   "restrictions": "",
+   "width": 101,
+   "height": 99
+  },
+  "ita-inter": {
+   "file": "/crests/ita-inter.svg",
+   "title": "FC Internazionale Milano 2021.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:FC_Internazionale_Milano_2021.svg",
+   "license": "Public domain",
+   "artist": "FC Internazionale Milano S.p.A. / Bureau Borsche",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 512
+  },
+  "ita-napoli": {
+   "file": "/crests/ita-napoli.svg",
+   "title": "SSC Napoli 2024 (deep blue navy).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:SSC_Napoli_2024_(deep_blue_navy).svg",
+   "license": "Public domain",
+   "artist": "Logo: SSC Napoli S.p.A. Upload: The White Lion",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 512
+  },
+  "ita-juventus": {
+   "file": "/crests/ita-juventus.svg",
+   "title": "Juventus FC - logo black (Italy, 2020).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Juventus_FC_-_logo_black_(Italy,_2020).svg",
+   "license": "Public domain",
+   "artist": "Interbrand – Global Brand Consultancy / Juventus Football Club SpA",
+   "restrictions": "trademarked",
+   "width": 164,
+   "height": 259
+  },
+  "ita-milan": {
+   "file": "/crests/ita-milan.svg",
+   "title": "Logo of AC Milan.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_of_AC_Milan.svg",
+   "license": "Public domain",
+   "artist": "A.C. Milan Uploaded by Vargklo at en.wikipedia",
+   "restrictions": "trademarked",
+   "width": 361,
+   "height": 566
+  },
+  "ita-atalanta": {
+   "file": "/crests/ita-atalanta.png",
+   "title": "Atalanta BC.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Atalanta_BC.png",
+   "license": "Public domain",
+   "artist": "Atalanta BC",
+   "restrictions": "trademarked",
+   "width": 960,
+   "height": 960
+  },
+  "ita-fiorentina": {
+   "file": "/crests/ita-fiorentina.svg",
+   "title": "ACF Fiorentina - logo (Italy, 2022).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:ACF_Fiorentina_-_logo_(Italy,_2022).svg",
+   "license": "Public domain",
+   "artist": "FutureBrand Creative Agency / ACF Fiorentina S.r.l. a socio unico",
+   "restrictions": "trademarked",
+   "width": 69,
+   "height": 69
+  },
+  "ita-bologna": {
+   "file": "/crests/ita-bologna.svg",
+   "title": "Bologna F.C. 1909 logo.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Bologna_F.C._1909_logo.svg",
+   "license": "Public domain",
+   "artist": "Bologna FC",
+   "restrictions": "trademarked",
+   "width": 163,
+   "height": 250
+  },
+  "ita-como": {
+   "file": "/crests/ita-como.svg",
+   "title": "Calcio Como - logo (Italy, 2019-).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Calcio_Como_-_logo_(Italy,_2019-).svg",
+   "license": "Public domain",
+   "artist": "Como 1907 srl",
+   "restrictions": "trademarked",
+   "width": 484,
+   "height": 500
+  },
+  "ita-udinese": {
+   "file": "/crests/ita-udinese.svg",
+   "title": "Udinese Calcio 2010.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Udinese_Calcio_2010.svg",
+   "license": "Public domain",
+   "artist": "Unknown authorUnknown author",
+   "restrictions": "trademarked",
+   "width": 1772,
+   "height": 1772
+  },
+  "ita-monza": {
+   "file": "/crests/ita-monza.png",
+   "title": "Logo of AC Monza.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_of_AC_Monza.png",
+   "license": "Public domain",
+   "artist": "AC Monza Uploaded by Giorgio Pallavicini",
+   "restrictions": "trademarked",
+   "width": 854,
+   "height": 1198
+  },
+  "ita-bari": {
+   "file": "/crests/ita-bari.png",
+   "title": "600pixel Bianco Rosso (Bordato) con gallo.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:600pixel_Bianco_Rosso_(Bordato)_con_gallo.png",
+   "license": "CC BY-SA 3.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "artist": "RR6",
+   "restrictions": "",
+   "width": 600,
+   "height": 400
+  },
+  "ita-cesena": {
+   "file": "/crests/ita-cesena.png",
+   "title": "Logo Cesena FC 2018.png",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_Cesena_FC_2018.png",
+   "license": "Public domain",
+   "artist": "RC Cesena FC ASD",
+   "restrictions": "trademarked",
+   "width": 516,
+   "height": 645
+  },
+  "ita-mantova": {
+   "file": "/crests/ita-mantova.svg",
+   "title": "Logo Mantova 1911.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_Mantova_1911.svg",
+   "license": "Public domain",
+   "artist": "Mantova 1911 s.r.l.",
+   "restrictions": "trademarked",
+   "width": 729,
+   "height": 875
+  },
+  "ita-spezia": {
+   "file": "/crests/ita-spezia.svg",
+   "title": "Logo of Spezia Calcio (2025-).svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_of_Spezia_Calcio_(2025-).svg",
+   "license": "Public domain",
+   "artist": "OttavianoLolnoob",
+   "restrictions": "trademarked",
+   "width": 172,
+   "height": 210
+  },
+  "ita-catania": {
+   "file": "/crests/ita-catania.svg",
+   "title": "Logo CATANIA FC.svg",
+   "sourcePage": "https://commons.wikimedia.org/wiki/File:Logo_CATANIA_FC.svg",
+   "license": "Public domain",
+   "artist": "Catania Calcio Holding Srl",
+   "restrictions": "trademarked",
+   "width": 512,
+   "height": 768
+  }
+ }
+}
