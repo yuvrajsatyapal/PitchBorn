@@ -1,13 +1,11 @@
 import { staticClub } from "@/engine/data/world";
 import { country } from "@/engine/data/world";
 import { hashString, readableOn } from "./hash";
-import { officialCrest } from "./officialCrests";
 
 /**
- * Club emblem. Uses the club's official crest when a redistributable copy
- * (with recorded licence/provenance) is bundled from Wikimedia Commons;
- * otherwise a programmatically generated Pitchborn emblem from the club's
- * real colours and initials.
+ * Original, programmatically generated club emblem. Official crests are
+ * trademarks and are not bundled; every club gets a distinctive Pitchborn
+ * emblem from its real colours and initials.
  */
 export function Crest({ clubId, size = 40, className = "" }: { clubId: string | null | undefined; size?: number; className?: string }) {
   const club = clubId ? staticClub(clubId) : undefined;
@@ -18,13 +16,6 @@ export function Crest({ clubId, size = 40, className = "" }: { clubId: string | 
       <svg width={size} height={size} viewBox="0 0 40 40" className={className} aria-hidden>
         <circle cx="20" cy="20" r="17" fill="var(--paper-2)" stroke="var(--line)" strokeWidth="2" strokeDasharray="4 3" />
       </svg>
-    );
-  }
-  const official = officialCrest(club.id);
-  if (official) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- static export, tiny local SVG/PNG
-      <img src={official.file} width={size} height={size} alt={`${club.name} crest`} loading="lazy" decoding="async" className={`inline-block object-contain ${className}`} style={{ width: size, height: size }} />
     );
   }
   const h = hashString(club.id);

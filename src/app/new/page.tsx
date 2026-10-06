@@ -71,7 +71,7 @@ export default function NewCareer() {
     const level = clubLevel(prestige);
     const start = path === "academy" ? level - 20 : level - 9;
     const gap = level - start;
-    return gap > 16 ? { t: "Few minutes", tone: "coral" as const } : gap > 11 ? { t: "Fight for minutes", tone: "sun" as const } : { t: "Good minutes", tone: "pitch" as const };
+    return gap > 16 ? { t: "Very little game time early", tone: "coral" as const } : gap > 11 ? { t: "Fight for minutes", tone: "sun" as const } : { t: "Good chance of minutes", tone: "pitch" as const };
   };
 
   return (
@@ -217,7 +217,7 @@ export default function NewCareer() {
                             {stadium(c.stadiumId)?.name} · {c.city}
                           </div>
                         </div>
-                        <Badge tone={hint.tone} className="shrink-0">{hint.t}</Badge>
+                        <Badge tone={hint.tone}>{hint.t.split(" ").slice(0, 3).join(" ")}</Badge>
                       </button>
                     </li>
                   );

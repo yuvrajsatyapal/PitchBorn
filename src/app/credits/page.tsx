@@ -3,8 +3,6 @@ import { PublicFooter, PublicHeader } from "@/components/app/PublicHeader";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { WORLD } from "@/engine/data/world";
 import assets from "@/data/assets.json";
-import { allOfficialCrests } from "@/components/art/officialCrests";
-import { staticClub } from "@/engine/data/world";
 
 export const metadata: Metadata = { title: "Data sources & credits" };
 
@@ -54,22 +52,6 @@ export default function Credits() {
           <h3 className="font-bold">Deliberately not bundled</h3>
           <ul className="list-disc pl-5 text-sm">
             {assets.notBundled.map((a) => <li key={a.id}><b>{a.name}</b> — {a.reason}</li>)}
-          </ul>
-        </section>
-        <section className="pb-card mb-5 p-5">
-          <h2 className="mb-1 font-display text-2xl">Club crest licences</h2>
-          <p className="mb-3 text-xs text-ink-2">
-            Official crests shown for {allOfficialCrests().length} clubs, each from Wikimedia Commons under the licence listed. Crests are trademarks of their clubs and are
-            used only to identify them. All other clubs use generated Pitchborn emblems.
-          </p>
-          <ul className="grid gap-1 text-xs sm:grid-cols-2">
-            {allOfficialCrests().map(([id, c]) => (
-              <li key={id} className="truncate">
-                <b>{staticClub(id)?.name ?? id}</b> —{" "}
-                <a href={c.sourcePage} className="underline" target="_blank" rel="noopener noreferrer">{c.license}</a>
-                {c.artist ? ` · ${c.artist}` : ""}
-              </li>
-            ))}
           </ul>
         </section>
         <InlineAdSlot placementId="footer" />

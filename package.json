@@ -17,8 +17,7 @@
     "sim:match": "tsx scripts/sim/calibrate-match.ts",
     "preview": "npx --yes serve out -l 4173",
     "icons": "node scripts/pwa/render-icons.mjs",
-    "e2e:only": "playwright test",
-    "data:crests": "tsx scripts/data/fetch-crests.ts"
+    "e2e:only": "playwright test"
   },
   "dependencies": {
     "dexie": "^4.4.6",

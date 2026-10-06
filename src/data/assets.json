@@ -1,98 +1,21 @@
 {
   "_note": "Provenance registry for every visual/third-party asset shipped with Pitchborn. Third-party entries are kept separate from original Pitchborn assets.",
   "original": [
-    {
-      "id": "club-emblems",
-      "name": "Club emblems",
-      "kind": "generated",
-      "description": "Procedurally generated SVG emblems from each club's real colours and initials (src/components/art/Crest.tsx). Not official crests."
-    },
-    {
-      "id": "kits",
-      "name": "Kits",
-      "kind": "generated",
-      "description": "Generated shirt illustrations from club colours (src/components/art/Kit.tsx). No licensed kit artwork."
-    },
-    {
-      "id": "portraits",
-      "name": "Player portraits",
-      "kind": "generated",
-      "description": "Flat illustrated portraits generated from appearance values (src/components/art/Portrait.tsx)."
-    },
-    {
-      "id": "logo-icons",
-      "name": "Pitchborn logo and app icons",
-      "kind": "original",
-      "description": "Original Pitchborn artwork (public/icon.svg and PNG renders)."
-    }
+    { "id": "club-emblems", "name": "Club emblems", "kind": "generated", "description": "Procedurally generated SVG emblems from each club's real colours and initials (src/components/art/Crest.tsx). Not official crests." },
+    { "id": "kits", "name": "Kits", "kind": "generated", "description": "Generated shirt illustrations from club colours (src/components/art/Kit.tsx). No licensed kit artwork." },
+    { "id": "portraits", "name": "Player portraits", "kind": "generated", "description": "Flat illustrated portraits generated from appearance values (src/components/art/Portrait.tsx)." },
+    { "id": "logo-icons", "name": "Pitchborn logo and app icons", "kind": "original", "description": "Original Pitchborn artwork (public/icon.svg and PNG renders)." }
   ],
   "thirdParty": [
-    {
-      "id": "club-crests",
-      "name": "Official club crests",
-      "author": "Various (see per-file records)",
-      "license": "Per file: public domain / CC0 / CC BY / CC BY-SA",
-      "url": "https://commons.wikimedia.org/",
-      "redistributable": true,
-      "usage": "Identifying real clubs. Files in public/crests/, provenance in src/data/crests.json. Crests remain trademarks of their clubs; Pitchborn is not affiliated with or endorsed by any club."
-    },
-    {
-      "id": "flag-icons",
-      "name": "flag-icons",
-      "author": "Panayiotis Lipiridis & contributors",
-      "license": "MIT",
-      "url": "https://github.com/lipis/flag-icons",
-      "redistributable": true,
-      "usage": "Country flag SVGs, bundled via npm."
-    },
-    {
-      "id": "font-lilita",
-      "name": "Lilita One",
-      "author": "Juan Montoreano",
-      "license": "SIL Open Font License 1.1",
-      "url": "https://fonts.google.com/specimen/Lilita+One",
-      "redistributable": true,
-      "usage": "Display typeface (self-hosted by next/font at build time)."
-    },
-    {
-      "id": "font-outfit",
-      "name": "Outfit",
-      "author": "Smartsheet / On Brand Investments",
-      "license": "SIL Open Font License 1.1",
-      "url": "https://fonts.google.com/specimen/Outfit",
-      "redistributable": true,
-      "usage": "Body typeface."
-    },
-    {
-      "id": "font-silkscreen",
-      "name": "Silkscreen",
-      "author": "Jason Kottke",
-      "license": "SIL Open Font License 1.1",
-      "url": "https://fonts.google.com/specimen/Silkscreen",
-      "redistributable": true,
-      "usage": "Pixel scoreboard typeface."
-    }
+    { "id": "flag-icons", "name": "flag-icons", "author": "Panayiotis Lipiridis & contributors", "license": "MIT", "url": "https://github.com/lipis/flag-icons", "redistributable": true, "usage": "Country flag SVGs, bundled via npm." },
+    { "id": "font-lilita", "name": "Lilita One", "author": "Juan Montoreano", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Lilita+One", "redistributable": true, "usage": "Display typeface (self-hosted by next/font at build time)." },
+    { "id": "font-outfit", "name": "Outfit", "author": "Smartsheet / On Brand Investments", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Outfit", "redistributable": true, "usage": "Body typeface." },
+    { "id": "font-silkscreen", "name": "Silkscreen", "author": "Jason Kottke", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Silkscreen", "redistributable": true, "usage": "Pixel scoreboard typeface." }
   ],
   "notBundled": [
-    {
-      "id": "club-crests-unlicensed",
-      "name": "Club crests without a free licence",
-      "reason": "Only crests whose Wikimedia Commons licence permits redistribution are bundled; other clubs use a generated Pitchborn emblem."
-    },
-    {
-      "id": "competition-logos",
-      "name": "League and competition logos",
-      "reason": "Trademarked. Original Pitchborn names are used for continental/international competitions and awards."
-    },
-    {
-      "id": "player-photos",
-      "name": "Player photographs",
-      "reason": "All players are fictional; no photographs are used."
-    },
-    {
-      "id": "stadium-photos",
-      "name": "Stadium photographs",
-      "reason": "Not needed for the current UI; Wikimedia Commons images could be added with per-file licence records."
-    }
+    { "id": "club-crests", "name": "Official club crests", "reason": "Trademarked; redistribution and endorsement implications. Architecture supports a per-club asset override once licensed (see docs/DATA_SOURCES.md)." },
+    { "id": "competition-logos", "name": "League and competition logos", "reason": "Trademarked. Original Pitchborn names are used for continental/international competitions and awards." },
+    { "id": "player-photos", "name": "Player photographs", "reason": "All players are fictional; no photographs are used." },
+    { "id": "stadium-photos", "name": "Stadium photographs", "reason": "Not needed for the current UI; Wikimedia Commons images could be added with per-file licence records." }
   ]
 }
