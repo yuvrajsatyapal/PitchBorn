@@ -21,7 +21,7 @@ export function legacyTier(score: number): string {
 function clubSpans(state: GameState): { clubId: string; seasons: number }[] {
   const p = userPlayer(state);
   const spans = new Map<string, number>();
-  for (const h of p.history) if (h.clubId && h.stats.apps > 0) spans.set(h.clubId, (spans.get(h.clubId) ?? 0) + 1);
+  for (const h of p.history) if (h.clubId && h.stats.apps >= 10) spans.set(h.clubId, (spans.get(h.clubId) ?? 0) + 1);
   return [...spans.entries()].map(([clubId, seasons]) => ({ clubId, seasons })).sort((a, b) => b.seasons - a.seasons);
 }
 

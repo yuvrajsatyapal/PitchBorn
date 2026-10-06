@@ -29,8 +29,8 @@ export const INTENSITY = {
 function ageFactor(age: number): number {
   if (age <= 18) return 1.05;
   if (age <= 20) return 1;
-  if (age <= 22) return 0.82;
-  if (age <= 24) return 0.55;
+  if (age <= 22) return 0.86;
+  if (age <= 24) return 0.62;
   if (age <= 26) return 0.3;
   if (age <= 28) return 0.12;
   return 0.03;

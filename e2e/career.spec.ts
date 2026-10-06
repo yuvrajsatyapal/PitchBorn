@@ -13,11 +13,18 @@ test.describe("core career flow", () => {
 
   test("weeks advance and match days can be simulated", async ({ page }) => {
     await createCareer(page);
-    for (let i = 0; i < 20 && ((await gameInfo(page))?.turn ?? 0) < 6; i++) await advanceWeeks(page, 1);
-    const info = await gameInfo(page);
-    expect(info!.turn).toBeGreaterThanOrEqual(6);
+    for (let i = 0; i < 8 && !(await page.getByTestId("matchday").isVisible().catch(() => false)); i++) {
+      const before = (await gameInfo(page))?.turn;
+      await page.getByTestId("continue").click();
+      await expect.poll(async () => (await gameInfo(page))?.turn, { timeout: 20_000 }).not.toBe(before);
+    }
+    expect((await gameInfo(page))!.turn).toBeGreaterThanOrEqual(4);
+    await page.getByTestId("matchday").click();
+    await expect(page).toHaveURL(/\/play\/match\/?$/);
+    await page.getByTestId("sim-match").click();
+    await expect(page.getByText("Full time").first()).toBeVisible();
     await page.goto("/play/schedule/");
-    await expect(page.getByText(/–/).first()).toBeVisible();
+    await expect(page.getByText(/\d–\d/).first()).toBeVisible();
   });
 
   test("live match plays to full time and records the result", async ({ page }) => {

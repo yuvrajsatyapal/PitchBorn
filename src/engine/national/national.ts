@@ -28,7 +28,7 @@ function eligibleFor(p: Player, code: string): boolean {
 function selectionScore(state: GameState, p: Player): number {
   const ovr = overallFor(p.attrs, p.position);
   const age = ageOf(p, state.season);
-  return ovr + (p.form - 6.6) * 1.8 + p.reputation * 0.03 + (age <= 20 ? -2 : 0) + (p.virtual ? -1.5 : 0);
+  return ovr + (p.form - 6.6) * 3 + p.reputation * 0.04 + (age <= 20 ? -2 : 0) + (p.virtual ? -1.5 : 0);
 }
 
 /** Pick 23-man squads for every nation (3 GKs, balanced lines). */

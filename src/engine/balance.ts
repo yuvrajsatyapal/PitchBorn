@@ -29,7 +29,7 @@ export const BALANCE = {
   },
   development: {
     /** Points of overall gained per season at max gap for an average-rate youngster. */
-    youthGrowth: 7.0,
+    youthGrowth: 8.4,
     primeAge: 27,
     declineStart: 30,
     declinePerYear: 1.0,

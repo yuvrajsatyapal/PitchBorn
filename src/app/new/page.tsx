@@ -204,7 +204,7 @@ export default function NewCareer() {
                 onChange={(t) => (setTier(Number(t)), setClub(""))}
                 items={WORLD.leagues.filter((l) => l.countryCode === clubCountry).map((l) => ({ id: String(l.tier), label: `${l.name}` }))}
               />
-              <ul className="mt-3 grid max-h-[420px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+              <ul className="mt-3 grid gap-2 sm:max-h-[420px] sm:grid-cols-2 sm:overflow-y-auto sm:pr-1">
                 {clubs.map((c) => {
                   const hint = playingTimeHint(c.prestige);
                   return (
@@ -249,7 +249,7 @@ export default function NewCareer() {
           </Card>
         )}
 
-        <div className="mt-5 flex justify-between">
+        <div className="sticky bottom-0 z-20 -mx-4 mt-5 flex justify-between border-t-2 border-line/20 bg-paper/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
           <Button tone="paper" onClick={() => (step === 0 ? router.push("/") : setStep(step - 1))}>
             ‹ Back
           </Button>
