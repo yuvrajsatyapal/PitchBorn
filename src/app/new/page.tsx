@@ -11,7 +11,7 @@ import { NAME_POOLS } from "@/engine/data/names";
 import { WORLD, country, stadium } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { POSITIONS, type Appearance, type Position } from "@/engine/types";
-import { clubLevel } from "@/engine/world/create";
+import { playingTimeOutlook } from "@/engine/world/create";
 import { useGame } from "@/game/store";
 
 const STEPS = ["Identity", "Player", "Path & club", "Confirm"];
@@ -68,10 +68,9 @@ export default function NewCareer() {
   if (busy) return <div className="grid min-h-screen place-items-center"><LoadingScreen label={busy} /></div>;
 
   const playingTimeHint = (prestige: number) => {
-    const level = clubLevel(prestige);
-    const start = path === "academy" ? level - 20 : level - 9;
-    const gap = level - start;
-    return gap > 16 ? { t: "Few minutes", tone: "coral" as const } : gap > 11 ? { t: "Fight for minutes", tone: "sun" as const } : { t: "Good minutes", tone: "pitch" as const };
+    const { outlook, level, start: you } = playingTimeOutlook(prestige, path);
+    const map = { good: { t: "Good minutes", tone: "pitch" as const }, fight: { t: "Fight for minutes", tone: "sun" as const }, few: { t: "Few minutes", tone: "coral" as const } };
+    return { ...map[outlook], level, you };
   };
 
   return (
@@ -194,7 +193,7 @@ export default function NewCareer() {
                 ))}
               </div>
               <div className="mt-4 text-sm font-bold">Difficulty</div>
-              <Tabs value={difficulty} onChange={setDiff} items={[{ id: "relaxed", label: "Relaxed" }, { id: "standard", label: "Standard" }, { id: "hardcore", label: "Hardcore" }]} />
+              <Tabs value={difficulty} onChange={setDiff} items={[{ id: "relaxed", label: "Easy" }, { id: "standard", label: "Medium" }, { id: "hardcore", label: "Hard" }]} />
             </Card>
             <Card title="Choose your first club">
               <Tabs value={clubCountry} onChange={(c) => (setClubCountry(c), setClub(""))} items={LEAGUE_COUNTRIES.map((c) => ({ id: c, label: <span className="flex items-center gap-1.5"><Flag code={c} />{country(c)?.name}</span> }))} />
@@ -215,6 +214,9 @@ export default function NewCareer() {
                           <div className="truncate font-bold">{c.name}</div>
                           <div className="truncate text-xs text-muted">
                             {stadium(c.stadiumId)?.name} · {c.city}
+                          </div>
+                          <div className="text-[11px] text-ink-2">
+                            Squad level {hint.level} · you start ≈{hint.you}
                           </div>
                         </div>
                         <Badge tone={hint.tone} className="shrink-0">{hint.t}</Badge>
@@ -242,7 +244,7 @@ export default function NewCareer() {
                 <div className="mt-2 flex items-center gap-2 text-sm">
                   <Crest clubId={club.id} size={28} /> {path === "academy" ? "Academy" : "First-team squad"} at <b>{club.name}</b>
                 </div>
-                <div className="mt-1 text-xs text-muted">Season 2026/27 · difficulty {difficulty}. Your true potential is hidden — scouts will give you hints.</div>
+                <div className="mt-1 text-xs text-muted">Season 2026/27 · difficulty {{ relaxed: "Easy", standard: "Medium", hardcore: "Hard" }[difficulty]}. Your true potential is hidden — scouts will give you hints.</div>
               </div>
             </div>
             {err && <div className="mt-3 rounded-xl border-2 border-line bg-coral-2 p-2 text-sm">{err}</div>}

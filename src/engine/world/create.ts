@@ -141,6 +141,26 @@ export function generateVirtualPool(state: GameState, rng: Rng, code: CountryCod
   return out;
 }
 
+/**
+ * Expected starting overall for a new career at a club. Small clubs give an
+ * academy kid or late starter a squad much closer to their level; elite clubs
+ * leave a big gap (development squad, loans). Shared with the new-career UI.
+ */
+export function expectedStartingOverall(prestige: number, path: "academy" | "late"): number {
+  const level = clubLevel(prestige);
+  return path === "academy" ? clamp(level - 10 - (level - 55) * 0.5, 46, 62) : clamp(level - 4 - (level - 55) * 0.55, 52, 72);
+}
+
+export type PlayingTimeOutlook = "good" | "fight" | "few";
+
+/** How likely early first-team minutes are, from the gap to the squad's level. */
+export function playingTimeOutlook(prestige: number, path: "academy" | "late"): { outlook: PlayingTimeOutlook; level: number; start: number } {
+  const level = clubLevel(prestige);
+  const start = expectedStartingOverall(prestige, path);
+  const gap = level - start;
+  return { outlook: gap <= 12 ? "good" : gap <= 17 ? "fight" : "few", level: Math.round(level), start: Math.round(start) };
+}
+
 export interface NewCareerInput {
   saveName: string;
   firstName: string;
@@ -166,7 +186,8 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   const age = input.path === "academy" ? 17 : 20;
   const level = clubLevel(club.reputation);
   // Starting ability: academy kids are raw; late starters are closer to the senior squad.
-  const startOvr = input.path === "academy" ? clamp(level - 20 + rng.normal(0, 2), 44, 60) : clamp(level - 9 + rng.normal(0, 2), 52, 70);
+  const startOvr = clamp(expectedStartingOverall(club.reputation, input.path) + rng.normal(0, 1.5), 44, 74);
+  void level;
   const diff = input.difficulty ?? "standard";
   const potBase = input.path === "academy" ? 84 : 79;
   const potential = clamp(potBase + rng.normal(0, 4.5) + (diff === "relaxed" ? 3 : diff === "hardcore" ? -3 : 0), 70, 96);

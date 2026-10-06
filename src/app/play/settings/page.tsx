@@ -124,7 +124,7 @@ export default function Settings() {
         </Card>
         <Card title="Game">
           <div className="mb-2 text-sm font-bold">Difficulty</div>
-          <Tabs value={g.settings.difficulty} onChange={setDifficulty} items={[{ id: "relaxed", label: "Relaxed" }, { id: "standard", label: "Standard" }, { id: "hardcore", label: "Hardcore" }]} />
+          <Tabs value={g.settings.difficulty} onChange={setDifficulty} items={[{ id: "relaxed", label: "Easy" }, { id: "standard", label: "Medium" }, { id: "hardcore", label: "Hard" }]} />
           <p className="mt-1 text-xs text-muted">Affects manager trust and contract generosity. Potential is fixed at career start.</p>
           <div className="mb-2 mt-4 text-sm font-bold">Theme</div>
           <Tabs value={theme} onChange={applyTheme} items={[{ id: "system", label: "System" }, { id: "light", label: "Light" }, { id: "dark", label: "Dark" }]} />
