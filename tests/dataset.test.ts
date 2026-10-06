@@ -1,0 +1,25 @@
+import { describe, expect, it } from "vitest";
+import { DatasetSchema, validateDataset } from "../src/engine/data/schema";
+import { WORLD } from "../src/engine/data/world";
+
+describe("bundled football dataset", () => {
+  it("matches the schema and passes cross-reference validation", () => {
+    expect(DatasetSchema.safeParse(WORLD).success).toBe(true);
+    expect(validateDataset(WORLD).filter((i) => i.level === "error")).toEqual([]);
+  });
+  it("covers the five core countries with three tiers each", () => {
+    for (const cc of ["ENG", "ESP", "GER", "ITA", "FRA"]) {
+      expect(WORLD.leagues.filter((l) => l.countryCode === cc).map((l) => l.tier).sort()).toEqual([1, 2, 3]);
+    }
+  });
+  it("has unique club ids and records provenance for every club", () => {
+    const ids = WORLD.clubs.map((c) => c.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const c of WORLD.clubs) expect(c.sources.length).toBeGreaterThan(0);
+    for (const s of WORLD.sources) expect(s.license.length).toBeGreaterThan(0);
+  });
+  it("detects broken references", () => {
+    const broken = { ...WORLD, clubs: [{ ...WORLD.clubs[0], stadiumId: "nope" }, ...WORLD.clubs.slice(1)] };
+    expect(validateDataset(broken).some((i) => i.message.includes("missing stadium"))).toBe(true);
+  });
+});

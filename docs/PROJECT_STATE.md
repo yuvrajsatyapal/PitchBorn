@@ -13,14 +13,25 @@ Read this first after any context reset. Keep it short and current.
 
 ## Status
 - [x] Scaffold, deps, data pipeline, world.json (15 leagues, 3 tiers × 5 countries, 300 clubs, 44 historical seasons)
-- [ ] Engine core (rng, types, generation, match engine, season/advance)
-- [ ] Career systems (dev, training, transfers, contracts, injuries, national, awards, legacy)
-- [ ] Persistence + store
+- [x] Engine core (rng, types, generation, match engine, season/advance) — src/engine/**
+- [x] Career systems (dev, training, transfers, contracts, injuries, national, awards, events, legacy, autopilot)
+- [x] Persistence (codec, Dexie db, migrations, import/export) — src/persistence/**
+- [x] Stress tools: scripts/sim/calibrate-match.ts, scripts/sim/careers.mts (worker threads, --count, --full)
+- [ ] Zustand store / app layer (src/game)
 - [ ] UI screens
 - [ ] Ads architecture
 - [ ] PWA/offline
 - [ ] Tests (vitest), stress sims, Playwright
 - [ ] Docs
 
+## Key engine entry points
+- createWorld(NewCareerInput) → GameState (world/create.ts)
+- beginTurn / advanceTurn / simUserMatch / completeUserMatch / liveMatchRng / retireUser (season/advance.ts)
+- prepareMatch(state, fixture, rng, {interactive, detail}) → MatchEngine (step/resolve/runToEnd) (season/matchday.ts, match/engine.ts)
+- negotiate / setTransferRequest (career/offers.ts), resolveDecision (career/events.ts), retireFromInternational (national/national.ts)
+- Calendar: 50 turns/season; season turns 4–43; season end 44; summer 45–50 (tournaments in even years)
+- Perf: ~115ms/turn full world (node). Lite world via settings.countries for stress tests.
+
 ## Known issues / TODO
-- (none yet)
+- Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
+- Academy prospects at elite clubs rarely play — UI should surface loan advice
