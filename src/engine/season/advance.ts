@@ -260,7 +260,8 @@ export function advanceTurn(state: GameState): AdvanceReport {
       report.seasonEnded = true;
     }
     if (state.turn >= C.turnsPerSeason) {
-      worldAwards(state);
+      const world = worldAwards(state);
+      state.archive[state.archive.length - 1]?.awards.push(...world);
       rollover(state, rng);
       report.newSeason = true;
     } else {

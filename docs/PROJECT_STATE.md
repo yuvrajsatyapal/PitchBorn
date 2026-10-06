@@ -35,3 +35,4 @@ Read this first after any context reset. Keep it short and current.
 ## Known issues / TODO
 - Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
 - Academy prospects at elite clubs rarely play — UI should surface loan advice
+- UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).

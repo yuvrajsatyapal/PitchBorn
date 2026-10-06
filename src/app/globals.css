@@ -1,26 +1,162 @@
 @import "tailwindcss";
+@import "flag-icons/css/flag-icons.min.css";
 
+/* Pitchborn design tokens — neo-retro sports almanac: cream paper, ink outlines,
+   hard offset shadows, chunky display type, pixel scoreboard numerals. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #fff5e6;
+  --paper-2: #fbe8cc;
+  --card: #fffdf8;
+  --ink: #1b1712;
+  --ink-2: #4a4136;
+  --muted: #7a6e5f;
+  --line: #1b1712;
+  --pitch: #2e8b57;
+  --pitch-2: #d6efdf;
+  --sun: #ffc62b;
+  --sun-2: #fff0c2;
+  --plum: #913a7f;
+  --plum-2: #f3dcee;
+  --coral: #ff6b57;
+  --coral-2: #ffe1dc;
+  --sky: #4d7fe8;
+  --sky-2: #dfe8fd;
+  --shadow: #1b1712;
+  --ad-bg: #f1ece3;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root[data-theme="dark"] {
+  --paper: #17140f;
+  --paper-2: #221d16;
+  --card: #1f1a14;
+  --ink: #f6ead6;
+  --ink-2: #d8c9b1;
+  --muted: #a59680;
+  --line: #f6ead6;
+  --pitch: #4cc283;
+  --pitch-2: #1d3527;
+  --sun: #ffcf4a;
+  --sun-2: #3a3015;
+  --plum: #d77cc4;
+  --plum-2: #3a2236;
+  --coral: #ff8473;
+  --coral-2: #40221d;
+  --sky: #7da2f5;
+  --sky-2: #1d2a45;
+  --shadow: #000000;
+  --ad-bg: #262019;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --paper: #17140f;
+    --paper-2: #221d16;
+    --card: #1f1a14;
+    --ink: #f6ead6;
+    --ink-2: #d8c9b1;
+    --muted: #a59680;
+    --line: #f6ead6;
+    --pitch: #4cc283;
+    --pitch-2: #1d3527;
+    --sun: #ffcf4a;
+    --sun-2: #3a3015;
+    --plum: #d77cc4;
+    --plum-2: #3a2236;
+    --coral: #ff8473;
+    --coral-2: #40221d;
+    --sky: #7da2f5;
+    --sky-2: #1d2a45;
+    --shadow: #000000;
+    --ad-bg: #262019;
   }
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-pitch: var(--pitch);
+  --color-pitch-2: var(--pitch-2);
+  --color-sun: var(--sun);
+  --color-sun-2: var(--sun-2);
+  --color-plum: var(--plum);
+  --color-plum-2: var(--plum-2);
+  --color-coral: var(--coral);
+  --color-coral-2: var(--coral-2);
+  --color-sky: var(--sky);
+  --color-sky-2: var(--sky-2);
+  --font-display: var(--font-lilita), "Arial Rounded MT Bold", sans-serif;
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+  --font-pixel: var(--font-silkscreen), ui-monospace, monospace;
+}
+
+html { -webkit-tap-highlight-color: transparent; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1;
+}
+
+/* Subtle paper grain via layered gradients (no image assets). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-image: radial-gradient(color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.pb-card {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 1.1rem;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+.pb-card-flat {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 1rem;
+}
+.pb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: 3px 3px 0 var(--shadow);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s;
+  min-height: 44px;
+}
+.pb-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow); }
+.pb-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow); }
+.pb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 6px; }
+
+.font-display { letter-spacing: 0.01em; }
+.scoreboard { font-family: var(--font-pixel); letter-spacing: 0.04em; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@keyframes pb-pop { 0% { transform: scale(0.92); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pb-slide { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+@keyframes pb-goal { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18) rotate(-2deg); } 60% { transform: scale(0.98); } }
+@keyframes pb-ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.anim-pop { animation: pb-pop 0.25s ease-out both; }
+.anim-slide { animation: pb-slide 0.3s ease-out both; }
+.anim-goal { animation: pb-goal 0.7s ease-out; }
+.anim-ticker { animation: pb-ticker 40s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }

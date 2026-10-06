@@ -217,7 +217,7 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
     return { ok: true, message: "Offer rejected." };
   }
   if (action.type === "accept") {
-    completeOffer(state, o, rng);
+    completeOffer(state, o);
     return { ok: true, message: o.kind === "renewal" ? "Contract extended!" : `Welcome to ${clubName(o.fromClubId)}!`, completed: true };
   }
   // Counter-offer
@@ -229,7 +229,7 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   if (ask <= o.maxWage * agentEdge && roleOk) {
     o.terms = { ...o.terms, wage: ask, role: action.role && roleOk ? action.role : o.terms.role, years: action.years ?? o.terms.years };
     o.history.push("They agree to your terms.");
-    completeOffer(state, o, rng);
+    completeOffer(state, o);
     return { ok: true, message: "Terms agreed!", completed: true };
   }
   o.patience--;
@@ -248,7 +248,7 @@ function roleRank(r: SquadRole): number {
   return { prospect: 0, backup: 1, rotation: 2, first: 3, star: 4 }[r];
 }
 
-function completeOffer(state: GameState, o: TransferOffer, rng: Rng) {
+function completeOffer(state: GameState, o: TransferOffer) {
   const p = userPlayer(state);
   o.status = "accepted";
   const club = state.clubs[o.fromClubId];

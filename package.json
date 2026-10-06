@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/pwa/build-sw.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit -p .",
@@ -14,7 +14,9 @@
     "data:fetch": "tsx scripts/data/fetch.ts",
     "data:build": "tsx scripts/data/build.ts",
     "sim:careers": "tsx scripts/sim/careers.mts",
-    "sim:match": "tsx scripts/sim/calibrate-match.ts"
+    "sim:match": "tsx scripts/sim/calibrate-match.ts",
+    "preview": "npx --yes serve out -l 4173",
+    "icons": "node scripts/pwa/render-icons.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",
