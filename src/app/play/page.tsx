@@ -77,6 +77,11 @@ export default function Dashboard() {
               <Stat label="MotM" value={tot.motm} />
               <Stat label="Mins" value={tot.minutes} />
             </div>
+            {g.user.reserves && g.user.reserves.season === g.season && g.user.reserves.apps > 0 && (
+              <p className="mt-2 text-xs text-ink-2">
+                Development squad: {g.user.reserves.apps} apps · {g.user.reserves.goals} goals · {g.user.reserves.assists} assists · avg {(g.user.reserves.ratingSum / g.user.reserves.apps).toFixed(2)}
+              </p>
+            )}
             <div className="mt-3">
               <div className="mb-1 text-xs font-bold uppercase text-muted">Recent ratings</div>
               <Sparkline values={g.user.recentRatings.slice(-12).map((r) => r.rating)} />

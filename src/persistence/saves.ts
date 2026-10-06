@@ -44,8 +44,8 @@ export interface SaveOptions {
 export async function saveGame(state: GameState, opts: SaveOptions = {}): Promise<SaveMeta> {
   const now = new Date().toISOString();
   state.updatedAt = now;
-  const data = encodeState(state);
-  const meta = metaFor(state);
+  const data = JSON.stringify(encodeState(state));
+  const meta = { ...metaFor(state), sizeBytes: data.length };
   const database = db();
   await database.transaction("rw", database.meta, database.saves, database.backups, async () => {
     await database.saves.put({ id: state.id, data, updatedAt: now });
@@ -63,7 +63,15 @@ export async function saveGame(state: GameState, opts: SaveOptions = {}): Promis
 export class LoadError extends Error {}
 
 /** Decode + migrate + validate a stored/exported state. */
-export function hydrate(data: unknown): GameState {
+export function hydrate(raw: unknown): GameState {
+  let data = raw;
+  if (typeof raw === "string") {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new LoadError("Save data is corrupted (unreadable JSON).");
+    }
+  }
   const decoded = isEncoded(data) ? decodeState(data) : (data as GameState);
   const migrated = migrateState(decoded as unknown as Record<string, unknown>);
   const shape = GameStateShape.safeParse(migrated);

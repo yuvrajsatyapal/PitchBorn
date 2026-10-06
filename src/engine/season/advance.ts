@@ -22,6 +22,7 @@ import { overallFor } from "../players/attributes";
 import { developPlayer, runTraining, weeklyCondition } from "../players/development";
 import { clubRevenue, marketValue } from "../players/economy";
 import { ageOf, emptyStat } from "../players/generate";
+import { clubLevel } from "../world/create";
 import { recoverWeek } from "../players/injuries";
 import { clamp, Rng } from "../rng";
 import { ensureMinimumSquads, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
@@ -128,6 +129,36 @@ function weeklyFinances(state: GameState): void {
   }
 }
 
+/**
+ * Young players left out of the matchday squad turn out for the development
+ * side: a light abstraction that keeps them sharp and growing.
+ */
+function reserveMatch(state: GameState, rng: Rng, trainingMul: number): void {
+  const p = userPlayer(state);
+  const u = state.user;
+  if (!p.clubId || p.injury || ageOf(p, state.season) > 21) return;
+  if (state.turn < C.seasonStart || state.turn > C.seasonEnd || u.lastMatchTurn === state.turn) return;
+  const clubPlayed = Object.values(state.competitions).some((c) => c.kind === "league" && c.season === state.season && c.fixtures.some((f) => f.turn === state.turn && (f.home === p.clubId || f.away === p.clubId)));
+  if (!clubPlayed) return;
+  const level = clubLevel(state.clubs[p.clubId].reputation) - 12; // U21 opposition
+  const ovr = overallFor(p.attrs, p.position);
+  const rating = Math.round(clamp(rng.normal(6.5 + (ovr - level) / 12, 0.7), 4.5, 9.8) * 10) / 10;
+  const att = ["ST", "RW", "LW", "AM"].includes(p.position);
+  const goals = rng.chance(att ? 0.32 + (ovr - level) / 80 : p.position === "GK" ? 0 : 0.08) ? (rng.chance(0.2) ? 2 : 1) : 0;
+  const assists = rng.chance(att || p.position === "CM" ? 0.2 : 0.06) ? 1 : 0;
+  if (!u.reserves || u.reserves.season !== state.season) u.reserves = { season: state.season, apps: 0, goals: 0, assists: 0, ratingSum: 0 };
+  u.reserves.apps++;
+  u.reserves.goals += goals;
+  u.reserves.assists += assists;
+  u.reserves.ratingSum = Math.round((u.reserves.ratingSum + rating) * 10) / 10;
+  p.sharpness = clamp(p.sharpness + 12, 0, 100);
+  p.morale = clamp(p.morale + (rating - 6.6), 0, 100);
+  u.relationships.manager = clamp(u.relationships.manager + (rating - 6.8) * 0.8, 0, 100);
+  // Counts as meaningful minutes for development (feeds monthly growth).
+  u.trainingHistory[u.trainingHistory.length - 1] = trainingMul + 0.25;
+  if (goals || rating >= 7.8) addNews(state, { kind: "match", title: `Development squad: ${goals ? `${goals} goal${goals > 1 ? "s" : ""} for you` : "standout display"}`, body: `Rating ${rating.toFixed(1)} · the manager was watching.` });
+}
+
 function userWeekly(state: GameState, rng: Rng): void {
   const p = userPlayer(state);
   const u = state.user;
@@ -143,6 +174,7 @@ function userWeekly(state: GameState, rng: Rng): void {
   if (out.injured) addNews(state, { kind: "injury", title: `Training injury: ${out.injured}`, body: out.note, important: true });
   u.trainingHistory.push(out.growthMultiplier);
   if (u.trainingHistory.length > 4) u.trainingHistory.shift();
+  reserveMatch(state, rng, out.growthMultiplier);
   if (p.contract) {
     const goals = Object.values(p.season).reduce((s, x) => s + x.goals, 0);
     void goals;

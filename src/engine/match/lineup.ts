@@ -36,7 +36,7 @@ function scoreWith(p: Player, fit: number, opts: { rotate?: boolean; managerBias
   s += (p.sharpness - 70) / 40;
   if (opts.rotate) {
     s -= p.fitness < 92 ? 4 : 0;
-    if (p.contract?.role === "prospect" || p.contract?.role === "backup") s += 5;
+    if (p.contract?.role === "prospect" || p.contract?.role === "backup") s += 8;
   }
   if (p.isUser && opts.managerBias) s += opts.managerBias;
   return s;

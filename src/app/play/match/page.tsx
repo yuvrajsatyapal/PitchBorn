@@ -7,6 +7,7 @@ import { Badge, Button, Card, Empty, PageTitle, Rating, Table } from "@/componen
 import { seasonLabel } from "@/engine/calendar";
 import type { Fixture, GameState } from "@/engine/types";
 import { name, scoreText, teamLabel, user, userFixtures } from "@/game/selectors";
+import { teamSelection } from "@/engine/season/matchday";
 import { useGame, useGameState } from "@/game/store";
 
 function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
@@ -16,7 +17,7 @@ function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
   const goals = f.result?.goals ?? [];
   return (
     <div className="grid gap-4">
-      <Card className="bg-ink text-paper" flat>
+      <Card className="!bg-[#1b1712] !text-[#fff5e6]" flat>
         <div className="text-center text-xs font-bold uppercase tracking-widest text-sun/80">
           {comp?.name} {f.stage ? `· ${f.stage}` : ""} · Full time
         </div>
@@ -126,7 +127,20 @@ export default function MatchDay() {
             <div className="flex flex-col items-center gap-1"><Crest clubId={fixture.away} size={70} /><b>{teamLabel(fixture.away)}</b></div>
           </div>
           <p className="mb-4 text-center text-sm">
-            {user(g).injury ? "You're injured — watch from the stands or sim it." : "Play live to make the big decisions when the ball comes to you, or let the engine sim it."}
+            {(() => {
+              const me = user(g);
+              if (me.injury) return "You're injured — watch from the stands or sim it.";
+              if (me.suspension > 0) return "You're suspended for this one.";
+              const team = fixture.home === me.clubId || fixture.away === me.clubId ? me.clubId! : fixture.home === (me.intl.tiedTo ?? me.nationality) ? fixture.home : fixture.away;
+              const sel = teamSelection(g, team, fixture, null);
+              const starting = sel.starters.some((s) => s.player.id === me.id);
+              const bench = sel.bench.some((p) => p.id === me.id);
+              return starting
+                ? "The manager has named you in the starting XI. Play live to make the big decisions when the ball comes to you."
+                : bench
+                  ? "You're on the bench — be ready to come on."
+                  : "You're not in the matchday squad this time. Train hard and impress in the development side.";
+            })()}
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             <Button size="lg" onClick={() => startLive(fixture.id)} data-testid="start-live">▶ Play live</Button>

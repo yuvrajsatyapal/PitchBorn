@@ -290,3 +290,8 @@ export function useGameState(): GameState | null {
 }
 
 export { Rng };
+
+// Debug/testing handle (dev and E2E builds only).
+if (typeof window !== "undefined" && (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_E2E === "1")) {
+  (window as unknown as { __pitchborn: typeof useGame }).__pitchborn = useGame;
+}

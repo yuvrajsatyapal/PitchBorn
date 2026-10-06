@@ -25,7 +25,7 @@ export function Stars({ value }: { value: number }) {
   return (
     <span className="tracking-tight text-sun [text-shadow:1px_1px_0_var(--line)]" aria-label={`${value} of 5 stars`}>
       {"★".repeat(Math.floor(value))}
-      {value % 1 ? "⯪" : ""}
+      {value % 1 ? "½" : ""}
       <span className="text-paper-2 [text-shadow:none]">{"★".repeat(5 - Math.ceil(value))}</span>
     </span>
   );
@@ -62,7 +62,7 @@ export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
         </div>
         <div className="text-center">
           <div className="text-[11px] font-black uppercase tracking-widest text-muted">Overall</div>
-          <div className="scoreboard rounded-xl border-2 border-line bg-ink px-3 py-1 text-4xl text-sun" data-testid="overall">
+          <div className="scoreboard rounded-xl border-2 border-line bg-[#1b1712] px-3 py-1 text-4xl text-[#ffc62b]" data-testid="overall">
             {ovr(p)}
           </div>
         </div>

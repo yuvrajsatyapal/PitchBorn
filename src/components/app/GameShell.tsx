@@ -57,8 +57,8 @@ function SimMenu() {
   ];
   return (
     <>
-      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy || game.pending.length > 0} aria-label="Simulate several weeks">
-        ⏩
+      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy || game.pending.length > 0} aria-label="Simulate several weeks" title="Simulate ahead">
+        <span className="font-black">»</span>
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Simulate ahead">
         <p className="mb-4 text-sm text-ink-2">

@@ -59,7 +59,7 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
 
   return (
     <div className="grid gap-4">
-      <Card className="bg-ink text-paper" flat>
+      <Card className="!bg-[#1b1712] !text-[#fff5e6]" flat>
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Crest clubId={home.id} size={44} />

@@ -22,14 +22,15 @@ export interface SaveMeta {
 
 export interface SaveRow {
   id: string;
-  data: EncodedState;
+  /** JSON string of EncodedState (strings clone into IndexedDB far faster than object graphs). */
+  data: EncodedState | string;
   updatedAt: string;
 }
 
 export interface BackupRow {
   id: string;
   saveId: string;
-  data: EncodedState;
+  data: EncodedState | string;
   createdAt: string;
   label: string;
 }

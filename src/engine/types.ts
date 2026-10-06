@@ -416,6 +416,8 @@ export interface UserCareer {
   lastAdTurnIndex?: number;
   /** Growth multipliers from the last few training weeks (feeds monthly development). */
   trainingHistory: number[];
+  /** Development-squad (U21) games when not picked for the first team. */
+  reserves?: { season: number; apps: number; goals: number; assists: number; ratingSum: number };
   lastTraining?: { note: string; injured?: string };
   /** Consecutive season rollovers spent without a club. */
   freeSeasons?: number;

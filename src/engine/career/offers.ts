@@ -128,7 +128,7 @@ export function generateUserOffers(state: GameState, rng: Rng): void {
     });
   }
   // Loan offers for young players who are not playing.
-  if (window && p.clubId && ageOf(p, state.season) <= 22 && (state.user.wantsLoan || lowMinutes(state, p)) && !p.loan && rng.chance(state.user.wantsLoan ? 0.45 : 0.15)) {
+  if (window && p.clubId && ageOf(p, state.season) <= 22 && (state.user.wantsLoan || lowMinutes(state, p)) && !p.loan && rng.chance(state.user.wantsLoan ? 0.6 : 0.3)) {
     const parent = state.clubs[p.clubId];
     const pool = Object.values(state.clubs).filter((c) => c.reputation < parent.reputation - 6 && clubLevel(c.reputation) <= uOvr(p) + 3 && clubLevel(c.reputation) >= uOvr(p) - 6);
     const club = pool.length ? rng.pick(pool) : null;
