@@ -17,12 +17,12 @@ Read this first after any context reset. Keep it short and current.
 - [x] Career systems (dev, training, transfers, contracts, injuries, national, awards, events, legacy, autopilot)
 - [x] Persistence (codec, Dexie db, migrations, import/export) — src/persistence/**
 - [x] Stress tools: scripts/sim/calibrate-match.ts, scripts/sim/careers.mts (worker threads, --count, --full)
-- [ ] Zustand store / app layer (src/game)
-- [ ] UI screens
-- [ ] Ads architecture
-- [ ] PWA/offline
-- [ ] Tests (vitest), stress sims, Playwright
-- [ ] Docs
+- [x] Zustand store / app layer (src/game)
+- [x] UI screens: landing, new, saves, credits, privacy, /play/{dashboard, match, schedule, profile, training, club, league, transfers, national, stats, awards, history, world, settings, legacy}
+- [x] Ads architecture (src/ads) — placeholder in dev, none in prod by default
+- [x] PWA/offline (manifest, icons, generated sw.js)
+- [x] Tests: vitest (35), Playwright e2e (desktop+mobile), stress sims (100 careers done; rebalanced after)
+- [x] Docs (docs/*.md, README)
 
 ## Key engine entry points
 - createWorld(NewCareerInput) → GameState (world/create.ts)

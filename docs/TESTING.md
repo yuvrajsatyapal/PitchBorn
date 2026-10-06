@@ -1,0 +1,16 @@
+# Testing
+
+## Unit & simulation (Vitest) — `npm test`
+`tests/`: RNG determinism; dataset schema + cross-reference validation; match engine determinism, stat/event reconciliation, scoreline sanity, knockout winners, interactive decisions; fixtures (double round-robin), table points/sorting/tie-breaks, calendar fitting; a full single-country season (all fixtures played, points = 3×matches − draws, invariants, player goals = goal events, cups resolved, promotion/relegation + rollover); determinism of whole worlds; pending user matches; development/decline; market value; transfers keep squads consistent; negotiation completes transfers; retirement/legacy; codec round-trip and size; migrations (v1→v2, future refusal); IndexedDB save/list/load/delete, backup recovery, export/import.
+
+## E2E (Playwright) — `npm run e2e`
+Runs against the static export on desktop (1440×900) and mobile (Pixel 7): new career, advancing weeks and match days, live match to full time, persistence across reloads, a full season to rollover, retirement/legacy, ad labels/placement rules (no ads in nav/negotiation/training, rail only on desktop), gameplay with ad requests blocked, main column width with the rail, no horizontal overflow, layout shift under 0.15, offline play after first load.
+
+## Stress simulation — `npm run sim:careers -- --count N [--workers 8] [--full]`
+Simulates complete careers with the autopilot policy in worker threads and reports distributions (seasons, retirement age, apps, goals, peak overall, clubs, trophies, awards, caps, injuries, legacy) plus world metrics (goals/match, home-win/draw %, extreme scorelines, top-scorer extremes, club balances, player counts, invariant issues) and balance flags. Default "lite" world simulates only the career's country so 1,000-career runs are practical; `--full` simulates all five. Reports in `data/reports/sim-N.md`.
+
+## Calibration — `npm run sim:match`
+Aggregate goals, results, shots, cards, injuries for equal and mismatched teams.
+
+## Performance notes
+~0.3 ms per world match; ~115 ms per simulated week (full world, Node); browser ~150–250 ms per week including autosave (string save ≈ 60 ms).

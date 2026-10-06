@@ -59,7 +59,7 @@ export function autopilotStep(state: GameState, rng: Rng): void {
     }
     const repGain = club.reputation - currentRep;
     const settled = p.contract && state.season - p.contract.signed < 2;
-    const wantsMove = !p.clubId || (repGain >= 10 && !settled) || repGain >= 18 || (!playing && roleScore >= 2 && repGain >= -12) || (u.transferRequest && repGain >= -5);
+    const wantsMove = !p.clubId || (repGain >= 14 && !settled) || repGain >= 22 || (!playing && roleScore >= 3 && repGain >= -8 && !settled) || (u.transferRequest && repGain >= -5);
     if (wantsMove && (roleScore >= 2 || !p.clubId || age <= 21)) {
       const res = negotiate(state, o.id, { type: "counter", wage: Math.round(o.terms.wage * rng.range(1.05, 1.2)) }, rng);
       if (!res.completed && state.user.offers.find((x) => x.id === o.id)?.status === "terms") negotiate(state, o.id, { type: "accept" }, rng);

@@ -10,13 +10,14 @@
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test",
+    "e2e": "NEXT_PUBLIC_E2E=1 NEXT_PUBLIC_AD_PROVIDER=placeholder npm run build && playwright test",
     "data:fetch": "tsx scripts/data/fetch.ts",
     "data:build": "tsx scripts/data/build.ts",
     "sim:careers": "tsx scripts/sim/careers.mts",
     "sim:match": "tsx scripts/sim/calibrate-match.ts",
     "preview": "npx --yes serve out -l 4173",
-    "icons": "node scripts/pwa/render-icons.mjs"
+    "icons": "node scripts/pwa/render-icons.mjs",
+    "e2e:only": "playwright test"
   },
   "dependencies": {
     "dexie": "^4.4.6",

@@ -31,8 +31,10 @@ function ContinueButton({ compact = false }: { compact?: boolean }) {
   const decisions = game.user.decisions.length;
   if (pending) {
     return (
-      <Button tone="coral" size={compact ? "sm" : "md"} onClick={() => router.push("/play/match")} disabled={pathname === "/play/match/"}>
-        ⚽ Match day{pending > 1 ? ` (${pending})` : ""}
+      <Button tone="coral" size={compact ? "sm" : "md"} onClick={() => router.push("/play/match")} disabled={pathname === "/play/match/"} data-testid="matchday">
+        <span aria-hidden>⚽</span>
+        <span className="hidden sm:inline">Match day{pending > 1 ? ` (${pending})` : ""}</span>
+        <span className="sm:hidden">Match</span>
       </Button>
     );
   }

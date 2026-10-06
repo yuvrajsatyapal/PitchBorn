@@ -51,8 +51,15 @@ export function selectNationalSquads(state: GameState): void {
   for (const nt of order) {
     const pool = (buckets.get(nt.code) ?? []).filter((p) => eligibleFor(p, nt.code) && !(p.isUser && takenUser.has(p.id)));
     pool.sort((a, b) => selectionScore(state, b) - selectionScore(state, a));
+    // Position-balanced 26-man squad: 3 GK, 9 DEF, 8 MID, 6 ATT (best remaining fill gaps).
     const gks = pool.filter((p) => p.position === "GK").slice(0, 3);
-    const outfield = pool.filter((p) => p.position !== "GK").slice(0, 20);
+    const by = (g: string[], n: number) => pool.filter((p) => g.includes(p.position)).slice(0, n);
+    const picked = new Set<Player>([...by(["CB", "RB", "LB"], 9), ...by(["DM", "CM", "AM"], 8), ...by(["RW", "LW", "ST"], 6)]);
+    for (const p of pool) {
+      if (picked.size >= 23) break;
+      if (p.position !== "GK") picked.add(p);
+    }
+    const outfield = [...picked].sort((a, b) => selectionScore(state, b) - selectionScore(state, a));
     nt.squad = [...gks, ...outfield].map((p) => p.id);
     if (nt.squad.includes(user.id)) takenUser.add(user.id);
     const top = [...gks.slice(0, 1), ...outfield.slice(0, 10)];

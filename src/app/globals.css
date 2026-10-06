@@ -137,6 +137,7 @@ body::before {
   box-shadow: 3px 3px 0 var(--shadow);
   transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s;
   min-height: 44px;
+  white-space: nowrap;
 }
 .pb-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow); }
 .pb-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow); }

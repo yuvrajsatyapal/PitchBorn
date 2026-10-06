@@ -44,14 +44,14 @@ export function careerStories(state: GameState): string[] {
   if (early || u.awards.some((a) => a.id === "rising-star")) stories.push("Wonderkid — a teenage sensation who announced themselves early.");
   if (peakAge >= 28 && hist.length >= 6 && peak - (hist[2]?.overall ?? peak) >= 10) stories.push("Late Bloomer — the best came after most had written them off.");
   if (spans[0] && spans[0].seasons >= 10 && spans.length <= 2) stories.push(`One-Club Legend — ${spans[0].seasons} seasons in the colours of ${clubName(spans[0].clubId)}.`);
-  if (spans.length >= 6) stories.push(`Journeyman — ${spans.length} clubs, a career lived out of a suitcase.`);
+  if (spans.length >= 7) stories.push(`Journeyman — ${spans.length} clubs, a career lived out of a suitcase.`);
   if (serious.length && hist.some((h) => h.season > serious[0].season && h.stats.apps >= 25 && h.stats.ratingSum / Math.max(1, h.stats.apps) >= 7)) stories.push("Injury Comeback — fought back from a career-threatening injury.");
   if (golden >= 1 || p.reputation >= 92) stories.push(golden >= 3 ? `Superstar — ${golden} Golden Pitch awards; one of the faces of the sport.` : "Superstar — the world knew the name.");
   if (p.hidden.potential >= 86 && peak < 72) stories.push("Failed Prospect — the potential was there, the career never quite followed.");
   if (majorTournament || p.intl.caps >= 100 || p.intl.goals >= 40) stories.push(majorTournament ? "International Hero — lifted a major international trophy." : `International Hero — ${p.intl.caps} caps for ${p.intl.tiedTo ?? p.nationality}.`);
   if (tierAtStart >= 3 && reachedTop) stories.push("Lower-League Rise — from the third tier to the top flight.");
   const lastSeasons = hist.slice(-3);
-  if (lastSeasons.length === 3 && lastSeasons.every((h) => h.age >= 33 && h.stats.apps >= 18)) stories.push("Veteran Leader — still starting week in, week out deep into their thirties.");
+  if (lastSeasons.length === 3 && lastSeasons.every((h) => h.age >= 34 && h.stats.apps >= 25 && h.stats.ratingSum / Math.max(1, h.stats.apps) >= 6.8)) stories.push("Veteran Leader — still starting week in, week out deep into their thirties.");
   if (!stories.length) stories.push("A professional career — earned every minute on the pitch.");
   return stories;
 }

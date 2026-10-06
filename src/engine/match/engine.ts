@@ -323,7 +323,7 @@ export class MatchEngine {
       const w = weight[p.input.slot];
       if (w <= 0) continue;
       const v = this.val(p, attr) / 60;
-      total += w * Math.sqrt(v * v * v) * (p.input.isUser ? 1.08 : 1);
+      total += w * v;
     }
     if (total <= 0) return undefined;
     let r = this.rng.next() * total;
@@ -334,7 +334,7 @@ export class MatchEngine {
       const w = weight[p.input.slot];
       if (w <= 0) continue;
       const v = this.val(p, attr) / 60;
-      r -= w * Math.sqrt(v * v * v) * (p.input.isUser ? 1.08 : 1);
+      r -= w * v;
       last = p;
       if (r <= 0) return p;
     }
@@ -529,7 +529,7 @@ export class MatchEngine {
     const q = this.shooterQuality(shooter, type);
     const pressure = type === "penalty" ? 1 : Math.exp(-(sDef.def - 65) / 120);
     const bigMatch = 1 + ((shooter.input.bigMatch - 50) / 50) * 0.06 * (this.input.importance - 1);
-    let xg = XG_BASE[type] * Math.exp((q - 68) / 40) * pressure * bigMatch * xgMul;
+    let xg = XG_BASE[type] * Math.exp((q - 68) / 58) * pressure * bigMatch * xgMul;
     xg *= Math.exp(-(sDef.gk - 68) / 70) * keeperMul;
     xg = clamp(xg, 0.01, type === "penalty" ? 0.92 : 0.8);
     att.shots++;

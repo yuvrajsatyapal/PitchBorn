@@ -51,7 +51,8 @@ class PlaceholderProvider implements AdProvider {
   }
   destroy() {}
   supportsRewarded() {
-    return true;
+    // Simulated completions exist only for development/E2E builds — never in production.
+    return process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_E2E === "1";
   }
   /** Simulated completion — only exists in the development provider. */
   async showRewarded(): Promise<RewardedResult> {
