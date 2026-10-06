@@ -19,7 +19,8 @@ Hidden: potential, consistency, professionalism, ambition, loyalty, injury prone
 - **Matches** – event-based engine (see SIMULATION.md). Selection depends on ability, condition, form and the manager relationship.
 - **Development squad** – under-21s left out of the matchday squad play abstracted U21 games that keep them sharp.
 - **Transfers & contracts** – interest from clubs that need your position at your level; bids, club acceptance/rejection, improved bids, release clauses (Spain), personal-terms negotiation with patience, loans, renewals, free agency, transfer requests.
-- **Form / morale / fitness / sharpness** – all feed match performance; playing time vs. role expectations drives morale.
+- **Fitness** – a full match costs ~12–15 (less with high stamina) and a normal week recovers ~20, so regular starters sit around 85–95. Two-match weeks and intense training pull it down (to the 60s–70s with intense work); performance tails off below ~90 and injury risk rises below 70. Players can use a Recovery training week or **ask to be rested** before a match day: they miss that week's club games and recover +12, but the manager relationship dips (more if they already looked fresh). Tunables live in `BALANCE.fitness`.
+- **Form / morale / sharpness** – feed match performance; playing time vs. role expectations drives morale.
 - **Injuries** – knocks to ACLs with recovery times, recurrence via proneness/fatigue, lasting pace loss for the worst; capped at one serious injury per user season to avoid frustration.
 - **Reputation & relationships** – domestic and international reputation; manager, teammates, supporters, board, agent.
 - **National teams** – 41 nations, squads chosen by ability/form/reputation; dual eligibility until a competitive cap; friendlies/qualifiers each window; summer tournaments; international retirement.

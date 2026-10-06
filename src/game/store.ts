@@ -10,7 +10,7 @@ import { resolveDecision } from "@/engine/career/events";
 import { negotiate, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
 import type { MatchResult } from "@/engine/match/engine";
 import { retireFromInternational } from "@/engine/national/national";
-import { advanceTurn, completeUserMatch, findFixture, liveMatchRng, retireUser, simUserMatch } from "@/engine/season/advance";
+import { advanceTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
 import { prepareMatch, type PreparedMatch } from "@/engine/season/matchday";
 import type { GameState, TrainingPlan } from "@/engine/types";
 import { createWorld, type NewCareerInput } from "@/engine/world/create";
@@ -52,6 +52,7 @@ interface GameStore {
   decide: (decisionId: string, optionId: string) => void;
   transferRequest: (on: boolean) => void;
   setWantsLoan: (on: boolean) => void;
+  askRest: () => void;
   retire: () => Promise<void>;
   retireInternational: () => void;
   grantReward: (kind: RewardKind) => boolean;
@@ -235,6 +236,13 @@ export const useGame = create<GameStore>((set, get) => ({
     g.user.wantsLoan = on;
     get().bump();
     get().notify(on ? "Your agent will look for loan opportunities in the next window." : "Loan search cancelled.");
+  },
+
+  askRest: () => {
+    const g = get().game;
+    if (!g) return;
+    get().notify(requestRest(g));
+    get().bump();
   },
 
   retire: async () => {

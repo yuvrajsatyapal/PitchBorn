@@ -19,6 +19,20 @@ export const BALANCE = {
     subsMin: 3,
     subsMax: 5,
   },
+  fitness: {
+    /** Fitness cost per minute played (scaled by stamina): ~12–15 for 90 minutes. */
+    matchDrainPerMinute: 0.17,
+    /** Weekly recovery: base + stamina bonus (~+19–23 for typical players). */
+    weeklyRecoveryBase: 10,
+    weeklyRecoveryStaminaDiv: 12,
+    /** Floor after a match so one heavy week can't cripple a player. */
+    matchFloor: 45,
+    /** Below these levels injury risk rises. */
+    riskHigh: 60,
+    riskMild: 70,
+    /** Extra recovery when the player asks to be rested. */
+    restBonus: 12,
+  },
   injuries: {
     trainingBase: 0.0035,
     intenseMultiplier: 2.1,

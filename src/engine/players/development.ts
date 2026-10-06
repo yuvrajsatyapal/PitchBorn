@@ -21,9 +21,9 @@ export const TRAINING_FOCUS: Record<TrainingFocus, { label: string; attrs: AttrK
 };
 
 export const INTENSITY = {
-  light: { growth: 0.65, fatigue: 2, injury: 0.5, label: "Light" },
-  normal: { growth: 1, fatigue: 6, injury: 1, label: "Normal" },
-  intense: { growth: 1.4, fatigue: 13, injury: BALANCE.injuries.intenseMultiplier, label: "Intense" },
+  light: { growth: 0.65, fatigue: 0, injury: 0.5, label: "Light" },
+  normal: { growth: 1, fatigue: 3, injury: 1, label: "Normal" },
+  intense: { growth: 1.4, fatigue: 7, injury: BALANCE.injuries.intenseMultiplier, label: "Intense" },
 } as const;
 
 function ageFactor(age: number): number {
@@ -110,7 +110,7 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
     p.attrs.composure = r2(clamp(p.attrs.composure + 0.03, 1, 99));
     return { fitnessDelta: p.fitness - before, growthMultiplier: 0.25, note: "Recovery week: legs feel fresh." };
   }
-  p.fitness = clamp(p.fitness - int.fatigue + 4, 20, 100);
+  p.fitness = clamp(p.fitness - int.fatigue + 2, 30, 100);
   const risk = BALANCE.injuries.trainingBase * int.injury * injuryRiskFactor(p);
   if (rng.chance(risk)) {
     const injury = rollInjury(rng, p, { context: "training", seriousAllowed: false });
@@ -139,7 +139,7 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
 
 /** Weekly condition drift for everyone. */
 export function weeklyCondition(p: Player, playedThisWeek: boolean): void {
-  if (!p.injury) p.fitness = r1(clamp(p.fitness + 11 + p.attrs.stamina / 25, 0, 100));
+  if (!p.injury) p.fitness = r1(clamp(p.fitness + BALANCE.fitness.weeklyRecoveryBase + p.attrs.stamina / BALANCE.fitness.weeklyRecoveryStaminaDiv, 0, 100));
   if (!playedThisWeek) {
     p.sharpness = r1(clamp(p.sharpness - 2.5, 15, 100));
     p.form = r2(p.form + (6.6 - p.form) * 0.08);

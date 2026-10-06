@@ -66,7 +66,8 @@ export function teamSelection(state: GameState, teamId: string, fixture: Fixture
   const comp = state.competitions[fixture.compId];
   const club = state.clubs[teamId];
   if (club && !isNationalComp(comp)) {
-    const squad = squadOf(state, teamId);
+    const resting = state.user.restTurnIndex === state.turnIndex;
+    const squad = squadOf(state, teamId).filter((p) => !(resting && p.isUser));
     const opp = state.clubs[fixture.home === teamId ? fixture.away : fixture.home];
     const rotate = comp?.kind === "cup" && !!opp && opp.reputation < club.reputation - 12 && (fixture.stage ?? "").startsWith("Round");
     return selectTeam(squad, club.formation, rng, { rotate, managerBias: managerBias(state) });
@@ -228,8 +229,8 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     }
     // Condition updates
     const mins = stat.minutes;
-    const staminaFactor = 1.25 - p.attrs.stamina / 220;
-    p.fitness = r1(clamp(p.fitness - mins * 0.26 * staminaFactor, 25, 100));
+    const staminaFactor = 1.2 - p.attrs.stamina / 250;
+    p.fitness = r1(clamp(p.fitness - mins * BALANCE.fitness.matchDrainPerMinute * staminaFactor, Math.min(p.fitness, BALANCE.fitness.matchFloor), 100));
     p.sharpness = r1(clamp(p.sharpness + mins / 5, 0, 100));
     p.form = Math.round((p.form * 0.68 + line.rating * 0.32) * 100) / 100;
     const won = line.side === "home" ? homeWon : awayWon;

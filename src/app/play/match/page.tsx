@@ -8,6 +8,7 @@ import { seasonLabel } from "@/engine/calendar";
 import type { Fixture, GameState } from "@/engine/types";
 import { name, scoreText, teamLabel, user, userFixtures } from "@/game/selectors";
 import { teamSelection } from "@/engine/season/matchday";
+import { canRequestRest } from "@/engine/season/advance";
 import { useGame, useGameState } from "@/game/store";
 
 function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
@@ -91,6 +92,7 @@ export default function MatchDay() {
   const finishLive = useGame((s) => s.finishLive);
   const abandonLive = useGame((s) => s.abandonLive);
   const sim = useGame((s) => s.simMatch);
+  const askRest = useGame((s) => s.askRest);
   const busy = useGame((s) => s.busy);
   const [lastId, setLastId] = useState<string | null>(null);
   if (!g) return null;
@@ -131,6 +133,7 @@ export default function MatchDay() {
               const me = user(g);
               if (me.injury) return "You're injured — watch from the stands or sim it.";
               if (me.suspension > 0) return "You're suspended for this one.";
+              if (g.user.restTurnIndex === g.turnIndex) return "You asked to be rested — you'll sit this one out and recover.";
               const team = fixture.home === me.clubId || fixture.away === me.clubId ? me.clubId! : fixture.home === (me.intl.tiedTo ?? me.nationality) ? fixture.home : fixture.away;
               const sel = teamSelection(g, team, fixture, null);
               const starting = sel.starters.some((s) => s.player.id === me.id);
@@ -146,6 +149,17 @@ export default function MatchDay() {
             <Button size="lg" onClick={() => startLive(fixture.id)} data-testid="start-live">▶ Play live</Button>
             <Button tone="paper" size="lg" disabled={!!busy} onClick={async () => { await sim(fixture.id); setLastId(fixture.id); }} data-testid="sim-match">Quick sim</Button>
           </div>
+          {canRequestRest(g) && (
+            <div className="mt-4 flex flex-col items-center gap-1 text-center">
+              <Button tone="paper" size="sm" onClick={askRest} data-testid="ask-rest">
+                😮‍💨 Ask to be rested
+              </Button>
+              <span className="text-[11px] text-muted">
+                Fitness {Math.round(user(g).fitness)} · Miss this week&apos;s club games, recover extra.{" "}
+                {user(g).fitness >= 85 ? "The manager won't love it — you look fresh." : "The manager will understand."}
+              </span>
+            </div>
+          )}
           {g.pending.length > 1 && <p className="mt-3 text-center text-xs">{g.pending.length - 1} more match{g.pending.length > 2 ? "es" : ""} this week.</p>}
         </Card>
       ) : (

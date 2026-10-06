@@ -77,6 +77,31 @@ export function simUserMatch(state: GameState, fixtureId: string): MatchResult |
   return res;
 }
 
+/** Can the player ask to be rested this week? (club match pending, not injured, not already resting) */
+export function canRequestRest(state: GameState): boolean {
+  const p = userPlayer(state);
+  if (!p.clubId || p.injury || state.user.retired || state.user.restTurnIndex === state.turnIndex) return false;
+  return state.pending.some((pm) => state.competitions[pm.compId]?.kind !== "international" && state.competitions[pm.compId]?.kind !== "friendly");
+}
+
+/**
+ * Ask the manager to rest you for this week's club matches: extra recovery,
+ * but the manager is less impressed the fresher you already are.
+ */
+export function requestRest(state: GameState): string {
+  if (!canRequestRest(state)) return "You can't ask to be rested right now.";
+  const p = userPlayer(state);
+  state.user.restTurnIndex = state.turnIndex;
+  const fresh = p.fitness >= 85;
+  state.user.relationships.manager = clamp(state.user.relationships.manager - (fresh ? 5 : 1.5), 0, 100);
+  addNews(state, {
+    kind: "club",
+    title: "Rested this week",
+    body: fresh ? "The manager agreed, but wasn't impressed — you looked fresh enough to play." : "The manager agreed you need a breather.",
+  });
+  return fresh ? "Rested — the manager wasn't thrilled." : "The manager agrees: you'll sit this week out and recover.";
+}
+
 /** Seed for a live match so the UI can create the engine deterministically. */
 export function liveMatchRng(state: GameState, fixtureId: string): Rng {
   return withRng(state, (rng) => rng.fork(`live:${fixtureId}`));
@@ -168,6 +193,7 @@ function userWeekly(state: GameState, rng: Rng): void {
   const recovery = u.boosts.filter((b) => b.kind === "recovery").reduce((s, b) => s + b.amount, 0);
   const moraleBoost = u.boosts.filter((b) => b.kind === "morale").reduce((s, b) => s + b.amount, 0);
   if (recovery) p.fitness = clamp(p.fitness + recovery, 0, 100);
+  if (u.restTurnIndex === state.turnIndex) p.fitness = clamp(p.fitness + BALANCE.fitness.restBonus, 0, 100);
   if (moraleBoost) p.morale = clamp(p.morale + moraleBoost * 0.5, 0, 100);
   const out = runTraining(state, rng, p, u.training, trainingBoost);
   u.lastTraining = { note: out.note, injured: out.injured };

@@ -62,7 +62,8 @@ export default function Training() {
           ))}
         </div>
         <p className="mt-3 text-sm text-ink-2">
-          Fitness now: <b>{Math.round(p.fitness)}</b>. Intense weeks speed development but tired players get hurt more often. Mix in recovery weeks before big matches.
+          Fitness now: <b>{Math.round(p.fitness)}</b>. A full match costs ~12–15 and a normal week recovers ~20, so regulars stay around 85–95.
+          Intense training and two-match weeks drain more; injury risk rises below 70. Use a Recovery week or ask to be rested when you&apos;re running low.
         </p>
         {g.user.lastTraining && <p className="mt-1 text-sm">Last week: {g.user.lastTraining.note}</p>}
       </Card>

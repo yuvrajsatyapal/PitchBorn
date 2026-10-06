@@ -37,7 +37,7 @@ export const SEVERITY_LABEL: Record<InjurySeverity, string> = {
 /** Probability multiplier from proneness, fitness and recent injury history. */
 export function injuryRiskFactor(p: Player): number {
   const prone = 0.6 + (p.hidden.injuryProneness / 100) * BALANCE.injuries.pronenessScale * 0.6;
-  const tired = p.fitness < 70 ? BALANCE.injuries.lowFitnessMultiplier : p.fitness < 85 ? 1.25 : 1;
+  const tired = p.fitness < BALANCE.fitness.riskHigh ? BALANCE.injuries.lowFitnessMultiplier : p.fitness < BALANCE.fitness.riskMild ? 1.3 : 1;
   const age = p.birthYear ? 1 : 1;
   return prone * tired * age;
 }

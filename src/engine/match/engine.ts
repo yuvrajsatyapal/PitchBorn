@@ -179,7 +179,8 @@ const ATT_W: Record<Position, number> = { ST: 2, RW: 1.6, LW: 1.6, AM: 1.5, CM: 
 const DEF_W: Record<Position, number> = { CB: 2, RB: 1.3, LB: 1.3, DM: 1.5, CM: 0.6, AM: 0.15, RW: 0.2, LW: 0.2, ST: 0.1, GK: 0 };
 
 function conditionFactor(p: MatchPlayerInput): number {
-  const fit = 0.82 + 0.18 * clamp(p.fitness, 0, 100) / 100;
+  // Fitness above ~90 is "match fit"; performance tails off below that.
+  const fit = 0.84 + 0.16 * Math.min(1, clamp(p.fitness, 0, 100) / 90);
   const morale = 0.95 + 0.07 * clamp(p.morale, 0, 100) / 100;
   const form = 1 + clamp(p.form - 6.6, -1.5, 1.5) * 0.02;
   const sharp = 0.95 + 0.06 * clamp(p.sharpness, 0, 100) / 100;

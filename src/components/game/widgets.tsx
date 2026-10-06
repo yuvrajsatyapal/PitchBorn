@@ -68,7 +68,7 @@ export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Bar label="Fitness" value={p.fitness} tone={p.fitness < 70 ? "coral" : "pitch"} />
+        <Bar label="Fitness" value={p.fitness} tone={p.fitness < 70 ? "coral" : p.fitness < 85 ? "sun" : "pitch"} />
         <Bar label="Morale" value={p.morale} tone={p.morale < 45 ? "coral" : "sky"} />
         <Bar label="Sharpness" value={p.sharpness} tone="sun" />
         <Bar label="Form" value={(p.form - 4) * (100 / 6)} tone="plum" showValue={false} />
