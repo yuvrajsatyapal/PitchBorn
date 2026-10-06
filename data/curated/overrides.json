@@ -1,0 +1,224 @@
+{
+  "_note": "Manual curation applied on top of automated Wikidata/OpenFootball import. Every entry is a factual correction; see docs/DATA_PIPELINE.md.",
+  "exclude": [
+    "Q97905930",
+    "Q1387764",
+    "Q2205582",
+    "Q135451504"
+  ],
+  "assign": {},
+  "names": {
+    "Q8682": {
+      "name": "Real Madrid",
+      "shortName": "Real Madrid",
+      "abbreviation": "RMA"
+    },
+    "Q7156": {
+      "abbreviation": "BAR"
+    },
+    "Q8701": {
+      "name": "Atlético Madrid",
+      "shortName": "Atlético",
+      "abbreviation": "ATM"
+    },
+    "Q18656": {
+      "shortName": "Man United",
+      "abbreviation": "MUN"
+    },
+    "Q50602": {
+      "shortName": "Man City",
+      "abbreviation": "MCI"
+    },
+    "Q483020": {
+      "name": "Paris Saint-Germain",
+      "shortName": "PSG",
+      "abbreviation": "PSG"
+    },
+    "Q15789": {
+      "name": "Bayern Munich",
+      "shortName": "Bayern",
+      "abbreviation": "FCB"
+    },
+    "Q631": {
+      "shortName": "Inter",
+      "abbreviation": "INT"
+    },
+    "Q8723": {
+      "name": "Real Betis",
+      "shortName": "Betis",
+      "abbreviation": "BET"
+    },
+    "Q460448": {
+      "name": "Cádiz CF",
+      "shortName": "Cádiz"
+    },
+    "Q10407": {
+      "name": "UD Almería",
+      "shortName": "Almería"
+    },
+    "Q19513": {
+      "name": "Montpellier HSC",
+      "shortName": "Montpellier"
+    },
+    "Q132885": {
+      "shortName": "Marseille"
+    },
+    "Q704": {
+      "shortName": "Lyon"
+    },
+    "Q208228": {
+      "shortName": "Reims"
+    },
+    "Q218372": {
+      "shortName": "Brest"
+    },
+    "Q19509": {
+      "shortName": "Rennes"
+    },
+    "Q10315": {
+      "shortName": "Real Sociedad"
+    },
+    "Q10286": {
+      "shortName": "Osasuna"
+    },
+    "Q12236": {
+      "shortName": "Racing Santander"
+    },
+    "Q726810": {
+      "shortName": "Real Unión"
+    },
+    "Q20278773": {
+      "shortName": "Unionistas"
+    },
+    "Q51974": {
+      "shortName": "Hamburg"
+    },
+    "Q131603": {
+      "shortName": "1860 Munich"
+    },
+    "Q18723": {
+      "shortName": "QPR"
+    },
+    "Q38245": {
+      "shortName": "Frankfurt"
+    },
+    "Q12278": {
+      "shortName": "Sporting Gijón"
+    },
+    "Q74030": {
+      "shortName": "Bourg-Péronnas"
+    },
+    "Q19500": {
+      "shortName": "Wolves"
+    },
+    "Q760736": {
+      "shortName": "Laval"
+    },
+    "Q209509": {
+      "shortName": "Grenoble"
+    },
+    "Q1573797": {
+      "shortName": "Épinal"
+    },
+    "Q1753870": {
+      "shortName": "Colmar"
+    },
+    "Q29390": {
+      "shortName": "Messina"
+    },
+    "Q298279": {
+      "shortName": "Cherbourg"
+    },
+    "Q2052": {
+      "shortName": "Fiorentina"
+    },
+    "Q1886": {
+      "shortName": "Atalanta"
+    },
+    "Q2074": {
+      "shortName": "Genoa"
+    },
+    "Q182876": {
+      "shortName": "Auxerre"
+    },
+    "Q19516": {
+      "shortName": "Lille"
+    },
+    "Q503317": {
+      "shortName": "Dijon"
+    },
+    "Q870182": {
+      "shortName": "Clermont"
+    },
+    "Q193377": {
+      "shortName": "Caen"
+    },
+    "Q608988": {
+      "shortName": "Sedan"
+    }
+  },
+  "colors": {
+    "Q9616": [
+      "#034694",
+      "#f4f1ea"
+    ],
+    "Q1130849": [
+      "#c8102e",
+      "#f4f1ea"
+    ],
+    "Q18741": [
+      "#f4f1ea",
+      "#132257"
+    ],
+    "Q1422": [
+      "#141414",
+      "#f4f1ea"
+    ],
+    "Q1543": [
+      "#c8102e",
+      "#141414"
+    ],
+    "Q631": [
+      "#0a3d91",
+      "#141414"
+    ],
+    "Q7156": [
+      "#a50044",
+      "#004d98"
+    ],
+    "Q8682": [
+      "#f4f1ea",
+      "#febe10"
+    ],
+    "Q15789": [
+      "#dc052d",
+      "#f4f1ea"
+    ],
+    "Q41420": [
+      "#fde100",
+      "#141414"
+    ],
+    "Q483020": [
+      "#004170",
+      "#da291c"
+    ]
+  },
+  "stadiums": {
+    "Q19571": {
+      "name": "Gtech Community Stadium",
+      "capacity": 17250
+    }
+  },
+  "historyAliases": {
+    "Q15789": [
+      "FC Bayern München"
+    ],
+    "Q1457": [
+      "Sampdoria"
+    ],
+    "Q191843": [
+      "RC Lens",
+      "Racing Club de Lens"
+    ]
+  }
+}
