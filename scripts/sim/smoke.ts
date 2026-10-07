@@ -1,8 +1,9 @@
+import { generateAppearance } from "../../src/engine/appearance/generate";
 import { createWorld } from "../../src/engine/world/create";
 import { advanceTurn } from "../../src/engine/season/advance";
 import { overallFor } from "../../src/engine/players/attributes";
 const t0 = Date.now();
-const s = createWorld({ saveName: "t", firstName: "Test", lastName: "Player", nationality: "ENG", birthCountry: "ENG", position: "ST", foot: "R", height: 182, look: { skin: 0, hair: 0, hairColor: 0, facial: 0, eyes: 0 }, clubId: "eng-ipswich-town", path: "academy", seed: "smoke" });
+const s = createWorld({ saveName: "t", firstName: "Test", lastName: "Player", nationality: "ENG", birthCountry: "ENG", position: "ST", foot: "R", height: 182, look: generateAppearance("sim-look"), clubId: "eng-ipswich-town", path: "academy", seed: "smoke" });
 console.log("create ms", Date.now() - t0, "players", Object.keys(s.players).length, "json MB", (JSON.stringify(s).length / 1e6).toFixed(2));
 const seasons = Number(process.argv[2] ?? 1);
 for (let i = 0; i < 50 * seasons; i++) {

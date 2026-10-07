@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
-import { Portrait } from "@/components/art/Portrait";
+import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { Card, LinkButton, PageTitle, Stat, Table } from "@/components/ui";
@@ -34,7 +34,7 @@ export default function Legacy() {
       <section className="pb-card relative overflow-hidden bg-plum p-6 text-white sm:p-10">
         <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full border-[3px] border-line bg-sun opacity-90" aria-hidden />
         <div className="relative flex flex-wrap items-center gap-6">
-          <Portrait look={p.look} size={120} kit="#ffc62b" />
+          <PlayerPortrait appearance={p.look} age={g.season - p.birthYear} size="large" kit="#ffc62b" />
           <div>
             <div className="text-xs font-black uppercase tracking-[0.25em] opacity-80">Pitchborn legacy</div>
             <h2 className="font-display text-4xl leading-none sm:text-6xl">{name(p)}</h2>

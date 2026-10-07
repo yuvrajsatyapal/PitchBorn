@@ -1,3 +1,4 @@
+import { generateAppearance } from "../../src/engine/appearance/generate";
 /** Simulates one complete career with the autopilot policy and returns metrics. */
 import { BALANCE } from "../../src/engine/balance";
 import { autopilotStep, autopilotWantsRetirement } from "../../src/engine/career/autopilot";
@@ -64,7 +65,7 @@ export function runCareer(seed: string, opts: { lite: boolean; maxSeasons?: numb
   const club = rng.pick(clubs);
   const state: GameState = createWorld({
     saveName: "sim", firstName: "Sim", lastName: seed, nationality: country, birthCountry: country, position, foot: "R", height: 180,
-    look: { skin: 0, hair: 0, hairColor: 0, facial: 0, eyes: 0 }, clubId: club.id, path: path as "academy" | "late", seed, countries: opts.lite ? [country] : undefined,
+    look: generateAppearance("sim-look"), clubId: club.id, path: path as "academy" | "late", seed, countries: opts.lite ? [country] : undefined,
   });
   const u = state.players[state.user.playerId];
   const potential = u.hidden.potential;

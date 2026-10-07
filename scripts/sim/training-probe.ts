@@ -1,3 +1,4 @@
+import { generateAppearance } from "../../src/engine/appearance/generate";
 /**
  * Small probe: how much do training intensity and playing time each move the
  * user's development, and what does intensity do to injuries?
@@ -17,7 +18,7 @@ const SEASONS = Number(process.argv[3] ?? 2);
 function probe(intensity: TrainingPlan["intensity"], clubId: string, seed: string) {
   const state: GameState = createWorld({
     saveName: "probe", firstName: "P", lastName: seed, nationality: "ENG", birthCountry: "ENG", position: "ST", foot: "R", height: 180,
-    look: { skin: 0, hair: 0, hairColor: 0, facial: 0, eyes: 0 }, clubId, path: "academy", seed, countries: ["ENG"],
+    look: generateAppearance("sim-look"), clubId, path: "academy", seed, countries: ["ENG"],
   });
   const rng = Rng.fromSeed(`probe:${seed}`);
   const p = state.players[state.user.playerId];

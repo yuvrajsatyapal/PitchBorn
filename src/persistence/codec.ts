@@ -4,6 +4,7 @@
  * (attributes, hidden traits, stat lines, appearance) become arrays.
  * decode(encode(s)) must deep-equal s — covered by tests.
  */
+import { APPEARANCE_KEYS } from "../engine/appearance/options";
 import { ALL_ATTRS, type Attributes, type GameState, type Hidden, type Player, type SeasonRecord, type StatLine } from "../engine/types";
 
 const STAT_KEYS: (keyof StatLine)[] = [
@@ -12,7 +13,7 @@ const STAT_KEYS: (keyof StatLine)[] = [
 const HIDDEN_KEYS: (keyof Hidden)[] = [
   "potential", "consistency", "professionalism", "ambition", "loyalty", "injuryProneness", "adaptability", "bigMatch", "developmentRate", "peakAge",
 ];
-const LOOK_KEYS = ["skin", "hair", "hairColor", "facial", "eyes"] as const;
+const LEGACY_LOOK_KEYS = ["skin", "hair", "hairColor", "facial", "eyes"] as const;
 
 const encStat = (s: StatLine): number[] => STAT_KEYS.map((k) => s[k]);
 const decStat = (a: number[]): StatLine => Object.fromEntries(STAT_KEYS.map((k, i) => [k, a[i] ?? 0])) as unknown as StatLine;
@@ -52,9 +53,15 @@ function encodePlayer(p: Player): EncodedPlayer {
       stats: encStat(h.stats),
       byCompetition: h.byCompetition ? Object.fromEntries(Object.entries(h.byCompetition).map(([k, s]) => [k, encStat(s)])) : undefined,
     })),
-    look: LOOK_KEYS.map((k) => p.look[k]),
+    look: (p.look.v === 2 ? APPEARANCE_KEYS.map((k) => p.look[k]) : LEGACY_LOOK_KEYS.map((k) => (p.look as unknown as Record<string, number>)[k])),
     month: [p.month.apps, p.month.ratingSum, p.month.goals, p.month.assists],
   };
+}
+
+/** Old saves hold the five-value avatar; they are upgraded by the schema migration. */
+function decodeLook(a: number[]): Player["look"] {
+  if (a.length <= LEGACY_LOOK_KEYS.length) return Object.fromEntries(LEGACY_LOOK_KEYS.map((k, i) => [k, a[i]])) as unknown as Player["look"];
+  return { v: 2, ...Object.fromEntries(APPEARANCE_KEYS.map((k, i) => [k, a[i] ?? 0])) } as unknown as Player["look"];
 }
 
 function decodePlayer(e: EncodedPlayer): Player {
@@ -72,7 +79,7 @@ function decodePlayer(e: EncodedPlayer): Player {
       else delete rec.byCompetition;
       return rec;
     }),
-    look: Object.fromEntries(LOOK_KEYS.map((k, i) => [k, e.look[i]])) as unknown as Player["look"],
+    look: decodeLook(e.look),
     month: { apps: e.month[0], ratingSum: e.month[1], goals: e.month[2], assists: e.month[3] },
   };
   if (!p.traits) delete p.traits;

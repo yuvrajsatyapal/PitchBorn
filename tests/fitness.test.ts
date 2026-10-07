@@ -13,13 +13,18 @@ function starter(seed: string, intensity: "light" | "normal" | "intense") {
 
 describe("fitness balance", () => {
   it("regular starters on normal training stay match fit", () => {
-    const s = starter("fit-normal", "normal");
-    const samples: number[] = [];
-    for (let i = 0; i < 24; i++) {
-      advanceTurn(s);
-      // Injuries cap fitness by design; this test is about match/training load.
-      if (s.turn > 6 && !userPlayer(s).injury && !s.user.injuryHistory.some((i) => i.season === s.season)) samples.push(userPlayer(s).fitness);
+    // Injuries cap fitness by design; this test is about match/training load, so use a season without one.
+    let samples: number[] = [];
+    for (const seed of ["fit-normal", "fit-normal-b", "fit-normal-c", "fit-normal-d"]) {
+      const s = starter(seed, "normal");
+      samples = [];
+      for (let i = 0; i < 24; i++) {
+        advanceTurn(s);
+        if (s.turn > 6 && !userPlayer(s).injury && !s.user.injuryHistory.some((i) => i.season === s.season)) samples.push(userPlayer(s).fitness);
+      }
+      if (samples.length >= 10) break;
     }
+    expect(samples.length).toBeGreaterThanOrEqual(10);
     const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
     expect(avg).toBeGreaterThan(82);
     expect(Math.min(...samples)).toBeGreaterThan(65);

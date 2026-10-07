@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
-import { Portrait } from "@/components/art/Portrait";
+import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Badge, Bar, Button, Card, FormDots, Rating } from "@/components/ui";
 import { formatTurnDate } from "@/engine/calendar";
 import { clubName, staticClub } from "@/engine/data/world";
@@ -46,8 +46,8 @@ export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
   return (
     <Card className="bg-sun-2" flat={false}>
       <div className="flex items-center gap-3 sm:gap-4">
-        <span className="sm:hidden"><Portrait look={p.look} size={72} kit={kit} /></span>
-        <span className="hidden sm:block"><Portrait look={p.look} size={96} kit={kit} /></span>
+        <span className="sm:hidden"><PlayerPortrait appearance={p.look} age={age(g, p)} size={72} kit={kit} /></span>
+        <span className="hidden sm:block"><PlayerPortrait appearance={p.look} age={age(g, p)} size={104} kit={kit} /></span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2">
             <h1 className="font-display text-2xl leading-tight sm:text-4xl">{name(p)}</h1>

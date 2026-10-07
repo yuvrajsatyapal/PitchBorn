@@ -1,3 +1,4 @@
+import type { AppearanceKey } from "./appearance/options";
 import type { RngState } from "./rng";
 
 export type PlayerId = string;
@@ -118,12 +119,19 @@ export interface SeasonRecord {
   byCompetition?: Record<CompetitionId, StatLine>;
 }
 
-export interface Appearance {
-  skin: number; // 0-5
-  hair: number; // style 0-7
-  hairColor: number; // 0-5
-  facial: number; // 0-3
-  eyes: number; // 0-2
+/**
+ * A player's face. Every field is a small integer so it stores compactly and never changes by accident.
+ * Identity (face, skin, eyes, nose, mouth, geometry) is fixed for life; hair, facial hair and ageing evolve on top.
+ */
+export type Appearance = Record<AppearanceKey, number> & { v: 2 };
+
+/** The pre-portrait avatar, kept so old saves can be upgraded. */
+export interface LegacyAppearance {
+  skin: number;
+  hair: number;
+  hairColor: number;
+  facial: number;
+  eyes: number;
 }
 
 export interface Player {

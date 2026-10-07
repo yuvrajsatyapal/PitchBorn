@@ -1,7 +1,7 @@
 "use client";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
-import { Portrait } from "@/components/art/Portrait";
+import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { TraitStrip } from "@/components/game/PlayIdentity";
 import { AttrValue, Badge, Modal } from "@/components/ui";
 import { clubName, staticClub } from "@/engine/data/world";
@@ -17,7 +17,7 @@ export function PlayerModal({ g, p, onClose }: { g: GameState; p: Player | null;
   return (
     <Modal open={!!p} onClose={onClose} title={name(p)} wide>
       <div className="flex flex-wrap items-center gap-4">
-        <Portrait look={p.look} size={84} kit={staticClub(p.clubId ?? "")?.colors.primary} />
+        <PlayerPortrait appearance={p.look} age={age(g, p)} size={88} kit={staticClub(p.clubId ?? "")?.colors.primary} />
         <div className="flex-1 text-sm">
           <div className="flex flex-wrap items-center gap-2">
             <Flag code={p.nationality} /> {POSITION_LABEL[p.position]} · Age {age(g, p)} · {p.height}cm

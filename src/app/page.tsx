@@ -3,13 +3,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { Kit } from "@/components/art/Kit";
-import { Portrait } from "@/components/art/Portrait";
+import { PlayerPortrait } from "@/components/art/PlayerPortrait";
+import { generateAppearance } from "@/engine/appearance/generate";
 import { PublicFooter, PublicHeader } from "@/components/app/PublicHeader";
 import { LinkButton } from "@/components/ui";
 import { WORLD } from "@/engine/data/world";
 import { listSaves } from "@/persistence/saves";
 import type { SaveMeta } from "@/persistence/db";
 
+const SAMPLE_LOOK = generateAppearance("pitchborn-home");
 const STEPS = ["Academy", "Debut", "Breakthrough", "Transfer", "Champion", "International", "Prime", "Decline", "Legacy"];
 
 export default function Landing() {
@@ -79,7 +81,7 @@ export default function Landing() {
         <section className="pb-card mt-6 p-5 sm:p-8">
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
             <div className="flex gap-2">
-              <Portrait look={{ skin: 2, hair: 1, hairColor: 0, facial: 0, eyes: 1 }} size={72} kit="#c8102e" />
+              <PlayerPortrait appearance={SAMPLE_LOOK} size={84} kit="#c8102e" />
               <Kit clubId={ticker[3]?.id} number={9} size={72} />
             </div>
             <div className="flex-1">

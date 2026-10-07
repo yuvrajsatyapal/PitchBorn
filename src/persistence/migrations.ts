@@ -3,7 +3,8 @@
  * version. Never edit a released step — add a new one and bump
  * SCHEMA_VERSION in engine/world/helpers.ts.
  */
-import type { GameState } from "../engine/types";
+import { fromLegacy, isLegacyAppearance, sanitizeAppearance } from "../engine/appearance/generate";
+import type { GameState, LegacyAppearance } from "../engine/types";
 import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
 import { backfillMemories } from "../engine/memory/backfill";
 import { initialTraits } from "../engine/traits/assign";
@@ -83,6 +84,20 @@ MIGRATIONS[4] = (s) => {
     }
   } catch {
     // Traits are an enhancement: a save must always load.
+  }
+  return s;
+};
+
+MIGRATIONS[5] = (s) => {
+  // v5 → v6: illustrated portraits. The old five-value avatar becomes a full face, keeping what was chosen.
+  const state = s as unknown as GameState;
+  try {
+    for (const p of Object.values(state.players ?? {})) {
+      if (isLegacyAppearance(p.look)) p.look = fromLegacy(p.look as unknown as LegacyAppearance, p.id);
+      else p.look = sanitizeAppearance(p.look);
+    }
+  } catch {
+    // A save must always load; players without a valid face are given one on demand.
   }
   return s;
 };

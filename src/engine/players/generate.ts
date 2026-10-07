@@ -4,6 +4,7 @@ import { country } from "../data/world";
 import { poolFor } from "../data/names";
 import { clamp, type Rng } from "../rng";
 import type { Appearance, CountryCode, Hidden, Player, Position, StatLine } from "../types";
+import { generateAppearance } from "../appearance/generate";
 import { bestOverall, generateAttributes, overallFor } from "./attributes";
 
 export function emptyStat(): StatLine {
@@ -79,6 +80,7 @@ export function randomHidden(rng: Rng, position: Position, potential: number): H
   };
 }
 
+// Light to dark, per name pool. A gentle lean only: generateAppearance blends it with a uniform spread.
 const SKIN_BY_POOL: Record<string, number[]> = {
   westafrican: [0, 0, 0, 0, 0.1, 0.9], nigerian: [0, 0, 0, 0, 0.1, 0.9], maghreb: [0.05, 0.25, 0.5, 0.2, 0, 0],
   brazilian: [0.2, 0.2, 0.2, 0.15, 0.15, 0.1], latin: [0.25, 0.3, 0.3, 0.1, 0.05, 0], japanese: [0.3, 0.6, 0.1, 0, 0, 0],
@@ -86,16 +88,9 @@ const SKIN_BY_POOL: Record<string, number[]> = {
 };
 const SKIN_DEFAULT = [0.55, 0.22, 0.08, 0.05, 0.05, 0.05];
 
-export function randomLook(rng: Rng, namePool: string): Appearance {
-  const dist = SKIN_BY_POOL[namePool] ?? SKIN_DEFAULT;
-  const skin = rng.weighted([0, 1, 2, 3, 4, 5], (i) => dist[i]);
-  return {
-    skin,
-    hair: rng.int(0, 7),
-    hairColor: skin >= 3 ? rng.weighted([0, 1, 2], (i) => [0.85, 0.12, 0.03][i]) : rng.int(0, 5),
-    facial: rng.weighted([0, 1, 2, 3], (i) => [0.55, 0.2, 0.15, 0.1][i]),
-    eyes: rng.int(0, 2),
-  };
+/** A face that belongs to this player id for life (never drawn from the world RNG). */
+export function lookFor(playerId: string, namePool: string): Appearance {
+  return generateAppearance(playerId, { skin: SKIN_BY_POOL[namePool] ?? SKIN_DEFAULT });
 }
 
 export function randomName(rng: Rng, nationality: CountryCode): { firstName: string; lastName: string } {
@@ -157,7 +152,7 @@ export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
     career: emptyStat(),
     history: [],
     intl: { caps: 0, goals: 0, retired: false },
-    look: randomLook(rng, country(o.nationality)?.namePool ?? "english"),
+    look: lookFor(o.id, country(o.nationality)?.namePool ?? "english"),
     virtual: o.virtual,
     trophies: 0,
     month: { apps: 0, ratingSum: 0, goals: 0, assists: 0 },

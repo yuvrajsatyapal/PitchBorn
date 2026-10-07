@@ -3,7 +3,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
-import { Portrait } from "@/components/art/Portrait";
+import { PlayerPortrait } from "@/components/art/PlayerPortrait";
+import { AppearanceEditor } from "@/components/game/AppearanceEditor";
+import { generateAppearance } from "@/engine/appearance/generate";
 import { PublicHeader } from "@/components/app/PublicHeader";
 import { LoadingScreen } from "@/components/app/GameShell";
 import { Badge, Button, Card, Tabs } from "@/components/ui";
@@ -33,7 +35,7 @@ export default function NewCareer() {
   const [position, setPos] = useState<Position>("ST");
   const [foot, setFoot] = useState<"L" | "R" | "B">("R");
   const [height, setHeight] = useState(180);
-  const [look, setLook] = useState<Appearance>({ skin: 1, hair: 1, hairColor: 1, facial: 0, eyes: 1 });
+  const [look, setLook] = useState<Appearance>(() => generateAppearance("new-career-start"));
   const [path, setPath] = useState<StartPath>("academy");
   const [custom, setCustom] = useState<CustomStart>({ age: 19, overall: 62, potential: 82 });
   const [clubCountry, setClubCountry] = useState("ENG");
@@ -130,7 +132,7 @@ export default function NewCareer() {
         )}
 
         {step === 1 && (
-          <div className="grid gap-4 md:grid-cols-[1fr_260px]">
+          <div className="grid gap-4">
             <Card title="Your game">
               <div className="mb-2 text-sm font-bold">Position</div>
               <div className="grid grid-cols-5 gap-2">
@@ -150,31 +152,7 @@ export default function NewCareer() {
               <p className="mt-1 text-xs text-muted">Taller helps heading and strength; shorter helps pace and agility.</p>
             </Card>
             <Card title="Look">
-              <div className="mb-3 flex justify-center">
-                <Portrait look={look} size={120} />
-              </div>
-              {(
-                [
-                  ["skin", "Skin", 6],
-                  ["hair", "Hair", 8],
-                  ["hairColor", "Hair colour", 6],
-                  ["facial", "Facial hair", 4],
-                  ["eyes", "Eyes", 3],
-                ] as const
-              ).map(([k, label, n]) => (
-                <div key={k} className="mb-2 flex items-center justify-between gap-2 text-sm font-bold">
-                  {label}
-                  <span className="flex items-center gap-1">
-                    <button className="h-8 w-8 rounded-full border-2 border-line bg-card" aria-label={`Previous ${label}`} onClick={() => setLook({ ...look, [k]: (look[k] + n - 1) % n })}>
-                      ‹
-                    </button>
-                    <span className="w-6 text-center tabular-nums">{look[k] + 1}</span>
-                    <button className="h-8 w-8 rounded-full border-2 border-line bg-card" aria-label={`Next ${label}`} onClick={() => setLook({ ...look, [k]: (look[k] + 1) % n })}>
-                      ›
-                    </button>
-                  </span>
-                </div>
-              ))}
+              <AppearanceEditor value={look} onChange={setLook} kit={club?.colors.primary} />
             </Card>
           </div>
         )}
@@ -261,7 +239,7 @@ export default function NewCareer() {
         {step === 3 && club && (
           <Card title="Ready?">
             <div className="flex flex-wrap items-center gap-5">
-              <Portrait look={look} size={110} kit={club.colors.primary} />
+              <PlayerPortrait appearance={look} age={path === "custom" ? custom.age : path === "academy" ? 17 : 20} size="large" kit={club.colors.primary} />
               <div>
                 <div className="font-display text-3xl">
                   {firstName} {lastName}
