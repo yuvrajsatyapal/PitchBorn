@@ -4,11 +4,14 @@ import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Button, Tabs } from "@/components/ui";
 import { randomizeAppearance, type RandomScope } from "@/engine/appearance/generate";
 import {
-  ACCESSORIES, BROW_STYLES, COUNTS, EAR_STYLES, EYE_COLORS, EYE_COLOR_NAMES, EYE_SHAPES, FACE_SHAPES, FACIAL_HAIR, HAIR_COLORS, HAIR_COLOR_NAMES, HAIR_STYLES, MARKS,
+  ACCESSORIES, BROW_STYLES, COUNTS, DYED_HAIR_COLORS, EAR_STYLES, EYE_COLORS, EYE_COLOR_NAMES, EYE_SHAPES, FACE_SHAPES, FACIAL_HAIR, HAIR_COLORS, HAIR_COLOR_NAMES, HAIR_STYLES, MARKS,
   MOUTH_STYLES, NOSE_STYLES, SCARS, SKIN_NAMES, SKIN_TONES, type AppearanceKey,
 } from "@/engine/appearance/options";
 import { Rng } from "@/engine/rng";
 import type { Appearance } from "@/engine/types";
+
+/** Dyeing the hair leaves the brows and beard their natural colour. */
+const DYED = new Set<number>(DYED_HAIR_COLORS);
 
 type Cat = "face" | "skin" | "hair" | "hairColor" | "eyes" | "brows" | "nose" | "mouth" | "facial" | "details";
 const CATS: { id: Cat; label: string }[] = [
@@ -106,7 +109,7 @@ export function AppearanceEditor({ value, onChange, kit, previewAge = 19 }: { va
     hair: <Stepper label="Hairstyle" value={value.hair} names={HAIR_STYLES.map((h) => h.name)} onChange={(v) => set("hair", v)} />,
     hairColor: (
       <div className="grid gap-3">
-        <Swatches label="Hair colour" value={value.hairColor} colors={HAIR_COLORS} names={HAIR_COLOR_NAMES} onChange={(v) => onChange({ ...value, hairColor: v, browColor: v, facialColor: v })} />
+        <Swatches label="Hair colour" value={value.hairColor} colors={HAIR_COLORS} names={HAIR_COLOR_NAMES} onChange={(v) => onChange(DYED.has(v) ? { ...value, hairColor: v } : { ...value, hairColor: v, browColor: v, facialColor: v })} />
         <Swatches label="Eyebrow colour" value={value.browColor} colors={HAIR_COLORS} names={HAIR_COLOR_NAMES} onChange={(v) => set("browColor", v)} />
       </div>
     ),

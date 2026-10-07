@@ -1,5 +1,9 @@
 # Player portraits
 
+> **Art direction has moved to hand-illustrated raster assets composed by code: see [PORTRAIT_ART.md](PORTRAIT_ART.md).**
+> The procedural vector renderer described below is the interim stopgap until that art is delivered; do not extend
+> it. The appearance data, generation, ageing and editor described here stay.
+
 Portraits are built from data, not images: `<PlayerPortrait appearance age size kit />` draws SVG from a stored
 `Appearance` (about 24 small integers per player), so it is sharp at any size, offline, instant and free.
 

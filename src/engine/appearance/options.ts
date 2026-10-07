@@ -13,8 +13,22 @@ export interface Option {
 export const SKIN_TONES = ["#f8dfce", "#f1cdb0", "#e8b998", "#d9a07a", "#c68a60", "#b0724a", "#94593a", "#794530", "#5f3525", "#482819"] as const;
 export const SKIN_NAMES = ["Porcelain", "Fair", "Light", "Warm beige", "Tan", "Caramel", "Bronze", "Brown", "Deep brown", "Ebony"] as const;
 
-export const HAIR_COLORS = ["#16110d", "#2a1c14", "#3e281a", "#5b3a22", "#7d5632", "#a37a45", "#c9a45f", "#a9461f", "#7a2f1a", "#aeaeb0"] as const;
-export const HAIR_COLOR_NAMES = ["Jet black", "Black brown", "Dark brown", "Chestnut", "Light brown", "Dark blond", "Blond", "Ginger", "Auburn", "Silver"] as const;
+/** Natural colours first, then dyed and cosmetic ones (append-only: saves store the index). */
+export const HAIR_COLORS = [
+  "#16110d", "#2a1c14", "#3e281a", "#5b3a22", "#7d5632", "#a37a45", "#c9a45f", "#a9461f", "#7a2f1a", "#aeaeb0",
+  "#e3d9b8", "#e8e6df", "#c4c8cc", "#2f5fa8", "#b02a2a", "#d87aa3",
+] as const;
+export const HAIR_COLOR_NAMES = [
+  "Jet black", "Natural black", "Dark brown", "Medium brown", "Light brown", "Dirty blonde", "Blonde", "Ginger", "Auburn", "Grey",
+  "Platinum", "White", "Silver", "Blue", "Red", "Pink",
+] as const;
+/** Stable ids for the illustrated palette, in HAIR_COLORS order. */
+export const HAIR_COLOR_IDS = [
+  "jet-black", "natural-black", "dark-brown", "medium-brown", "light-brown", "dirty-blonde", "blonde", "ginger", "auburn", "grey",
+  "platinum", "white", "silver", "blue", "red", "pink",
+] as const;
+/** Indexes of dyed / cosmetic colours: rare for generated players, never used for brows. */
+export const DYED_HAIR_COLORS = [10, 12, 13, 14, 15] as const;
 
 export const EYE_COLORS = ["#2a1a10", "#5a3a1e", "#7d6a2a", "#3d7a52", "#3f78b5", "#7d8a96"] as const;
 export const EYE_COLOR_NAMES = ["Dark brown", "Brown", "Hazel", "Green", "Blue", "Grey"] as const;

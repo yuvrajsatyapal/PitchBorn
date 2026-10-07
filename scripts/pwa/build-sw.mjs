@@ -75,7 +75,7 @@ self.addEventListener("fetch", (event) => {
     if (hit) return hit;
     try {
       const res = await fetch(req);
-      if (res.ok && (url.pathname.startsWith("/_next/") || /\\.(png|svg|woff2?|css|js)$/.test(url.pathname))) cache.put(req, res.clone());
+      if (res.ok && (url.pathname.startsWith("/_next/") || /\\.(png|webp|svg|woff2?|css|js)$/.test(url.pathname))) cache.put(req, res.clone());
       return res;
     } catch {
       return hit || Response.error();

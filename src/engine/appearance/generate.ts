@@ -1,6 +1,6 @@
 import { Rng } from "../rng";
 import type { Appearance, LegacyAppearance } from "../types";
-import { APPEARANCE_KEYS, COUNTS, HAIR_STYLES } from "./options";
+import { APPEARANCE_KEYS, COUNTS, DYED_HAIR_COLORS, HAIR_STYLES } from "./options";
 
 export type RandomScope = "all" | "face" | "hair";
 
@@ -50,11 +50,16 @@ function pickWeighted(rng: Rng, weights: readonly number[]): number {
   return weights.length - 1;
 }
 
+/** Natural colours only; grey and white come with age, dyes are a separate rare roll. */
 function hairColorWeights(skin: number): number[] {
   if (skin >= 7) return [7, 4, 1.2, 0.2, 0, 0, 0, 0, 0.05, 0];
   if (skin >= 4) return [4, 4, 3, 1.8, 0.8, 0.3, 0.1, 0.25, 0.2, 0];
   return [2.4, 2.8, 3.4, 3, 2.4, 2, 1.5, 1, 0.8, 0];
 }
+
+/** About 1 player in 70 dyes his hair: mostly platinum, cosmetic colours are rarer still. */
+const DYE_CHANCE = 0.014;
+const DYE_WEIGHTS = [6, 1, 0.6, 0.5, 0.4]; // platinum, silver, blue, red, pink
 
 function geoValue(rng: Rng): number {
   return Math.round(clamp(rng.normal(50, 19), 0, 100));
@@ -98,6 +103,9 @@ function roll(rng: Rng, into: Appearance, scope: RandomScope, bias?: LookBias): 
     into.browColor = rng.chance(0.18) ? clamp(into.hairColor + rng.int(-1, 1), 0, 8) : into.hairColor;
     into.facial = pickWeighted(rng, FACIAL_ODDS);
     into.facialColor = rng.chance(0.2) ? clamp(into.hairColor + rng.int(-1, 1), 0, 8) : into.hairColor;
+    // Dyed hair: only the hair changes, brows and beard keep the natural colour. Rolled last so it
+    // never shifts any other feature.
+    if (rng.chance(DYE_CHANCE)) into.hairColor = DYED_HAIR_COLORS[pickWeighted(rng, DYE_WEIGHTS)];
   }
 }
 

@@ -3,6 +3,7 @@ import { ageLook } from "@/engine/appearance/age";
 import type { Appearance } from "@/engine/types";
 import { REFERENCE_FACE, type BrowSpec, type EyeSpec, type FaceSpec, type MouthSpec, type NoseSpec } from "./anatomy";
 import type { PortraitModel } from "./art";
+import { backdropFor } from "../shared";
 import { clamp, hash01, mix } from "./geometry";
 import { hairTint } from "./hair";
 
@@ -156,22 +157,6 @@ export function faceSpecFor(a: Appearance, age: number): FaceSpec {
     adam: clamp(0.4 + hv(12, 0.5), 0, 1),
     asym: { eye: 0.05 + Math.abs(vary(a, 141, 1, 0.06)), brow: vary(a, 141, 2, 2), mouth: vary(a, 141, 3, 1.1), ear: vary(a, 141, 4, 2.6), jaw: vary(a, 141, 5, 2) },
   };
-}
-
-/** Muted print-ink backgrounds: navy, green, brown, burgundy, slate, cream. */
-const BACKDROPS = ["#2c3a52", "#2f4a3c", "#5b3d2a", "#56242f", "#4a6073", "#d8ccaa", "#3b3a52", "#6a5a3a"];
-const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-const cdist = (a: string, b: string) => Math.hypot(...rgb(a).map((v, i) => v - rgb(b)[i]));
-
-/** A backdrop that is stable per player and stays clear of the shirt colour. */
-export function backdropFor(a: Appearance, kit: string): string {
-  const start = Math.floor(hash01(a.aging * 7 + a.face, a.skin) * BACKDROPS.length);
-  const k = /^#[0-9a-f]{6}$/i.test(kit) ? kit : null;
-  for (let i = 0; i < BACKDROPS.length; i++) {
-    const c = BACKDROPS[(start + i) % BACKDROPS.length];
-    if (!k || cdist(c, k) > 90) return c;
-  }
-  return BACKDROPS[0];
 }
 
 export function modelFor(a: Appearance, age: number, kit: string, trim: string, background?: string): PortraitModel {

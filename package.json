@@ -17,7 +17,11 @@
     "sim:match": "tsx scripts/sim/calibrate-match.ts",
     "preview": "npx --yes serve out -l 4173",
     "icons": "node scripts/pwa/render-icons.mjs",
-    "e2e:only": "playwright test"
+    "e2e:only": "playwright test",
+    "portraits:assets": "tsx --tsconfig tsconfig.json scripts/portraits/build-assets.ts",
+    "portraits:guide": "tsx --tsconfig tsconfig.json scripts/portraits/canvas-guide.ts",
+    "portraits:sheets": "tsx --tsconfig tsconfig.json scripts/portraits/illustrated-sheet.tsx portrait-sheets && node scripts/portraits/shoot.mjs portrait-sheets",
+    "portraits:docs": "tsx --tsconfig tsconfig.json scripts/portraits/art-docs.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",
@@ -38,6 +42,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "fake-indexeddb": "^6.2.5",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",

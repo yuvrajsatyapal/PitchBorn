@@ -1,4 +1,12 @@
-/** Shared drawing helpers for the portrait. All parts are drawn in one 300 x 350 canvas. */
+/**
+ * INTERIM vector renderer. This folder draws portraits procedurally with SVG geometry and is kept only so the game
+ * has portraits until the hand-illustrated asset set (components/art/illustrated, docs/PORTRAIT_ART.md) is
+ * delivered. Do not extend it: new art goes into illustrated assets.
+ *
+ * Shared drawing helpers for the portrait. All parts are drawn in one 300 x 350 canvas.
+ */
+import { hash01, luminance, mix } from "../shared";
+
 export const W = 300;
 export const H = 350;
 export const CX = 150;
@@ -14,20 +22,9 @@ export const FINE = 1.15;
 
 // ------------------------------------------------------------------ colour
 
-const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-const toHex = (c: readonly number[]) => `#${c.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("")}`;
-
-export function mix(a: string, b: string, t: number): string {
-  const x = hex(a);
-  const y = hex(b);
-  return toHex([x[0] + (y[0] - x[0]) * t, x[1] + (y[1] - x[1]) * t, x[2] + (y[2] - x[2]) * t]);
-}
+export { hash01, luminance, mix };
 export const darken = (c: string, t: number) => mix(c, "#150f0a", t);
 export const lighten = (c: string, t: number) => mix(c, "#ffffff", t);
-export const luminance = (c: string) => {
-  const [r, g, b] = hex(c);
-  return (r * 0.3 + g * 0.59 + b * 0.11) / 255;
-};
 
 // ------------------------------------------------------------------ numbers and points
 
@@ -45,15 +42,6 @@ export const unit = (a: Pt): Pt => {
   return [a[0] / l, a[1] / l];
 };
 export const mirrorX = (p: Pt): Pt => [2 * CX - p[0], p[1]];
-
-/** Small deterministic noise in [0, 1) for designed irregularity (never Math.random). */
-export function hash01(seed: number, i: number): number {
-  let h = Math.imul(seed ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(i + 0x632be5ab, 0xc2b2ae35);
-  h ^= h >>> 15;
-  h = Math.imul(h, 0x2c1b3c6d);
-  h ^= h >>> 12;
-  return ((h >>> 0) % 10000) / 10000;
-}
 
 // ------------------------------------------------------------------ curves
 
