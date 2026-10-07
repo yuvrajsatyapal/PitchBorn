@@ -22,10 +22,10 @@ export const detailFor = (px: number): Detail => (px < 72 ? 0 : px < 140 ? 1 : 2
 
 /**
  * The improved portrait: same data and canvas as the current one, drawn as an illustration (variable ink, organic
- * cel planes, tone-aware colour, suggested features). Hair still uses the current renderer until the new hair passes
- * review.
+ * cel planes, tone-aware colour, suggested features). Styles without a new hair design still use the current hair.
+ * `silhouette` is a review mode: the hair alone in solid black over a plain grey head.
  */
-export function PortraitNext({ m, uid, d }: { m: NextModel; uid: string; d: Detail }) {
+export function PortraitNext({ m, uid, d, silhouette = false }: { m: NextModel; uid: string; d: Detail; silhouette?: boolean }) {
   const f = m.f;
   const head = buildHeadNext(f);
   const t = skinTones(m.skin);
@@ -43,6 +43,35 @@ export function PortraitNext({ m, uid, d }: { m: NextModel; uid: string; d: Deta
   const legacy = !bald && !next;
   // The head turns very slightly on the neck; the pivot sits at the top of the neck so nothing detaches.
   const tilt = `rotate(${f.tilt.toFixed(2)} ${CX} ${f.jawY + 10})`;
+  if (silhouette) {
+    const black = `url(#${uid}black)`;
+    return (
+      <>
+        <defs>
+          <filter id={`${uid}black`}>
+            <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
+          </filter>
+          <filter id={`${uid}grey`}>
+            <feColorMatrix type="matrix" values="0 0 0 0 0.86  0 0 0 0 0.86  0 0 0 0 0.86  0 0 0 1 0" />
+          </filter>
+        </defs>
+        <rect x={x} y={y} width={w} height={h} rx="16" fill="#fff" />
+        <g transform={tilt}>
+          <g filter={black}>{next ? next.back : legacy && <HairBack ctx={ctx} />}</g>
+        </g>
+        <g filter={`url(#${uid}grey)`}>
+          <KitBack {...kitProps} />
+          <NeckNext f={f} head={head} t={t} d={d} uid={uid} line={line} />
+          <KitFront {...kitProps} />
+        </g>
+        <g transform={tilt}>
+          <path d={head.path} fill="#d6d6d6" />
+          <g filter={black}>{next ? next.front : legacy && <HairFront ctx={ctx} g={g} />}</g>
+        </g>
+        <rect x={x + 1} y={y + 1} width={w - 2} height={h - 2} rx="15.5" fill="none" stroke="#999" strokeWidth={d === 0 ? 4 : 2} />
+      </>
+    );
+  }
   return (
     <>
       <defs>
