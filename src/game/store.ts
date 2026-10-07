@@ -9,6 +9,7 @@ import { BALANCE } from "@/engine/balance";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { resolveDecision } from "@/engine/career/events";
 import { negotiate, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
+import { syncSagas } from "@/engine/career/saga/engine";
 import type { MatchResult } from "@/engine/match/engine";
 import { retireFromInternational } from "@/engine/national/national";
 import { advanceTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
@@ -142,11 +143,16 @@ export const useGame = create<GameStore>((set, get) => ({
     await yieldFrame();
     try {
       let seasonRolled = false;
+      const startSeason = g.season;
+      const beforeSeasonEnd = g.turn <= BALANCE.calendar.endOfSeasonTurn;
       for (let i = 0; i < weeks; i++) {
         // Multi-week sims run straight through: matches are quick-simmed and decisions use their fallback.
         if (i > 0 && g.user.retired) break;
         const report = advanceTurn(g);
         if (report.newSeason) seasonRolled = true;
+        // A multi-week sim from before the season's end always stops once the season has ended, so the summer
+        // tournament and the transfer window are never skipped past.
+        if (weeks > 1 && beforeSeasonEnd && g.season === startSeason && g.turn > BALANCE.calendar.endOfSeasonTurn) break;
         if (weeks > 1 && i % 3 === 2) {
           set({ version: get().version + 1 });
           await yieldFrame();
@@ -212,6 +218,7 @@ export const useGame = create<GameStore>((set, get) => ({
     const g = get().game;
     if (!g) return "";
     const res = withRng(g, (rng) => negotiate(g, offerId, action, rng));
+    syncSagas(g);
     get().bump();
     get().notify(res.message, res.completed ? "good" : res.ok ? "info" : "bad");
     if (res.completed) void get().save();
@@ -222,6 +229,7 @@ export const useGame = create<GameStore>((set, get) => ({
     const g = get().game;
     if (!g) return;
     const msg = resolveDecision(g, decisionId, optionId);
+    syncSagas(g);
     get().bump();
     get().notify(msg);
   },

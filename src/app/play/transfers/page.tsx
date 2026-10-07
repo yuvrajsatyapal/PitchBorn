@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { AgentPanel } from "@/components/game/AgentPanel";
+import { SagaCard } from "@/components/game/SagaCard";
 import { Badge, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
 import { isTransferWindow, windowName } from "@/engine/calendar";
 import { ROLE_LABEL } from "@/engine/career/offers";
@@ -175,6 +176,7 @@ export default function CareerPage() {
         </div>
         {!isTransferWindow(g.turn) && p.clubId && <p className="mt-3 text-xs text-muted">Transfers happen in the summer (weeks 45–3) and January (weeks 21–24) windows. Renewals can be offered any time.</p>}
       </Card>
+      <SagaCard g={g} />
       <section>
         <h2 className="mb-2 font-display text-2xl">Offers</h2>
         {open.length ? (

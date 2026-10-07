@@ -15,14 +15,14 @@ export const MEMORY_ICON: Record<MemoryKind, string> = {
   "major-injury": "🩹", "injury-comeback": "💪",
   "big-transfer": "✍️", "controversial-transfer": "🌶️", "transfer-rejected": "✋", "return-to-club": "❤️", captaincy: "©️",
   promotion: "⬆️", relegation: "⬇️", "contract-dispute": "📝", "financial-exit": "💸", "manager-conflict": "😤", "career-decision": "🧭",
-  retirement: "👋", "final-match": "🔔", identity: "🧬",
+  retirement: "👋", "final-match": "🔔", identity: "🧬", "transfer-saga": "📰",
 };
 
 export const MEMORY_GROUP: Record<MemoryKind, "Matches" | "Honours" | "Moves" | "Career"> = {
   debut: "Matches", "first-goal": "Matches", "intl-debut": "Matches", "first-intl-goal": "Matches", "derby-winner": "Matches", "late-winner": "Matches", "winner-goal": "Matches",
   "hat-trick": "Matches", haul: "Matches", comeback: "Matches", "final-goal": "Matches", "final-winner": "Matches", "famous-upset": "Matches", "injury-comeback": "Matches", "final-match": "Matches",
   trophy: "Honours", "first-title": "Honours", "continental-trophy": "Honours", "intl-trophy": "Honours", record: "Honours", award: "Honours", promotion: "Honours",
-  "big-transfer": "Moves", "controversial-transfer": "Moves", "transfer-rejected": "Moves", "return-to-club": "Moves", "financial-exit": "Moves", "contract-dispute": "Moves",
+  "big-transfer": "Moves", "controversial-transfer": "Moves", "transfer-rejected": "Moves", "return-to-club": "Moves", "financial-exit": "Moves", "contract-dispute": "Moves", "transfer-saga": "Moves",
   "major-injury": "Career", identity: "Career", captaincy: "Career", relegation: "Career", "manager-conflict": "Career", "career-decision": "Career", retirement: "Career",
 };
 
@@ -92,6 +92,16 @@ export function describeMemory(state: GameState, m: Memory): MemoryView {
     case "injury-comeback": t = dflt("The comeback", `You came back after ${Number(m.data?.weeks ?? 0)} weeks out${opp ? `, against ${opp}` : ""}${Number(m.data?.goals ?? 0) > 0 ? " — and you scored" : ""}.`); break;
     case "big-transfer": t = dflt("Big move", `You joined ${name(m.transfer?.to ?? m.clubId)}${m.transfer?.from ? ` from ${name(m.transfer.from)}` : ""}.`); break;
     case "controversial-transfer": t = dflt("A controversial move", `You left ${name(m.transfer?.from)} for ${name(m.transfer?.to)}. Not everyone forgave you.`); break;
+    case "transfer-saga": {
+      const outcome = String(m.data?.outcome ?? "completed");
+      const bids = Number(m.data?.bids ?? 0);
+      const bidText = bids > 1 ? ` after ${bids} bids` : "";
+      const to = name(m.transfer?.to ?? m.clubId);
+      if (outcome === "completed") t = dflt(m.data?.returning ? `The long road back to ${to}` : `The ${to} saga`, `${pick(m.id, ["It took", "It ran", "It finally came together"])} ${Number(m.data?.weeks ?? 0)} weeks${bidText}, and you joined ${to}.`);
+      else if (outcome === "player-declined") t = dflt(`You turned ${to} down`, `After a long, public chase you chose to stay${m.data?.loyal ? " out of loyalty" : ""}.`);
+      else t = dflt(`The move to ${to} that never happened`, `${bids ? `${bids} bid${bids === 1 ? "" : "s"} and weeks of talks` : "Weeks of talks"}, but the deal fell through.`);
+      break;
+    }
     case "transfer-rejected": t = dflt("Said no to a bigger club", `You turned down ${name(m.opponentId)} and stayed put.`); break;
     case "return-to-club": t = dflt("Coming home", `You returned to ${name(m.clubId)} after ${Number(m.data?.years ?? 0)} years away.`); break;
     case "captaincy": t = dflt("Handed the armband", `You were named captain of ${club}.`); break;

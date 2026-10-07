@@ -61,6 +61,13 @@ export function checkInvariants(state: GameState): Invariant {
       }
     }
   }
+  const sagas = state.user.sagas ?? [];
+  const active = sagas.filter((s) => s.stage !== "completed" && s.stage !== "failed");
+  if (active.length > 1) issues.push(`${active.length} active transfer sagas (at most one allowed)`);
+  for (const s of active) {
+    for (const id of s.offerIds) if (!state.user.offers.some((o) => o.id === id)) issues.push(`saga ${s.id} references missing offer ${id}`);
+    if (s.deadlineIndex < state.turnIndex) issues.push(`saga ${s.id} is active past its deadline`);
+  }
   if (!state.players[state.user.playerId]) issues.push("user player missing");
   return { ok: issues.length === 0, issues };
 }

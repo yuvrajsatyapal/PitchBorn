@@ -104,3 +104,27 @@ export function weeksToNewYear(season: number, turn: number): number | null {
   if (turnDate(season, turn).getTime() >= newYear.getTime() - 3 * DAY) return null;
   return weeksToDate(season, turn, newYear);
 }
+
+/** The weeks just before a window opens, when a transfer story can start brewing (enquiries, agents) before bids are allowed. */
+export const RUMOUR_WEEKS = 4;
+
+export function upcomingWindow(turn: number): "summer" | "january" | null {
+  const summerOpens = C.summerWindow[0];
+  const janOpens = C.januaryWindow[0];
+  if (turn < summerOpens && turn >= summerOpens - RUMOUR_WEEKS && turn < C.endOfSeasonTurn) return "summer";
+  if (turn < janOpens && turn >= janOpens - RUMOUR_WEEKS) return "january";
+  return null;
+}
+
+/**
+ * The last turn on which a transfer saga begun now still lets the player act. Sagas never run across the season
+ * rollover: the summer window is cut at the last week of the season, and the pre-season weeks end at week 3.
+ */
+export function sagaDeadlineTurn(turn: number, free: boolean): number {
+  if (turn >= C.endOfSeasonTurn) return C.turnsPerSeason;
+  if (turn < C.seasonStart) return C.preseasonTurns[C.preseasonTurns.length - 1];
+  const jan = C.januaryWindow as readonly number[];
+  if (!free && (jan.includes(turn) || upcomingWindow(turn) === "january")) return jan[jan.length - 1];
+  if (!free && upcomingWindow(turn) === "summer") return C.turnsPerSeason;
+  return Math.min(turn + 5, C.endOfSeasonTurn - 1);
+}

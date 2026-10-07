@@ -9,7 +9,7 @@ import type { MatchResult } from "../match/engine";
 import { overallFor } from "../players/attributes";
 import { traitDef } from "../traits/registry";
 import { ageOf } from "../players/generate";
-import type { Competition, Fixture, GameState, Memory, MemoryKind, TransferOffer } from "../types";
+import type { Competition, Fixture, GameState, Memory, MemoryKind, TransferOffer, TransferSaga } from "../types";
 import { userPlayer } from "../world/helpers";
 import { bumpRivalHeat, rivalryLevel } from "./rivalry";
 import { agePoints, Factors, stagePoints } from "./score";
@@ -340,6 +340,37 @@ export function rememberRejection(state: GameState, o: TransferOffer, loyal = fa
   const f = new Factors().add("Turned down a bigger club", 16 + Math.min(20, Math.max(0, rep - cur) * 0.9)).add("Big fee", o.fee > 0 ? Math.min(10, Math.log10(o.fee / 1e6 + 1) * 8) : 0);
   if (loyal) f.add("Loyalty to the club", 14);
   return recordMemory(state, { kind: "transfer-rejected", clubId: u.clubId, opponentId: o.fromClubId, transfer: { from: u.clubId, to: o.fromClubId, fee: o.fee }, tags: loyal ? ["transfer", "loyalty"] : ["transfer"], factors: f, key: o.id, data: loyal ? { loyal: true } : undefined });
+}
+
+/** The story of a finished transfer saga: how dramatic it was decides whether it is worth remembering. */
+export function rememberSaga(state: GameState, saga: TransferSaga): Memory | null {
+  const completed = saga.outcome === "completed";
+  const toRep = clubRep(state, saga.clubId);
+  const fromRep = clubRep(state, saga.fromClubId);
+  const rival = saga.fromClubId ? rivalryLevel(state, saga.fromClubId, saga.clubId) : 0;
+  const eliteRivals = saga.rivals.filter((c) => clubRep(state, c) >= 75).length;
+  const f = new Factors();
+  f.add("Move to a rival", completed && rival >= 0.4 ? 10 + rival * 14 : 0);
+  f.add("Return to a former club", saga.flags.formerClub && completed ? 14 : 0);
+  f.add("Rejected bids", Math.min(18, saga.rejections * 6));
+  f.add("Transfer request", saga.flags.requested ? 10 : 0);
+  f.add("Deadline-day drama", saga.flags.deadline ? (completed ? 10 : 6) : 0);
+  f.add("High-value move", saga.fee > 0 ? Math.min(16, Math.log10(saga.fee / 1e6 + 1) * 9) : 0);
+  f.add("Loyalty decision", saga.outcome === "player-declined" && saga.flags.committed ? 16 : 0);
+  f.add("Competing elite clubs", Math.min(14, eliteRivals * 7));
+  f.add("Career-defining step", completed ? Math.min(14, Math.max(0, toRep - fromRep) * 0.4 + (toRep >= 75 ? 4 : 0)) : saga.flags.committed ? 6 : 0);
+  f.add("A long saga", saga.entries.length >= 8 ? 6 : 0);
+  const weeks = Math.max(0, saga.endedIndex !== undefined ? saga.endedIndex - saga.startIndex : 0);
+  return recordMemory(state, {
+    kind: "transfer-saga",
+    clubId: saga.clubId,
+    rivalId: saga.fromClubId ?? undefined,
+    transfer: { from: saga.fromClubId, to: saga.clubId, fee: completed ? saga.fee : 0 },
+    tags: ["transfer", "saga", ...(saga.flags.committed ? ["loyalty"] : [])],
+    factors: f,
+    key: saga.id,
+    data: { outcome: saga.outcome ?? "failed", bids: saga.bids, rejections: saga.rejections, rivals: saga.rivals.length, weeks, returning: !!saga.flags.formerClub, loyal: !!saga.flags.committed },
+  });
 }
 
 export function rememberContractDispute(state: GameState, clubId: string | null, detail: string): Memory | null {

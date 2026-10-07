@@ -19,6 +19,9 @@ export { ROLE_LABEL };
 /** How many overall points below the player a club's usual XI may be and still make an offer. */
 const DROP_ALLOWED = 4;
 
+/** How far above the strongest possible club a player may count as for the purposes of interest. */
+const ELITE_HEADROOM = 3;
+
 function uOvr(p: Player) {
   return overallFor(p.attrs, p.position);
 }
@@ -40,7 +43,7 @@ export function expectedRole(state: GameState, club: ClubState, p: Player): Squa
   return "backup";
 }
 
-function makeTerms(state: GameState, rng: Rng, club: ClubState, p: Player, kind: TransferOffer["kind"]): { terms: ContractTerms; maxWage: number } {
+export function makeTerms(state: GameState, rng: Rng, club: ClubState, p: Player, kind: TransferOffer["kind"]): { terms: ContractTerms; maxWage: number } {
   const role = expectedRole(state, club, p);
   const o = uOvr(p);
   const base = wageFor(o, club.reputation, role);
@@ -62,13 +65,16 @@ function makeTerms(state: GameState, rng: Rng, club: ClubState, p: Player, kind:
   };
 }
 
-function openOffers(state: GameState) {
+export function openOffers(state: GameState) {
   return state.user.offers.filter((o) => o.status === "club-pending" || o.status === "terms");
 }
 
 /** Probability a given club shows concrete interest this turn. */
 function interestIn(state: GameState, club: ClubState, p: Player): number {
-  const o = uOvr(p);
+  // No club can be better than the best in the world, so a 95+ superstar is compared as if he were only a
+  // little above the elite clubs. Without this cap the gap to even the biggest club exceeds every limit
+  // below and nobody ever bids for the very best players.
+  const o = Math.min(uOvr(p), clubLevel(100) + ELITE_HEADROOM);
   const level = clubLevel(club.reputation);
   const age = ageOf(p, state.season);
   const squad = squadOf(state, club.id);
@@ -94,12 +100,25 @@ function interestIn(state: GameState, club: ClubState, p: Player): number {
   return 0.045 * upgrade * rep * form * agent * request * expiring * outgrown * fit;
 }
 
-export function generateUserOffers(state: GameState, rng: Rng): void {
+/** What a club would offer, before it becomes a TransferOffer. A diverter may turn it into a transfer saga instead. */
+export interface OfferDraft {
+  kind: "transfer" | "free";
+  fee: number;
+  terms: ContractTerms;
+  maxWage: number;
+}
+export type OfferDiverter = (club: ClubState, draft: OfferDraft, rng: Rng) => boolean;
+
+/**
+ * Weekly: clubs show concrete interest. With `rumour` set (the weeks before a window opens) nothing is offered:
+ * the only possible outcome is a transfer saga starting early, so ordinary careers see no change.
+ */
+export function generateUserOffers(state: GameState, rng: Rng, divert?: OfferDiverter, rumour = false): void {
   const p = userPlayer(state);
   if (state.user.retired || p.retired) return;
   const free = !p.clubId;
   const window = isTransferWindow(state.turn);
-  if (!window && !free) return;
+  if (rumour ? free || window : !window && !free) return;
   if (openOffers(state).length >= 4) return;
   const current = p.clubId ? state.clubs[p.clubId] : null;
   const contractEnding = !!p.contract && p.contract.expires <= state.season && state.turn > BALANCE.calendar.endOfSeasonTurn;
@@ -110,13 +129,18 @@ export function generateUserOffers(state: GameState, rng: Rng): void {
     if (state.user.offers.some((o) => o.fromClubId === club.id && o.season === state.season && o.status !== "expired")) continue;
     let pr = interestIn(state, club, p);
     // Unattached players get more calls, but still only from clubs near their level.
-    if (free) pr = pr * 3 + (Math.abs(clubLevel(club.reputation) - uOvr(p)) <= 4 ? 0.05 : 0);
+    if (free) pr = pr * 3 + (Math.abs(clubLevel(club.reputation) - Math.min(uOvr(p), clubLevel(100) + ELITE_HEADROOM)) <= 4 ? 0.05 : 0);
     if (!rng.chance(pr)) continue;
     const kind: TransferOffer["kind"] = free || contractEnding ? "free" : "transfer";
     const value = marketValue(p, state.season);
     let fee = kind === "free" ? 0 : Math.round((value * rng.range(0.95, 1.35)) / 50000) * 50000;
     if (p.contract?.releaseClause && fee > p.contract.releaseClause * 0.8 && rng.chance(0.5)) fee = p.contract.releaseClause;
     const { terms, maxWage } = makeTerms(state, rng, club, p, kind);
+    if (divert?.(club, { kind, fee, terms, maxWage }, rng)) {
+      made++;
+      continue;
+    }
+    if (rumour) continue;
     const offer: TransferOffer = {
       id: nextId(state, "o"),
       kind,
@@ -164,23 +188,33 @@ function lowMinutes(state: GameState, p: Player): boolean {
   return state.turn > 12 ? mins < elapsed * 25 : state.season > state.user.startSeason && (p.history[p.history.length - 1]?.stats.minutes ?? 0) < 900;
 }
 
+/** The selling club's verdict on a bid: its asking price, and whether the bid meets it. Draws from `rng` only when the bid is close. */
+export function evaluateBid(state: GameState, o: TransferOffer, rng: Rng, askingMultiplier = 1): { accept: boolean; asking: number; clause: boolean } {
+  const p = userPlayer(state);
+  const value = marketValue(p, state.season);
+  const club = p.clubId ? state.clubs[p.clubId] : null;
+  const key = p.contract?.role === "star" || p.contract?.role === "first";
+  const yearsLeft = (p.contract?.expires ?? state.season) - state.season;
+  let asking = value * (1.15 + (key ? 0.35 : 0)) * (yearsLeft >= 3 ? 1.15 : yearsLeft <= 0 ? 0.6 : 1);
+  if (state.user.transferRequest) asking *= 0.82;
+  if (club && state.clubs[o.fromClubId].reputation > club.reputation + 15) asking *= 0.95;
+  asking *= askingMultiplier;
+  const clause = p.contract?.releaseClause;
+  const clauseHit = !!clause && o.fee >= clause;
+  const accept = clauseHit || o.fee >= asking || (o.fee >= asking * 0.85 && rng.chance(0.35));
+  return { accept, asking, clause: clauseHit };
+}
+
 /** Selling club responds to pending bids; buyers may improve rejected bids. */
 export function processBids(state: GameState, rng: Rng): void {
   const p = userPlayer(state);
   for (const o of state.user.offers) {
+    if (o.sagaId) continue;
     if (o.status === "club-pending") {
-      const value = marketValue(p, state.season);
-      const club = p.clubId ? state.clubs[p.clubId] : null;
-      const key = p.contract?.role === "star" || p.contract?.role === "first";
-      const yearsLeft = (p.contract?.expires ?? state.season) - state.season;
-      let asking = value * (1.15 + (key ? 0.35 : 0)) * (yearsLeft >= 3 ? 1.15 : yearsLeft <= 0 ? 0.6 : 1);
-      if (state.user.transferRequest) asking *= 0.82;
-      if (club && state.clubs[o.fromClubId].reputation > club.reputation + 15) asking *= 0.95;
-      const clause = p.contract?.releaseClause;
-      const accept = (clause && o.fee >= clause) || o.fee >= asking || (o.fee >= asking * 0.85 && rng.chance(0.35));
+      const { accept, asking, clause } = evaluateBid(state, o, rng);
       if (accept) {
         o.status = "terms";
-        o.history.push(clause && o.fee >= clause ? "Release clause triggered — the club cannot block the move." : `${clubName(p.clubId)} accept the bid. Personal terms to agree.`);
+        o.history.push(clause ? "Release clause triggered — the club cannot block the move." : `${clubName(p.clubId)} accept the bid. Personal terms to agree.`);
         o.expiresTurn = state.turn + 3;
         addNews(state, { kind: "transfer", title: `Bid accepted: ${clubName(o.fromClubId)}`, body: "Negotiate your personal terms.", important: true });
       } else {
@@ -200,6 +234,7 @@ export function processBids(state: GameState, rng: Rng): void {
 export function expireOffers(state: GameState): void {
   const windowOpen = isTransferWindow(state.turn) || !userPlayer(state).clubId;
   for (const o of state.user.offers) {
+    if (o.sagaId) continue; // a saga closes its own offers at its deadline
     if ((o.status === "club-pending" || o.status === "terms" || o.status === "club-rejected") && (state.turn > o.expiresTurn || o.season !== state.season || (!windowOpen && o.kind !== "renewal" && o.kind !== "free"))) {
       if (o.status !== "club-rejected") o.history.push("The offer lapsed.");
       o.status = "expired";

@@ -373,6 +373,68 @@ export interface TransferOffer {
   season: number;
   note?: string;
   history: string[];
+  /** Set when a transfer saga opened this offer; the saga, not the weekly offer logic, decides its fate. */
+  sagaId?: string;
+}
+
+export type SagaStage =
+  | "interest" | "scouting" | "agent-contact" | "enquiry" | "first-bid" | "bid-rejected" | "improved-bid" | "player-unsettled"
+  | "manager-talk" | "contract-talks" | "transfer-request" | "competing-bid" | "deadline-pressure" | "agreement" | "medical"
+  | "completed" | "failed";
+
+export type SagaOutcome = "completed" | "rejected" | "withdrawn" | "negotiations-failed" | "player-declined" | "club-declined" | "window-closed" | "deadline-expired";
+
+export interface SagaEntry {
+  season: number;
+  turn: number;
+  stage: SagaStage;
+  text: string;
+}
+
+export interface SagaFlags {
+  unsettled?: boolean;
+  managerTalked?: boolean;
+  requested?: boolean;
+  agentPushed?: boolean;
+  waited?: boolean;
+  committed?: boolean;
+  deadline?: boolean;
+  formerClub?: boolean;
+}
+
+/** A multi-week transfer story for the user's player. It sits above TransferOffer and ends through the normal offer flow. */
+export interface TransferSaga {
+  id: string;
+  kind: "transfer" | "free";
+  /** The club leading the pursuit (switches if the player prefers a rival). */
+  clubId: ClubId;
+  /** The player's club when the saga began. */
+  fromClubId: ClubId | null;
+  rivals: ClubId[];
+  stage: SagaStage;
+  outcome?: SagaOutcome;
+  window: "summer" | "january" | "free";
+  startSeason: number;
+  startTurn: number;
+  startIndex: number;
+  /** Absolute turn index of the last week the player can still act. */
+  deadlineIndex: number;
+  /** Absolute turn index of the last step taken (a saga moves at most once a week, twice under deadline pressure). */
+  lastStepIndex: number;
+  endedIndex?: number;
+  fee: number;
+  draft: { terms: ContractTerms; maxWage: number };
+  offerIds: string[];
+  bids: number;
+  rejections: number;
+  /** How important the move was judged to be when it began (0-100), and why. */
+  importance: number;
+  reasons: string[];
+  flags: SagaFlags;
+  entries: SagaEntry[];
+  decisionId?: string;
+  /** Circumstances at the start, so a later saga with the same club needs a material change. */
+  snapshot: { reputation: number; value: number; requested: boolean; yearsLeft: number };
 }
 
 export interface CareerDecision {
@@ -386,6 +448,8 @@ export interface CareerDecision {
   eventId: string;
   /** default option chosen if it expires */
   fallback: string;
+  /** Set for decisions that belong to a transfer saga. */
+  sagaId?: string;
 }
 
 export interface Relationships {
@@ -425,7 +489,7 @@ export type MemoryKind =
   | "major-injury" | "injury-comeback"
   | "big-transfer" | "controversial-transfer" | "transfer-rejected" | "return-to-club" | "captaincy"
   | "promotion" | "relegation" | "contract-dispute" | "financial-exit" | "manager-conflict" | "career-decision"
-  | "retirement" | "final-match" | "identity";
+  | "retirement" | "final-match" | "identity" | "transfer-saga";
 
 export type RecallReason = "anniversary" | "origin" | "former-club" | "opponent-history" | "venue" | "grudge";
 
@@ -544,6 +608,8 @@ export interface UserCareer {
   training: TrainingPlan;
   timeline: TimelineEvent[];
   offers: TransferOffer[];
+  /** Transfer sagas: at most one active, plus the most recent finished ones (they drive cooldowns). */
+  sagas: TransferSaga[];
   decisions: CareerDecision[];
   awards: AwardRecord[];
   trophies: TrophyRecord[];

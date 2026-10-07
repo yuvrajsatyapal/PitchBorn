@@ -8,11 +8,13 @@
  *                 world awards + rollover after turn 50
  */
 import { BALANCE } from "../balance";
-import { isInternationalTurn, isMonthEnd, isTransferWindow, seasonLabel, tournamentFor } from "../calendar";
+import { isInternationalTurn, isMonthEnd, isTransferWindow, seasonLabel, tournamentFor, upcomingWindow } from "../calendar";
 import { awardTrophy, playerOfTheMonth, seasonAwards, teamOfTheWeek, totalSeason, worldAwards } from "./awards";
 import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
+import { divertToSaga, stepSagas } from "../career/saga/engine";
+import { RUMOUR_MIN_REPUTATION } from "../career/saga/eligibility";
 import { leagueCompId, progressKnockouts, refreshLeagueTables, setupSeason } from "../competitions/setup";
 import { clubName, leaguesInPlay, stadium, staticClub, staticLeague } from "../data/world";
 import type { MatchResult } from "../match/engine";
@@ -325,8 +327,13 @@ export function advanceTurn(state: GameState): AdvanceReport {
       runAiTransfers(state, rng, state.turn >= 45 || state.turn <= 3 ? 0.3 : 0.15);
     }
     processBids(state, rng);
-    generateUserOffers(state, rng);
+    generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r));
+    // Stories can start brewing in the weeks before a window opens, but only for players clubs would build a saga around.
+    if (!state.user.retired && upcomingWindow(state.turn) && userPlayer(state).reputation >= RUMOUR_MIN_REPUTATION) {
+      generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r), true);
+    }
     checkUserContract(state, rng);
+    stepSagas(state, rng);
     expireOffers(state);
     maybeCareerEvent(state, rng);
     expireDecisions(state);

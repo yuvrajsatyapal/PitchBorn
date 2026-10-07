@@ -329,6 +329,7 @@ export function createWorld(input: NewCareerInput): GameState {
       training: { focus: "balanced", intensity: "normal" },
       timeline: [],
       offers: [],
+      sagas: [],
       decisions: [],
       awards: [],
       trophies: [],

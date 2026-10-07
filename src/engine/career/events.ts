@@ -6,6 +6,7 @@ import type { GameState, Player, Relationships } from "../types";
 import { addNews, addTimeline, nextId, userPlayer } from "../world/helpers";
 import { rememberCaptaincy, rememberDecision } from "../memory/detect";
 import { careerProfile } from "../traits/effects";
+import { resolveSagaDecision } from "./saga/engine";
 import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
 
 const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
@@ -273,6 +274,12 @@ export function maybeCareerEvent(state: GameState, rng: Rng): void {
 export function resolveDecision(state: GameState, decisionId: string, optionId: string): string {
   const d = state.user.decisions.find((x) => x.id === decisionId);
   if (!d) return "Decision not found.";
+  if (d.sagaId) {
+    state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
+    const msg = resolveSagaDecision(state, d, optionId);
+    addNews(state, { kind: "event", title: d.title, body: msg });
+    return msg;
+  }
   const ev = EVENTS.find((e) => e.id === d.eventId);
   const opt = ev?.options?.find((o) => o.id === optionId) ?? ev?.options?.find((o) => o.id === d.fallback);
   state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);

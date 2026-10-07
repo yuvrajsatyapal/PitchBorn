@@ -6,6 +6,7 @@
 import { fromLegacy, isLegacyAppearance, sanitizeAppearance } from "../engine/appearance/generate";
 import type { GameState, LegacyAppearance } from "../engine/types";
 import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
+import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
 import { initialTraits } from "../engine/traits/assign";
 import { SCHEMA_VERSION } from "../engine/world/helpers";
@@ -102,6 +103,14 @@ MIGRATIONS[5] = (s) => {
   return s;
 };
 
+MIGRATIONS[6] = (s) => {
+  // v6 → v7: transfer sagas. Old saves have none; the list starts empty.
+  const user = (s.user ?? {}) as Record<string, unknown>;
+  user.sagas ??= [];
+  s.user = user;
+  return s;
+};
+
 export class MigrationError extends Error {}
 
 export function migrateState(raw: RawState): GameState {
@@ -115,5 +124,13 @@ export function migrateState(raw: RawState): GameState {
     v++;
     s.schemaVersion = v;
   }
-  return s as unknown as GameState;
+  const state = s as unknown as GameState;
+  // Saga state is cheap to check and the one part of a save the engine reads as a state machine, so it is
+  // sanitised on every load, not only when migrating.
+  try {
+    sanitizeSagas(state);
+  } catch {
+    if (state.user) state.user.sagas = [];
+  }
+  return state;
 }
