@@ -145,7 +145,7 @@ export const BALANCE = {
     internationalTurns: [9, 14, 19, 33],
     // Real dates: turn 1 is 1 July and every turn is a week. The summer window is 1 Jul–31 Aug (turns 1–9, the last
     // week of which ends 26 Aug) and the January window 1–31 Jan (turns 28–31, from 6 Jan). Outside them nobody
-    // joins a club; renewals are the only deals that can be done at any time.
+    // under contract can move; free agents can sign at any time, and renewals are always possible.
     januaryWindow: [28, 29, 30, 31],
     summerWindow: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     endOfSeasonTurn: 44,

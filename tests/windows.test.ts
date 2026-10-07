@@ -31,7 +31,7 @@ describe("transfer windows follow the real calendar", () => {
   });
 });
 
-describe("the user can only join a club in a window", () => {
+describe("players under contract only move in a window; free agents can sign any time", () => {
   const rng = () => Rng.fromSeed("win");
   function star(seed: string): GameState {
     const s = newCareer({ seed });
@@ -42,7 +42,7 @@ describe("the user can only join a club in a window", () => {
     return s;
   }
 
-  it("no offers are made outside a window, to a club player or a free agent", () => {
+  it("a player under contract gets no offers outside a window", () => {
     const s = star("w-1");
     for (let i = 0; i < 80; i++) {
       for (const turn of [10, 15, 20, 27, 32, 40, 44, 47, 50]) {
@@ -51,27 +51,30 @@ describe("the user can only join a club in a window", () => {
       }
     }
     expect(s.user.offers).toHaveLength(0);
+  });
 
+  it("a free agent is offered deals at any time of year, and can join straight away", () => {
     const free = star("w-2");
     const p = userPlayer(free);
     removeFromSquad(free, p.id);
     p.clubId = null;
     p.contract = null;
     const r = rng();
+    const closed = [10, 15, 20, 27, 33, 40, 44];
     for (let i = 0; i < 80; i++) {
-      for (const turn of [10, 18, 27, 33, 44, 50]) {
-        free.turn = turn;
-        generateUserOffers(free, r);
-      }
-    }
-    expect(free.user.offers).toHaveLength(0);
-    // The same free agent is offered deals once a window opens.
-    for (let i = 0; i < 40; i++) {
-      free.turn = 1 + (i % 9);
+      free.turn = closed[i % closed.length];
       generateUserOffers(free, r);
     }
     expect(free.user.offers.length).toBeGreaterThan(0);
     expect(free.user.offers.every((o) => o.kind === "free")).toBe(true);
+    const offer = free.user.offers.find((o) => o.status === "terms")!;
+    free.turn = 15; // mid-September: no window
+    expect(isTransferWindow(free.turn)).toBe(false);
+    expireOffers(free);
+    expect(offer.status).toBe("terms");
+    const res = negotiate(free, offer.id, { type: "accept" }, r);
+    expect(res.completed).toBe(true);
+    expect(p.clubId).toBe(offer.fromClubId);
   });
 
   it("an offer cannot be completed once the window has closed", () => {

@@ -119,8 +119,8 @@ export function generateUserOffers(state: GameState, rng: Rng, divert?: OfferDiv
   if (state.user.retired || p.retired) return;
   const free = !p.clubId;
   const window = isTransferWindow(state.turn);
-  // Nobody joins a club outside a transfer window, free agents included.
-  if (rumour ? free || window : !window) return;
+  // Players under contract only move in a transfer window; a free agent can sign at any time.
+  if (rumour ? free || window : !window && !free) return;
   if (openOffers(state).length >= 4) return;
   const current = p.clubId ? state.clubs[p.clubId] : null;
   const candidates = rng.shuffle(Object.values(state.clubs).filter((c) => c.id !== p.clubId && c.id !== p.loan?.fromClubId)).slice(0, 70);
@@ -233,7 +233,7 @@ export function processBids(state: GameState, rng: Rng): void {
 }
 
 export function expireOffers(state: GameState): void {
-  const windowOpen = isTransferWindow(state.turn);
+  const windowOpen = isTransferWindow(state.turn) || !userPlayer(state).clubId;
   for (const o of state.user.offers) {
     if (o.sagaId) continue; // a saga closes its own offers at its deadline
     if ((o.status === "club-pending" || o.status === "terms" || o.status === "club-rejected") && (state.turn > o.expiresTurn || o.season !== state.season || (!windowOpen && o.kind !== "renewal"))) {
@@ -260,8 +260,8 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   if (!o) return { ok: false, message: "Offer not found." };
   if (o.status !== "terms") return { ok: false, message: "This offer is not open for negotiation." };
   const p = userPlayer(state);
-  // A move to another club can only be completed while a transfer window is open.
-  if (action.type !== "reject" && o.kind !== "renewal" && !isTransferWindow(state.turn)) {
+  // A move from one club to another can only be completed while a window is open. Free agents and renewals are exempt.
+  if (action.type !== "reject" && o.kind !== "renewal" && o.kind !== "free" && !isTransferWindow(state.turn)) {
     o.status = "expired";
     o.history.push("The transfer window closed before the deal was done.");
     return { ok: false, message: "The transfer window is closed: you can't join a new club until it reopens." };

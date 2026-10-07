@@ -65,12 +65,12 @@ export function assessSaga(state: GameState, club: ClubState, kind: "transfer" |
   const p = userPlayer(state);
   const free = !p.clubId;
   const wn = windowName(state.turn) ?? upcomingWindow(state.turn);
-  const window: SagaAssessment["window"] = wn ?? "free";
-  const deadlineTurn = sagaDeadlineTurn(state.turn);
+  const window: SagaAssessment["window"] = free ? "free" : wn ?? "free";
+  const deadlineTurn = sagaDeadlineTurn(state.turn, free);
   const base = { window, deadlineTurn };
   if (state.user.retired || p.retired) return { score: 0, chance: 0, reasons: [], blocked: "retired", ...base };
   if (p.loan) return { score: 0, chance: 0, reasons: [], blocked: "on loan", ...base };
-  if (!wn) return { score: 0, chance: 0, reasons: [], blocked: "window closed", ...base };
+  if (!free && !wn) return { score: 0, chance: 0, reasons: [], blocked: "window closed", ...base };
   if (deadlineTurn - state.turn < MIN_RUNWAY) return { score: 0, chance: 0, reasons: [], blocked: "too late in the window", ...base };
 
   const reasons: string[] = [];

@@ -118,11 +118,13 @@ export function upcomingWindow(turn: number): "summer" | "january" | null {
 
 /**
  * The last turn on which a transfer saga begun now still lets the player act: the end of the window it belongs to
- * (or of the window it is brewing towards). Windows sit inside one season, so a saga never crosses the rollover.
+ * (or of the window it is brewing towards). A free agent, who can sign at any time, gets a few weeks, never beyond
+ * the end of the season. Windows sit inside one season, so no saga crosses the rollover.
  */
-export function sagaDeadlineTurn(turn: number): number {
+export function sagaDeadlineTurn(turn: number, free = false): number {
   const summer = C.summerWindow as readonly number[];
   const jan = C.januaryWindow as readonly number[];
+  if (free) return Math.min(turn + 5, C.turnsPerSeason);
   if (summer.includes(turn)) return summer[summer.length - 1];
   if (jan.includes(turn) || upcomingWindow(turn) === "january") return jan[jan.length - 1];
   return turn;

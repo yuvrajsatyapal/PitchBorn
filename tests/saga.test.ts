@@ -419,16 +419,16 @@ describe("saga state machine", () => {
     play(jan, rng, pickRandom(rng), 31);
     expect(isActiveSaga(saga)).toBe(false);
 
-    const free = starState(base, 2);
+    const free = starState(base, 15); // outside any window: a free agent can still sign
     const p = userPlayer(free);
     removeFromSquad(free, p.id);
     p.clubId = null;
     p.contract = null;
     const fs = begin(free, topClub(free), "free");
-    expect(fs.window).toBe("summer");
+    expect(fs.window).toBe("free");
     expect(fs.kind).toBe("free");
     const rng2 = Rng.fromSeed("free");
-    play(free, rng2, pickRandom(rng2), 9);
+    play(free, rng2, pickRandom(rng2), 25);
     expect(isActiveSaga(fs)).toBe(false);
     expect(fs.entries.some((e) => e.stage === "contract-talks")).toBe(true);
   });

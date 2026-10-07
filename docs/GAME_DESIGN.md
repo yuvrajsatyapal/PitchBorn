@@ -7,7 +7,7 @@ Youth/academy → first contract → development squad / loans → debut → bre
 
 ## Core loop (one week = one turn, 50 turns per season)
 - Turns 1–3 pre-season · 4–43 season (league rounds, cups, continental nights, 4 international windows) · 44 season finale (awards, promotion/relegation decided) · 45–50 summer (even-year summers host a 16-team World Championship or European Nations Championship) → rollover (contracts end on 30 June).
-- Transfer windows follow real dates (turn 1 = 1 July, a turn = a week): summer 1 Jul–31 Aug (turns 1–9) and January 1–31 Jan (turns 28–31). Nobody joins a club outside them, free agents and the user included; only renewals can be done any time.
+- Transfer windows follow real dates (turn 1 = 1 July, a turn = a week): summer 1 Jul–31 Aug (turns 1–9) and January 1–31 Jan (turns 28–31). Nobody under contract moves outside them; free agents can sign at any time, and renewals can be agreed whenever.
 - Each week: training plan → user's matches (live or sim) → world simulates → development, finances, transfers, offers, random events, news.
 
 ## Starting out
