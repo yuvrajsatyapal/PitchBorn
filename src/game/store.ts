@@ -6,6 +6,7 @@
  */
 import { create } from "zustand";
 import { BALANCE } from "@/engine/balance";
+import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { resolveDecision } from "@/engine/career/events";
 import { negotiate, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
 import type { MatchResult } from "@/engine/match/engine";
@@ -53,6 +54,8 @@ interface GameStore {
   transferRequest: (on: boolean) => void;
   setWantsLoan: (on: boolean) => void;
   askRest: () => void;
+  hireAgent: (agentId: string) => void;
+  releaseAgent: () => void;
   retire: () => Promise<void>;
   retireInternational: () => void;
   grantReward: (kind: RewardKind) => boolean;
@@ -236,6 +239,22 @@ export const useGame = create<GameStore>((set, get) => ({
     g.user.wantsLoan = on;
     get().bump();
     get().notify(on ? "Your agent will look for loan opportunities in the next window." : "Loan search cancelled.");
+  },
+
+  hireAgent: (agentId) => {
+    const g = get().game;
+    if (!g) return;
+    const res = hireAgent(g, agentId);
+    get().notify(res.ok ? "You have a new agent." : res.reason ?? "Can't hire this agent.", res.ok ? "good" : "bad");
+    get().bump();
+  },
+
+  releaseAgent: () => {
+    const g = get().game;
+    if (!g) return;
+    releaseAgent(g);
+    get().notify("You now represent yourself.");
+    get().bump();
   },
 
   askRest: () => {

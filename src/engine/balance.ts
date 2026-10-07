@@ -80,6 +80,18 @@ export const BALANCE = {
     valueCurve: 5.0,
     revenuePerPrestige: 26000,
   },
+  agents: {
+    /** Weekly fee ≈ feeBase × e^((rating − 30) / feeCurve), discounted for higher commission. */
+    feeBase: 50,
+    feeCurve: 11,
+    commission: [0.03, 0.08] as [number, number],
+    minReputation: { none: 0, rookie: 0, established: 20, top: 45, super: 65 },
+    /** Under-21s with high potential get top agents' attention this much earlier. */
+    prospectDiscount: 15,
+    depositWeeks: 4,
+    unpaidWeeksBeforeLeaving: 4,
+    startingBank: 5000,
+  },
   squad: {
     min: 22,
     target: 25,

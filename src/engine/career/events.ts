@@ -4,6 +4,10 @@ import { ageOf } from "../players/generate";
 import { clamp, type Rng } from "../rng";
 import type { GameState, Player, Relationships } from "../types";
 import { addNews, addTimeline, nextId, userPlayer } from "../world/helpers";
+import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
+
+const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
+const sponsorValue = (s: GameState, p: Player) => Math.round(p.reputation * p.reputation * 120 * (0.8 + agentSkill(s, "media") / 150));
 
 interface Effect {
   morale?: number;
@@ -12,7 +16,10 @@ interface Effect {
   reputation?: number;
   earnings?: number;
   rel?: Partial<Relationships>;
-  agentQuality?: number;
+  /** Sign with this market agent (sign-on fee comes out of `earnings`). */
+  hireAgentId?: string;
+  /** Current agent works harder for you: +skill on every skill. */
+  agentBoost?: number;
   transferRequest?: boolean;
   news?: string;
 }
@@ -83,9 +90,9 @@ const EVENTS: CareerEventDef[] = [
     id: "sponsor", weight: 1.2, cooldown: 30,
     when: (s, p) => p.reputation > 40,
     title: () => "Boot sponsor wants you",
-    body: (s, p) => `A sportswear brand offers ${formatMoney(Math.round(p.reputation * p.reputation * 120))} for a two-year endorsement.`,
+    body: (s, p) => `A sportswear brand offers ${formatMoney(sponsorValue(s, p))} for a two-year endorsement.`,
     options: [
-      { id: "sign", label: "Sign the deal", hint: "Money, extra media duties", effect: (s, p) => ({ earnings: Math.round(p.reputation * p.reputation * 120), morale: 2, sharpness: -3 }) },
+      { id: "sign", label: "Sign the deal", hint: "Money, extra media duties", effect: (s, p) => ({ earnings: sponsorValue(s, p), morale: 2, sharpness: -3 }) },
       { id: "refuse", label: "Focus on football", hint: "Manager approves", effect: () => ({ rel: { manager: 3 } }) },
     ],
     fallback: "refuse",
@@ -158,12 +165,12 @@ const EVENTS: CareerEventDef[] = [
   },
   {
     id: "super-agent", weight: 1, cooldown: 60,
-    when: (s, p) => p.reputation > 45 && s.user.agent.quality < 75,
+    when: (s, p) => p.reputation > 55 && s.user.agent.id !== "none" && s.user.agent.tier !== "super" && !!superAgent(s),
     title: () => "A super-agent comes calling",
-    body: () => "One of the game's most powerful agents wants to represent you. Your current agent has been with you from the start.",
+    body: (s) => `${superAgent(s)?.name ?? "One of the game's most powerful agents"} wants to represent you. ${s.user.agent.name} has been working for you.`,
     options: [
-      { id: "switch", label: "Sign with the super-agent", hint: "Better deals, more interest", effect: (s, p) => ({ agentQuality: 22, rel: { agent: -15 }, earnings: -Math.round(p.reputation * 4000) }) },
-      { id: "loyal", label: "Stay loyal", hint: "Your agent works harder for you", effect: () => ({ agentQuality: 4, rel: { agent: 12 } }) },
+      { id: "switch", label: "Sign with the super-agent", hint: "Better deals, more interest. Costs a sign-on fee", effect: (s, p) => ({ hireAgentId: superAgent(s)?.id, rel: { agent: -15 }, earnings: -Math.round(p.reputation * 4000) }) },
+      { id: "loyal", label: "Stay loyal", hint: "Your agent works harder for you", effect: () => ({ agentBoost: 3, rel: { agent: 12 } }) },
     ],
     fallback: "loyal",
   },
@@ -185,8 +192,16 @@ function apply(state: GameState, p: Player, e: Effect) {
   if (e.fitness) p.fitness = clamp(p.fitness + e.fitness, 10, 100);
   if (e.sharpness) p.sharpness = clamp(p.sharpness + e.sharpness, 0, 100);
   if (e.reputation) p.reputation = clamp(p.reputation + e.reputation, 0, 100);
-  if (e.earnings) state.user.earnings += e.earnings;
-  if (e.agentQuality) state.user.agent.quality = clamp(state.user.agent.quality + e.agentQuality, 0, 100);
+  if (e.earnings) {
+    state.user.earnings += e.earnings;
+    state.user.bank = Math.max(0, state.user.bank + e.earnings);
+  }
+  if (e.hireAgentId) hireAgent(state, e.hireAgentId, { force: true });
+  if (e.agentBoost && state.user.agent.id !== "none") {
+    const sk = state.user.agent.skills;
+    for (const k of Object.keys(sk) as (keyof typeof sk)[]) sk[k] = clamp(sk[k] + e.agentBoost, 0, 100);
+    state.user.agent.rating = agentRating(sk);
+  }
   if (e.rel) for (const k in e.rel) {
     const key = k as keyof Relationships;
     state.user.relationships[key] = clamp(state.user.relationships[key] + (e.rel[key] ?? 0), 0, 100);

@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
+import { AgentPanel } from "@/components/game/AgentPanel";
 import { Badge, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
 import { isTransferWindow, windowName } from "@/engine/calendar";
 import { ROLE_LABEL } from "@/engine/career/offers";
@@ -130,7 +131,7 @@ export default function CareerPage() {
               <Stat label="Role" value={<span className="text-lg">{ROLE_LABEL[p.contract.role]}</span>} />
               <Stat label="Market value" value={formatMoney(p.value)} />
               <Stat label="Release clause" value={p.contract.releaseClause ? formatMoney(p.contract.releaseClause) : "None"} />
-              <Stat label="Career earnings" value={formatMoney(g.user.earnings)} />
+              <Stat label="Bank" value={formatMoney(g.user.bank)} sub={`Earned ${formatMoney(g.user.earnings)} in total`} />
               <Stat label="Status" value={<span className="text-lg">{p.loan ? `On loan from ${clubName(p.loan.fromClubId, true)}` : g.user.transferRequest ? "Transfer-listed" : "Settled"}</span>} />
             </div>
           ) : (
@@ -139,11 +140,7 @@ export default function CareerPage() {
             </Empty>
           )}
         </Card>
-        <Card title="Agent">
-          <div className="text-lg font-bold">{g.user.agent.name}</div>
-          <div className="mt-1 text-sm text-ink-2">Negotiating skill {g.user.agent.quality}/100 · relationship {Math.round(g.user.relationships.agent)}</div>
-          <p className="mt-2 text-xs text-muted">Better agents generate more interest and win you slightly better terms.</p>
-        </Card>
+        <AgentPanel g={g} />
       </div>
       <Card title="Career moves">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

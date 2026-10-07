@@ -27,6 +27,8 @@ import { recoverWeek } from "../players/injuries";
 import { clamp, Rng } from "../rng";
 import { ensureMinimumSquads, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
+import { agentSkill, payAgent } from "../career/agents";
+import { receiveIncome } from "../career/money";
 import { assignRoles } from "../world/create";
 import { hireManager, releaseManager } from "../world/managers";
 import { addNews, addTimeline, fullName, squadOf, userPlayer, withRng } from "../world/helpers";
@@ -205,8 +207,11 @@ function userWeekly(state: GameState, rng: Rng): void {
   if (p.contract) {
     const goals = Object.values(p.season).reduce((s, x) => s + x.goals, 0);
     void goals;
-    u.earnings += p.contract.wage;
+    receiveIncome(state, p.contract.wage);
   }
+  payAgent(state);
+  // A good agent keeps spirits up.
+  p.morale = clamp(p.morale + (agentSkill(state, "care") - 30) / 400, 0, 100);
   // Playing-time morale: regulars expect to start.
   if (p.clubId && state.turn > C.seasonStart + 2 && state.turn <= C.seasonEnd) {
     const playedRecently = u.lastMatchTurn !== undefined && state.turn - u.lastMatchTurn <= 2;

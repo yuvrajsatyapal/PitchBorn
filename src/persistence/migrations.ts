@@ -4,6 +4,7 @@
  * SCHEMA_VERSION in engine/world/helpers.ts.
  */
 import type { GameState } from "../engine/types";
+import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
 import { SCHEMA_VERSION } from "../engine/world/helpers";
 
 type RawState = Record<string, unknown> & { schemaVersion?: number };
@@ -26,6 +27,31 @@ const MIGRATIONS: Record<number, Migration> = {
     s.pendingMoves ??= [];
     return s;
   },
+};
+
+MIGRATIONS[2] = (s) => {
+  // v2 → v3: agents become a market with fees; money becomes a bank balance.
+  const user = (s.user ?? {}) as Record<string, unknown>;
+  const old = (user.agent ?? {}) as { name?: string; quality?: number };
+  if (typeof old.quality === "number") {
+    const q = old.quality;
+    const skills = { negotiation: q, connections: q, media: Math.max(10, q - 8), care: Math.max(10, q - 8) };
+    const rating = agentRating(skills);
+    user.agent = {
+      id: "legacy",
+      name: old.name ?? "Your agent",
+      nationality: "",
+      tier: tierFor(rating),
+      rating,
+      skills,
+      weeklyFee: agentWeeklyFee(rating, 0.04),
+      commission: 0.04,
+      minReputation: 0,
+    };
+  }
+  user.bank ??= Math.max(5000, Math.round(Number(user.earnings ?? 0)));
+  s.user = user;
+  return s;
 };
 
 export class MigrationError extends Error {}

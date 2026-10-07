@@ -1,4 +1,5 @@
 import { BALANCE } from "../balance";
+import { agentSkill } from "../career/agents";
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
 import { country, stadium, staticClub, clubName } from "../data/world";
 import { MatchEngine, type MatchInput, type MatchPlayerInput, type MatchResult, type TeamInput } from "../match/engine";
@@ -243,7 +244,8 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     p.morale = r1(clamp(p.morale + (won ? BALANCE.morale.winBoost : lost ? -BALANCE.morale.lossPenalty : 0.3) + (line.rating - 6.6) * 1.2, 5, 100));
     const repDelta = (line.rating - 6.5) * 0.22 * repWeight + line.goals * 0.12 * repWeight;
     if (comp.kind === "continental" || nat) p.intlReputation = r1(clamp(p.intlReputation + repDelta * 1.2, 0, 100));
-    p.reputation = r1(clamp(p.reputation + repDelta, 0, 100));
+    const mediaBoost = p.isUser && repDelta > 0 ? 1 + (agentSkill(state, "media") - 30) / 300 : 1;
+    p.reputation = r1(clamp(p.reputation + repDelta * mediaBoost, 0, 100));
     if (line.red) p.suspension += line.yellow >= 2 ? 1 : 2;
     if (comp.kind === "league" && line.yellow === 1 && !line.red) {
       p.yellowAccum++;

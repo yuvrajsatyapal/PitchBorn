@@ -9,6 +9,7 @@ import { ageOf } from "../players/generate";
 import type { Rng } from "../rng";
 import type { GameState, SquadRole, TrainingFocus } from "../types";
 import { userPlayer } from "../world/helpers";
+import { agentMarket, canHireAgent, hireAgent, releaseAgent } from "./agents";
 import { resolveDecision } from "./events";
 import { negotiate, setTransferRequest } from "./offers";
 
@@ -65,6 +66,16 @@ export function autopilotStep(state: GameState, rng: Rng): void {
       if (!res.completed && state.user.offers.find((x) => x.id === o.id)?.status === "terms") negotiate(state, o.id, { type: "accept" }, rng);
       if (res.completed || !p.clubId) break;
     }
+  }
+
+  // Once a season, upgrade to the best agent the bank comfortably affords.
+  if (state.turn === 45 && p.contract) {
+    const budget = p.contract.wage * 0.08;
+    const better = agentMarket(state)
+      .filter((a) => a.rating > u.agent.rating && a.weeklyFee <= budget && canHireAgent(state, a).ok)
+      .sort((a, b) => b.rating - a.rating)[0];
+    if (better) hireAgent(state, better.id);
+    else if (u.agent.id !== "none" && u.agent.weeklyFee > p.contract.wage * 0.25) releaseAgent(state, "Fees are too heavy for your wages.");
   }
 
   // Ask for a move after a season stuck on the bench.

@@ -382,13 +382,48 @@ export interface ActiveBoost {
   source: "reward" | "event";
 }
 
+export type AgentTier = "none" | "rookie" | "established" | "top" | "super";
+
+export interface AgentSkills {
+  /** Wage ceilings and signing bonuses. */
+  negotiation: number;
+  /** How many clubs hear about you, and how big they are. */
+  connections: number;
+  /** Reputation growth and sponsorship value. */
+  media: number;
+  /** Morale support and loan searches. */
+  care: number;
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  nationality: CountryCode;
+  tier: AgentTier;
+  /** 1-100 overall, weighted from the four skills. */
+  rating: number;
+  skills: AgentSkills;
+  /** Weekly retainer in euros. */
+  weeklyFee: number;
+  /** Share of each new contract's signing bonus + first-year wages (0.03 = 3%). */
+  commission: number;
+  /** Player reputation this agent requires before taking them on. */
+  minReputation: number;
+  specialty?: keyof AgentSkills;
+}
+
 export interface UserCareer {
   playerId: PlayerId;
   startSeason: number;
   startAge: number;
   startClubId: ClubId;
   startTier: number;
-  agent: { name: string; quality: number };
+  agent: Agent;
+  /** Money in hand: wages, bonuses and deals in; agent fees and commission out. */
+  bank: number;
+  agentUnpaidWeeks?: number;
+  /** Season in which the player last hired an agent (one change per season). */
+  agentChangedSeason?: number;
   relationships: Relationships;
   priorities: CareerPriorities;
   training: TrainingPlan;
@@ -398,6 +433,7 @@ export interface UserCareer {
   awards: AwardRecord[];
   trophies: TrophyRecord[];
   transfers: { season: number; turn: number; from: ClubId | null; to: ClubId; fee: number; kind: TransferOffer["kind"] }[];
+  /** Total gross income over the career (a stat; spending comes out of `bank`). */
   earnings: number;
   peakOverall: number;
   peakSeason: number;
@@ -497,6 +533,8 @@ export interface GameState {
   settings: { difficulty: "relaxed" | "standard" | "hardcore"; autoSave: boolean; countries?: string[] };
   /** Match the user must play this turn before the world advances. */
   pending: PendingMatch[];
+  /** Agents available to represent the user (generated lazily per career). */
+  agents?: Agent[];
   /** Unemployed managers clubs can hire (seeded from real free agents; sacked managers join it). */
   managerPool?: PoolManager[];
   /** Promotion/relegation decided at season end, applied at rollover. */

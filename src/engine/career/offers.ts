@@ -7,6 +7,8 @@ import { ageOf } from "../players/generate";
 import { clamp, type Rng } from "../rng";
 import type { ClubState, ContractTerms, GameState, Player, SquadRole, TransferOffer } from "../types";
 import { clubLevel } from "../world/create";
+import { agentSkill, chargeCommission } from "./agents";
+import { receiveIncome } from "./money";
 import { addNews, addTimeline, addToSquad, nextId, removeFromSquad, squadOf, userPlayer } from "../world/helpers";
 
 const ROLE_LABEL: Record<SquadRole, string> = { star: "Star player", first: "First-team regular", rotation: "Rotation", backup: "Squad player", prospect: "Prospect" };
@@ -47,7 +49,7 @@ function makeTerms(state: GameState, rng: Rng, club: ClubState, p: Player, kind:
       wage,
       years,
       role,
-      signingBonus: kind === "free" ? Math.round(wage * rng.int(8, 20)) : kind === "renewal" ? Math.round(wage * rng.int(2, 6)) : 0,
+      signingBonus: Math.round((kind === "free" ? wage * rng.int(8, 20) : kind === "renewal" ? wage * rng.int(2, 6) : 0) * (0.9 + agentSkill(state, "negotiation") / 250)),
       goalBonus: ["ST", "RW", "LW", "AM"].includes(p.position) ? Math.round(wage * 0.04) : 0,
       releaseClause: staticClub(club.id)?.countryCode === "ESP" ? Math.round((marketValue(p, state.season) * rng.range(3, 5)) / 1e6) * 1e6 : undefined,
     },
@@ -75,7 +77,7 @@ function interestIn(state: GameState, club: ClubState, p: Player): number {
   const curLevel = p.clubId ? clubLevel(state.clubs[p.clubId]?.reputation ?? 50) : 0;
   const outgrown = p.clubId && o > curLevel + 4 && club.reputation > (state.clubs[p.clubId]?.reputation ?? 0) ? 1 + (o - curLevel - 4) / 4 : 1;
   const form = clamp(1 + (p.form - 6.6) * 0.4, 0.6, 1.6);
-  const agent = 0.7 + state.user.agent.quality / 160;
+  const agent = 0.65 + agentSkill(state, "connections") / 150;
   const request = state.user.transferRequest ? 2 : 1;
   const expiring = p.contract && p.contract.expires <= state.season ? 1.6 : 1;
   return 0.045 * upgrade * rep * form * agent * request * expiring * outgrown;
@@ -128,7 +130,7 @@ export function generateUserOffers(state: GameState, rng: Rng): void {
     });
   }
   // Loan offers for young players who are not playing.
-  if (window && p.clubId && ageOf(p, state.season) <= 22 && (state.user.wantsLoan || lowMinutes(state, p)) && !p.loan && rng.chance(state.user.wantsLoan ? 0.6 : 0.3)) {
+  if (window && p.clubId && ageOf(p, state.season) <= 22 && (state.user.wantsLoan || lowMinutes(state, p)) && !p.loan && rng.chance((state.user.wantsLoan ? 0.6 : 0.3) * (0.7 + agentSkill(state, "care") / 100))) {
     const parent = state.clubs[p.clubId];
     const pool = Object.values(state.clubs).filter((c) => c.reputation < parent.reputation - 6 && clubLevel(c.reputation) <= uOvr(p) + 3 && clubLevel(c.reputation) >= uOvr(p) - 6);
     const club = pool.length ? rng.pick(pool) : null;
@@ -225,7 +227,7 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   const roleOk = !action.role || action.role === o.terms.role || roleRank(action.role) >= roleRank(o.terms.role) || expectedRole(state, club, p) === action.role || rng.chance(0.25);
   const ask = Math.round(action.wage / 100) * 100;
   o.history.push(`You ask for ${formatMoney(ask)}/wk${action.role ? ` as ${ROLE_LABEL[action.role].toLowerCase()}` : ""}${action.years ? ` over ${action.years} years` : ""}.`);
-  const agentEdge = 1 + (state.user.agent.quality - 50) / 500;
+  const agentEdge = 1 + (agentSkill(state, "negotiation") - 40) / 350;
   if (ask <= o.maxWage * agentEdge && roleOk) {
     o.terms = { ...o.terms, wage: ask, role: action.role && roleOk ? action.role : o.terms.role, years: action.years ?? o.terms.years };
     o.history.push("They agree to your terms.");
@@ -264,7 +266,8 @@ function completeOffer(state: GameState, o: TransferOffer) {
       releaseClause: o.terms.releaseClause,
       goalBonus: o.terms.goalBonus,
     };
-    state.user.earnings += o.terms.signingBonus;
+    receiveIncome(state, o.terms.signingBonus);
+    chargeCommission(state, o.terms.wage, o.terms.signingBonus);
     p.morale = clamp(p.morale + 6, 0, 100);
     state.user.relationships.board = clamp(state.user.relationships.board + 8, 0, 100);
     addTimeline(state, { kind: "contract", title: `New contract with ${clubName(club.id)}`, detail: `${formatMoney(o.terms.wage)}/wk until ${p.contract.expires + 1}` });
@@ -299,7 +302,8 @@ function completeOffer(state: GameState, o: TransferOffer) {
     releaseClause: o.terms.releaseClause,
     goalBonus: o.terms.goalBonus,
   };
-  state.user.earnings += o.terms.signingBonus;
+  receiveIncome(state, o.terms.signingBonus);
+  chargeCommission(state, o.terms.wage, o.terms.signingBonus);
   state.user.transfers.push({ season, turn: state.turn, from, to: club.id, fee: o.fee, kind: o.kind });
   state.user.transferRequest = false;
   state.user.relationships = { ...state.user.relationships, manager: 52, teammates: 48, supporters: 50, board: 55 };

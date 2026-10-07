@@ -1,4 +1,5 @@
 import { BALANCE } from "../balance";
+import { agentMarket, NO_AGENT } from "../career/agents";
 import { setupSeason } from "../competitions/setup";
 import { WORLD, country, leaguesInPlay, stadium, staticClub, staticLeague } from "../data/world";
 import type { StaticManager } from "../data/schema";
@@ -278,7 +279,8 @@ export function createWorld(input: NewCareerInput): GameState {
       startAge: input.path === "academy" ? 17 : 20,
       startClubId: input.clubId,
       startTier: staticLeague(staticClub(input.clubId)?.leagueId ?? "")?.tier ?? 1,
-      agent: { name: managerName(rng, input.nationality), quality: rng.int(35, 60) },
+      agent: NO_AGENT,
+      bank: BALANCE.agents.startingBank,
       relationships: { manager: 55, teammates: 55, supporters: 50, board: 50, agent: 60 },
       priorities: input.priorities ?? { money: 1, playingTime: 1, ambition: 1, loyalty: 1 },
       training: { focus: "balanced", intensity: "normal" },
@@ -310,6 +312,9 @@ export function createWorld(input: NewCareerInput): GameState {
     settings: { difficulty: input.difficulty ?? "standard", autoSave: true, countries: input.countries },
     pending: [],
   };
+
+  // Everyone starts with the market's most modest agent; better ones cost more and must be hired.
+  state.user.agent = { ...agentMarket(state)[0], skills: { ...agentMarket(state)[0].skills } };
 
   const leagueIds = new Set(leaguesInPlay(state).map((l) => l.id));
   for (const c of WORLD.clubs.filter((x) => leagueIds.has(x.leagueId))) {
