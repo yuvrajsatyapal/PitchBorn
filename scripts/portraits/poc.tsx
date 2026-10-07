@@ -25,7 +25,7 @@ export const REP: Appearance = {
 };
 const AGE = 26;
 const KIT = "#b5232f";
-const REP_O = { collar: "ribbed" as Collar };
+export const REP_O = { collar: "ribbed" as Collar };
 const BALD_O = { ...REP_O, hairStyle: "none" };
 const TRIM = "#f1ead8";
 const BG = "#2f3e55";
@@ -34,13 +34,18 @@ let n = 0;
 const frame = (size: number, art: ReturnType<typeof createElement>, v = VIEW) =>
   renderToStaticMarkup(createElement("svg", { width: size, height: Math.round((size * v.h) / v.w), viewBox: `${v.x} ${v.y} ${v.w} ${v.h}` }, art));
 export const A = (a: Appearance, size: number, age = AGE) => frame(size, createElement(PortraitArt, { m: modelFor(a, age, KIT, TRIM, BG), uid: `a${n++}`, textured: size >= 96, lite: size < 96 }));
-export const B = (a: Appearance, size: number, o: { age?: number; kit?: string; collar?: Collar; bg?: string; hairStyle?: string; view?: { x: number; y: number; w: number; h: number } } = {}) =>
+export const B = (
+  a: Appearance,
+  size: number,
+  o: { age?: number; kit?: string; collar?: Collar; bg?: string; hairStyle?: string; silhouette?: boolean; view?: { x: number; y: number; w: number; h: number } } = {},
+) =>
   frame(
     size,
     createElement(PortraitNext, {
       m: { ...nextModelFor(a, o.age ?? AGE, o.kit ?? KIT, TRIM, o.bg ?? BG), ...(o.collar ? { collar: o.collar } : {}), ...(o.hairStyle ? { hairStyle: o.hairStyle } : {}) },
       uid: `b${n++}`,
       d: detailFor(size),
+      silhouette: o.silhouette,
     }),
     o.view ?? viewFor(detailFor(size)),
   );
