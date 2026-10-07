@@ -5,11 +5,12 @@
 import { coilyHair, type CoilyDesign } from "./coily";
 import type { HairArt, HairInput } from "./core";
 import { flowHair, type FlowDesign } from "./flow";
+import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
 import { locsHair, type LocsDesign } from "./locs";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
 
 export type { HairArt, HairInput } from "./core";
-export { HAIRLINES, hairline, type HairlineKind } from "./core";
+export { HAIRLINES, extentOf, hairline, type HairlineKind } from "./core";
 
 export interface HairStyleMeta {
   id: string;
@@ -26,13 +27,21 @@ export interface HairStyleMeta {
   supportsSecondaryColor: boolean;
   supportsHeadband: boolean;
   supportsRecedingHairline: boolean;
+  /** How the hair treats the ears (an ear stud is only drawn where the ear shows), and whether it brings its own band. */
+  ears: "visible" | "partial" | "covered";
+  supportsEarrings: boolean;
+  ownHeadband: boolean;
 }
 
-const meta = (m: Omit<HairStyleMeta, "supportsSecondaryColor" | "supportsHeadband" | "supportsRecedingHairline"> & Partial<HairStyleMeta>): HairStyleMeta => ({
+type Defaults = "supportsSecondaryColor" | "supportsHeadband" | "supportsRecedingHairline" | "ears" | "supportsEarrings" | "ownHeadband";
+const meta = (m: Omit<HairStyleMeta, Defaults> & Partial<HairStyleMeta>): HairStyleMeta => ({
   supportsSecondaryColor: false,
   supportsHeadband: false,
   supportsRecedingHairline: true,
+  ears: "visible",
+  ownHeadband: false,
   ...m,
+  supportsEarrings: m.supportsEarrings ?? (m.ears ?? "visible") !== "covered",
 });
 
 const TEXTURED_CROP: CropDesign = {
@@ -122,6 +131,28 @@ const CURLY_FADE: CoilyDesign = {
 // Thirteen major locks: 2 + 2 behind, 3 + 4 framing the face (the extra one on a seeded side), 2 over the forehead.
 const MEDIUM_DREADS: LocsDesign = { kind: "irregular", end: 324, fringe: 2, side: 3, back: 2, w: [12, 16.5] };
 
+// Fewer, much thicker locks than Medium Dreads, from a big crown: some arch out over it, some push out wide beside
+// the face, one hangs in front of a shoulder, the rest fall behind.
+const DUTCH_DREADS: LocsDesign = { kind: "irregular", end: 318, fringe: 2, side: 2, back: 2, w: [19, 26], cap: { top: 24, side: 14 }, spread: 30, forward: 1, rise: 1 };
+
+// A cloud far bigger than Medium Afro: it surrounds the whole head, covers the ears and continues behind the jaw.
+// Large lobes, a few big light groups, very few curls. Ends in the second colour (golden by default) when chosen.
+const LION_AFRO: CoilyDesign = {
+  kind: "rounded",
+  shape: "round",
+  top: 34,
+  side: 47,
+  sides: "full",
+  edge: { spacing: [13, 24], amp: [3, 6.5], big: 0.35 },
+  fringe: { spacing: [9, 15], amp: [1, 2.6] },
+  cluster: { r: [5, 8], lobes: 3, squash: 0.8 },
+  groups: 5,
+  curls: 4,
+  curlR: [2.2, 3.4],
+  mane: { low: (f) => f.ear.bot - 4, bottom: (f) => f.jawY + 24 },
+  rim: true,
+};
+
 const LONG_FLOW: FlowDesign = {
   kind: "straight",
   part: 7,
@@ -161,19 +192,28 @@ const CLASSIC_CURTAINS: FlowDesign = {
 export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => HairArt })[] = [
   { ...meta({ id: "shaved", name: "Shaved", category: "shaved", hairType: "none", length: "shaved", rarity: "common", minimumAge: 16, maximumAge: 45, eraWeight: { retro: 0.5, modern: 1 } }), draw: (i) => shavedHair(i) },
   { ...meta({ id: "textured-crop", name: "Short Textured", category: "crop", hairType: "straight", length: "short", rarity: "common", minimumAge: 16, maximumAge: 40, eraWeight: { retro: 0.4, modern: 1 }, supportsSecondaryColor: true }), draw: (i) => cropHair(i, TEXTURED_CROP) },
-  { ...meta({ id: "medium-afro", name: "Medium Afro", category: "afro", hairType: "coily", length: "medium", rarity: "uncommon", minimumAge: 16, maximumAge: 40, eraWeight: { retro: 1, modern: 0.7 }, supportsHeadband: true }), draw: (i) => coilyHair(i, MEDIUM_AFRO) },
-  { ...meta({ id: "medium-dreads", name: "Medium Dreads", category: "locs", hairType: "locs", length: "long", rarity: "uncommon", minimumAge: 17, maximumAge: 40, eraWeight: { retro: 0.8, modern: 1 }, supportsSecondaryColor: true, supportsHeadband: true }), draw: (i) => locsHair(i, MEDIUM_DREADS) },
-  { ...meta({ id: "long-flow", name: "Long Flow", category: "long", hairType: "straight", length: "long", rarity: "uncommon", minimumAge: 16, maximumAge: 38, eraWeight: { retro: 1, modern: 0.6 }, supportsHeadband: true }), draw: (i) => flowHair(i, LONG_FLOW) },
-  { ...meta({ id: "classic-curtains", name: "Classic Curtains", category: "retro", hairType: "straight", length: "medium", rarity: "uncommon", minimumAge: 16, maximumAge: 36, eraWeight: { retro: 1, modern: 0.4 } }), draw: (i) => flowHair(i, CLASSIC_CURTAINS) },
+  { ...meta({ id: "medium-afro", name: "Medium Afro", category: "afro", hairType: "coily", length: "medium", rarity: "uncommon", minimumAge: 16, maximumAge: 40, eraWeight: { retro: 1, modern: 0.7 }, supportsHeadband: true, ears: "partial" }), draw: (i) => coilyHair(i, MEDIUM_AFRO) },
+  { ...meta({ id: "medium-dreads", name: "Medium Dreads", category: "locs", hairType: "locs", length: "long", rarity: "uncommon", minimumAge: 17, maximumAge: 40, eraWeight: { retro: 0.8, modern: 1 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => locsHair(i, MEDIUM_DREADS) },
+  { ...meta({ id: "long-flow", name: "Long Flow", category: "long", hairType: "straight", length: "long", rarity: "uncommon", minimumAge: 16, maximumAge: 38, eraWeight: { retro: 1, modern: 0.6 }, supportsHeadband: true, ears: "covered" }), draw: (i) => flowHair(i, LONG_FLOW) },
+  { ...meta({ id: "classic-curtains", name: "Classic Curtains", category: "retro", hairType: "straight", length: "medium", rarity: "uncommon", minimumAge: 16, maximumAge: 36, eraWeight: { retro: 1, modern: 0.4 }, ears: "covered" }), draw: (i) => flowHair(i, CLASSIC_CURTAINS) },
   { ...meta({ id: "curly-fade", name: "Curly Fade", category: "fade", hairType: "curly", length: "short", rarity: "common", minimumAge: 16, maximumAge: 36, eraWeight: { retro: 0.3, modern: 1 }, supportsSecondaryColor: true }), draw: (i) => coilyHair(i, CURLY_FADE) },
   { ...meta({ id: "brazilian-crescent", name: "Brazilian Crescent", category: "iconic", hairType: "straight", length: "shaved", rarity: "legendary", minimumAge: 18, maximumAge: 34, eraWeight: { retro: 1, modern: 0.3 }, supportsRecedingHairline: false }), draw: (i) => crescentHair(i) },
   {
     ...meta({ id: "classic-mullet", name: "Classic Mullet", category: "mullet", hairType: "wavy", length: "medium", rarity: "rare", minimumAge: 17, maximumAge: 38, eraWeight: { retro: 1, modern: 0.3 }, supportsHeadband: true }),
     draw: (i) => flowHair(i, CLASSIC_MULLET),
   },
+  // Iconic: rare across the squad, each with a silhouette of its own.
+  { ...meta({ id: "frosted-faux-hawk", name: "Frosted Faux Hawk", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 0.6, modern: 1 }, supportsSecondaryColor: true, supportsHeadband: true }), draw: (i) => fauxHawkHair(i) },
+  { ...meta({ id: "long-headband-curls", name: "Long Headband Curls", category: "iconic", hairType: "curly", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.6 }, ears: "partial", ownHeadband: true }), draw: (i) => headbandCurlsHair(i) },
+  { ...meta({ id: "lion-afro", name: "Lion Afro", category: "iconic", hairType: "coily", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.7 }, supportsSecondaryColor: true, ears: "covered" }), draw: (i) => coilyHair(i, LION_AFRO) },
+  { ...meta({ id: "divine-ponytail", name: "Divine Ponytail", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.8, modern: 0.8 }, supportsRecedingHairline: true }), draw: (i) => ponytailHair(i) },
+  { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => locsHair(i, DUTCH_DREADS) },
 ];
 
 const BY_ID = new Map(HAIR_LIBRARY.map((h) => [h.id, h]));
+
+/** A design's metadata (undefined for ids without a new design). */
+export const hairMeta = (id: string): HairStyleMeta | undefined => BY_ID.get(id);
 
 /** New-technique hair for a design id; null means "use the current renderer". */
 export function drawHair(id: string, i: HairInput): HairArt | null {
@@ -190,4 +230,10 @@ export const POC_IDS: Partial<Record<number, string>> = {
   23: "long-flow",
   24: "classic-curtains",
   29: "classic-mullet",
+  39: "brazilian-crescent",
+  40: "frosted-faux-hawk",
+  41: "long-headband-curls",
+  42: "lion-afro",
+  43: "divine-ponytail",
+  44: "dutch-dreads",
 };

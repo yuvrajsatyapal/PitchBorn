@@ -32,13 +32,54 @@ export interface HairInput {
   recede: number;
   /** Player seed: small, fixed variations (lock curvature, fringe offset, temple recession). */
   seed: number;
+  /** Secondary (frosted tip) colour, if chosen, and the headband colour. */
+  tip: string | null;
+  band: string;
 }
 
-/** Layers a technique returns: behind the head and shirt, on the skin (inside the head clip), and in front. */
+/**
+ * Layers a technique returns, in drawing order: behind the head and shirt; on the skin (inside the head clip); the
+ * main hair over the face ("mid", under a headband); locks in front of a headband ("front"); and the style's own
+ * headband between the two when it has one. `extent` is the hair's outer half-width at a height (for a headband or
+ * anything else that wraps the hair); `ears` says how the style treats the ears.
+ */
 export interface HairArt {
   back?: ReactNode;
   onSkin?: ReactNode;
+  mid?: ReactNode;
   front?: ReactNode;
+  band?: ReactNode;
+  extent?: (y: number, s: 1 | -1) => number;
+  ears?: "visible" | "partial" | "covered";
+}
+
+/** Half-width of an outer silhouette (left -> over the top -> right) at height y, per side. */
+export function extentOf(outer: readonly Pt[]): (y: number, s: 1 | -1) => number {
+  const top = outer.reduce((k, p, i) => (p[1] < outer[k][1] ? i : k), 0);
+  const sides = { [-1]: outer.slice(0, top + 1).reverse(), [1]: outer.slice(top) } as Record<number, Pt[]>;
+  return (y, s) => {
+    const pts = sides[s];
+    let best = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1];
+      const b = pts[i];
+      if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1]) best = Math.max(best, Math.abs(lerp(a[0], b[0], (y - a[1]) / (b[1] - a[1])) - CX));
+    }
+    return best;
+  };
+}
+
+/** Height of the top of the skull at x (the upper outline), so crests and patches follow its curve. */
+export function skullTop(head: Head, x: number): number {
+  const s = x >= CX ? 1 : -1;
+  const pts = s > 0 ? head.rightPts : head.leftPts;
+  const dx = Math.abs(x - CX);
+  for (let i = 1; i < pts.length; i++) {
+    const a = Math.abs(pts[i - 1][0] - CX);
+    const b = Math.abs(pts[i][0] - CX);
+    if (b >= dx) return lerp(pts[i - 1][1], pts[i][1], b === a ? 0 : (dx - a) / (b - a));
+  }
+  return pts[pts.length - 1][1];
 }
 
 // ------------------------------------------------------------------ hairline
@@ -129,8 +170,8 @@ export function bumped(pts: Pt[], bumps: readonly Bump[], profile: (x: number) =
  * Rounded lobes of varied size and spacing along an edge, for curly and coily silhouettes. Spacing, height and the
  * odd larger lobe come from the seed, so the edge never reads as a regular scallop.
  */
-export function lobedEdge(pts: Pt[], o: { seed: number; spacing: readonly [number, number]; amp: readonly [number, number]; big?: number; sign?: number }): Pt[] {
-  const step = 1.4;
+export function lobedEdge(pts: Pt[], o: { seed: number; spacing: readonly [number, number]; amp: readonly [number, number]; big?: number; sign?: number; step?: number }): Pt[] {
+  const step = o.step ?? 1.4;
   const res = resample(pts, step);
   const len = Math.max(1, (res.length - 1) * step);
   const bumps: Bump[] = [];
@@ -279,6 +320,46 @@ export function bend(pts: readonly Pt[], seed: number, amp: number): Pt[] {
   });
 }
 
+/**
+ * A ringlet (a curly lock seen from the front): its centre line swings from side to side, more towards the end, and
+ * its width swells where a coil faces out and pinches between coils. Returns the outline and, for shading, where each
+ * coil turns under (a point on the lock and the direction across it).
+ */
+export function ringlet(path: readonly Pt[], o: { w: number; turns: number; amp: number; seed: number; tip?: number }): { outline: Pt[]; turns: { p: Pt; n: Pt; hw: number }[] } {
+  const line = resampleN(along(path, 6), 44);
+  const n = line.length;
+  const ph = hash01(o.seed, 7) * 6.28;
+  const tip = o.tip ?? 0.45;
+  const L: Pt[] = [];
+  const R: Pt[] = [];
+  const turns: { p: Pt; n: Pt; hw: number }[] = [];
+  let prev = 0;
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1);
+    const t = unit(sub(line[Math.min(n - 1, i + 1)], line[Math.max(0, i - 1)]));
+    const nr: Pt = [-t[1], t[0]];
+    const a = u * o.turns * Math.PI * 2 + ph;
+    const c = add(line[i], scale(nr, o.amp * Math.sin(a) * (0.35 + 0.65 * u)));
+    const hw = (o.w / 2) * lerp(1, tip, u) * (0.82 + 0.22 * Math.cos(a)) * (u < 0.08 ? 0.75 + 3 * u : 1);
+    L.push(add(c, scale(nr, hw)));
+    R.push(add(c, scale(nr, -hw)));
+    const k = Math.floor((a - Math.PI) / (Math.PI * 2));
+    if (i > 2 && k !== prev && u < 0.95) turns.push({ p: c, n: nr, hw });
+    prev = k;
+  }
+  // A rounded end.
+  const t = unit(sub(line[n - 1], line[n - 2]));
+  const nr: Pt = [-t[1], t[0]];
+  const end = scale(add(L[n - 1], R[n - 1]), 0.5);
+  const hwEnd = dist(L[n - 1], R[n - 1]) / 2;
+  const cap: Pt[] = [];
+  for (let k = 1; k < 5; k++) {
+    const th = (Math.PI * k) / 5;
+    cap.push(add(end, add(scale(nr, hwEnd * Math.cos(th)), scale(t, hwEnd * Math.sin(th)))));
+  }
+  return { outline: [...L, ...cap, ...R.reverse()], turns };
+}
+
 /** The same outline moved: a contact shadow under an overlapping lock, or a cast shadow on the skin. */
 export const offset = (pts: readonly Pt[], dx: number, dy: number): Pt[] => pts.map((p) => P(p[0] + dx, p[1] + dy));
 
@@ -399,6 +480,18 @@ export function sideRegion(temple: Pt[], s: 1 | -1, y0: number): Pt[] {
   const t = temple.filter((p) => p[1] >= y0);
   const yB = last(t)[1];
   return [...t, P(CX + s * 160, yB + 2), P(CX + s * 160, y0 - 4)];
+}
+
+/** One shape used both as a clip and as a fill, written once: fill it with `<use href={`#${id}s`} />`. */
+export function ShapeDefs({ id, d }: { id: string; d: string }) {
+  return (
+    <defs>
+      <path id={`${id}s`} d={d} />
+      <clipPath id={id}>
+        <use href={`#${id}s`} />
+      </clipPath>
+    </defs>
+  );
 }
 
 /** A clip path made of several shapes (their union). */

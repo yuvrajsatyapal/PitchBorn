@@ -59,7 +59,7 @@ export interface CropDesign {
  * Separations run back towards the crown; light sits in short groups on the upper left where the hair turns down.
  */
 export function cropHair(i: HairInput, o: CropDesign): HairArt {
-  const { f, head, color, skin, uid, d, recede, seed } = i;
+  const { f, head, color, skin, uid, d, recede, seed, tip } = i;
   const T = hairTones(color);
   const hl = hairline(f, head, o.kind, recede, seed);
   const v = (k: number, span: number) => (hash01(seed + 29, k) - 0.5) * 2 * span;
@@ -182,7 +182,7 @@ export function cropHair(i: HairInput, o: CropDesign): HairArt {
         </g>
       </g>
     ),
-    front: (
+    mid: (
       <g>
         <ClipDefs id={clip} shapes={[regionD, ...lockD]} />
         <ClipDefs id={`${clip}m`} shapes={[regionD]} />
@@ -202,6 +202,14 @@ export function cropHair(i: HairInput, o: CropDesign): HairArt {
           {lights.length > 0 && <path d={lights.join("")} fill={T.light} opacity={0.8} />}
           {dim.length > 0 && <path d={dim.join("")} fill={mixHex(T.base, T.light, 0.45)} opacity={0.55} />}
         </g>
+        {/* Frosted tips: the ends of the top and of each fringe lock in the second colour. */}
+        {tip && (
+          <g clipPath={`url(#${clip})`}>
+            <path d={strokeLine(outer.filter((p) => p[1] < yS - 6), { w: 12, start: 0.6, end: 0.6, seed: seed + 8 })} fill={tip} opacity={0.9} />
+            <path d={locks.map((l) => ring([P(last(l.path)[0] - l.w, lerp(l.path[0][1], last(l.path)[1], 0.55)), P(last(l.path)[0] + l.w, lerp(l.path[0][1], last(l.path)[1], 0.55)), P(last(l.path)[0] + l.w, last(l.path)[1] + 8), P(last(l.path)[0] - l.w, last(l.path)[1] + 8)])).join("")} fill={tip} opacity={0.85} clipPath={`url(#${clip}l)`} />
+          </g>
+        )}
+        {tip && <ClipDefs id={`${clip}l`} shapes={lockD} />}
         {/* The outer silhouette is the only heavy line; it breaks once where the light is strongest. */}
         <path d={silhouetteInk(outer, d, seed + 5, [[0, 0.3], [0.36, 1]])} fill={INK} />
         {cross && (
@@ -256,7 +264,7 @@ export function crescentHair(i: HairInput): HairArt {
   }
   return {
     onSkin: shaved.onSkin,
-    front: (
+    mid: (
       <g>
         <ClipDefs id={clip} shapes={[patchD]} />
         {d > 0 && <path d={ring(halo)} fill={T.base} opacity={0.35} />}
