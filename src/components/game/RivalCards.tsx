@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Badge, Card } from "@/components/ui";
+import { careerHonours } from "@/engine/awards/honours";
 import { headToHeadLine, intensityLabel, primaryRival, rivalsByIntensity, storyline } from "@/engine/career/rivalry/engine";
 import { clubName } from "@/engine/data/world";
 import { ageOf } from "@/engine/players/generate";
@@ -98,6 +99,21 @@ export function RivalStatsCard({ g }: { g: GameState }) {
             <div className="text-[11px] font-bold uppercase tracking-wide text-muted">{label}</div>
             <div className="scoreboard text-xl">{v}</div>
           </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+/** Profile: the major season honours, counted. Hidden until there is something to show. */
+export function HonoursCard({ g }: { g: GameState }) {
+  const honours = careerHonours(g);
+  if (!honours.length) return null;
+  return (
+    <Card title="Career honours" action={<Link href="/play/awards" className="text-xs font-bold underline">All awards ›</Link>}>
+      <div className="flex flex-wrap gap-2">
+        {honours.map((h) => (
+          <Badge key={h.id} tone="plum">{h.count}× {h.name}</Badge>
         ))}
       </div>
     </Card>

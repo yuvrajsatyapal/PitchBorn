@@ -6,6 +6,7 @@
 import { fromLegacy, isLegacyAppearance, sanitizeAppearance } from "../engine/appearance/generate";
 import type { GameState, LegacyAppearance } from "../engine/types";
 import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
+import { sanitizeCeremony } from "../engine/awards/sanitize";
 import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
@@ -121,6 +122,14 @@ MIGRATIONS[7] = (s) => {
   return s;
 };
 
+MIGRATIONS[8] = (s) => {
+  // v8 → v9: the awards ceremony. Old saves have no ceremony and no missed nominations.
+  const user = (s.user ?? {}) as Record<string, unknown>;
+  user.awardNoms ??= [];
+  s.user = user;
+  return s;
+};
+
 export class MigrationError extends Error {}
 
 export function migrateState(raw: RawState): GameState {
@@ -141,6 +150,11 @@ export function migrateState(raw: RawState): GameState {
     sanitizeSagas(state);
   } catch {
     if (state.user) state.user.sagas = [];
+  }
+  try {
+    sanitizeCeremony(state);
+  } catch {
+    delete state.ceremony;
   }
   try {
     sanitizeRivalry(state);

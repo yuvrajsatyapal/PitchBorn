@@ -1,6 +1,7 @@
 "use client";
 import { MobileAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
+import Link from "next/link";
 import { Badge, Card, Empty, PageTitle, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import { clubName, countryName } from "@/engine/data/world";
@@ -16,6 +17,12 @@ export default function Awards() {
   const majors = ua.filter((a) => a.id !== "totw");
   const counts = new Map<string, number>();
   for (const a of majors) counts.set(a.name, (counts.get(a.name) ?? 0) + 1);
+  const noms = g.user.awardNoms ?? [];
+  // One list of seasons: what was won and what was narrowly missed, newest first.
+  const history = [
+    ...majors.map((a) => ({ season: a.season, name: a.name, scope: a.scope, result: "Winner", detail: a.value })),
+    ...noms.map((n) => ({ season: n.season, name: n.name, scope: n.scope, result: n.place === 2 ? "Runner-up" : "Nominee", detail: undefined as string | undefined })),
+  ].sort((a, b) => b.season - a.season);
   const worldWinners = g.archive.flatMap((a) => a.awards.filter((x) => x.id === "golden-pitch" || x.id === "rising-star").map((x) => ({ ...x })));
   return (
     <div className="grid gap-4">
@@ -45,12 +52,14 @@ export default function Awards() {
             ))}
             {totw > 0 && <Badge tone="sky">{totw}× Team of the Week</Badge>}
           </div>
-          {majors.length ? (
+          {history.length ? (
             <ul className="grid gap-1 text-sm">
-              {[...majors].reverse().map((a, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="w-16 text-xs text-muted">{seasonLabel(a.season)}</span>
-                  <b>{a.name}</b> <span className="text-xs text-ink-2">{a.scope}{a.value ? ` · ${a.value}` : ""}</span>
+              {history.map((a, i) => (
+                <li key={i} className="flex flex-wrap items-center gap-x-2">
+                  <span className="w-16 shrink-0 text-xs text-muted">{seasonLabel(a.season)}</span>
+                  <b>{a.name}</b>
+                  <Badge tone={a.result === "Winner" ? "pitch" : "paper"}>{a.result}</Badge>
+                  <span className="text-xs text-ink-2">{a.scope}{a.detail ? ` · ${a.detail}` : ""}</span>
                 </li>
               ))}
             </ul>
@@ -59,6 +68,12 @@ export default function Awards() {
           )}
         </Card>
       </div>
+      {g.ceremony && (
+        <Card title={`${seasonLabel(g.ceremony.season)} Awards Night`} tone="plum">
+          <p className="mb-2 text-sm">{g.ceremony.status === "completed" ? `The ${g.ceremony.leagueName} awards have been presented.` : `The ${g.ceremony.leagueName} awards are waiting to be presented.`}</p>
+          <Link href="/play/ceremony" className="pb-btn bg-card px-4 text-sm">{g.ceremony.status === "completed" ? "View the results" : "Open Awards Night"}</Link>
+        </Card>
+      )}
       <MobileAdSlot placementId="mobile-inline" />
       <Card title="World honours roll">
         {worldWinners.length ? (

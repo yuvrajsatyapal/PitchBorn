@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
-import { Badge, Bar, Button, Card, FormDots, Rating } from "@/components/ui";
-import { formatTurnDate } from "@/engine/calendar";
+import { Badge, Bar, Button, Card, FormDots, LinkButton, Rating } from "@/components/ui";
+import { formatTurnDate, seasonLabel } from "@/engine/calendar";
 import { clubName, staticClub } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { formatMoney } from "@/engine/players/economy";
@@ -213,3 +213,15 @@ export function TeamForm({ form }: { form: ("W" | "D" | "L")[] }) {
 }
 
 export { Rating };
+
+/** Prompt on the dashboard while the season's awards are waiting to be presented. */
+export function AwardsNightCard({ g }: { g: GameState }) {
+  const c = g.ceremony;
+  if (!c || c.status === "completed") return null;
+  return (
+    <Card tone="sun" title="Awards Night">
+      <p className="mb-3 text-sm">The {c.leagueName} awards for {seasonLabel(c.season)} are ready. {c.status === "in-progress" ? "You left the ceremony part-way through." : "Watch them presented, or skip to the results."}</p>
+      <LinkButton href="/play/ceremony" tone="pitch">{c.status === "in-progress" ? "Resume ceremony" : "Open Awards Night"}</LinkButton>
+    </Card>
+  );
+}

@@ -1,6 +1,4 @@
 import { clubName, country, leaguesInPlay, staticLeague } from "../data/world";
-import { keeperScore } from "../players/keeper";
-import { noteAwardDuel } from "../career/rivalry/engine";
 import { rememberAward, rememberTrophy } from "../memory/detect";
 import { overallFor, positionGroup } from "../players/attributes";
 import { ageOf, avgRating, emptyStat, addStat } from "../players/generate";
@@ -79,61 +77,10 @@ export function playerOfTheMonth(state: GameState): void {
   for (const p of Object.values(state.players)) p.month = { apps: 0, ratingSum: 0, goals: 0, assists: 0 };
 }
 
-function compStat(p: Player, compId: string): StatLine {
-  return p.season[compId] ?? emptyStat();
-}
-
 export function totalSeason(p: Player, filter?: (compId: string) => boolean): StatLine {
   const s = emptyStat();
   for (const k in p.season) if (!filter || filter(k)) addStat(s, p.season[k]);
   return s;
-}
-
-/** End-of-season league awards. Returns archive-friendly records. */
-export function seasonAwards(state: GameState): AwardRecord[] {
-  const out: AwardRecord[] = [];
-  for (const l of leaguesInPlay(state)) {
-    const compId = leagueCompId(l.id, state.season);
-    const comp = state.competitions[compId];
-    if (!comp) continue;
-    const players = leaguePlayers(state, l.id);
-    const table = comp.table ?? [];
-    const posOf = (clubId: string | null) => (clubId ? table.findIndex((r) => r.team === clubId) + 1 : 20);
-    const scored = players
-      .map((p) => {
-        const s = compStat(p, compId);
-        const apps = s.apps;
-        const pos = posOf(p.clubId);
-        const gk = p.position === "GK";
-        const role = gk ? keeperScore(s) * 0.6 : s.goals * 0.55 + s.assists * 0.35 + s.cleanSheets * 0.25;
-        const score = apps < 12 ? 0 : avgRating(s) * 10 * Math.min(1, apps / 30) + role + (table.length - pos) * 0.25;
-        return { p, s, score };
-      })
-      .filter((x) => x.score > 0);
-    if (!scored.length) continue;
-    const byScore = [...scored].sort((a, b) => b.score - a.score);
-    const pots = byScore[0];
-    if (byScore[1]) {
-      const gap = pots.score - byScore[1].score;
-      noteAwardDuel(state, "pots", "Player of the Season", pots.p.id, byScore[1].p.id, gap < 1.5 ? 1 : gap < 4 ? 3 : 9);
-    }
-    const major = l.tier === 1 || players.some((p) => p.isUser);
-    out.push(record(state, { id: "pots", name: "Player of the Season", scope: l.name, playerId: pots.p.id, clubId: pots.p.clubId, value: `${pots.s.goals}G ${pots.s.assists}A · avg ${avgRating(pots.s).toFixed(2)}` }, { news: major ? `${fullName(pots.p)} is the ${l.name} Player of the Season` : undefined }));
-    const young = scored.filter((x) => ageOf(x.p, state.season) <= 21).sort((a, b) => b.score - a.score)[0];
-    if (young) out.push(record(state, { id: "ypots", name: "Young Player of the Season", scope: l.name, playerId: young.p.id, clubId: young.p.clubId, value: `Age ${ageOf(young.p, state.season)}` }));
-    const byGoals = [...scored].sort((a, b) => b.s.goals - a.s.goals || a.s.minutes - b.s.minutes);
-    const scorer = byGoals[0];
-    if (scorer && byGoals[1] && scorer.s.goals > 0) noteAwardDuel(state, "topscorer", "Golden Boot", scorer.p.id, byGoals[1].p.id, scorer.s.goals - byGoals[1].s.goals);
-    if (scorer && scorer.s.goals > 0) out.push(record(state, { id: "topscorer", name: "Golden Boot", scope: l.name, playerId: scorer.p.id, clubId: scorer.p.clubId, value: `${scorer.s.goals} goals` }, { news: major ? `${fullName(scorer.p)} wins the ${l.name} Golden Boot (${scorer.s.goals})` : undefined }));
-    const assister = [...scored].sort((a, b) => b.s.assists - a.s.assists)[0];
-    if (assister && assister.s.assists > 0) out.push(record(state, { id: "topassist", name: "Playmaker Award", scope: l.name, playerId: assister.p.id, clubId: assister.p.clubId, value: `${assister.s.assists} assists` }));
-    const glove = scored.filter((x) => x.p.position === "GK").sort((a, b) => b.s.cleanSheets - a.s.cleanSheets || keeperScore(b.s) - keeperScore(a.s))[0];
-    if (glove && l.tier === 1) out.push(record(state, { id: "goldenglove", name: "Golden Glove", scope: l.name, playerId: glove.p.id, clubId: glove.p.clubId, value: `${glove.s.cleanSheets} clean sheets` }));
-    const xi = pickXI(scored);
-    const user = xi.find((x) => x.p.isUser);
-    if (user) out.push(record(state, { id: "tots", name: "Team of the Season", scope: l.name, playerId: user.p.id, clubId: user.p.clubId }));
-  }
-  return out;
 }
 
 /** Global end-of-year awards (after summer tournaments). */

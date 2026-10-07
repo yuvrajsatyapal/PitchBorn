@@ -252,6 +252,38 @@ export function rememberAward(state: GameState, id: string, name: string, scope:
   return recordMemory(state, { kind: "award", clubId, tags: ["award", id], factors: f, key: `${id}-${scope}`, data: { award: id, name, scope } });
 }
 
+const SEASON_AWARD_POINTS: Record<string, number> = { pots: 40, ypots: 22, topscorer: 36, topassist: 16, goldenglove: 30, breakthrough: 24, tots: 10 };
+
+export interface AwardContext {
+  /** The first time the player has won this award. */
+  first: boolean;
+  /** Consecutive seasons including this one. */
+  streak: number;
+  /** Total wins including this one. */
+  total: number;
+  overRival?: string;
+  /** Won on the same night as at least two other individual awards. */
+  sweep?: boolean;
+}
+
+/**
+ * A season award as a memory. Ordinary repeats stay in career history; firsts, streaks, wins over a rival and
+ * sweeps make the story. The existing importance system decides whether it is kept.
+ */
+export function rememberSeasonAward(state: GameState, award: { id: string; name: string; scope: string; clubId?: string | null }, ctx: AwardContext): Memory | null {
+  const base = SEASON_AWARD_POINTS[award.id];
+  if (!base) return null;
+  const u = userPlayer(state);
+  const f = new Factors().add(award.name, base);
+  f.add("Your first", ctx.first ? 16 : 0);
+  f.add(ctx.streak >= 3 ? `${ctx.streak} in a row` : "Back to back", ctx.streak >= 3 ? 14 + Math.min(12, (ctx.streak - 3) * 4) : ctx.streak === 2 ? 6 : 0);
+  f.add("A landmark total", ctx.total >= 5 && ctx.total % 5 === 0 ? 10 : 0);
+  f.add("Won over your rival", ctx.overRival ? 12 : 0);
+  f.add("An awards sweep", ctx.sweep ? 14 : 0);
+  f.add("Young talent", ageOf(u, state.season) <= 21 && (ctx.first || base >= 22) ? 8 : 0);
+  return recordMemory(state, { kind: "award", clubId: award.clubId, tags: ["award", award.id, ...(ctx.overRival ? ["rivalry"] : [])], factors: f, key: `${award.id}-${award.scope}`, data: { award: award.id, name: award.name, scope: award.scope, streak: ctx.streak, total: ctx.total } });
+}
+
 export function rememberRecord(state: GameState, label: string, value: number): Memory | null {
   const f = new Factors().add("Record broken", 46 + Math.min(20, Math.log10(Math.max(1, value)) * 6));
   const u = userPlayer(state);

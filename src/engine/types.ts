@@ -320,6 +320,80 @@ export interface TimelineEvent {
   detail?: string;
 }
 
+export type CeremonyStatus = "not-ready" | "ready" | "in-progress" | "completed";
+
+/** One player's season in the numbers the ceremony shows (never the internal scoring). */
+export interface AwardNominee {
+  playerId: PlayerId;
+  clubId: ClubId | null;
+  position: Position;
+  age: number;
+  apps: number;
+  goals: number;
+  assists: number;
+  cleanSheets: number;
+  saves: number;
+  avgRating: number;
+  /** A football reason for the nomination, e.g. "31 apps · 14 clean sheets · 7.4 avg rating". */
+  reason: string;
+}
+
+export interface AwardResult {
+  id: string;
+  name: string;
+  /** What kind of award: a pure statistic, a positional/special award, or a major judged one. */
+  tier: "statistical" | "special" | "major";
+  /** The competition it belongs to. The first ceremony covers the user's domestic league; the shape allows others. */
+  scope: string;
+  leagueId: string;
+  compId: string;
+  winnerId: PlayerId;
+  /** Best first. The winner is `nominees[0]`; stored once and never recalculated. */
+  nominees: AwardNominee[];
+  /** How close the winner was to the runner-up: 1 = a whisker, 3 = close, 9 = clear. */
+  margin: number;
+  /** How a tie in a statistical award was settled, if there was one. */
+  tiebreak?: string;
+}
+
+export interface TeamOfSeasonSlot {
+  slot: string;
+  label: string;
+  playerId: PlayerId;
+  clubId: ClubId | null;
+  position: Position;
+  reason: string;
+}
+
+/** The end-of-season awards: calculated once from final results, presented by the ceremony, applied once. */
+export interface SeasonCeremony {
+  season: number;
+  leagueId: string;
+  leagueName: string;
+  status: CeremonyStatus;
+  /** How far through the scenes the player has got, so a reload resumes in place. */
+  step: number;
+  results: AwardResult[];
+  team: TeamOfSeasonSlot[];
+  formation: string;
+  /** Winners of the other leagues' awards: no ceremony for them, but their careers feel the same consequences. */
+  others: { id: string; name: string; scope: string; leagueId: string; playerId: PlayerId }[];
+  /** Career consequences (reputation, memories, history, rivalry, news) have been applied. */
+  applied: boolean;
+  /** Presentation only: how it was completed. Both give an identical world. */
+  how?: "watched" | "skipped" | "auto";
+  turnIndex: number;
+}
+
+export interface AwardNomination {
+  season: number;
+  id: string;
+  name: string;
+  scope: string;
+  /** 2 = runner-up, 3 and 4 = nominee. */
+  place: number;
+}
+
 export interface AwardRecord {
   season: number;
   id: string;
@@ -328,6 +402,8 @@ export interface AwardRecord {
   playerId: PlayerId;
   clubId?: ClubId | null;
   value?: string;
+  /** Winner's age when awarded (for youngest/oldest winner records). */
+  age?: number;
 }
 
 export interface TrophyRecord {
@@ -688,6 +764,8 @@ export interface UserCareer {
   sagas: TransferSaga[];
   /** Emergent player rivalries. */
   rivalry: RivalryState;
+  /** Season-award nominations the player missed out on (wins are in `awards`). Optional for old saves. */
+  awardNoms?: AwardNomination[];
   decisions: CareerDecision[];
   awards: AwardRecord[];
   trophies: TrophyRecord[];
@@ -787,6 +865,8 @@ export interface GameState {
   user: UserCareer;
   news: NewsItem[];
   archive: SeasonArchive[];
+  /** The latest end-of-season awards ceremony. Optional so old saves load. */
+  ceremony?: SeasonCeremony;
   records: WorldRecord[];
   /** Hall of fame of retired notable NPCs (name + totals) to keep records after removal. */
   legends: { id: PlayerId; name: string; nationality: CountryCode; goals: number; apps: number; caps: number; peak: number; retiredSeason: number }[];

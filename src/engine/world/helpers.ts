@@ -1,7 +1,7 @@
 import { Rng } from "../rng";
 import type { ClubState, GameState, NewsItem, Player, TimelineEvent } from "../types";
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export function nextId(state: GameState, prefix: string): string {
   state.idCounter++;

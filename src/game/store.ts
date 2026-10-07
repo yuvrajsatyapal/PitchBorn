@@ -6,6 +6,7 @@
  */
 import { create } from "zustand";
 import { BALANCE } from "@/engine/balance";
+import { completeCeremony, setCeremonyStep, startCeremony } from "@/engine/awards/ceremony";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { resolveDecision } from "@/engine/career/events";
 import { negotiate, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
@@ -52,6 +53,10 @@ interface GameStore {
   setTraining: (plan: TrainingPlan) => void;
   negotiate: (offerId: string, action: NegotiationAction) => string;
   decide: (decisionId: string, optionId: string) => void;
+  /** Awards night: presentation only. Watching and skipping end in the same place. */
+  ceremonyStart: () => void;
+  ceremonyStep: (step: number) => void;
+  ceremonyFinish: (how: "watched" | "skipped") => Promise<void>;
   transferRequest: (on: boolean) => void;
   setWantsLoan: (on: boolean) => void;
   askRest: () => void;
@@ -232,6 +237,29 @@ export const useGame = create<GameStore>((set, get) => ({
     syncSagas(g);
     get().bump();
     get().notify(msg);
+  },
+
+  ceremonyStart: () => {
+    const g = get().game;
+    if (!g || !startCeremony(g)) return;
+    get().bump();
+    void get().save();
+  },
+
+  ceremonyStep: (step) => {
+    const g = get().game;
+    if (!g) return;
+    setCeremonyStep(g, step);
+    get().bump();
+    void get().save();
+  },
+
+  ceremonyFinish: async (how) => {
+    const g = get().game;
+    if (!g) return;
+    completeCeremony(g, how);
+    get().bump();
+    await get().save();
   },
 
   transferRequest: (on) => {

@@ -9,7 +9,9 @@
  */
 import { BALANCE } from "../balance";
 import { isInternationalTurn, isMonthEnd, isTransferWindow, seasonLabel, tournamentFor, upcomingWindow } from "../calendar";
-import { awardTrophy, playerOfTheMonth, seasonAwards, teamOfTheWeek, totalSeason, worldAwards } from "./awards";
+import { AWARD_RECORD_PREFIX } from "../awards/records";
+import { prepareSeasonAwards, settleCeremony } from "../awards/ceremony";
+import { awardTrophy, playerOfTheMonth, teamOfTheWeek, totalSeason, worldAwards } from "./awards";
 import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
@@ -295,6 +297,7 @@ export interface AdvanceReport {
 /** Simulate the rest of the current week and move to the next one. */
 export function advanceTurn(state: GameState): AdvanceReport {
   if (state.user.retired) return { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
+  settleCeremony(state);
   for (const pm of [...state.pending]) simUserMatch(state, pm.fixtureId);
   const report: AdvanceReport = { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
   withRng(state, (rng) => {
@@ -420,7 +423,8 @@ function updateRecords(state: GameState): void {
       noteRecord(state, r.playerId, false, r.label);
     }
   }
-  state.records = records;
+  // Award records are kept separately and refreshed when the awards are given out.
+  state.records = [...records, ...state.records.filter((r) => r.id.startsWith(AWARD_RECORD_PREFIX))];
 }
 
 function seasonEnd(state: GameState, rng: Rng): void {
@@ -443,7 +447,7 @@ function seasonEnd(state: GameState, rng: Rng): void {
     }
   }
   awardCompletedTrophies(state);
-  archive.awards = seasonAwards(state);
+  archive.awards = prepareSeasonAwards(state);
   for (const comp of Object.values(state.competitions)) {
     if (comp.season === state.season && comp.winner && comp.kind !== "international") archive.champions[comp.id] = { name: comp.name, winner: comp.winner, runnerUp: comp.runnerUp };
   }
@@ -563,6 +567,7 @@ export function retireUser(state: GameState, reason = "You announce your retirem
   }
   u.retired = true;
   u.retiredSeason = state.season;
+  settleCeremony(state);
   addTimeline(state, { kind: "retirement", title: "Retired from professional football", detail: reason });
   addNews(state, { kind: "career", title: "End of an era", body: reason, important: true });
   u.legacy = computeLegacy(state);

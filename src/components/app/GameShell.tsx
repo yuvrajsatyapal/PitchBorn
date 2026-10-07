@@ -7,6 +7,7 @@ import { Logo } from "@/components/art/Logo";
 import { Crest } from "@/components/art/Crest";
 import { Button, LinkButton, Modal } from "@/components/ui";
 import { formatTurnDate, isTransferWindow, phaseOf, seasonLabel, weeksToNewYear, weeksToNextMonth, windowName } from "@/engine/calendar";
+import { ceremonyPending } from "@/engine/awards/ceremony";
 import { BALANCE } from "@/engine/balance";
 import { clubName } from "@/engine/data/world";
 import { useGame, useGameState } from "@/game/store";
@@ -35,6 +36,14 @@ function ContinueButton({ compact = false }: { compact?: boolean }) {
         <span aria-hidden>⚽</span>
         <span className="hidden sm:inline">Match day{pending > 1 ? ` (${pending})` : ""}</span>
         <span className="sm:hidden">Match</span>
+      </Button>
+    );
+  }
+  // The season is over and the awards are ready: carrying on goes through Awards Night, where they can be skipped.
+  if (ceremonyPending(game) && game.turn > BALANCE.calendar.endOfSeasonTurn) {
+    return (
+      <Button tone="sun" size={compact ? "sm" : "md"} onClick={() => router.push("/play/ceremony")} disabled={pathname === "/play/ceremony/"} data-testid="awards-night">
+        <span aria-hidden>🏆</span> Awards night
       </Button>
     );
   }

@@ -525,15 +525,22 @@ export function noteAwardDuel(state: GameState, awardId: string, awardName: stri
   const me = userPlayer(state);
   const other = state.players[winnerId === uid ? runnerUpId : winnerId];
   if (!relevant(state, me, other)) return;
-  const weight = awardId === "topscorer" ? 8 : awardId === "pots" ? 7 : 4;
-  const points = weight * (margin <= 1 ? 1.5 : margin <= 3 ? 1.2 : 1) * (0.8 + profileFactor(state, me, other) * 0.2);
   const won = winnerId === uid;
   const name = fullName(other);
+  const existing = rivalFor(state, other.id);
+  // Repeated award competition with the same person matters more, and so does a result that went the same way again.
+  const before = existing ? existing.events.filter((e) => e.kind === "award" && e.text.includes(awardName)) : [];
+  const repeat = before.length ? 1 + Math.min(0.5, before.length * 0.2) : 1;
+  const weight = awardId === "topscorer" ? 8 : awardId === "pots" ? 7 : 4;
+  const points = weight * (margin <= 1 ? 1.5 : margin <= 3 ? 1.2 : 1) * (0.8 + profileFactor(state, me, other) * 0.2) * repeat;
   const text = won ? `You edged ${name} to the ${awardName}.` : `${name} beat you to the ${awardName}.`;
   addEvidence(state, other, { points, cause: "award", text });
   const rv = rivalFor(state, other.id);
   if (rv && live(rv)) {
-    addNews(state, { kind: "career", title: won ? `You beat ${name} to the ${awardName}` : `${name} pips you to the ${awardName}`, body: "The battle between rivals went to the wire.", important: true });
+    const timesBeaten = rv.events.filter((e) => e.kind === "award" && e.text.includes("beat you") && e.text.includes(awardName)).length;
+    const title = won ? `You beat ${name} to the ${awardName}` : timesBeaten >= 2 ? `${name} takes the ${awardName} off you again` : `${name} pips you to the ${awardName}`;
+    const body = !won && timesBeaten >= 2 ? `For the ${timesBeaten === 2 ? "second" : `${timesBeaten}th`} time you finish behind your career rival in the ${awardName} race.` : margin <= 1 ? "The battle between rivals went to the wire." : "The rivalry has another chapter.";
+    addNews(state, { kind: "career", title, body, important: true });
     const f = new Factors().add("An award decided between rivals", Math.min(26, points * 2.2 + rv.intensity * 0.1));
     recordMemory(state, { kind: "rivalry", tags: ["rivalry", "award"], factors: f, key: `${awardId}-${other.id}`, data: { rival: other.id, name, event: "award", won, award: awardName } });
   }
@@ -628,6 +635,7 @@ export function rivalryStory(state: GameState): string | null {
   const best = [...rivalryOf(state).rivals].sort((a, b) => b.peak - a.peak)[0];
   if (!best || best.peak < 40) return null;
   const h = best.h2h;
-  return `Defining Rival — ${best.name}. ${h.meetings ? `${h.meetings} meetings (${h.wins}W ${h.draws}D ${h.losses}L), ${h.myGoals}–${h.theirGoals} in goals. ` : ""}${causeSummary(best)}`;
+  const battles = best.events.filter((e) => e.kind === "award").length;
+  return `Defining Rival — ${best.name}. ${battles >= 2 ? `${battles} award battles. ` : ""}${h.meetings ? `${h.meetings} meetings (${h.wins}W ${h.draws}D ${h.losses}L), ${h.myGoals}–${h.theirGoals} in goals. ` : ""}${causeSummary(best)}`;
 }
 

@@ -4,6 +4,7 @@ import { ageOf } from "../players/generate";
 import type { GameState, LegacyResult } from "../types";
 import { identityOf } from "../traits/identity";
 import { userPlayer } from "../world/helpers";
+import { honourStories } from "../awards/honours";
 import { rivalryStory } from "./rivalry/engine";
 
 export const LEGACY_TIERS: [number, string][] = [
@@ -43,6 +44,7 @@ export function careerStories(state: GameState): string[] {
   const majorTournament = u.trophies.some((t) => t.kind === "international");
   const serious = u.injuryHistory.filter((i) => i.weeks >= 12);
 
+  stories.push(...honourStories(state));
   const rivalStory = rivalryStory(state);
   if (rivalStory) stories.push(rivalStory);
   if (early || u.awards.some((a) => a.id === "rising-star")) stories.push("Wonderkid — a teenage sensation who announced themselves early.");
@@ -92,7 +94,7 @@ export function computeLegacy(state: GameState): LegacyResult {
   add(`${u.trophies.length} trophies`, trophyPts);
   const awardPts: Record<string, number> = {
     "golden-pitch": 40, "golden-pitch-podium": 12, "rising-star": 10, pots: 10, ypots: 4, topscorer: 8, topassist: 4, goldenglove: 6,
-    "world-glove": 15, tots: 3, potm: 1, totw: 0.15,
+    "world-glove": 15, breakthrough: 6, tots: 3, potm: 1, totw: 0.15,
   };
   const awards = u.awards.reduce((s, a) => s + (awardPts[a.id] ?? 1), 0);
   add(`${u.awards.filter((a) => a.id !== "totw").length} individual awards`, awards);
