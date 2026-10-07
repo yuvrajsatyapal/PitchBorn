@@ -392,51 +392,6 @@ export function EarsNext({ f, head, t, d, stud }: { f: NextSpec; head: Head; t: 
   );
 }
 
-// ------------------------------------------------------------------ neck
-
-export function NeckNext({ f, head, t, d }: { f: NextSpec; head: Head; t: SkinTones; d: Detail }) {
-  const nw = f.neckW;
-  const y0 = f.jawY - 30;
-  const base = 352;
-  const shape = q(`M${CX - nw} ${y0}C${CX - nw + 1} ${y0 + 40} ${CX - nw - 3} ${base - 30} ${CX - nw - 8} ${base}L${CX + nw + 8} ${base}C${CX + nw + 3} ${base - 30} ${CX + nw - 1} ${y0 + 40} ${CX + nw} ${y0}Z`);
-  const R = head.right;
-  const L = head.left;
-  // The jaw's shadow on the neck follows the jawline: deep under the chin and towards the shadow side.
-  const cast = blob(
-    [
-      P(CX - nw - 4, y0),
-      P(CX + nw + 4, y0),
-      P(CX + nw + 4, R.J[1] + 36),
-      P(R.J[0] - 22, R.J[1] + 30),
-      P(CX + f.chinW + 8, f.chinY + 19),
-      P(CX - 4, f.chinY + 22),
-      P(CX - f.chinW - 12, f.chinY + 17),
-      P(L.J[0] + 20, L.J[1] + 18),
-      P(CX - nw - 4, L.J[1] + 20),
-    ],
-    0.45,
-  );
-  const sideR = blob([P(CX + nw - 14, y0 + 30), P(CX + nw + 6, y0 + 30), P(CX + nw + 8, 312), P(CX + nw - 20, 312), P(CX + nw - 14, 270)], 0.4);
-  const tendon = (s: 1 | -1) => [P(CX + s * (nw - 9), f.jawY + 8), P(CX + s * (nw - 17), f.jawY + 38), P(CX + s * 15, 298), P(CX + s * 8, 314)];
-  return (
-    <g>
-      <path d={shape} fill={t.base} />
-      <path d={sideR} fill={t.shade} />
-      <path d={cast} fill={t.shade} />
-      <path d={blob([P(CX - f.chinW - 6, f.chinY + 2), P(CX + f.chinW + 10, f.chinY + 2), P(R.J[0] - 18, R.J[1] + 12), P(CX + f.chinW + 4, f.chinY + 14), P(CX - 4, f.chinY + 13)], 0.5)} fill={t.deep} opacity={0.45} />
-      <path d={stroke([P(CX - nw + 0.5, y0 + 10), P(CX - nw - 1, y0 + 60), P(CX - nw - 5, 300)], { w: 1.3, start: 0.4, end: 0.05, peak: 0.3, seed: 109 })} fill={INK} />
-      <path d={stroke([P(CX + nw - 0.5, y0 + 10), P(CX + nw + 1, y0 + 60), P(CX + nw + 5, 302)], { w: 1.8, start: 0.4, end: 0.1, peak: 0.3, seed: 113 })} fill={INK} />
-      {d === 2 && (
-        <>
-          <path d={stroke(tendon(-1), { w: 0.8, start: 0.1, end: 0.05, peak: 0.5, seed: 127 })} fill={t.line} opacity={0.2} />
-          <path d={stroke(tendon(1), { w: 0.9, start: 0.1, end: 0.05, peak: 0.5, seed: 131 })} fill={t.line} opacity={0.25} />
-        </>
-      )}
-      {f.adam > 0.2 && d > 0 && <path d={stroke([P(CX - 3.5, f.chinY + 35), P(CX + 0.5, f.chinY + 37 + 3 * f.adam), P(CX + 4, f.chinY + 35)], { w: 0.9, seed: 137 })} fill={t.line} opacity={0.3 * f.adam} />}
-    </g>
-  );
-}
-
 // ------------------------------------------------------------------ age and structure lines
 
 /**

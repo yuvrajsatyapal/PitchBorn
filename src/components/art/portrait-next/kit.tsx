@@ -1,6 +1,7 @@
-import { CX, hash01, lerp, q, type Pt } from "../portrait/geometry";
+import { CX, hash01, lerp, type Pt } from "../portrait/geometry";
 import type { NextSpec } from "./head";
-import { blob, stroke } from "./ink";
+import { blob, ring, stroke, strokeLine } from "./ink";
+import { neckline, type CollarCut, type Neckline } from "./neck";
 import { INK, shift } from "./palette";
 import type { Detail } from "./face";
 
@@ -8,99 +9,129 @@ import type { Detail } from "./face";
 export const COLLARS = ["crew", "ribbed", "vneck", "fold", "polo"] as const;
 export type Collar = (typeof COLLARS)[number];
 
+const CUTS: Record<Collar, CollarCut> = {
+  crew: { dip: 9, h: 5.5, back: 6 },
+  ribbed: { dip: 9, h: 8, back: 7 },
+  vneck: { dip: 30, h: 6.5, back: 5, v: true },
+  fold: { dip: 7, h: 4.5, back: 6 },
+  // A polo's collar stands up behind the neck.
+  polo: { dip: 6, h: 5, back: 10 },
+};
+
+export const necklineFor = (f: NextSpec, collar: Collar): Neckline => neckline(f, CUTS[collar]);
+
 const P = (x: number, y: number): Pt => [x, y];
 
-/**
- * The shirt: shoulders falling away from the neck, one shadow plane on the right, two or three soft folds and a
- * collar built for its cut. Thin ink, heavier only along the outer shoulder line.
- */
-export function KitNext({ f, kit, trim, collar, d }: { f: NextSpec; kit: string; trim: string; collar: Collar; d: Detail }) {
-  const nw = f.neckW;
-  const shade = shift(kit, -4, 0.02, -0.12);
-  const deep = shift(kit, -6, 0.04, -0.2);
-  const light = shift(kit, 4, -0.04, 0.08);
-  const trimShade = shift(trim, -4, 0.02, -0.14);
-  const xl = CX - nw - 15;
-  const xr = CX + nw + 15;
-  const yN = 297;
-  // Shoulder line: rises a little at the trapezius, then falls away.
-  const shoulderR: Pt[] = [P(xr - 2, yN + 1), P(xr + 30, yN + 8), P(xr + 72, 318), P(330, 336)];
-  const shoulderL: Pt[] = [P(xl + 2, yN + 1), P(xl - 30, yN + 9), P(xl - 72, 319), P(-30, 338)];
-  const body = q(
-    `M-30 362L${shoulderL
-      .slice()
-      .reverse()
-      .map((p) => `${p[0]} ${p[1]}`)
-      .join("L")}L${CX} ${yN + 6}L${shoulderR.map((p) => `${p[0]} ${p[1]}`).join("L")}L330 362Z`,
-  );
-  const neckLine = (dy: number) => [P(xl + 2, yN + 1), P(CX - nw * 0.5, yN + 8 + dy), P(CX, yN + 11 + dy), P(CX + nw * 0.5, yN + 8 + dy), P(xr - 2, yN + 1)];
-  const els = [];
-  els.push(<path key="body" d={body} fill={kit} />);
-  // Shadow plane on the far shoulder and under the collar, with a soft-edged fold.
-  els.push(<path key="sh" d={blob([P(CX + nw * 0.4, yN + 14), P(xr + 20, yN + 10), P(332, 330), P(332, 364), P(CX + 74, 364), P(CX + 58, 334)], 0.45)} fill={shade} />);
-  els.push(<path key="under" d={blob([P(xl + 8, yN + 8), P(CX, yN + 22), P(xr - 8, yN + 8), P(CX + 4, yN + 30)], 0.5)} fill={shade} opacity={0.6} />);
-  els.push(<path key="lit" d={blob([P(xl - 46, 314), P(xl - 14, yN + 9), P(xl + 6, yN + 20), P(xl - 30, 326)], 0.5)} fill={light} opacity={0.55} />);
-  if (d > 0) {
-    els.push(
-      <path key="f1" d={stroke([P(60, 333), P(72, 343), P(77, 360)], { w: 2.4, start: 0.1, end: 0.2, seed: 201 })} fill={shade} />,
-      <path key="f2" d={stroke([P(CX + 40, 334), P(CX + 46, 346), P(CX + 44, 362)], { w: 2.6, start: 0.1, end: 0.2, seed: 203 })} fill={deep} opacity={0.6} />,
-    );
-  }
+interface KitProps {
+  f: NextSpec;
+  kit: string;
+  trim: string;
+  collar: Collar;
+  d: Detail;
+  line: Neckline;
+}
 
-  // Collars
-  const band = (outer: Pt[], inner: Pt[]) => q(`M${[...outer, ...inner.slice().reverse()].map((p) => `${p[0]} ${p[1]}`).join("L")}Z`);
-  if (collar === "crew" || collar === "ribbed") {
-    const h = collar === "ribbed" ? 8 : 5.5;
-    const outer = neckLine(0).map((p, i) => P(p[0] + (i === 0 ? -3 : i === 4 ? 3 : 0), p[1] + h * (i === 0 || i === 4 ? 0.6 : 1)));
-    const inner = neckLine(-h);
-    els.push(<path key="c" d={band(outer, inner)} fill={trim} />);
-    els.push(<path key="cs" d={band(outer.slice(2), inner.slice(2))} fill={trimShade} opacity={0.75} />);
+function colours(kit: string, trim: string) {
+  return {
+    shade: shift(kit, -4, 0.02, -0.12),
+    deep: shift(kit, -6, 0.04, -0.2),
+    inside: shift(kit, -8, 0.02, -0.28),
+    light: shift(kit, 4, -0.04, 0.08),
+    trimShade: shift(trim, -4, 0.02, -0.14),
+    trimDeep: shift(trim, -6, 0.04, -0.26),
+  };
+}
+
+function shoulders(line: Neckline) {
+  const { Lo, Ro } = line;
+  // The shoulder line leaves the collar, rises a touch over the trapezius, then falls away to the card edge.
+  const right: Pt[] = [Ro, P(Ro[0] + 28, Ro[1] + 7), P(Ro[0] + 70, 317), P(330, 336)];
+  const left: Pt[] = [Lo, P(Lo[0] - 28, Lo[1] + 8), P(Lo[0] - 70, 318), P(-30, 338)];
+  return { left, right };
+}
+
+const band = (a: Pt[], b: Pt[]) => ring([...a, ...b.slice().reverse()]);
+
+/**
+ * Everything of the shirt that lies behind the neck: the torso (its top edge runs over the shoulders and round the
+ * back of the collar), its shading, the dark inside of the opening and the back of the collar.
+ */
+export function KitBack({ kit, trim, d, line }: KitProps) {
+  const c = colours(kit, trim);
+  const { left, right } = shoulders(line);
+  const body = ring([P(-30, 362), ...left.slice().reverse(), ...line.backOut.slice(1, -1), ...right, P(330, 362)]);
+  const { Lo, Ro, y, open } = line;
+  return (
+    <g>
+      <path d={body} fill={kit} />
+      {/* Shadow plane on the far shoulder, light on the near one, and the shadow the collar casts on the chest. */}
+      <path d={blob([P(CX + open * 0.5, y + 18), P(Ro[0] + 20, y + 12), P(332, 330), P(332, 364), P(CX + 74, 364), P(CX + 58, 334)], 0.45)} fill={c.shade} />
+      <path d={blob([P(Lo[0] - 46, 315), P(Lo[0] - 14, y + 10), P(Lo[0] + 6, y + 22), P(Lo[0] - 30, 327)], 0.5)} fill={c.light} opacity={0.55} />
+      <path d={strokeLine(line.frontOut.map((p) => P(p[0] + 1, p[1] + 3)), { w: 5, start: 0.3, end: 0.6, peak: 0.65, seed: 205 })} fill={c.shade} opacity={0.7} />
+      {d > 0 && (
+        <>
+          <path d={stroke([P(60, 333), P(72, 343), P(77, 360)], { w: 2.4, start: 0.1, end: 0.2, seed: 201 })} fill={c.shade} />
+          <path d={stroke([P(CX + 40, 334), P(CX + 46, 346), P(CX + 44, 362)], { w: 2.6, start: 0.1, end: 0.2, seed: 203 })} fill={c.deep} opacity={0.6} />
+        </>
+      )}
+      {/* Inside of the shirt, seen through the opening beside the neck. */}
+      <path d={band(line.backIn, line.frontIn)} fill={c.inside} />
+      {/* Back of the collar, in shadow, rising behind the neck. */}
+      <path d={band(line.backOut, line.backIn)} fill={c.trimShade} />
+      <path d={band(line.backOut.filter((p) => p[0] > CX), line.backIn.filter((p) => p[0] > CX))} fill={c.trimDeep} opacity={0.5} />
+      {d > 0 && <path d={strokeLine(line.backOut, { w: 0.9, start: 0.6, end: 0.6, seed: 207 })} fill={INK} opacity={0.6} />}
+    </g>
+  );
+}
+
+/** The front of the collar (in front of the neck), its details, and the shoulder ink. */
+export function KitFront({ kit, trim, collar, d, line }: KitProps) {
+  const c = colours(kit, trim);
+  const { left, right } = shoulders(line);
+  const { y, open, frontIn, frontOut } = line;
+  const cut = CUTS[collar];
+  const els = [];
+  const rightHalf = (pts: Pt[]) => pts.filter((p) => p[0] >= CX - 0.01);
+  if (collar === "fold") {
+    // Retro fold-down collar: two leaves lying on the chest, folded over at the neckline, a short placket between.
+    const leaf = (s: 1 | -1) => {
+      const half = frontIn.filter((p) => s * (p[0] - CX) >= -0.01);
+      const fromCentre = s > 0 ? half : half.slice().reverse();
+      return ring([...fromCentre, P(CX + s * (open + 9), y + 3), P(CX + s * (open * 0.62), y + 27), P(CX + s * 2.5, y + cut.dip + 7)]);
+    };
+    els.push(<path key="pl" d={ring([P(CX - 3.5, y + cut.dip), P(CX + 3.5, y + cut.dip), P(CX + 3, y + 52), P(CX - 3, y + 52)])} fill={c.shade} />);
+    els.push(<path key="lfR" d={leaf(1)} fill={c.trimShade} />, <path key="lfL" d={leaf(-1)} fill={trim} />);
+    if (d > 0) els.push(<circle key="bt" cx={CX} cy={y + 42} r={1.6} fill={c.trimDeep} />);
+    els.push(
+      <path key="lfRi" d={stroke([P(CX + open + 9, y + 3), P(CX + open * 0.62, y + 27), P(CX + 2.5, y + cut.dip + 7)], { w: 1.1, start: 0.4, end: 0.4, seed: 225, steps: 3 })} fill={INK} opacity={0.75} />,
+      <path key="lfLi" d={stroke([P(CX - open - 9, y + 3), P(CX - open * 0.62, y + 27), P(CX - 2.5, y + cut.dip + 7)], { w: 0.9, start: 0.4, end: 0.4, seed: 227, steps: 3 })} fill={INK} opacity={0.6} />,
+    );
+  } else {
+    if (collar === "polo") {
+      els.push(<path key="pl" d={ring([P(CX - 6, y + cut.dip + 2), P(CX + 6, y + cut.dip + 2), P(CX + 5, y + 50), P(CX - 5, y + 50)])} fill={trim} />);
+      els.push(<path key="pls" d={stroke([P(CX + 6, y + cut.dip + 3), P(CX + 5, y + 50)], { w: 1, seed: 229, steps: 2 })} fill={INK} opacity={0.45} />);
+      if (d > 0) els.push(<circle key="b1" cx={CX} cy={y + 24} r={1.5} fill={c.trimDeep} />, <circle key="b2" cx={CX} cy={y + 38} r={1.5} fill={c.trimDeep} />);
+    }
+    els.push(<path key="c" d={band(frontOut, frontIn)} fill={trim} />);
+    els.push(<path key="cs" d={band(rightHalf(frontOut), rightHalf(frontIn))} fill={c.trimShade} opacity={0.8} />);
     if (collar === "ribbed" && d > 0) {
-      for (let i = 1; i < 14; i++) {
-        const u = i / 14;
-        const a = sampleLine(inner, u);
-        const b = sampleLine(outer, u);
-        els.push(<path key={`r${i}`} d={stroke([a, b], { w: 0.6, steps: 2, seed: 210 + i })} fill={trimShade} opacity={0.7} />);
+      const n = d === 2 ? 16 : 10;
+      for (let i = 1; i < n; i++) {
+        const u = i / n;
+        els.push(<path key={`r${i}`} d={stroke([sample(frontIn, u), sample(frontOut, u)], { w: 0.6, steps: 2, seed: 210 + i })} fill={c.trimDeep} opacity={0.55} />);
       }
     }
-    els.push(<path key="ci" d={stroke(inner, { w: 1.1, start: 0.3, end: 0.3, seed: 221 })} fill={INK} opacity={0.75} />);
-  } else if (collar === "vneck") {
-    const depth = 34;
-    const outerL = [P(xl - 2, yN + 2), P(CX - 12, yN + depth * 0.6), P(CX, yN + depth + 8)];
-    const outerR = [P(CX, yN + depth + 8), P(CX + 12, yN + depth * 0.6), P(xr + 2, yN + 2)];
-    const innerL = [P(xl + 9, yN - 1), P(CX - 7, yN + depth * 0.55), P(CX, yN + depth - 2)];
-    const innerR = [P(CX, yN + depth - 2), P(CX + 7, yN + depth * 0.55), P(xr - 9, yN - 1)];
-    // The skin of the chest shows inside the V.
-    els.push(<path key="v" d={band([...outerL, ...outerR.slice(1)], [...innerL, ...innerR.slice(1)])} fill={trim} />);
-    els.push(<path key="vs" d={band(outerR, innerR)} fill={trimShade} opacity={0.8} />);
-    els.push(<path key="vi" d={stroke([...innerL, ...innerR.slice(1)], { w: 1.1, start: 0.3, end: 0.3, seed: 223 })} fill={INK} opacity={0.75} />);
-  } else if (collar === "fold") {
-    // Retro fold-down collar: two pointed leaves lying on the shoulders, meeting at a short placket.
-    const leaf = (k: 1 | -1) => [P(CX + k * 1.5, yN + 20), P(CX + k * (nw * 0.45), yN + 5), P(CX + k * (nw + 10), yN - 1), P(CX + k * (nw + 15), yN + 7), P(CX + k * (nw * 0.62), yN + 22), P(CX + k * 7, yN + 34)];
-    els.push(<path key="pl" d={q(`M${CX - 4} ${yN + 14}L${CX + 4} ${yN + 14}L${CX + 3.5} ${yN + 52}L${CX - 3.5} ${yN + 52}Z`)} fill={shade} />);
-    els.push(<path key="lfR" d={blob(leaf(1), 0.3)} fill={trimShade} />);
-    els.push(<path key="lfL" d={blob(leaf(-1), 0.3)} fill={trim} />);
-    els.push(<path key="lfRi" d={stroke([...leaf(1).slice(1), leaf(1)[0]], { w: 1.1, start: 0.3, end: 0.3, seed: 225 })} fill={INK} opacity={0.75} />);
-    els.push(<path key="lfLi" d={stroke([...leaf(-1).slice(1), leaf(-1)[0]], { w: 0.9, start: 0.3, end: 0.3, seed: 227 })} fill={INK} opacity={0.6} />);
-    els.push(<circle key="bt" cx={CX} cy={yN + 44} r={1.6} fill={trimShade} />);
-  } else {
-    // Polo: a standing collar band and a buttoned placket.
-    const outer = neckLine(0).map((p, i) => P(p[0] + (i === 0 ? -4 : i === 4 ? 4 : 0), p[1] + (i === 0 || i === 4 ? 4 : 9)));
-    const inner = neckLine(-4);
-    els.push(<path key="pl" d={q(`M${CX - 6} ${yN + 12}L${CX + 6} ${yN + 12}L${CX + 5} ${yN + 50}L${CX - 5} ${yN + 50}Z`)} fill={trim} />);
-    els.push(<path key="pls" d={stroke([P(CX + 6, yN + 13), P(CX + 5, yN + 50)], { w: 1, seed: 229 })} fill={INK} opacity={0.5} />);
-    els.push(<path key="c" d={band(outer, inner)} fill={trim} />);
-    els.push(<path key="cs" d={band(outer.slice(2), inner.slice(2))} fill={trimShade} opacity={0.8} />);
-    els.push(<path key="ci" d={stroke(inner, { w: 1.1, start: 0.3, end: 0.3, seed: 231 })} fill={INK} opacity={0.75} />);
-    els.push(<circle key="b1" cx={CX} cy={yN + 24} r={1.5} fill={trimShade} />, <circle key="b2" cx={CX} cy={yN + 38} r={1.5} fill={trimShade} />);
+    if (d > 0) els.push(<path key="co" d={strokeLine(rightHalf(frontOut), { w: 0.9, start: 0.3, end: 0.6, seed: 233 })} fill={INK} opacity={0.45} />);
   }
-  // Outer shoulder line: the only heavy ink on the shirt; it fades towards the card edge.
-  els.push(<path key="oR" d={stroke(shoulderR, { w: 2, start: 0.6, end: 0.1, peak: 0.2, seed: 241 })} fill={INK} />);
-  els.push(<path key="oL" d={stroke(shoulderL, { w: 1.5, start: 0.6, end: 0.1, peak: 0.2, seed: 243 })} fill={INK} />);
+  // The edge the neck disappears behind, and the outer shoulder line (the only heavy ink on the shirt).
+  els.push(<path key="ci" d={strokeLine(frontIn, { w: 1.1, start: 0.5, end: 0.5, seed: 221, wobble: 0.1 })} fill={INK} opacity={0.75} />);
+  els.push(<path key="oR" d={stroke(right, { w: 2, start: 0.6, end: 0.1, peak: 0.2, seed: 241 })} fill={INK} />);
+  els.push(<path key="oL" d={stroke(left, { w: 1.5, start: 0.6, end: 0.1, peak: 0.2, seed: 243 })} fill={INK} />);
   return <g>{els}</g>;
 }
 
-function sampleLine(pts: Pt[], u: number): Pt {
+/** Point at fraction u along a polyline (by index). */
+function sample(pts: Pt[], u: number): Pt {
   const n = pts.length - 1;
   const x = Math.min(n - 1e-6, u * n);
   const i = Math.floor(x);

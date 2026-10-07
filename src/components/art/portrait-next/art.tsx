@@ -3,11 +3,12 @@ import { FacialHair } from "../portrait/facialHair";
 import { CX } from "../portrait/geometry";
 import { HairBack, HairFront, HairOnSkin, hairGeometry, hairStyleOf, type HairCtx } from "../portrait/hair";
 import { BackdropNext } from "./backdrop";
-import { AgeLinesNext, BrowsNext, EarsNext, EyesNext, HeadInk, MouthNext, NeckNext, NoseNext, Planes, Sockets, type Detail } from "./face";
+import { AgeLinesNext, BrowsNext, EarsNext, EyesNext, HeadInk, MouthNext, NoseNext, Planes, Sockets, type Detail } from "./face";
 import { StubbleNext } from "./facialHair";
 import { POC_IDS, drawHair } from "./hair";
 import { buildHeadNext } from "./head";
-import { KitNext } from "./kit";
+import { KitBack, KitFront, necklineFor } from "./kit";
+import { NeckNext } from "./neck";
 import type { NextModel } from "./model";
 import { INK, skinTones } from "./palette";
 
@@ -31,6 +32,8 @@ export function PortraitNext({ m, uid, d }: { m: NextModel; uid: string; d: Deta
   const ctx: HairCtx = { style: hairStyleOf(m.hair), index: m.hair, color: m.hairColor, f, head, recede: m.recede, skin: t, uid, lite: d === 0 };
   const g = hairGeometry(ctx);
   const clip = `${uid}head`;
+  const line = necklineFor(f, m.collar);
+  const kitProps = { f, kit: m.kit, trim: m.trim, collar: m.collar, d, line };
   const box = viewFor(d);
   const { x, y, w, h } = box;
   const stubble = m.facial === 1 || m.facial === 2;
@@ -63,8 +66,11 @@ export function PortraitNext({ m, uid, d }: { m: NextModel; uid: string; d: Deta
           {legacy && <HairBack ctx={ctx} />}
           {next?.back}
         </g>
-        <NeckNext f={f} head={head} t={t} d={d} />
-        <KitNext f={f} kit={m.kit} trim={m.trim} collar={m.collar} d={d} />
+        {/* Shirt behind the neck (torso, inside of the opening, back of the collar), then the neck clipped to the
+            opening, then the front of the collar: the neck goes into the shirt. */}
+        <KitBack {...kitProps} />
+        <NeckNext f={f} head={head} t={t} d={d} uid={uid} line={line} />
+        <KitFront {...kitProps} />
         <g transform={tilt}>
           <EarsNext f={f} head={head} t={t} d={d} stud={m.accessory === 2} />
           <use href={`#${uid}hp`} fill={t.base} />
