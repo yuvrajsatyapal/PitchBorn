@@ -137,7 +137,7 @@ export default function CareerPage() {
             </div>
           ) : (
             <Empty title="Free agent" icon="🧳">
-              Any club can sign you without a fee. Offers arrive weekly while you&apos;re unattached.
+              Any club can sign you without a fee, but only while a transfer window is open (1 July – 31 August, and January). Offers arrive weekly during a window.
             </Empty>
           )}
         </Card>
@@ -174,7 +174,7 @@ export default function CareerPage() {
             </Button>
           </div>
         </div>
-        {!isTransferWindow(g.turn) && p.clubId && <p className="mt-3 text-xs text-muted">Transfers happen in the summer (weeks 45–3) and January (weeks 21–24) windows. Renewals can be offered any time.</p>}
+        {!isTransferWindow(g.turn) && p.clubId && <p className="mt-3 text-xs text-muted">Players can only join a club while a transfer window is open: summer (1 July – 31 August) and January (1 – 31 January). Contract renewals can be agreed at any time.</p>}
       </Card>
       <SagaCard g={g} />
       <section>

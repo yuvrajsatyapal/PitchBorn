@@ -117,14 +117,13 @@ export function upcomingWindow(turn: number): "summer" | "january" | null {
 }
 
 /**
- * The last turn on which a transfer saga begun now still lets the player act. Sagas never run across the season
- * rollover: the summer window is cut at the last week of the season, and the pre-season weeks end at week 3.
+ * The last turn on which a transfer saga begun now still lets the player act: the end of the window it belongs to
+ * (or of the window it is brewing towards). Windows sit inside one season, so a saga never crosses the rollover.
  */
-export function sagaDeadlineTurn(turn: number, free: boolean): number {
-  if (turn >= C.endOfSeasonTurn) return C.turnsPerSeason;
-  if (turn < C.seasonStart) return C.preseasonTurns[C.preseasonTurns.length - 1];
+export function sagaDeadlineTurn(turn: number): number {
+  const summer = C.summerWindow as readonly number[];
   const jan = C.januaryWindow as readonly number[];
-  if (!free && (jan.includes(turn) || upcomingWindow(turn) === "january")) return jan[jan.length - 1];
-  if (!free && upcomingWindow(turn) === "summer") return C.turnsPerSeason;
-  return Math.min(turn + 5, C.endOfSeasonTurn - 1);
+  if (summer.includes(turn)) return summer[summer.length - 1];
+  if (jan.includes(turn) || upcomingWindow(turn) === "january") return jan[jan.length - 1];
+  return turn;
 }

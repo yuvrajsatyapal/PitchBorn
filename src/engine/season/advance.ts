@@ -8,7 +8,7 @@
  *                 world awards + rollover after turn 50
  */
 import { BALANCE } from "../balance";
-import { isInternationalTurn, isMonthEnd, isTransferWindow, seasonLabel, tournamentFor, upcomingWindow } from "../calendar";
+import { isInternationalTurn, isMonthEnd, isTransferWindow, seasonLabel, tournamentFor, upcomingWindow, windowName } from "../calendar";
 import { AWARD_RECORD_PREFIX } from "../awards/records";
 import { prepareSeasonAwards, settleCeremony } from "../awards/ceremony";
 import { awardTrophy, playerOfTheMonth, teamOfTheWeek, totalSeason, worldAwards } from "./awards";
@@ -328,7 +328,7 @@ export function advanceTurn(state: GameState): AdvanceReport {
 
     // Transfers
     if (isTransferWindow(state.turn)) {
-      runAiTransfers(state, rng, state.turn >= 45 || state.turn <= 3 ? 0.3 : 0.15);
+      runAiTransfers(state, rng, windowName(state.turn) === "summer" ? 0.3 : 0.15);
     }
     processBids(state, rng);
     generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r));

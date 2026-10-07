@@ -119,10 +119,10 @@ export function generateUserOffers(state: GameState, rng: Rng, divert?: OfferDiv
   if (state.user.retired || p.retired) return;
   const free = !p.clubId;
   const window = isTransferWindow(state.turn);
-  if (rumour ? free || window : !window && !free) return;
+  // Nobody joins a club outside a transfer window, free agents included.
+  if (rumour ? free || window : !window) return;
   if (openOffers(state).length >= 4) return;
   const current = p.clubId ? state.clubs[p.clubId] : null;
-  const contractEnding = !!p.contract && p.contract.expires <= state.season && state.turn > BALANCE.calendar.endOfSeasonTurn;
   const candidates = rng.shuffle(Object.values(state.clubs).filter((c) => c.id !== p.clubId && c.id !== p.loan?.fromClubId)).slice(0, 70);
   let made = 0;
   for (const club of candidates) {
@@ -132,7 +132,7 @@ export function generateUserOffers(state: GameState, rng: Rng, divert?: OfferDiv
     // Unattached players get more calls, but still only from clubs near their level.
     if (free) pr = pr * 3 + (Math.abs(clubLevel(club.reputation) - Math.min(uOvr(p), clubLevel(100) + ELITE_HEADROOM)) <= 4 ? 0.05 : 0);
     if (!rng.chance(pr)) continue;
-    const kind: TransferOffer["kind"] = free || contractEnding ? "free" : "transfer";
+    const kind: TransferOffer["kind"] = free ? "free" : "transfer";
     const value = marketValue(p, state.season);
     let fee = kind === "free" ? 0 : Math.round((value * rng.range(0.95, 1.35)) / 50000) * 50000;
     if (p.contract?.releaseClause && fee > p.contract.releaseClause * 0.8 && rng.chance(0.5)) fee = p.contract.releaseClause;
@@ -233,10 +233,10 @@ export function processBids(state: GameState, rng: Rng): void {
 }
 
 export function expireOffers(state: GameState): void {
-  const windowOpen = isTransferWindow(state.turn) || !userPlayer(state).clubId;
+  const windowOpen = isTransferWindow(state.turn);
   for (const o of state.user.offers) {
     if (o.sagaId) continue; // a saga closes its own offers at its deadline
-    if ((o.status === "club-pending" || o.status === "terms" || o.status === "club-rejected") && (state.turn > o.expiresTurn || o.season !== state.season || (!windowOpen && o.kind !== "renewal" && o.kind !== "free"))) {
+    if ((o.status === "club-pending" || o.status === "terms" || o.status === "club-rejected") && (state.turn > o.expiresTurn || o.season !== state.season || (!windowOpen && o.kind !== "renewal"))) {
       if (o.status !== "club-rejected") o.history.push("The offer lapsed.");
       o.status = "expired";
     }
@@ -260,6 +260,12 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   if (!o) return { ok: false, message: "Offer not found." };
   if (o.status !== "terms") return { ok: false, message: "This offer is not open for negotiation." };
   const p = userPlayer(state);
+  // A move to another club can only be completed while a transfer window is open.
+  if (action.type !== "reject" && o.kind !== "renewal" && !isTransferWindow(state.turn)) {
+    o.status = "expired";
+    o.history.push("The transfer window closed before the deal was done.");
+    return { ok: false, message: "The transfer window is closed: you can't join a new club until it reopens." };
+  }
   if (action.type === "reject") {
     o.status = "rejected";
     o.history.push("You turned the offer down.");

@@ -251,7 +251,7 @@ function stepOnce(state: GameState, rng: Rng, s: TransferSaga): void {
   const urgent = left(state, s) <= 2;
   const free = s.kind === "free";
   // Before the window opens a story can only brew: bids wait for the first week of the window.
-  const open = free || isTransferWindow(state.turn);
+  const open = isTransferWindow(state.turn);
   const lean = leanings(p);
   const agent = agentSkill(state, "connections") / 100;
 

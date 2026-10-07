@@ -18,7 +18,8 @@ import { newCareer } from "./helpers";
 const ALWAYS = { chance: () => true } as unknown as Rng;
 
 /** A star on the summer window's first week, with the richest clubs able to pay any fee. */
-function starState(base: GameState, turn = 45): GameState {
+/** Windows: summer turns 1–9 (1 Jul–31 Aug), January turns 28–31, with rumours from turn 24. */
+function starState(base: GameState, turn = 2): GameState {
   const s = structuredClone(base);
   const p = userPlayer(s);
   for (const k of Object.keys(p.attrs)) (p.attrs as Record<string, number>)[k] = 90;
@@ -67,8 +68,8 @@ beforeAll(() => {
 describe("saga eligibility", () => {
   it("an ordinary player is not a saga candidate, whoever is calling", () => {
     const s = structuredClone(base);
-    s.turn = 46;
-    s.turnIndex = 46;
+    s.turn = 2;
+    s.turnIndex = 2;
     for (const c of Object.values(s.clubs)) {
       const a = assessSaga(s, c, "transfer", 3e6);
       expect(a.chance, c.id).toBe(0);
@@ -80,7 +81,7 @@ describe("saga eligibility", () => {
     const p = userPlayer(s);
     p.reputation = 40;
     for (let i = 0; i < 80; i++) {
-      s.turn = 45 + (i % 6);
+      s.turn = 1 + (i % 9);
       s.turnIndex = 200 + i;
       generateUserOffers(s, Rng.fromSeed(`ord${i}`), (club, draft, rng) => divertToSaga(s, club, draft, rng));
     }
@@ -114,9 +115,9 @@ describe("saga eligibility", () => {
   });
 
   it("is blocked when the window is closed, too late in the window, or the player is retired", () => {
-    const closed = starState(base, 30);
+    const closed = starState(base, 15);
     expect(assessSaga(closed, topClub(closed), "transfer", 60e6).blocked).toBe("window closed");
-    const late = starState(base, 49);
+    const late = starState(base, 8);
     expect(assessSaga(late, topClub(late), "transfer", 60e6).blocked).toBe("too late in the window");
     const retired = starState(base);
     retired.user.retired = true;
@@ -133,7 +134,7 @@ describe("saga eligibility", () => {
     const other = Object.values(s.clubs).filter((c) => c.id !== first.clubId && c.id !== userPlayer(s).clubId).sort((a, b) => b.reputation - a.reputation)[0];
     expect(assessSaga(s, other, "transfer", 60e6).blocked).toBe("too soon after the last saga");
     s.turnIndex += SAGA_GAP;
-    s.turn = 21; // January
+    s.turn = 28; // January
     expect(assessSaga(s, other, "transfer", 60e6).blocked).toBeUndefined();
   });
 
@@ -145,7 +146,7 @@ describe("saga eligibility", () => {
     first.outcome = "club-declined";
     first.endedIndex = s.turnIndex;
     s.turnIndex += SAGA_GAP + 6;
-    s.turn = 21;
+    s.turn = 28;
     first.snapshot = { reputation: userPlayer(s).reputation, value: marketValue(userPlayer(s), s.season), requested: false, yearsLeft: 3 };
     expect(assessSaga(s, club, "transfer", 60e6).blocked).toBe("same club, same circumstances");
     userPlayer(s).reputation = Math.min(100, first.snapshot.reputation + 9);
@@ -177,7 +178,7 @@ describe("saga state machine", () => {
 
   beforeAll(() => {
     for (let i = 1; i <= 120; i++) {
-      const s = starState(base, [41, 42, 43, 45, 46, 47][i % 6]);
+      const s = starState(base, [24, 25, 26, 1, 2, 3][i % 6]);
       const rng = Rng.fromSeed(`saga-${i}`);
       begin(s);
       const choose = (st: GameState, ids: string[]) => {
@@ -257,18 +258,18 @@ describe("saga state machine", () => {
   });
 
   it("lets a story brew before the window opens but never bids until it does", () => {
-    const early = results.filter((r) => r.saga.startTurn < 45);
+    const early = results.filter((r) => r.saga.startTurn < 28 && r.saga.startTurn > 20);
     expect(early.length).toBeGreaterThan(0);
     for (const { saga, state } of early) {
-      expect(saga.window).toBe("summer");
-      expect(saga.deadlineIndex).toBe(50);
-      for (const o of state.user.offers.filter((x) => x.sagaId === saga.id)) expect(o.createdTurn).toBeGreaterThanOrEqual(45);
+      expect(saga.window).toBe("january");
+      expect(saga.deadlineIndex).toBe(31);
+      for (const o of state.user.offers.filter((x) => x.sagaId === saga.id)) expect(o.createdTurn).toBeGreaterThanOrEqual(28);
     }
   });
 
   it("rumour weeks make no ordinary offers, only sagas", () => {
     for (let i = 0; i < 40; i++) {
-      const s = starState(base, 41 + (i % 3));
+      const s = starState(base, 24 + (i % 3));
       generateUserOffers(s, Rng.fromSeed(`rum${i}`), (club, draft, rng) => divertToSaga(s, club, draft, rng), true);
       expect(s.user.offers).toEqual([]);
       expect(s.user.sagas.length).toBeLessThanOrEqual(1);
@@ -381,11 +382,11 @@ describe("saga state machine", () => {
   });
 
   it("an unattended saga runs out its window and ends as expired, closing its offers", () => {
-    for (const startTurn of [41, 45, 48]) {
+    for (const startTurn of [24, 1, 6]) {
       const s = starState(base, startTurn);
       const rng = Rng.fromSeed(`idle-${startTurn}`);
       const saga = begin(s);
-      while (isActiveSaga(saga) && s.turn <= 50) {
+      while (isActiveSaga(saga) && s.turn <= 40) {
         s.turn++;
         s.turnIndex++;
         stepSagas(s, rng);
@@ -398,7 +399,7 @@ describe("saga state machine", () => {
   });
 
   it("a buyer that cannot pay walks away: the saga fails as club-declined", () => {
-    const s = starState(base, 46);
+    const s = starState(base, 2);
     const club = topClub(s);
     s.clubs[club.id].balance = 0;
     const rng = Rng.fromSeed("broke");
@@ -410,24 +411,24 @@ describe("saga state machine", () => {
   });
 
   it("works in the January window and for a free agent", () => {
-    const jan = starState(base, 21);
+    const jan = starState(base, 28);
     const rng = Rng.fromSeed("jan");
     const saga = begin(jan);
     expect(saga.window).toBe("january");
-    expect(saga.deadlineIndex).toBe(24);
-    play(jan, rng, pickRandom(rng), 24);
+    expect(saga.deadlineIndex).toBe(31);
+    play(jan, rng, pickRandom(rng), 31);
     expect(isActiveSaga(saga)).toBe(false);
 
-    const free = starState(base, 30);
+    const free = starState(base, 2);
     const p = userPlayer(free);
     removeFromSquad(free, p.id);
     p.clubId = null;
     p.contract = null;
     const fs = begin(free, topClub(free), "free");
-    expect(fs.window).toBe("free");
+    expect(fs.window).toBe("summer");
     expect(fs.kind).toBe("free");
     const rng2 = Rng.fromSeed("free");
-    play(free, rng2, pickRandom(rng2), 43);
+    play(free, rng2, pickRandom(rng2), 9);
     expect(isActiveSaga(fs)).toBe(false);
     expect(fs.entries.some((e) => e.stage === "contract-talks")).toBe(true);
   });

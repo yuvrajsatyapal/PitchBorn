@@ -78,7 +78,7 @@ describe("contract offers match the player's level", () => {
     const levels: number[] = [];
     for (let i = 0; i < 300; i++) {
       s.user.offers = [];
-      s.turn = 46;
+      s.turn = 2; // the summer window
       generateUserOffers(s, rng);
       for (const o of s.user.offers) levels.push(clubLevel(s.clubs[o.fromClubId].reputation));
     }
