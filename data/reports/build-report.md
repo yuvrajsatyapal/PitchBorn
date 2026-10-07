@@ -82,6 +82,6 @@ Validation: 0 errors, 0 warnings.
 - history 2024-25 es.2: 3 teams not in current world (relegated/renamed)
 - history 2024-25 fr.2: 3 teams not in current world (relegated/renamed)
 - history 2024-25 it.2: 6 teams not in current world (relegated/renamed)
-- Managers: 298/298 clubs and 40/41 national teams have a real head coach (Wikidata P286 + curated corrections); the rest are generated in-game.
+- Managers: 297/298 clubs and 40/41 national teams have a real head coach (Wikidata P286 + curated corrections); the rest are generated in-game.
 
 ## Errors

@@ -87,9 +87,8 @@
       "born": 1982
     },
     "Q14551982": {
-      "name": "Alois Schwartz",
-      "nationality": "GER",
-      "born": 1967
+      "name": "Daniel Jungwirth",
+      "nationality": "GER"
     },
     "Q170117": {
       "name": "Achim Beierlorzer",
@@ -127,9 +126,8 @@
       "born": 1970
     },
     "Q610621": {
-      "name": "Fabrizio Castori",
-      "nationality": "ITA",
-      "born": 1954
+      "name": "Stefano Cassani",
+      "nationality": "ITA"
     },
     "Q2018": {
       "name": "Emilio Longo",
@@ -278,7 +276,8 @@
     "Q19477": {
       "name": "Sergej Jakirović",
       "since": 2025,
-      "born": 1977
+      "born": 1977,
+      "nationality": "BIH"
     },
     "Q18747": {
       "name": "Nuno Espírito Santo",
@@ -407,10 +406,9 @@
       "born": 1970
     },
     "Q18662": {
-      "name": "Aaron Ramsey",
-      "nationality": "ENG",
-      "since": 2025,
-      "born": 1991
+      "name": "Brian Barry-Murphy",
+      "nationality": "IRL",
+      "born": 1978
     },
     "Q19444": {
       "name": "Chris Davies",
@@ -467,10 +465,8 @@
       "born": 1976
     },
     "Q48953": {
-      "name": "Michael Duff",
-      "nationality": "ENG",
-      "since": 2025,
-      "born": 1978
+      "name": "Tom Hounsell",
+      "nationality": "ENG"
     },
     "Q19442": {
       "name": "Conor Hourihane",
@@ -491,10 +487,9 @@
       "born": 1980
     },
     "Q48947": {
-      "name": "Miron Muslić",
-      "nationality": "AUT",
-      "since": 2025,
-      "born": 1982
+      "name": "Tom Cleverley",
+      "nationality": "ENG",
+      "born": 1989
     },
     "Q48879": {
       "name": "Graham Alexander",
@@ -583,7 +578,8 @@
     "Q8723": {
       "name": "Manuel Pellegrini",
       "since": 2020,
-      "born": 1953
+      "born": 1953,
+      "nationality": "CHI"
     },
     "Q12297": {
       "name": "Iñigo Pérez",
@@ -682,16 +678,14 @@
       "born": 1975
     },
     "Q8835": {
-      "name": "Luis García",
+      "name": "Luis Carrión",
       "nationality": "ESP",
-      "since": 2026,
-      "born": 1973
+      "born": 1982
     },
     "Q11979": {
-      "name": "Luis García",
+      "name": "Rubén de la Barrera",
       "nationality": "ESP",
-      "since": 2025,
-      "born": 1973
+      "born": 1983
     },
     "Q460448": {
       "name": "Albert Celades",
@@ -736,10 +730,9 @@
       "born": 1978
     },
     "Q770740": {
-      "name": "Beñat San José",
+      "name": "Jokin Aranbarri",
       "nationality": "ESP",
-      "since": 2025,
-      "born": 1979
+      "born": 1985
     },
     "Q12168": {
       "name": "David Gallego",
@@ -766,10 +759,9 @@
       "born": 1979
     },
     "Q582342": {
-      "name": "Curro Torres",
+      "name": "Jandro Castro",
       "nationality": "ESP",
-      "since": 2021,
-      "born": 1977
+      "born": 1979
     },
     "Q743557": {
       "name": "Johan Plat",
@@ -834,9 +826,9 @@
       "born": 1979
     },
     "Q12230": {
-      "name": "Curro Torres",
+      "name": "Sergi Guilló",
       "nationality": "ESP",
-      "born": 1977
+      "born": 1991
     },
     "Q257984": {
       "name": "Luis César Sampedro",
@@ -873,10 +865,9 @@
       "born": 1969
     },
     "Q515516": {
-      "name": "Natxo González",
+      "name": "Jon Castrillo",
       "nationality": "ESP",
-      "since": 2024,
-      "born": 1966
+      "born": 1996
     },
     "Q483020": {
       "name": "Luis Enrique",
@@ -1013,7 +1004,8 @@
     "Q221525": {
       "name": "Luc Holtz",
       "since": 2026,
-      "born": 1969
+      "born": 1969,
+      "nationality": "LUX"
     },
     "Q503317": {
       "name": "Baptiste Ridira",
@@ -1060,24 +1052,18 @@
     "Q760736": {
       "name": "David Vignes",
       "since": 2026,
-      "born": 1975
+      "born": 1975,
+      "nationality": "FRA"
     },
     "Q2619514": {
       "name": "Mathieu Chabert",
       "nationality": "FRA",
       "born": 1979
     },
-    "Q212269": {
-      "name": "Nicolas Rabuel",
-      "nationality": "FRA",
-      "since": 2022,
-      "born": 1978
-    },
+    "Q212269": null,
     "Q369349": {
-      "name": "Didier Ollé-Nicolle",
-      "nationality": "FRA",
-      "since": 2016,
-      "born": 1961
+      "name": "Hervé Della Maggiore",
+      "nationality": "FRA"
     },
     "Q522283": {
       "name": "Damien Perrinelle",
@@ -1091,10 +1077,8 @@
       "born": 1970
     },
     "Q270051": {
-      "name": "Olivier Pantaloni",
-      "nationality": "FRA",
-      "since": 2014,
-      "born": 1967
+      "name": "Thierry Debes",
+      "nationality": "FRA"
     },
     "Q208399": {
       "name": "Réginald Ray",
@@ -1125,9 +1109,9 @@
       "born": 1975
     },
     "Q867320": {
-      "name": "Didier Ollé-Nicolle",
+      "name": "Régis Brouard",
       "nationality": "FRA",
-      "born": 1961
+      "born": 1967
     },
     "Q74030": {
       "name": "Nicolas Rabuel",
@@ -1147,9 +1131,8 @@
       "born": 1966
     },
     "Q1753870": {
-      "name": "Didier Ollé-Nicolle",
-      "nationality": "FRA",
-      "born": 1961
+      "name": "Vincent Rychen",
+      "nationality": "FRA"
     },
     "Q15789": {
       "name": "Vincent Kompany",
@@ -1279,7 +1262,8 @@
     "Q157828": {
       "name": "Tim Walter",
       "since": 2026,
-      "born": 1976
+      "born": 1976,
+      "nationality": "GER"
     },
     "Q105844": {
       "name": "Daniel Scherning",
@@ -1306,9 +1290,9 @@
       "born": 1982
     },
     "Q105853": {
-      "name": "Alois Schwartz",
-      "nationality": "GER",
-      "born": 1967
+      "name": "Maximilian Senft",
+      "nationality": "AUT",
+      "born": 1990
     },
     "Q33748": {
       "name": "Lars Barlemann",
@@ -1341,19 +1325,20 @@
       "born": 1978
     },
     "Q141931": {
-      "name": "Markus Kauczinski",
-      "nationality": "GER",
-      "born": 1970
+      "name": "Thomas Stamm",
+      "nationality": "SUI",
+      "born": 1983
     },
     "Q151747": {
       "name": "Alexander Ende",
       "since": 2026,
-      "born": 1979
+      "born": 1979,
+      "nationality": "GER"
     },
     "Q142005": {
-      "name": "Alois Schwartz",
+      "name": "André Breitenreiter",
       "nationality": "GER",
-      "born": 1967
+      "born": 1973
     },
     "Q157463": {
       "name": "Rüdiger Ziehl",
@@ -1373,7 +1358,8 @@
     },
     "Q265570": {
       "name": "Mersad Selimbegović",
-      "born": 1982
+      "born": 1982,
+      "nationality": "BIH"
     },
     "Q639525": {
       "name": "Uwe Koschinat",
@@ -1388,15 +1374,14 @@
       "born": 1965
     },
     "Q310621": {
-      "name": "Markus Kauczinski",
+      "name": "Jochen Seitz",
       "nationality": "GER",
-      "born": 1970
+      "born": 1976
     },
     "Q160530": {
-      "name": "Daniel Thioune",
+      "name": "Timo Schultz",
       "nationality": "GER",
-      "since": 2017,
-      "born": 1974
+      "born": 1978
     },
     "Q153535": {
       "name": "Peter Schubert",
@@ -1405,16 +1390,13 @@
       "born": 1966
     },
     "Q535785": {
-      "name": "Torsten Ziegner",
+      "name": "Michael Schiele",
       "nationality": "GER",
-      "since": 2021,
       "born": 1978
     },
     "Q316855": {
-      "name": "Torsten Ziegner",
-      "nationality": "GER",
-      "since": 2018,
-      "born": 1978
+      "name": "Robert Schröder",
+      "nationality": "GER"
     },
     "Q155218": {
       "name": "Christian Neidhart",
@@ -1428,10 +1410,9 @@
       "born": 1988
     },
     "Q154293": {
-      "name": "Torsten Lieberknecht",
+      "name": "Dietmar Hirsch",
       "nationality": "GER",
-      "since": 2018,
-      "born": 1973
+      "born": 1971
     },
     "Q158121": {
       "name": "Heiko Herrlich",
@@ -1446,7 +1427,8 @@
     "Q631": {
       "name": "Cristian Chivu",
       "since": 2025,
-      "born": 1981
+      "born": 1981,
+      "nationality": "ROU"
     },
     "Q2641": {
       "name": "Massimiliano Allegri",
@@ -1491,10 +1473,9 @@
       "born": 1972
     },
     "Q1893": {
-      "name": "Raffaele Palladino",
+      "name": "Domenico Tedesco",
       "nationality": "ITA",
-      "since": 2026,
-      "born": 1984
+      "born": 1985
     },
     "Q1120838": {
       "name": "Cesc Fàbregas",
@@ -1568,22 +1549,19 @@
       "born": 1983
     },
     "Q6703": {
-      "name": "Fabio Caserta",
+      "name": "Guido Pagliuca",
       "nationality": "ITA",
-      "since": 2026,
-      "born": 1978
+      "born": 1976
     },
     "Q652516": {
-      "name": "Fabio Caserta",
+      "name": "Antonio Floro Flores",
       "nationality": "ITA",
-      "since": 2021,
-      "born": 1978
+      "born": 1983
     },
     "Q6641": {
-      "name": "Fabio Caserta",
+      "name": "Massimo Rastelli",
       "nationality": "ITA",
-      "since": 2025,
-      "born": 1978
+      "born": 1968
     },
     "Q16848949": {
       "name": "Alessandro Diamanti",
@@ -1604,10 +1582,9 @@
       "born": 1977
     },
     "Q16344": {
-      "name": "Fabrizio Castori",
+      "name": "Giovanni Tedesco",
       "nationality": "ITA",
-      "since": 2022,
-      "born": 1954
+      "born": 1972
     },
     "Q2037": {
       "name": "Marco Zaffaroni",
@@ -1628,9 +1605,9 @@
       "born": 1964
     },
     "Q8408": {
-      "name": "Ezio Capuano",
+      "name": "Daniele Galloppa",
       "nationality": "ITA",
-      "born": 1965
+      "born": 1985
     },
     "Q8623": {
       "name": "Cristiano Lucarelli",
@@ -1638,9 +1615,9 @@
       "born": 1975
     },
     "Q298217": {
-      "name": "Ezio Capuano",
+      "name": "Alessandro Nesta",
       "nationality": "ITA",
-      "born": 1965
+      "born": 1976
     },
     "Q56542463": {
       "name": "Domenico Di Carlo",
@@ -1678,10 +1655,8 @@
       "born": 1974
     },
     "Q29390": {
-      "name": "Giacomo Modica",
-      "nationality": "ITA",
-      "since": 2023,
-      "born": 1964
+      "name": "Alfio Torrisi",
+      "nationality": "ITA"
     },
     "Q139399": {
       "name": "Gianluca Grassadonia",
@@ -1711,9 +1686,9 @@
       "born": 1981
     },
     "Q1520422": {
-      "name": "Giacomo Modica",
+      "name": "Cristiano Masitto",
       "nationality": "ITA",
-      "born": 1964
+      "born": 1972
     }
   },
   "national": {
@@ -1779,7 +1754,8 @@
     "IRL": {
       "name": "Heimir Hallgrímsson",
       "since": 2024,
-      "born": 1967
+      "born": 1967,
+      "nationality": "ISL"
     },
     "POR": {
       "name": "Jorge Jesus",
@@ -2108,28 +2084,10 @@
       "stature": 83
     },
     {
-      "name": "Graham Potter",
-      "nationality": "ENG",
-      "born": 1975,
-      "stature": 80
-    },
-    {
       "name": "Xavi Hernández",
       "nationality": "ESP",
       "born": 1980,
       "stature": 83
-    },
-    {
-      "name": "Zinedine Zidane",
-      "nationality": "FRA",
-      "born": 1972,
-      "stature": 90
-    },
-    {
-      "name": "Will Still",
-      "nationality": "BEL",
-      "born": 1993,
-      "stature": 72
     },
     {
       "name": "Michael Duff",
