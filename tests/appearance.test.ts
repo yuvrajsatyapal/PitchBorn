@@ -14,7 +14,29 @@ import { newCareer } from "./helpers";
 
 const render = (a: Appearance, age = 25, size: number | "small" = 120) => renderToStaticMarkup(createElement(PlayerPortrait, { appearance: a, age, size, kit: "#c8102e" }));
 
+/** The head outline, drawn from the skull and jaw anatomy alone. */
+const headOf = (svg: string) => svg.match(/<path id="\w*hp" d="([^"]+)"/)?.[1];
+
 describe("retro portrait style", () => {
+  it("editing one feature never moves another: the head ignores nose, eyes, mouth and hair", () => {
+    const a = generateAppearance("modular");
+    const head = headOf(render(a));
+    expect(head).toBeTruthy();
+    for (const change of [{ nose: (a.nose + 3) % COUNTS.nose }, { eyes: (a.eyes + 2) % COUNTS.eyes }, { mouth: (a.mouth + 4) % COUNTS.mouth }, { hair: (a.hair + 5) % COUNTS.hair }, { facial: 10 }]) {
+      expect(headOf(render({ ...a, ...change }))).toBe(head);
+    }
+    expect(headOf(render({ ...a, face: (a.face + 1) % COUNTS.face }))).not.toBe(head);
+  });
+
+  it("changing clubs never changes the face", () => {
+    const a = generateAppearance("transfer");
+    const at = (kit: string) => renderToStaticMarkup(createElement(PlayerPortrait, { appearance: a, age: 26, size: 120, kit }));
+    const red = at("#c8102e");
+    const blue = at("#1d4ea8");
+    expect(red).not.toBe(blue);
+    expect(headOf(red)).toBe(headOf(blue));
+  });
+
   it("favours neutral, focused expressions over grins", () => {
     let smiling = 0;
     const N = 1000;
@@ -118,15 +140,15 @@ describe("ageing", () => {
     expect(ageLook(a, 55).grey).toBeGreaterThan(0.5);
   });
 
-  it("a face stays recognisable: the same face parts are drawn at 20 and 38", () => {
+  it("a face stays recognisable: the same head is drawn at 24 and 38", () => {
     const a = generateAppearance("same-guy");
-    const young = render(a, 20);
+    const adult = render(a, 24);
     const old = render(a, 38);
-    expect(young).not.toBe(old);
-    // Face outline comes from the contour alone, so it is identical at every age.
-    const face = (s: string) => s.match(/<path d="(M[^"]+)" fill="#[0-9a-f]{6}" stroke="#1b1712" stroke-width="2.8"/)?.[1];
-    expect(face(young)).toBeTruthy();
-    expect(face(young)).toBe(face(old));
+    expect(adult).not.toBe(old);
+    expect(headOf(adult)).toBeTruthy();
+    expect(headOf(adult)).toBe(headOf(old));
+    // Only the teenage jaw is a little softer; it settles into the adult head.
+    expect(headOf(render(a, 17))).not.toBe(headOf(adult));
   });
 });
 
@@ -165,8 +187,8 @@ describe("rendering never breaks", () => {
 
   it("small portraits skip the expensive effects", () => {
     const a = generateAppearance("small");
-    expect(render(a, 25, "small")).not.toContain("filter=\"url(#pbp-ink)\"");
-    expect(render(a, 25, 190)).toContain("filter=\"url(#pbp-grain)\"");
+    expect(render(a, 25, "small")).not.toMatch(/filter="url\(#\w*grain\)"/);
+    expect(render(a, 25, 190)).toMatch(/filter="url\(#\w*grain\)"/);
     expect(render(a, 25, 190).length).toBeGreaterThan(render(a, 25, "small").length);
   });
 });
