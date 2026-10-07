@@ -22,7 +22,7 @@ export function marketValue(p: Player, season: number): number {
   const ovr = overall(p);
   const age = ageOf(p, season);
   const gap = p.hidden.potential - ovr;
-  let v = economy.valueBase * Math.exp((ovr - 60) / economy.valueCurve) * ageValueFactor(age, gap);
+  let v = economy.valueBase * Math.exp((ovr - economy.valueRef) / economy.valueCurve) * ageValueFactor(age, gap);
   v *= 0.85 + p.reputation / 330;
   if (p.contract) {
     const yearsLeft = p.contract.expires - season;
@@ -37,7 +37,7 @@ export function marketValue(p: Player, season: number): number {
 /** Weekly wage the player commands at a club of the given reputation. */
 export function wageFor(ovr: number, clubReputation: number, role: SquadRole = "first"): number {
   const roleMul = { star: 1.35, first: 1, rotation: 0.78, backup: 0.6, prospect: 0.4 }[role];
-  const w = economy.wageBase * Math.exp((ovr - 60) / economy.wageCurve) * (0.5 + clubReputation / 110) * roleMul;
+  const w = economy.wageBase * Math.exp((ovr - economy.wageRef) / economy.wageCurve) * (0.3 + clubReputation / 95) * roleMul;
   return roundMoney(clamp(w, 600, 650_000));
 }
 
@@ -60,7 +60,7 @@ export function formatMoney(v: number): string {
 
 /** Club annual revenue estimate (euros) used for budgets. */
 export function clubRevenue(reputation: number, tier: number, capacity: number): number {
-  const tierMul = tier === 1 ? 1 : tier === 2 ? 0.32 : 0.12;
+  const tierMul = tier === 1 ? 1 : tier === 2 ? 0.45 : 0.25;
   const base = economy.revenuePerPrestige * Math.pow(reputation, 1.9) * tierMul;
   const gate = capacity * 19 * 40 * (tier === 1 ? 1 : tier === 2 ? 0.55 : 0.3);
   return Math.round(base + gate);

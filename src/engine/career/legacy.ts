@@ -47,7 +47,7 @@ export function careerStories(state: GameState): string[] {
   if (spans.length >= 7) stories.push(`Journeyman — ${spans.length} clubs, a career lived out of a suitcase.`);
   if (serious.length && hist.some((h) => h.season > serious[0].season && h.stats.apps >= 25 && h.stats.ratingSum / Math.max(1, h.stats.apps) >= 7)) stories.push("Injury Comeback — fought back from a career-threatening injury.");
   if (golden >= 1 || p.reputation >= 92) stories.push(golden >= 3 ? `Superstar — ${golden} Golden Pitch awards; one of the faces of the sport.` : "Superstar — the world knew the name.");
-  if (p.hidden.potential >= 86 && peak < 72) stories.push("Failed Prospect — the potential was there, the career never quite followed.");
+  if (p.hidden.potential >= 90 && peak < 77) stories.push("Failed Prospect — the potential was there, the career never quite followed.");
   if (majorTournament || p.intl.caps >= 100 || p.intl.goals >= 40) stories.push(majorTournament ? "International Hero — lifted a major international trophy." : `International Hero — ${p.intl.caps} caps for ${p.intl.tiedTo ?? p.nationality}.`);
   if (tierAtStart >= 3 && reachedTop) stories.push("Lower-League Rise — from the third tier to the top flight.");
   const lastSeasons = hist.slice(-3);
@@ -84,7 +84,7 @@ export function computeLegacy(state: GameState): LegacyResult {
   const awards = u.awards.reduce((s, a) => s + (awardPts[a.id] ?? 1), 0);
   add(`${u.awards.filter((a) => a.id !== "totw").length} individual awards`, awards);
   add(`${p.intl.caps} international caps`, p.intl.caps * 0.3 + p.intl.goals * 0.4);
-  add(`Peak ability ${u.peakOverall}`, Math.max(0, u.peakOverall - 60) * 2.2);
+  add(`Peak ability ${u.peakOverall}`, Math.max(0, u.peakOverall - 68) * 2.8);
   const seasons = p.history.filter((h) => h.stats.apps > 0).length;
   add(`${seasons} seasons`, seasons * 1.5);
   const spans = clubSpans(state);

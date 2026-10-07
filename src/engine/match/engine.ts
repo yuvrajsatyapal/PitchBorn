@@ -528,10 +528,10 @@ export class MatchEngine {
   private resolveShot(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType, xgMul = 1, keeperMul = 1) {
     const sDef = this.strength(def);
     const q = this.shooterQuality(shooter, type);
-    const pressure = type === "penalty" ? 1 : Math.exp(-(sDef.def - 65) / 120);
+    const pressure = type === "penalty" ? 1 : Math.exp(-(sDef.def - 70) / 120);
     const bigMatch = 1 + ((shooter.input.bigMatch - 50) / 50) * 0.06 * (this.input.importance - 1);
-    let xg = XG_BASE[type] * Math.exp((q - 68) / 58) * pressure * bigMatch * xgMul;
-    xg *= Math.exp(-(sDef.gk - 68) / 70) * keeperMul;
+    let xg = XG_BASE[type] * Math.exp((q - 73) / 58) * pressure * bigMatch * xgMul;
+    xg *= Math.exp(-(sDef.gk - 73) / 70) * keeperMul;
     xg = clamp(xg, 0.01, type === "penalty" ? 0.92 : 0.8);
     att.shots++;
     att.xg += xg;
@@ -551,7 +551,7 @@ export class MatchEngine {
       this.scoreGoal(att, def, shooter, creator, type, desc);
       return;
     }
-    const onTargetRate = clamp(0.32 + (q - 65) / 220, 0.18, 0.62);
+    const onTargetRate = clamp(0.32 + (q - 70) / 220, 0.18, 0.62);
     if (r < Math.max(xg + 0.05, onTargetRate)) {
       shooter.line.onTarget++;
       att.onTarget++;

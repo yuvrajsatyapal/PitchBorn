@@ -80,5 +80,5 @@ export function autopilotWantsRetirement(state: GameState): boolean {
   const p = userPlayer(state);
   const age = ageOf(p, state.season);
   const ovr = overallFor(p.attrs, p.position);
-  return (age >= 34 && ovr < 64) || age >= 38 || (age >= 33 && !p.clubId);
+  return (age >= 34 && ovr < 70) || age >= 38 || (age >= 33 && !p.clubId);
 }

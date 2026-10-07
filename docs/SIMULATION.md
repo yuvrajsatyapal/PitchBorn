@@ -1,7 +1,7 @@
 # Simulation engine
 
 ## World
-`createWorld()` instantiates ClubState for every dataset club, generates a 25-man fictional squad per club scaled to club prestige (`clubLevel = 40 + 0.44 × prestige` average first-XI overall), national-team depth pools ("virtual" players representing unsimulated leagues), the user's player, and the season's competitions. ~8,500 players.
+`createWorld()` instantiates ClubState for every dataset club, generates a 25-man fictional squad per club scaled to club prestige (`clubLevel = 54.6 + 0.316 × prestige`; first XIs ≈ elite 85–87, bottom of a top flight 75–78, second tier 74–81, third tier 68–76), national-team depth pools ("virtual" players representing unsimulated leagues), the user's player, and the season's competitions. ~8,500 players.
 
 ## Match engine (`src/engine/match/engine.ts`)
 Event-based, minute by minute (+stoppage, +extra time, +penalties):

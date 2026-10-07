@@ -127,7 +127,7 @@ export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
   const ovr = overallFor(attrs, o.position);
   const potential = Math.max(ovr, Math.round(o.potential));
   const name = randomName(rng, o.nationality);
-  const rep = clamp((ovr - 45) * 1.6 + rng.normal(0, 4), 1, 95);
+  const rep = clamp((ovr - 55) * 2 + rng.normal(0, 4), 1, 95);
   const p: Player = {
     id: o.id,
     ...name,
@@ -164,17 +164,17 @@ export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
   // Seed plausible past career numbers for veterans so records/caps feel lived-in.
   const seasonsPlayed = Math.max(0, o.age - 19);
   if (seasonsPlayed > 0 && !o.virtual) {
-    const appsPer = 18 + (ovr - 60) * 0.4;
+    const appsPer = 18 + (ovr - 68) * 0.5;
     const goalRate = { GK: 0, CB: 0.04, RB: 0.03, LB: 0.03, DM: 0.05, CM: 0.1, AM: 0.22, RW: 0.25, LW: 0.25, ST: 0.42 }[o.position];
     p.career.apps = Math.max(0, Math.round(seasonsPlayed * clamp(appsPer, 8, 38) * rng.range(0.7, 1.1)));
     p.career.starts = Math.round(p.career.apps * 0.8);
     p.career.minutes = p.career.starts * 85;
     p.career.goals = Math.round(p.career.apps * goalRate * rng.range(0.6, 1.3) * (0.6 + ovr / 150));
     p.career.assists = Math.round(p.career.apps * goalRate * 0.6 * rng.range(0.6, 1.3));
-    p.career.ratingSum = Math.round(p.career.apps * (6.3 + (ovr - 60) / 40) * 10) / 10;
+    p.career.ratingSum = Math.round(p.career.apps * (6.3 + (ovr - 68) / 32) * 10) / 10;
   }
-  if (ovr > 72 && !o.virtual) {
-    const capRate = clamp((ovr - 72) / 14, 0, 1) * (country(o.nationality)?.strength ?? 70) / 90;
+  if (ovr > 77 && !o.virtual) {
+    const capRate = clamp((ovr - 77) / 10, 0, 1) * (country(o.nationality)?.strength ?? 70) / 90;
     p.intl.caps = Math.round(Math.max(0, o.age - 20) * 6 * capRate * rng.range(0.4, 1.1));
     p.intl.goals = Math.round(p.intl.caps * ({ ST: 0.35, RW: 0.2, LW: 0.2, AM: 0.18 } as Record<string, number>)[o.position] * rng.range(0.3, 1) || 0);
     if (p.intl.caps > 0) p.intl.tiedTo = o.nationality;

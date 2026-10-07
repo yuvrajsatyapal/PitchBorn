@@ -513,7 +513,7 @@ function forcedRetirementCheck(state: GameState): void {
   const p = userPlayer(state);
   const age = ageOf(p, state.season);
   const ovr = overallFor(p.attrs, p.position);
-  if (age >= BALANCE.retirement.userForcedAge || (age >= 36 && ovr < 50) || (age >= 33 && !p.clubId && (state.user.freeSeasons ?? 0) >= 1)) {
+  if (age >= BALANCE.retirement.userForcedAge || (age >= 36 && ovr < 58) || (age >= 33 && !p.clubId && (state.user.freeSeasons ?? 0) >= 1)) {
     retireUser(state, age >= BALANCE.retirement.userForcedAge ? "Your body has made the decision for you." : "With no offers coming, you hang up your boots.");
   }
 }

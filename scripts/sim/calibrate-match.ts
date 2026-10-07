@@ -26,9 +26,9 @@ function run(label: string, ho: number, ao: number, N = 1500) {
   console.log(`${label}: goals/m ${((hg + ag) / N).toFixed(2)} (H ${(hg / N).toFixed(2)} A ${(ag / N).toFixed(2)}) HW ${(hw / N * 100).toFixed(0)}% D ${(d / N * 100).toFixed(0)}% AW ${((N - hw - d) / N * 100).toFixed(0)}% shots ${(shots / N).toFixed(1)} sot ${(sot / N).toFixed(1)} xg ${(xg/N).toFixed(2)} 7+ ${(big / N * 100).toFixed(1)}% yel ${(yel / N).toFixed(1)} red ${(reds / N).toFixed(2)} inj ${(inj / N).toFixed(2)} penG ${(pens/N).toFixed(2)}`);
 }
 const t0 = Date.now();
-run("equal 70", 70, 70);
-run("equal 82", 82, 82);
-run("80 vs 70", 80, 70);
-run("70 vs 80", 70, 80);
-run("85 vs 60", 85, 60);
+run("equal 72", 72, 72);
+run("equal 84", 84, 84);
+run("82 vs 74", 82, 74);
+run("74 vs 82", 74, 82);
+run("86 vs 66", 86, 66);
 console.log("ms per match", (Date.now() - t0) / 7500);

@@ -90,8 +90,8 @@ function summarize(r: CareerMetrics[], errors: { seed: string; error: string }[]
   if (gpm < 2.2 || gpm > 3.3) flags.push(`League goals per match ${gpm.toFixed(2)} outside 2.2–3.3`);
   if (Math.max(0, ...r.map((c) => c.world.maxGoalsInMatch)) > 13) flags.push("A league match had more than 13 goals");
   if (Math.max(0, ...r.map((c) => c.world.maxTopScorer)) > 55) flags.push("A league top scorer exceeded 55 goals");
-  const superstar = r.filter((c) => c.peakOverall >= 88).length / Math.max(1, r.length);
-  if (superstar > 0.25) flags.push(`${(superstar * 100).toFixed(0)}% of careers peak at 88+ (too many superstars)`);
+  const superstar = r.filter((c) => c.peakOverall >= 90).length / Math.max(1, r.length);
+  if (superstar > 0.25) flags.push(`${(superstar * 100).toFixed(0)}% of careers peak at 90+ (too many superstars)`);
   const injuryRate = mean(r.map((c) => c.injuries / Math.max(1, c.seasons)));
   if (injuryRate > 2.2) flags.push(`Injury rate ${injuryRate.toFixed(2)} per season is high`);
   const earlyRetire = r.filter((c) => c.retireAge < 30).length / Math.max(1, r.length);

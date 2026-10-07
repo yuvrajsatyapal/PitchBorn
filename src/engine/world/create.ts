@@ -16,8 +16,12 @@ export const START_SEASON = 2026;
 
 /** Average first-XI overall a club of this prestige fields (Pitchborn scale). */
 export function clubLevel(prestige: number): number {
-  return 40 + prestige * 0.44;
+  // Elite ≈85–87, bottom of a top flight ≈75, second tier ≈70–76, third tier ≈65–71.
+  return 54.6 + prestige * 0.316;
 }
+
+/** Starting overall for a new career depends only on the path, never on the club. */
+export const STARTING_OVERALL = { academy: 61, late: 67 } as const;
 
 const SQUAD_TEMPLATE: Position[] = [
   "GK", "GK", "GK", "CB", "CB", "CB", "CB", "RB", "RB", "LB", "LB", "DM", "DM", "CM", "CM", "CM", "AM", "AM", "RW", "RW", "LW", "LW", "ST", "ST", "ST",
@@ -126,7 +130,7 @@ function createClubState(rng: Rng, id: string, season: number): ClubState {
 export function generateVirtualPool(state: GameState, rng: Rng, code: CountryCode, season: number, count: number): Player[] {
   const c = country(code);
   if (!c) return [];
-  const base = c.strength - 6;
+  const base = c.strength - 3;
   const out: Player[] = [];
   const positions: Position[] = ["GK", "GK", "CB", "CB", "CB", "RB", "LB", "DM", "CM", "CM", "AM", "RW", "LW", "ST", "ST", "CM", "CB", "ST", "RW", "LB", "DM", "AM", "GK", "RB", "LW", "CM"];
   for (let i = 0; i < count; i++) {
@@ -141,14 +145,9 @@ export function generateVirtualPool(state: GameState, rng: Rng, code: CountryCod
   return out;
 }
 
-/**
- * Expected starting overall for a new career at a club. Small clubs give an
- * academy kid or late starter a squad much closer to their level; elite clubs
- * leave a big gap (development squad, loans). Shared with the new-career UI.
- */
-export function expectedStartingOverall(prestige: number, path: "academy" | "late"): number {
-  const level = clubLevel(prestige);
-  return path === "academy" ? clamp(level - 10 - (level - 55) * 0.5, 46, 62) : clamp(level - 4 - (level - 55) * 0.55, 52, 72);
+/** Expected starting overall for a new career (path only — fair regardless of club). */
+export function expectedStartingOverall(_prestige: number, path: "academy" | "late"): number {
+  return STARTING_OVERALL[path];
 }
 
 export type PlayingTimeOutlook = "good" | "fight" | "few";
@@ -158,7 +157,7 @@ export function playingTimeOutlook(prestige: number, path: "academy" | "late"): 
   const level = clubLevel(prestige);
   const start = expectedStartingOverall(prestige, path);
   const gap = level - start;
-  return { outlook: gap <= 12 ? "good" : gap <= 17 ? "fight" : "few", level: Math.round(level), start: Math.round(start) };
+  return { outlook: gap <= 9 ? "good" : gap <= 15 ? "fight" : "few", level: Math.round(level), start: Math.round(start) };
 }
 
 export interface NewCareerInput {
@@ -186,11 +185,11 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   const age = input.path === "academy" ? 17 : 20;
   const level = clubLevel(club.reputation);
   // Starting ability: academy kids are raw; late starters are closer to the senior squad.
-  const startOvr = clamp(expectedStartingOverall(club.reputation, input.path) + rng.normal(0, 1.5), 44, 74);
+  const startOvr = clamp(STARTING_OVERALL[input.path] + rng.normal(0, 1.2), 56, 72);
   void level;
   const diff = input.difficulty ?? "standard";
-  const potBase = input.path === "academy" ? 84 : 79;
-  const potential = clamp(potBase + rng.normal(0, 4.5) + (diff === "relaxed" ? 3 : diff === "hardcore" ? -3 : 0), 70, 96);
+  const potBase = input.path === "academy" ? 89 : 85;
+  const potential = clamp(potBase + rng.normal(0, 4) + (diff === "relaxed" ? 2 : diff === "hardcore" ? -2 : 0), 76, 97);
   const attrs = generateAttributes(rng, input.position, startOvr, input.height);
   const hidden = randomHidden(rng, input.position, potential);
   hidden.professionalism = Math.max(hidden.professionalism, 55);

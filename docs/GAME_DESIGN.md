@@ -9,6 +9,9 @@ Youth/academy → first contract → development squad / loans → debut → bre
 - Turns 1–3 pre-season (summer window open) · 4–43 season (league rounds, cups, continental nights, 4 international windows) · 44 season finale (awards, promotion/relegation decided) · 45–50 summer (window open; even-year summers host a 16-team World Championship or European Nations Championship) → rollover.
 - Each week: training plan → user's matches (live or sim) → world simulates → development, finances, transfers, offers, random events, news.
 
+## Starting out
+Your starting ability depends only on the path, never on the club: academy prospect ≈61 overall (age 17, hidden potential ~89), late starter ≈67 (age 20, potential ~85). The club decides the environment instead: elite clubs mean little early game time (development squad, loans) but better facilities, reputation and wages; smaller clubs mean early minutes, which drive development. The club picker shows each squad's level against your start.
+
 ## Player model
 Visible attributes (1–99): pace, acceleration, stamina, strength, finishing, long shots, passing, vision, crossing, dribbling, first touch, tackling, positioning, heading, composure, plus GK reflexes, handling, diving, kicking, command. Overall is a position-weighted blend.
 Hidden: potential, consistency, professionalism, ambition, loyalty, injury proneness, adaptability, big-match temperament, development rate, personal peak age. Hidden values surface only as scouting stars and personality traits.

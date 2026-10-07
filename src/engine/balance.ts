@@ -5,7 +5,7 @@
 export const BALANCE = {
   match: {
     /** Probability that a possession phase produces a chance, before strength ratios. */
-    chanceBase: 0.11,
+    chanceBase: 0.108,
     /** Exponent applied to attack/defence ratio when deciding chances. */
     chanceExponent: 2.1,
     possessionExponent: 2.0,
@@ -52,11 +52,13 @@ export const BALANCE = {
     seasonNoise: 1.4,
   },
   economy: {
-    /** Weekly wage for an overall-60 player at a prestige-60 club. */
+    /** Weekly wage for an overall-70 player at a mid-prestige club (reference point). */
+    wageRef: 70,
     wageBase: 9000,
-    wageCurve: 8.5,
+    wageCurve: 6.5,
+    valueRef: 70,
     valueBase: 1_200_000,
-    valueCurve: 7.2,
+    valueCurve: 5.0,
     revenuePerPrestige: 26000,
   },
   squad: {

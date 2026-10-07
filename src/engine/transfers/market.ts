@@ -199,7 +199,7 @@ function retireProbability(age: number, o: number, clubless: boolean): number {
   let base = 0;
   for (const [a, pr] of curve) if (age >= a) base = pr;
   if (age < curve[0][0]) base = 0;
-  if (o >= 80) base *= 0.6;
+  if (o >= 84) base *= 0.6;
   if (clubless) base = Math.min(1, base * 1.8 + (age >= 31 ? 0.15 : 0));
   return base;
 }
@@ -213,7 +213,7 @@ export function processRetirements(state: GameState, rng: Rng): void {
     if (!p.clubId && !p.virtual) {
       // Unsigned players drift out of the professional game.
       const o = ovr(p);
-      if (rng.chance(age >= 30 || o < 62 ? 0.55 : 0.2)) {
+      if (rng.chance(age >= 30 || o < 67 ? 0.55 : 0.2)) {
         retire(state, p);
         continue;
       }
@@ -246,18 +246,18 @@ export function youthIntake(state: GameState, rng: Rng): void {
     for (let i = 0; i < n; i++) {
       const position = rng.pick<Position>(["GK", "CB", "CB", "RB", "LB", "DM", "CM", "CM", "AM", "RW", "LW", "ST", "ST"]);
       const age = rng.int(16, 18);
-      const potential = clamp(level - 4 + rng.normal(0, 7) + (club.youth - 50) / 8 + (rng.chance(0.03) ? 12 : 0), 45, 95);
+      const potential = clamp(level - 2 + rng.normal(0, 6) + (club.youth - 50) / 8 + (rng.chance(0.03) ? 9 : 0), 55, 97);
       const p = generatePlayer(rng, {
         id: nextId(state, "p"),
         nationality: rng.chance(0.85) ? st?.countryCode ?? "ENG" : rng.pick(["FRA", "BRA", "NGA", "SEN", "POR", "NED", "ESP"]),
-        position, age, season, overall: clamp(potential - 22 - (18 - age) * 2 + rng.normal(0, 3), 35, 70), potential, clubId: club.id,
+        position, age, season, overall: clamp(potential - 24 - (18 - age) * 2 + rng.normal(0, 3), 45, 72), potential, clubId: club.id,
       });
       p.contract = { clubId: club.id, wage: wageFor(ovr(p), club.reputation, "prospect"), expires: season + 2, signed: season, role: "prospect", youth: true };
       p.value = marketValue(p, season);
       p.reputation = 3;
       state.players[p.id] = p;
       club.squad.push(p.id);
-      if (potential >= 88 && club.reputation >= 80 && gems++ < 3) {
+      if (potential >= 91 && club.reputation >= 80 && gems++ < 3) {
         addNews(state, { kind: "world", title: `${clubName(club.id)} unveil academy gem ${fullName(p)}`, body: `${age}-year-old ${position} tipped for the top.` });
       }
     }
