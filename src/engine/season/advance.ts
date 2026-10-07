@@ -27,7 +27,8 @@ import { recoverWeek } from "../players/injuries";
 import { clamp, Rng } from "../rng";
 import { ensureMinimumSquads, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
-import { assignRoles, managerName } from "../world/create";
+import { assignRoles } from "../world/create";
+import { hireManager, releaseManager } from "../world/managers";
 import { addNews, addTimeline, fullName, squadOf, userPlayer, withRng } from "../world/helpers";
 import { applyMatchResult, fixturesForTurn, involvesUserTeam, prepareMatch, type TurnRatings } from "./matchday";
 
@@ -245,12 +246,13 @@ function sackManagers(state: GameState, rng: Rng): void {
     if (under >= 7 && rng.chance(0.08 + under * 0.01)) {
       const old = club.manager.name;
       const nat = rng.chance(0.6) ? staticClub(club.id)?.countryCode ?? "ENG" : rng.pick(["ESP", "POR", "ITA", "GER", "FRA", "NED", "ARG"]);
-      club.manager = { name: managerName(rng, nat), quality: Math.round(clamp(club.reputation * 0.7 + rng.normal(20, 8), 20, 99)), since: state.season, nationality: nat };
+      releaseManager(state, club.manager);
+      club.manager = hireManager(state, rng, club, nat);
       const u = userPlayer(state);
       if (u.clubId === club.id) {
         state.user.relationships.manager = 50;
         addNews(state, { kind: "club", title: `${old} sacked`, body: `${club.manager.name} takes charge at ${clubName(club.id)}. A fresh start for everyone.`, important: true });
-      } else if (club.reputation > 80) addNews(state, { kind: "world", title: `${clubName(club.id)} part ways with ${old}` });
+      } else if (club.reputation > 80) addNews(state, { kind: "world", title: `${clubName(club.id)} part ways with ${old}`, body: `${club.manager.name} is the new manager.` });
     }
   }
 }

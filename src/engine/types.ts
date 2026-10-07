@@ -460,6 +460,13 @@ export interface PendingMatch {
   compId: CompetitionId;
 }
 
+export interface PoolManager {
+  name: string;
+  nationality: CountryCode;
+  quality: number;
+  born?: number;
+}
+
 export interface GameState {
   schemaVersion: number;
   id: string;
@@ -490,6 +497,8 @@ export interface GameState {
   settings: { difficulty: "relaxed" | "standard" | "hardcore"; autoSave: boolean; countries?: string[] };
   /** Match the user must play this turn before the world advances. */
   pending: PendingMatch[];
+  /** Unemployed managers clubs can hire (seeded from real free agents; sacked managers join it). */
+  managerPool?: PoolManager[];
   /** Promotion/relegation decided at season end, applied at rollover. */
   pendingMoves?: { clubId: string; to: string }[];
   lastTurnSummary?: TurnSummary;

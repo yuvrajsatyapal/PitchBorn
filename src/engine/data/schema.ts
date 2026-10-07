@@ -19,6 +19,16 @@ export const ManagerSchema = z.object({
 });
 export type StaticManager = z.infer<typeof ManagerSchema>;
 
+/** A real coach without a club at snapshot time; hired when clubs sack their manager. */
+export const FreeAgentManagerSchema = z.object({
+  name: z.string().min(2),
+  nationality: z.string().optional(),
+  born: z.number().int().optional(),
+  /** Pitchborn's own 1-100 standing: manager quality and which clubs would hire them. */
+  stature: z.number().min(1).max(100),
+});
+export type FreeAgentManager = z.infer<typeof FreeAgentManagerSchema>;
+
 export const CountrySchema = z.object({
   code: z.string().regex(/^[A-Z]{3}$/),
   name: z.string().min(2),
@@ -120,6 +130,7 @@ export const DatasetSchema = z.object({
   leagues: z.array(LeagueSchema),
   history: z.array(HistoricalSeasonSchema),
   sources: z.array(SourceSchema),
+  freeAgentManagers: z.array(FreeAgentManagerSchema).optional(),
 });
 export type Dataset = z.infer<typeof DatasetSchema>;
 

@@ -13,6 +13,7 @@ import {
   type Club,
   type Country,
   type Dataset,
+  type FreeAgentManager,
   DatasetSchema,
   type HistoricalSeason,
   type League,
@@ -339,7 +340,7 @@ const leagues: League[] = LEAGUE_SOURCES.map((l) => {
 // Real head coaches at snapshot time. Curated corrections in data/curated/managers.json
 // win over Wikidata ("null" removes a manager so the game generates one).
 interface ManagerOverride { name: string; nationality?: string; since?: number }
-const managerOverrides = readJson<{ clubs: Record<string, ManagerOverride | null>; national: Record<string, ManagerOverride | null> }>(
+const managerOverrides = readJson<{ clubs: Record<string, ManagerOverride | null>; national: Record<string, ManagerOverride | null>; freeAgents?: FreeAgentManager[] }>(
   join(ROOT, "data", "curated", "managers.json"),
 );
 const countryByName = new Map(countries.map((c) => [c.name.toLowerCase(), c.code]));
@@ -388,6 +389,7 @@ const dataset: Dataset = {
   leagues,
   history: history.sort((a, b) => a.leagueId.localeCompare(b.leagueId) || a.season.localeCompare(b.season)),
   sources: DATA_SOURCES,
+  freeAgentManagers: managerOverrides.freeAgents ?? [],
 };
 void usedCountries;
 

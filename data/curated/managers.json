@@ -1,5 +1,5 @@
 {
-  "_note": "Curated corrections to head coaches imported from Wikidata (P286). Keyed by club Wikidata QID or Pitchborn country code. An object replaces the imported coach; null removes it so the game generates a fictional one. Use only to fix factual errors or vandalism.",
+  "_note": "Curated corrections to head coaches imported from Wikidata (P286). Keyed by club Wikidata QID or Pitchborn country code. An object replaces the imported coach; null removes it so the game generates a fictional one. Use only to fix factual errors or vandalism. 'freeAgents' are real unemployed coaches at snapshot time (supplied by the project owner); 'stature' is Pitchborn's own 1-100 judgement used as manager quality and to match them to clubs of similar standing. Anyone already employed in the world is skipped until they become free.",
   "clubs": {
     "Q248188": {
       "name": "Paul Warne",
@@ -135,5 +135,199 @@
       "name": "Ibrahim Hamdani"
     },
     "GHA": null
-  }
+  },
+  "freeAgents": [
+    {
+      "name": "Pep Guardiola",
+      "nationality": "ESP",
+      "born": 1971,
+      "stature": 95
+    },
+    {
+      "name": "Antonio Conte",
+      "nationality": "ITA",
+      "born": 1969,
+      "stature": 90
+    },
+    {
+      "name": "Didier Deschamps",
+      "nationality": "FRA",
+      "born": 1969,
+      "stature": 88
+    },
+    {
+      "name": "Marcelo Bielsa",
+      "nationality": "ARG",
+      "born": 1955,
+      "stature": 84
+    },
+    {
+      "name": "Marcelo Gallardo",
+      "nationality": "ARG",
+      "born": 1976,
+      "stature": 84
+    },
+    {
+      "name": "Julian Nagelsmann",
+      "nationality": "GER",
+      "born": 1987,
+      "stature": 88
+    },
+    {
+      "name": "Arne Slot",
+      "nationality": "NED",
+      "born": 1978,
+      "stature": 89
+    },
+    {
+      "name": "Erik ten Hag",
+      "nationality": "NED",
+      "born": 1970,
+      "stature": 83
+    },
+    {
+      "name": "Sérgio Conceição",
+      "nationality": "POR",
+      "born": 1975,
+      "stature": 82
+    },
+    {
+      "name": "Roberto Martínez",
+      "nationality": "ESP",
+      "born": 1973,
+      "stature": 82
+    },
+    {
+      "name": "Eddie Howe",
+      "nationality": "ENG",
+      "born": 1978,
+      "stature": 84
+    },
+    {
+      "name": "Thomas Frank",
+      "nationality": "DEN",
+      "born": 1974,
+      "stature": 81
+    },
+    {
+      "name": "Gareth Southgate",
+      "nationality": "ENG",
+      "born": 1970,
+      "stature": 82
+    },
+    {
+      "name": "Thiago Motta",
+      "nationality": "ITA",
+      "born": 1982,
+      "stature": 80
+    },
+    {
+      "name": "Igor Tudor",
+      "nationality": "CRO",
+      "born": 1978,
+      "stature": 79
+    },
+    {
+      "name": "Raffaele Palladino",
+      "nationality": "ITA",
+      "born": 1984,
+      "stature": 77
+    },
+    {
+      "name": "Vítor Pereira",
+      "nationality": "POR",
+      "born": 1968,
+      "stature": 74
+    },
+    {
+      "name": "Stefano Pioli",
+      "nationality": "ITA",
+      "born": 1966,
+      "stature": 80
+    },
+    {
+      "name": "Ralph Hasenhüttl",
+      "nationality": "AUT",
+      "born": 1967,
+      "stature": 75
+    },
+    {
+      "name": "Steven Gerrard",
+      "nationality": "ENG",
+      "born": 1980,
+      "stature": 74
+    },
+    {
+      "name": "Jon Dahl Tomasson",
+      "nationality": "DEN",
+      "born": 1976,
+      "stature": 74
+    },
+    {
+      "name": "Steve Clarke",
+      "nationality": "SCO",
+      "born": 1963,
+      "stature": 72
+    },
+    {
+      "name": "Sean Dyche",
+      "nationality": "ENG",
+      "born": 1971,
+      "stature": 74
+    },
+    {
+      "name": "Rafael Benítez",
+      "nationality": "ESP",
+      "born": 1960,
+      "stature": 80
+    },
+    {
+      "name": "Joachim Löw",
+      "nationality": "GER",
+      "born": 1960,
+      "stature": 83
+    },
+    {
+      "name": "Graham Potter",
+      "nationality": "ENG",
+      "born": 1975,
+      "stature": 80
+    },
+    {
+      "name": "Xavi Hernández",
+      "nationality": "ESP",
+      "born": 1980,
+      "stature": 83
+    },
+    {
+      "name": "Zinedine Zidane",
+      "nationality": "FRA",
+      "born": 1972,
+      "stature": 90
+    },
+    {
+      "name": "Will Still",
+      "nationality": "BEL",
+      "born": 1993,
+      "stature": 72
+    },
+    {
+      "name": "Michael Duff",
+      "nationality": "NIR",
+      "born": 1978,
+      "stature": 62
+    },
+    {
+      "name": "Chris Coleman",
+      "nationality": "WAL",
+      "born": 1970,
+      "stature": 66
+    },
+    {
+      "name": "Sam Allardyce",
+      "nationality": "ENG",
+      "born": 1955,
+      "stature": 70
+    }
+  ]
 }
