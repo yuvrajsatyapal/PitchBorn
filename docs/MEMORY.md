@@ -16,8 +16,14 @@ Context points are summed, then `importance = 100·(1 − e^(−raw/34))`. Tiers
 ## Rivalries (`rivalry.ts`, `src/data/rivalries.json`)
 Editorial strengths for ~120 well-known derbies, 0.4 for clubs in the same city, plus heat the user's own moments create (`rivalHeat`, capped +0.35).
 
+## Recall (`recall.ts`)
+Once a week (after the new turn begins) `refreshRecall` picks at most one memory worth resurfacing and stores it as `user.vault`; it is shown as the dashboard's **From the vault** card, as **Memory lane** on the match page, and sometimes as a "memory" news item. Candidates:
+- **Anniversaries** — same week, 1/5/10/15/20 seasons on, memories ≥ 55 only ("Five years since your first professional goal").
+- **This week's match** — facing the club where your career began, a former club or a club where something big happened, an opponent you have history with, a ground where you made your mark, or a manager you fell out with.
+Weight = importance × reason × freshness; below 48 nothing shows. Restraint: 3 weeks between recalls (opponent stories may break it), 6 weeks between news items, a memory is not repeated within 52 weeks and decays with each showing. Retirement/final-match memories are never recalled mid-career. All text is second person ("you"), generated from the stored data.
+
 ## Old saves
 Schema v3 → v4 rebuilds what older saves recorded (debut, firsts, trophies, awards, moves, promotions, retirement), flagged `backfilled`; minutes and scorelines can't be recovered.
 
 ## UI
-`/play/memories` — Iconic Moments (`MemoryCard` shows how each score was built). Phase 2: recall in news, match previews and the dashboard. Phase 3: rivalry screens, profile/history integration, retirement showcase.
+`/play/memories` — Iconic Moments (`MemoryCard` shows how each score was built). Phase 3 (next): rivalry screens, profile/history integration, retirement showcase.

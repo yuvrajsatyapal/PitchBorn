@@ -3,6 +3,7 @@ import { useState } from "react";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { LiveMatch } from "@/components/game/LiveMatch";
+import { MemoryLane } from "@/components/game/VaultCard";
 import { Badge, Button, Card, Empty, PageTitle, Rating, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import type { Fixture, GameState } from "@/engine/types";
@@ -128,6 +129,7 @@ export default function MatchDay() {
             <span className="scoreboard text-3xl">VS</span>
             <div className="flex flex-col items-center gap-1"><Crest clubId={fixture.away} size={70} /><b>{teamLabel(fixture.away)}</b></div>
           </div>
+          <MemoryLane g={g} fixtureId={fixture.id} />
           <p className="mb-4 text-center text-sm">
             {(() => {
               const me = user(g);

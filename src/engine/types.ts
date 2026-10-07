@@ -262,7 +262,7 @@ export interface NationalTeamState {
   titles: { season: number; compId: string; name: string }[];
 }
 
-export type NewsKind = "match" | "transfer" | "award" | "injury" | "contract" | "national" | "club" | "career" | "event" | "world";
+export type NewsKind = "match" | "transfer" | "award" | "injury" | "contract" | "national" | "club" | "career" | "event" | "world" | "memory";
 export interface NewsItem {
   id: string;
   season: number;
@@ -271,6 +271,8 @@ export interface NewsItem {
   title: string;
   body?: string;
   important?: boolean;
+  /** For "memory" news: the memory being recalled. */
+  memoryId?: string;
 }
 
 export type TimelineKind =
@@ -391,6 +393,17 @@ export type MemoryKind =
   | "promotion" | "relegation" | "contract-dispute" | "financial-exit" | "manager-conflict" | "career-decision"
   | "retirement" | "final-match";
 
+export type RecallReason = "anniversary" | "origin" | "former-club" | "opponent-history" | "venue" | "grudge";
+
+export interface VaultItem {
+  memoryId: string;
+  reason: RecallReason;
+  turnIndex: number;
+  fixtureId?: string;
+  /** Whole seasons since the memory (anniversaries). */
+  years?: number;
+}
+
 export type MemoryTier = "iconic" | "major" | "notable" | "minor";
 
 /**
@@ -471,6 +484,10 @@ export interface UserCareer {
   agent: Agent;
   /** Career memories, strongest context first at display time. */
   memories: Memory[];
+  /** This week's "from the vault" recall, chosen by engine/memory/recall.ts. */
+  vault?: VaultItem;
+  /** Turn index of the last memory news item (limits how often memories surface in the feed). */
+  memoryNewsTurnIndex?: number;
   /** The user's most recent match, kept for the "final match" memory. */
   lastMatch?: { fixtureId: string; compId: string; opponentId: string; score: [number, number]; minutes: number; goals: number; assists: number; rating: number; season: number; turn: number };
   /** Pending injury comeback to remember: set on a long injury, cleared on the first match back. */

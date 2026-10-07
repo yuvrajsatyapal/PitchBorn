@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
+import { VaultCard } from "@/components/game/VaultCard";
 import { DecisionCards, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, TeamForm } from "@/components/game/widgets";
 import { Badge, Card, Empty, LinkButton, Sparkline, Stat } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
@@ -42,6 +43,7 @@ export default function Dashboard() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-4">
           <PendingMatchCard g={g} />
+          <VaultCard g={g} />
           <DecisionCards g={g} />
           {openOffers.length > 0 && (
             <Card tone="sky" title={`📨 ${openOffers.length} open offer${openOffers.length > 1 ? "s" : ""}`} action={<LinkButton href="/play/transfers" size="sm">Review</LinkButton>}>

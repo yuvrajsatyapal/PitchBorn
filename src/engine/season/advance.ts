@@ -28,6 +28,7 @@ import { clamp, Rng } from "../rng";
 import { ensureMinimumSquads, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
+import { refreshRecall } from "../memory/recall";
 import { rememberManagerConflict, rememberPromotionOrRelegation, rememberRecord, rememberRetirement } from "../memory/detect";
 import { receiveIncome } from "../career/money";
 import { assignRoles } from "../world/create";
@@ -337,6 +338,7 @@ export function advanceTurn(state: GameState): AdvanceReport {
   });
   if (state.user.retired) report.retiredForced = true;
   beginTurn(state);
+  refreshRecall(state);
   state.updatedAt = new Date().toISOString();
   return report;
 }

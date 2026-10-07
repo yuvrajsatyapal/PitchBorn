@@ -9,7 +9,7 @@ import { formatMoney } from "@/engine/players/economy";
 import type { NewsKind } from "@/engine/types";
 import { useGameState } from "@/game/store";
 
-const KIND_TONE: Partial<Record<NewsKind, "sun" | "pitch" | "plum" | "coral" | "sky">> = { transfer: "sky", award: "sun", injury: "coral", national: "pitch", career: "plum" };
+const KIND_TONE: Partial<Record<NewsKind, "sun" | "pitch" | "plum" | "coral" | "sky">> = { transfer: "sky", award: "sun", injury: "coral", national: "pitch", career: "plum", memory: "sun" };
 
 export default function World() {
   const g = useGameState();
