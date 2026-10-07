@@ -12,7 +12,7 @@ export const TRAINING_FOCUS: Record<TrainingFocus, { label: string; attrs: AttrK
   finishing: { label: "Finishing", attrs: ["finishing", "composure", "longShots"], blurb: "Shooting drills, composure in front of goal." },
   passing: { label: "Passing", attrs: ["passing", "vision", "firstTouch"], blurb: "Rondos, switches of play, weight of pass." },
   dribbling: { label: "Dribbling", attrs: ["dribbling", "firstTouch", "acceleration"], blurb: "Close control and 1v1 work." },
-  pace: { label: "Speed", attrs: ["pace", "acceleration"], blurb: "Sprint mechanics. Gains slow after 28; speed fades slowly from 32." },
+  pace: { label: "Speed", attrs: ["pace", "acceleration"], blurb: "Sprint mechanics. Gains slow after 28." },
   physical: { label: "Physical", attrs: ["strength", "stamina"], blurb: "Gym and conditioning — tiring." },
   defending: { label: "Defending", attrs: ["tackling", "positioning", "heading"], blurb: "Shape, duels and aerial work." },
   setPieces: { label: "Set Pieces", attrs: ["crossing", "longShots", "heading"], blurb: "Deliveries, free kicks and attacking corners." },
