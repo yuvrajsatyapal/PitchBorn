@@ -1,367 +1,563 @@
-import { HAIR_STYLES, INK, type HairStyle } from "@/engine/appearance/options";
-import { bezier, CX, darken, lighten, line as polyline, mix, smooth, type Contour, type Pt } from "./geometry";
+import type { ReactNode } from "react";
+import { HAIR_STYLES, type HairStyle } from "@/engine/appearance/options";
+import type { FaceSpec, Head } from "./anatomy";
+import type { Skin } from "./face";
+import { q, CX, FINE, INK, MID, OUT, add, along, clamp, darken, dist, hash01, inside, lerp, luminance, mix, poly, polyCont, r1, ribbon, scale, sub, sw, taper, unit, type Pt } from "./geometry";
 
 export interface HairCtx {
   style: HairStyle;
+  /** Style index: seeds the designed irregularity of tips and clumps so each cut always looks the same. */
+  index: number;
   color: string;
-  contour: Contour;
-  /** 0-1 hairline retreat from age/genes. */
+  f: FaceSpec;
+  head: Head;
   recede: number;
-  skin: string;
+  skin: Skin;
+  uid: string;
+  /** Small sizes draw fewer clumps and curls; the silhouette and hairline stay the same. */
+  lite?: boolean;
 }
-
-const sw = (n: number) => ({ strokeWidth: n, strokeLinecap: "round" as const, strokeLinejoin: "round" as const });
-const r1 = (n: number) => Math.round(n * 10) / 10;
 
 export const hairStyleOf = (i: number): HairStyle => HAIR_STYLES[i] ?? HAIR_STYLES[0];
+export const hairTint = (base: string, grey: number) => (grey > 0 ? mix(base, "#b8b8bb", grey * 0.85) : base);
 
-/** Where the crown of the hair sits. */
-const crownY = (s: HairStyle, c: Contour) => c.top - s.top;
-
-/** Outer silhouette points, right base -> crown -> left base, hugging the skull. */
-function outerPoints(s: HairStyle, c: Contour, baseY: number, steps: number): Pt[] {
-  const top = crownY(s, c);
-  const h = baseY - top;
-  // Big hair is widest well above its base and tucks back in towards the head, rather than ending in a brim.
-  const xw = CX + c.half(baseY - h * 0.4) + s.side + 1.6;
-  const xs = CX + c.half(baseY) + 1.6 + s.side * 0.3;
-  const k = s.flat ? 0.78 : 0.5523;
-  const right = bezier([xs, baseY], [xw + s.side * 0.12, baseY - h * 0.22], [CX + k * (xw - CX), top], [CX, top], steps);
-  const left = right.map((p) => [2 * CX - p[0], p[1]] as Pt).reverse().slice(1);
-  return [...right, ...left];
+/** Hair options were authored on the old 200px head; this maps their heights onto the anatomical landmarks. */
+export function legacyY(f: FaceSpec): (y: number) => number {
+  const src = [56, 94, 108, 138, 153, 178];
+  const dst = [f.top, f.browY, f.eyeY, f.noseY, f.mouthY, f.chinY];
+  return (y: number) => {
+    let i = 1;
+    while (i < src.length - 1 && y > src[i]) i++;
+    const t = (y - src[i - 1]) / (src[i] - src[i - 1]);
+    return dst[i - 1] + (dst[i] - dst[i - 1]) * t;
+  };
 }
 
-function decorate(pts: Pt[], s: HairStyle): Pt[] {
-  const out = pts.map((p) => [p[0], p[1]] as [number, number]);
-  const mid = out.length / 2;
-  if (s.edge === "tuft") {
-    for (const p of out) p[1] -= 8 * Math.exp(-(((p[0] - (CX + 12)) / 27) ** 2));
-  }
-  if (s.edge === "spiky") {
-    for (let i = 2; i < out.length - 2; i++) {
-      if (i % 2 === 0) continue;
-      const dx = out[i][0] - CX;
-      const dy = out[i][1] - 96;
-      const len = Math.hypot(dx, dy) || 1;
-      const amp = 4.5 + (i % 4);
-      out[i] = [out[i][0] + (dx / len) * amp, out[i][1] + (dy / len) * amp];
+interface Tone {
+  base: string;
+  dark: string;
+  light: string;
+}
+
+function tones(color: string): Tone {
+  const lum = luminance(color);
+  return {
+    base: color,
+    dark: darken(color, 0.4),
+    // Black hair takes a cool sheen; brown and fair hair a warm one.
+    light: lum < 0.09 ? mix(color, "#69707e", 0.4) : mix(mix(color, "#c08a5a", 0.32 + 0.1 * (1 - lum)), "#ffffff", 0.05 + 0.15 * lum),
+  };
+}
+
+// ------------------------------------------------------------------ geometry
+
+interface HairGeom {
+  s: HairStyle;
+  seed: number;
+  /** Outer silhouette, right bottom -> crown -> left bottom. */
+  outer: Pt[];
+  /** Front edge across the forehead, right corner -> left corner (includes fringe tips). */
+  front: Pt[];
+  /** Front edge of the side hair, corner -> bottom, per side. */
+  sideR: Pt[];
+  sideL: Pt[];
+  capBottom: number;
+  endY: number;
+  hlY: number;
+  thickTop: number;
+  thickSide: number;
+  cap: string;
+  /** Fade regions (below the solid cap) per side. */
+  fades: string[];
+  dir: 1 | -1;
+  /** The cap as polygons, for placing texture inside it. */
+  shape: Pt[][];
+}
+
+function resample(pts: Pt[], step: number): Pt[] {
+  const out: Pt[] = [pts[0]];
+  let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    let a = pts[i - 1];
+    const b = pts[i];
+    let seg = dist(a, b);
+    while (acc + seg >= step) {
+      const t = (step - acc) / seg;
+      a = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      out.push(a);
+      seg = dist(a, b);
+      acc = 0;
     }
+    acc += seg;
   }
-  if (s.edge === "wavy") {
-    for (let i = 1; i < out.length - 1; i++) {
-      const dx = out[i][0] - CX;
-      const dy = out[i][1] - 96;
-      const len = Math.hypot(dx, dy) || 1;
-      const amp = i % 2 ? 2 : -1;
-      out[i] = [out[i][0] + (dx / len) * amp, out[i][1] + (dy / len) * amp];
-    }
-  }
-  void mid;
+  if (dist(out[out.length - 1], pts[pts.length - 1]) > step * 0.3) out.push(pts[pts.length - 1]);
   return out;
 }
 
-function edgePath(pts: Pt[], s: HairStyle): string {
-  if (s.edge === "scallop") {
-    // Bumps of roughly constant size along the silhouette.
-    const sampled: Pt[] = [];
-    let acc = 0;
-    sampled.push(pts[0]);
-    const want = s.texture === "coily" ? 9 : 11;
-    for (let i = 1; i < pts.length; i++) {
-      acc += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-      if (acc >= want) {
-        sampled.push(pts[i]);
-        acc = 0;
-      }
+const normalAt = (pts: Pt[], i: number): Pt => {
+  const a = pts[Math.max(0, i - 1)];
+  const b = pts[Math.min(pts.length - 1, i + 1)];
+  const t = unit(sub(b, a));
+  return [t[1], -t[0]];
+};
+
+/** Cut a polyline at height y (first crossing), returning the part before it. */
+function until(pts: Pt[], y: number): Pt[] {
+  const out: Pt[] = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1] && b[1] >= y) {
+      const t = (y - a[1]) / (b[1] - a[1]);
+      out.push([a[0] + (b[0] - a[0]) * t, y]);
+      return out;
     }
-    const last = pts[pts.length - 1];
-    if (sampled[sampled.length - 1] !== last) sampled.push(last);
-    let d = `M${r1(sampled[0][0])} ${r1(sampled[0][1])}`;
-    for (let i = 1; i < sampled.length; i++) {
-      const rad = Math.hypot(sampled[i][0] - sampled[i - 1][0], sampled[i][1] - sampled[i - 1][1]) * 0.72;
-      d += `A${r1(rad)} ${r1(rad)} 0 0 1 ${r1(sampled[i][0])} ${r1(sampled[i][1])}`;
-    }
-    return d;
+    out.push(b);
   }
-  if (s.edge === "spiky") return polyline(pts).replace(/^M/, "M");
-  return smooth(pts, false, 0.5);
+  return out;
 }
 
-/** The inner (hairline) edge from the left temple to the right temple. */
-function hairline(s: HairStyle, c: Contour, recede: number): { pts: Pt[]; yL: number; part?: Pt; dir: number } {
-  const dir = s.part === 0 ? 1 : s.part;
-  const crown = c.top;
-  const line = Math.max(crown + 8, s.line - recede * 8);
-  const temple = Math.max(crown + 10, s.temple - recede * 18);
-  const T = (y: number, sign: 1 | -1): Pt => [CX + sign * (c.half(y) + 0.6), y];
-  if (s.horseshoe) {
-    return { pts: [T(100, -1), [CX - 38, 80], [CX - 26, crown + 6], [CX, crown + 3], [CX + 26, crown + 6], [CX + 38, 80], T(100, 1)], yL: 100, dir };
-  }
+export function hairGeometry(ctx: HairCtx): HairGeom {
+  const { style: s, f, head, recede, index } = ctx;
+  const Y = legacyY(f);
+  const seed = 7919 * (index + 3);
+  const dir: 1 | -1 = s.part === 0 ? 1 : (s.part as 1 | -1);
+  const thickTop = s.top * 1.5;
+  const thickSide = 1.5 + s.side * 1.35;
+  const fringeRecede = s.fringe === "none" || s.horseshoe ? recede : recede * 0.4;
+  const hlY = clamp(Y(s.line) - fringeRecede * 20, f.top + 9, f.browY - 26);
+  const endY = Math.max(Y(s.end), f.browY);
+  // Faded cuts keep their solid hair on top; the fade starts higher the tighter the cut.
+  const capBottom = s.fade > 0 ? Math.min(endY, lerp(f.top, f.browY, [1, 0.7, 0.57, 0.46][s.fade])) : endY;
+
+  // Hairline: across the forehead to the temple corners, then down the temples to the sideburns.
+  const cornerY = clamp(Math.min(hlY + 7, Y(s.temple) - 2 - fringeRecede * 14), f.top + 8, f.browY - 20);
+  const sideFront = (sign: 1 | -1): Pt[] => {
+    const tfY = Math.max(cornerY + 12, Y(s.temple) - fringeRecede * 12);
+    const sb = (s.back >= 2 ? 9 : 7) + s.side * 0.15;
+    const pts: Pt[] = [
+      [CX + sign * f.templeW * 0.6, cornerY],
+      [CX + sign * (head.half(tfY, sign) - 11), tfY],
+      [CX + sign * (head.half(endY, sign) - sb), endY],
+    ];
+    return along(pts, 5, 0.4);
+  };
+  const sideR = sideFront(1);
+  const sideL = sideFront(-1);
+
+  // ---- front edge (hairline or fringe), right corner -> left corner
+  const cR: Pt = sideR[0];
+  const cL: Pt = sideL[0];
+  const h = (i: number) => hash01(seed, i);
+  let front: Pt[];
+  const tips = (base: Pt[], len: (i: number) => number, lean: (i: number) => number, every = 1): Pt[] => {
+    // Insert a tip between consecutive points: hair clumps hanging over the forehead.
+    const out: Pt[] = [base[0]];
+    for (let i = 1; i < base.length; i++) {
+      const a = base[i - 1];
+      const b = base[i];
+      if (i % every === 0) {
+        const m: Pt = [(a[0] + b[0]) / 2 + lean(i) * (0.6 + h(i) * 0.6), (a[1] + b[1]) / 2 + len(i)];
+        out.push(m);
+      }
+      out.push(b);
+    }
+    return out;
+  };
   switch (s.fringe) {
     case "straight":
     case "caesar": {
-      const fy = Math.max(line + 6, 76);
-      const j = s.fringe === "caesar" ? 2.2 : 1;
-      return { pts: [T(fy - 2, -1), [CX - 24, fy + 1 * j], [CX - 12, fy - 1 * j], [CX, fy + 2 * j], [CX + 12, fy - 1], [CX + 24, fy + 1.5 * j], T(fy - 2, 1)], yL: fy - 2, dir };
+      const fy = clamp(Math.max(hlY + 14, f.browY - 34), hlY, f.browY - 14);
+      const base = resample(along([cR, [CX + 30, fy - 1], [CX, fy + 1], [CX - 30, fy - 1], cL], 6), s.fringe === "caesar" ? 7 : 10);
+      front = tips(base, (i) => (s.fringe === "caesar" ? 2.6 : 3 + h(i) * 6), () => (s.fringe === "caesar" ? 0 : -1.5));
+      break;
     }
     case "side":
     case "sweep": {
-      const low = s.fringe === "sweep" ? 14 : 9;
-      const hi = line - 6;
-      const a: Pt = T(temple - 4, (-dir) as 1 | -1);
-      const b: Pt = T(line + low + 2, dir as 1 | -1);
-      return { pts: [a, [CX - dir * 14, hi + 1], [CX + dir * 2, line - 1], [CX + dir * 18, line + low - 2], b], yL: dir > 0 ? temple - 4 : line + low + 2, dir, part: [CX - dir * 14, hi] };
+      // Swept across from the parting: clumps lean away from the part and hang lower on the far side.
+      const low = s.fringe === "sweep" ? 26 : 16;
+      const pts: Pt[] = dir > 0 ? [cR, [CX + 28, hlY + low - 4], [CX - 4, hlY + low * 0.55], [CX - 30, hlY + 4], cL] : [cR, [CX + 30, hlY + 4], [CX + 4, hlY + low * 0.55], [CX - 28, hlY + low - 4], cL];
+      const base = resample(along(pts, 6), 11);
+      front = tips(base, (i) => 4 + h(i) * 7, () => -dir * 6);
+      break;
     }
-    case "curtain":
-      return { pts: [T(100, -1), [CX - half(c, 84) + 8, 86], [CX - 22, 72], [CX - 9, line - 2], [CX, line - 6], [CX + 9, line - 2], [CX + 22, 72], [CX + half(c, 84) - 8, 86], T(100, 1)], yL: 100, dir, part: [CX, line - 6] };
+    case "curtain": {
+      const fy = Math.min(hlY + 28, f.browY - 10);
+      const pts: Pt[] = [[CX + head.half(f.browY - 6) - 4, f.browY - 6], [CX + 36, fy - 6], [CX + 10, hlY + 6], [CX, hlY - 1], [CX - 10, hlY + 6], [CX - 36, fy - 6], [CX - head.half(f.browY - 6) + 4, f.browY - 6]];
+      front = resample(along(pts, 6), 9).map((p, i) => [p[0], p[1] + (i % 2 ? 2.5 : 0)] as Pt);
+      sideR.splice(0, sideR.length, ...along([[CX + head.half(f.browY - 6) - 4, f.browY - 6], [CX + head.half(endY) - 9, endY]], 4));
+      sideL.splice(0, sideL.length, ...along([[CX - head.half(f.browY - 6) + 4, f.browY - 6], [CX - head.half(endY) + 9, endY]], 4));
+      break;
+    }
     case "messy": {
-      const fy = Math.max(line + 5, 74);
-      return { pts: [T(temple, -1), [CX - 26, fy - 2], [CX - 17, fy + 4], [CX - 8, fy - 1], [CX + 2, fy + 5], [CX + 12, fy], [CX + 22, fy + 4], [CX + 30, fy - 3], T(temple, 1)], yL: temple, dir };
+      const fy = Math.max(hlY + 10, f.browY - 40);
+      const base = resample(along([cR, [CX + 26, fy], [CX, fy + 2], [CX - 26, fy], cL], 6), 9);
+      front = tips(base, (i) => 3 + h(i) * 11, (i) => (h(i + 40) - 0.5) * 8);
+      break;
     }
     case "quiff":
-      return { pts: [T(temple, -1), [CX - 26, line + 1], [CX, line - 3], [CX + 26, line + 1], T(temple, 1)], yL: temple, dir };
-    default:
-      return { pts: [T(temple, -1), [CX - 24, line + 3], [CX, line], [CX + 24, line + 3], T(temple, 1)], yL: temple, dir, part: s.part ? [CX + s.part * -12, line - 1] : undefined };
+    case "none":
+    default: {
+      // A natural hairline: a clean line with tiny, irregular notches where the hairs start.
+      const base = resample(along([cR, [CX + f.templeW * 0.32, hlY + 2.5], [CX, hlY], [CX - f.templeW * 0.32, hlY + 2.5], cL], 6), 6);
+      front = base.map((p, i) => [p[0], p[1] + (i % 2 ? 1.3 + h(i) : -0.3)] as Pt);
+      break;
+    }
   }
+
+  // ---- outer silhouette: the skull outline pushed out by the hair's thickness, then given an irregular edge
+  const centre: Pt = [CX, f.top + f.skullW * 0.95];
+  const skullR = head.rightPts.filter((p) => p[1] <= capBottom);
+  const long = s.back >= 2 && endY > f.eyeY;
+  let maxX = 0;
+  const pushed: Pt[] = skullR.map((p) => {
+    const t = clamp((capBottom - p[1]) / Math.max(1, capBottom - f.top), 0, 1);
+    const d = thickSide + (thickTop - thickSide) * Math.pow(t, 1.6) + (s.texture === "coily" ? s.side * 0.5 * Math.sin(Math.PI * t) : 0);
+    const n = unit(sub(p, centre));
+    let q = add(p, scale(n, d));
+    if (s.flat) q = [q[0], Math.max(q[1], f.top - thickTop * 0.82)];
+    if (long) {
+      maxX = Math.max(maxX, q[0]);
+      q = [Math.max(q[0], maxX - (q[1] - f.eyeY) * 0.08), q[1]];
+    }
+    return q;
+  });
+  if (pushed.length && pushed[pushed.length - 1][1] < capBottom) {
+    const last = pushed[pushed.length - 1];
+    pushed.push([Math.max(last[0], CX + head.half(capBottom) + thickSide), capBottom]);
+  }
+  const rightHalf = pushed.slice().reverse(); // capBottom -> crown
+  const leftHalf = pushed.map((p) => [2 * CX - p[0] - (hash01(seed, 99) - 0.5) * 2, p[1]] as Pt);
+  let outer = [...rightHalf, ...leftHalf.slice(1)];
+  if (s.edge === "tuft") {
+    outer = outer.map((p) => [p[0], p[1] - 16 * Math.exp(-(((p[0] - (CX + 12)) / 30) ** 2)) * (p[1] < f.top + 10 ? 1 : 0)] as Pt);
+  }
+  if (s.edge === "scallop") {
+    outer = resample(outer, s.texture === "coily" ? 11 : 14);
+  } else {
+    // Dense points with sharp clump tips every few samples; the tips lean back over the head like brushed hair.
+    const every = s.edge === "spiky" ? 3 : s.edge === "wavy" ? 4 : 5;
+    outer = resample(outer, 4);
+    outer = outer.map((p, i) => {
+      if (i < 2 || i > outer.length - 3) return p;
+      const n = normalAt(outer, i);
+      const tip = i % every === 0;
+      let amp = (h(i) - 0.5) * 0.9;
+      // Mostly small clump tips with the odd larger one, so the edge never reads as a regular sawtooth.
+      if (tip) amp = s.edge === "spiky" ? 5 + h(i) * 6 : s.edge === "wavy" ? 2 + h(i) * 2 : 1.4 + h(i) * 2.2 + (h(i + 33) > 0.75 ? 3.5 : 0);
+      const lean = tip ? (p[0] > CX ? 1 : -1) * amp * 0.45 : 0;
+      return [p[0] + n[0] * -amp + lean, p[1] + n[1] * -amp] as Pt;
+    });
+  }
+
+  // ---- assemble the cap: outer silhouette, down the left side, across the front, down the right side
+  const sideCutR = until(sideR, capBottom);
+  const sideCutL = until(sideL, capBottom);
+  const outerD = s.edge === "scallop" ? scallopPath(outer) : poly(outer);
+  // Where the solid hair stops on the sides, it ends in short clumps rather than a ruled line.
+  const bottomTips = (from: Pt, to: Pt, k: number): Pt[] => {
+    const out: Pt[] = [];
+    const n = Math.max(2, Math.round(dist(from, to) / 6));
+    for (let i = 1; i < n; i++) {
+      const p: Pt = [lerp(from[0], to[0], i / n), lerp(from[1], to[1], i / n)];
+      out.push(i % 2 ? [p[0], p[1] + 3 + h(k + i) * 4] : [p[0], p[1] - 0.5]);
+    }
+    return out;
+  };
+  const oR = outer[0];
+  const oL = outer[outer.length - 1];
+  const bl = sideCutL[sideCutL.length - 1];
+  const br = sideCutR[sideCutR.length - 1];
+  const cap = `${outerD}${polyCont(bottomTips(oL, bl, 50))}${polyCont(sideCutL.slice().reverse())}${polyCont(front.slice().reverse())}${polyCont(sideCutR)}${polyCont(bottomTips(br, oR, 70))}Z`;
+
+  const fades: string[] = [];
+  if (s.fade > 0 && capBottom < endY) {
+    for (const sign of [1, -1] as const) {
+      const sf = sign > 0 ? sideR : sideL;
+      const below = sf.filter((p) => p[1] > capBottom);
+      const startF = until(sf, capBottom);
+      const a = startF[startF.length - 1];
+      const ys = Array.from({ length: 7 }, (_, i) => capBottom + ((endY - capBottom) * i) / 6);
+      const outline = ys.map((y) => [CX + sign * (head.half(y, sign) + 12), y] as Pt);
+      fades.push(`${poly([a, ...below])}${polyCont(outline.slice().reverse())}Z`);
+    }
+  }
+  const shape = [[...outer, ...sideCutL.slice().reverse(), ...front.slice().reverse(), ...sideCutR]];
+  if (s.horseshoe) {
+    // Only the sides and back remain: two patches above the ears, the crown is bare.
+    const patches = ([1, -1] as const).map((sign) => {
+      const y0 = f.top + (f.browY - f.top) * 0.38;
+      const ys = Array.from({ length: 8 }, (_, i) => y0 + ((endY - y0) * i) / 7);
+      const outerP = ys.map((y, i) => [CX + sign * (head.half(y, sign) + thickSide + (i % 2 ? 1.5 : 0)), y] as Pt);
+      const innerP = ys.map((y) => [CX + sign * (head.half(y, sign) - 10), y + 2] as Pt);
+      return [...outerP, ...innerP.reverse()];
+    });
+    return { s, seed, outer: [], front: [], sideR: [], sideL: [], capBottom: endY, endY, hlY, thickTop, thickSide, cap: patches.map((q) => poly(q, true)).join(""), fades: [], dir, shape: patches };
+  }
+  return { s, seed, outer, front, sideR, sideL, capBottom, endY, hlY, thickTop, thickSide, cap, fades, dir, shape };
 }
 
-const half = (c: Contour, y: number) => c.half(y);
-
-/** Face-contour points on one side between two heights. */
-function sidePoints(c: Contour, y0: number, y1: number, sign: 1 | -1): Pt[] {
-  const out: Pt[] = [];
-  const n = 6;
-  for (let i = 0; i <= n; i++) {
-    const y = y0 + ((y1 - y0) * i) / n;
-    out.push([CX + sign * (c.half(y) + 0.4), y]);
+function scallopPath(pts: Pt[]): string {
+  let d = q(`M${r1(pts[0][0])} ${r1(pts[0][1])}`);
+  for (let i = 1; i < pts.length; i++) {
+    const rad = dist(pts[i], pts[i - 1]) * 0.66;
+    d += `A${r1(rad)} ${r1(rad)} 0 0 1 ${r1(pts[i][0])} ${r1(pts[i][1])}`;
   }
-  return out;
+  return d;
 }
 
-// ------------------------------------------------------------------ back layer
+// ------------------------------------------------------------------ layers
 
-const BACK_END = [0, 140, 158, 196, 236];
-const BACK_W = [0, 0.96, 1.02, 1.08, 1.14];
+/**
+ * Everything the hair does to the skin, drawn inside the head clip so the head outline stays on top: the shadow
+ * cast on the forehead, faded sides (hair colour mixed into the skin in two stepped bands) and shaved scalps.
+ */
+export function HairOnSkin({ ctx, g }: { ctx: HairCtx; g: HairGeom }) {
+  const { style: s, skin, color, uid, head } = ctx;
+  const els: ReactNode[] = [];
+  const t = tones(color);
+  const flecks = (
+    <pattern key="pat" id={`${uid}buzz`} width="3.2" height="3.2" patternUnits="userSpaceOnUse" patternTransform="rotate(24)">
+      <path d="M0.6 0.8l0.4 1M2.2 2.3l0.4 0.9" stroke={darken(t.base, 0.25)} strokeWidth="0.7" strokeLinecap="round" />
+    </pattern>
+  );
+  els.push(<defs key="defs">{flecks}</defs>);
+  if (s.density < 0.5) {
+    els.push(<path key="scalp" d={g.cap} fill={mix(skin.base, t.base, s.density * 1.2)} />, <path key="scalpt" d={g.cap} fill={`url(#${uid}buzz)`} opacity={0.8} />);
+    return <g>{els}</g>;
+  }
+  if (!s.horseshoe && g.front.length) {
+    const drop = s.fringe === "none" || s.fringe === "quiff" ? 4 : 6.5;
+    const line = [...g.sideR.slice().reverse(), ...g.front.slice().reverse(), ...g.sideL].map((p) => [p[0], p[1] + drop * 0.55] as Pt);
+    els.push(<path key="shadow" d={ribbon(line, (u) => (u > 0.2 && u < 0.8 ? drop * 1.6 : drop))} fill={skin.shade} />);
+  }
+  if (g.fades.length) {
+    const strong = [0, 0.62, 0.55, 0.45][s.fade];
+    const soft = [0, 0.4, 0.3, 0.14][s.fade];
+    g.fades.forEach((d, i) => {
+      const sign = i === 0 ? 1 : -1;
+      const y1 = g.capBottom + (g.endY - g.capBottom) * 0.42;
+      // The upper band ends in a slightly ragged line, like clipper work.
+      const ragged: Pt[] = Array.from({ length: 7 }, (_, k) => [CX + sign * (head.half(y1, sign) - 18 + k * 5), y1 + (k % 2 ? 2 : -1.5)] as Pt);
+      els.push(
+        <defs key={`fx${i}`}>
+          <path id={`${uid}fd${i}`} d={d} />
+        </defs>,
+        <use key={`fs${i}`} href={`#${uid}fd${i}`} fill={mix(skin.base, t.base, soft)} />,
+        <path key={`fu${i}`} d={q(`${poly([[CX + sign * (head.half(g.capBottom, sign) - 30), g.capBottom - 4], [CX + sign * (head.half(g.capBottom, sign) + 14), g.capBottom - 4], [CX + sign * (head.half(y1, sign) + 14), y1], ...ragged.slice().reverse()])}Z`)} fill={mix(skin.base, t.base, strong)} clipPath={`url(#${uid}fade${i})`} />,
+        <clipPath key={`fc${i}`} id={`${uid}fade${i}`}>
+          <use href={`#${uid}fd${i}`} />
+        </clipPath>,
+        ctx.lite ? null : <use key={`ft${i}`} href={`#${uid}fd${i}`} fill={`url(#${uid}buzz)`} opacity={0.6} />,
+      );
+    });
+  }
+  return <g>{els}</g>;
+}
 
-export function HairBack({ style: s, color, contour: c, skin }: HairCtx) {
-  void skin;
-  const dark = darken(color, 0.28);
-  const parts: React.ReactNode[] = [];
-  const top = crownY(s, c);
-
+export function HairBack({ ctx }: { ctx: HairCtx }) {
+  const { style: s, f, head, color } = ctx;
+  const t = tones(color);
+  const parts: ReactNode[] = [];
+  const top = f.top - s.top * 1.5;
   if (s.strands === "bun") {
-    parts.push(<circle key="bun" cx={CX} cy={top - 7} r={12} fill={color} stroke={INK} {...sw(2.4)} />, <path key="bunb" d={`M${CX - 11} ${top - 3}Q${CX} ${top + 3} ${CX + 11} ${top - 3}`} fill="none" stroke={dark} {...sw(2)} />);
+    parts.push(<circle key="bun" cx={CX + 2} cy={top - 6} r={17} fill={t.base} stroke={INK} strokeWidth={OUT * 0.85} />, <path key="bt" d={q(`M${CX - 12} ${top - 12}q12 -9 26 2M${CX - 10} ${top - 2}q12 -7 24 2`)} stroke={t.dark} {...sw(1.6)} />);
   }
   if (s.strands === "ponytail") {
-    parts.push(
-      <path key="pt" d={`M${CX + 22} ${top + 12}C${CX + 66} ${top - 6} ${CX + 78} ${top + 80} ${CX + 54} ${top + 128}C${CX + 52} ${top + 102} ${CX + 40} ${top + 70} ${CX + 20} ${top + 38}Z`} fill={color} stroke={INK} {...sw(2.4)} />,
-      <circle key="ptt" cx={CX + 30} cy={top + 20} r={3.4} fill={dark} stroke={INK} {...sw(1.4)} />,
-    );
+    parts.push(<path key="pt" d={q(`M${CX + 40} ${top + 34}C${CX + 110} ${top + 10} ${CX + 118} ${top + 150} ${CX + 82} ${top + 230}C${CX + 78} ${top + 180} ${CX + 62} ${top + 120} ${CX + 36} ${top + 70}Z`)} fill={t.dark} stroke={INK} strokeWidth={OUT * 0.85} strokeLinejoin="round" />);
   }
-  if (s.back > 0 && !s.strands.match(/locs|braids/)) {
-    const yb = BACK_END[s.back];
-    const ys = 106;
-    const wTop = c.half(ys) + s.side + 2.5;
-    const wBot = (c.half(138) + 3 + s.side * 0.6) * BACK_W[s.back];
-    const inner = 24;
-    const sag = s.texture === "straight" ? 0 : 4;
-    const body = `M${CX + wTop} ${ys}C${CX + wTop + 2} ${ys + (yb - ys) * 0.4} ${CX + wBot + 2} ${yb - 36} ${CX + wBot} ${yb - 4}Q${CX + wBot - 4} ${yb + sag} ${CX + inner} ${yb}L${CX - inner} ${yb}Q${CX - wBot + 4} ${yb + sag} ${CX - wBot} ${yb - 4}C${CX - wBot - 2} ${yb - 36} ${CX - wTop - 2} ${ys + (yb - ys) * 0.4} ${CX - wTop} ${ys}Z`;
-    parts.push(<path key="back" d={body} fill={dark} stroke={INK} {...sw(2.4)} />);
+  if (s.back > 0 && s.strands !== "locs" && s.strands !== "braids") {
+    const end = [0, f.jawY - 8, f.chinY + 6, f.chinY + 44, 336][s.back];
+    const wTop = head.half(f.eyeY) + 1.5 + s.side * 1.35 + 2;
+    const wBot = head.half(f.cheekDy + f.eyeY) + 6 + s.side + s.back * 3;
+    const seed = 31 * (ctx.index + 5);
+    const bottom: Pt[] = [];
+    for (let i = 0; i <= 8; i++) {
+      const x = CX - wBot + (2 * wBot * i) / 8;
+      bottom.push([x, end - (i % 2 ? 0 : 6 + hash01(seed, i) * 6) - Math.abs(i - 4) * 1.5]);
+    }
+    const y0 = f.browY - 10;
+    const d = q(`M${CX + wTop} ${y0}C${CX + wTop + 4} ${y0 + 60} ${CX + wBot + 2} ${end - 50} ${CX + wBot} ${end - 6}${polyCont(bottom.slice().reverse())}L${CX - wBot} ${end - 6}C${CX - wBot - 2} ${end - 50} ${CX - wTop - 4} ${y0 + 60} ${CX - wTop} ${y0}Z`);
+    parts.push(<path key="back" d={d} fill={darken(t.base, 0.22)} stroke={INK} strokeWidth={OUT * 0.85} strokeLinejoin="round" />);
+    for (let i = 0; i < 6; i++) {
+      const x = CX + (i < 3 ? -1 : 1) * (wBot - 6 - (i % 3) * 6);
+      parts.push(<path key={`bs${i}`} d={q(`M${x} ${f.eyeY + 10}Q${x + (i < 3 ? -3 : 3)} ${(f.eyeY + end) / 2} ${x} ${end - 12}`)} stroke={t.dark} opacity={0.7} {...sw(1.4)} />);
+    }
   }
   if (s.strands === "locs" || s.strands === "braids") {
     const braid = s.strands === "braids";
-    const yEnd = BACK_END[Math.max(1, s.back)] - (braid ? 10 : 0);
-    const n = braid ? 11 : 9;
+    const end = [0, f.jawY - 6, f.chinY + 6, f.chinY + 40, 330][Math.max(1, s.back)];
+    const n = braid ? 12 : 10;
     for (let i = 0; i < n; i++) {
-      const t = (i + 0.5) / n - 0.5; // -0.5..0.5
-      const x0 = CX + t * 2 * (c.half(86) + s.side - 3);
-      const y0 = top + 12 + Math.abs(t) * 38;
-      const spread = t * 2 * (c.half(120) + 18 + s.side);
-      const yb = yEnd - (i % 3) * 7 - Math.abs(t) * 10;
-      const wid = braid ? 6.2 : 8.4;
-      const d = `M${r1(x0)} ${r1(y0)}C${r1(x0 + spread * 0.4)} ${r1(y0 + 40)} ${r1(CX + spread)} ${r1(yb - 40)} ${r1(CX + spread * 0.94)} ${r1(yb)}`;
-      parts.push(
-        <path key={`s${i}`} d={d} fill="none" stroke={INK} {...sw(wid + 2.6)} />,
-        <path key={`c${i}`} d={d} fill="none" stroke={i % 2 ? dark : color} {...sw(wid)} />,
-        braid ? <path key={`b${i}`} d={d} fill="none" stroke={INK} opacity={0.5} strokeWidth={wid} strokeDasharray="1.2 3.2" strokeLinecap="butt" /> : <path key={`b${i}`} d={d} fill="none" stroke={lighten(color, 0.14)} opacity={0.5} strokeWidth={1.2} strokeLinecap="round" />,
-      );
+      const u = (i + 0.5) / n - 0.5;
+      const x0 = CX + u * 2 * (head.half(f.browY - 20) + 4);
+      const xe = CX + u * 2 * (head.half(f.eyeY + 20) + 24 + s.side);
+      const ye = end - (i % 3) * 9 - Math.abs(u) * 14;
+      const pts = along([[x0, f.top + 20], [x0 + (xe - x0) * 0.6, f.eyeY], [xe, ye]], 6);
+      const wd = braid ? 8 : 11;
+      parts.push(<path key={`s${i}`} d={ribbon(pts, () => wd)} fill={i % 2 ? t.dark : darken(t.base, 0.15)} stroke={INK} strokeWidth={FINE * 1.2} strokeLinejoin="round" />);
+      if (braid) parts.push(<path key={`sb${i}`} d={pts.slice(1).map((p, k) => q(`M${r1(p[0] - 3)} ${r1(p[1] - 2 + (k % 2))}l6 3`)).join("")} stroke={INK} opacity={0.5} {...sw(0.9)} />);
     }
   }
   if (!parts.length) return null;
   return <g>{parts}</g>;
 }
 
-// ------------------------------------------------------------------ front layer
+export function HairFront({ ctx, g }: { ctx: HairCtx; g: HairGeom }) {
+  const { style: s, f, color, skin, uid } = ctx;
+  const t = tones(color);
+  const els: ReactNode[] = [];
+  const thin = s.density < 0.5;
 
-export function HairFront({ style: s, color, contour: c, recede, skin, uid }: HairCtx & { uid: string }) {
-  const dark = darken(color, 0.3);
-  const light = lighten(color, 0.2);
-  const top = crownY(s, c);
-  const capEnd = s.fade > 0 ? s.end - [0, 14, 24, 34][s.fade] : s.end;
-  const baseY = Math.min(s.end, 112);
-  const capBase = Math.min(capEnd, baseY);
-  const outer = decorate(outerPoints(s, c, capBase, 14), s);
-  const hl = hairline(s, c, s.fringe === "none" || s.horseshoe ? recede : recede * 0.4);
-  const left = sidePoints(c, hl.yL, capBase, -1); // temple down to base on the left
-  const rightSide = sidePoints(c, hl.yL, capBase, 1).reverse(); // base up to temple on the right (reverse of temple->base)
+  if (thin) return null;
 
-  // Hair region: outer silhouette (right base -> left base), up the left face edge, along the hairline, down the right face edge.
-  const outerD = edgePath(outer, s);
-  const hlPath = s.fringe === "messy" || s.fringe === "caesar" ? polyline(hl.pts) : smooth(hl.pts);
-  const hairlineD = s.fringe === "messy" || s.fringe === "caesar" ? polyline(hl.pts).replace("M", "L") : smooth(hl.pts).replace("M", "L");
-  const leftUp = `L${left
-    .slice()
-    .reverse()
-    .map((p) => `${r1(p[0])} ${r1(p[1])}`)
-    .join("L")}`;
-  const rightDown = rightSide.map((p) => `L${r1(p[0])} ${r1(p[1])}`).join("");
-  const region = `${outerD}${leftUp}${hairlineD}${rightDown}Z`;
-
-  const els: React.ReactNode[] = [];
-  const baldCap = s.density < 0.4;
-
-  // Side fade bands (translucent hair colour on skin, stepped like a retro print).
-  if (s.fade > 0 && capBase < s.end) {
-    const bands = 3;
-    for (let b = 0; b < bands; b++) {
-      const y0 = capBase + ((s.end - capBase) * b) / bands;
-      const op = [0.62, 0.38, 0.17][b];
-      for (const sign of [1, -1] as const) {
-        const w0 = c.half(y0) + s.side + 1.6;
-        const w1 = c.half(s.end) + s.side + 1.6;
-        const yEnd = s.end;
-        const pts = `${CX + sign * (c.half(y0) + 0.4)} ${y0}L${CX + sign * w0} ${y0}L${CX + sign * w1} ${yEnd}L${CX + sign * (c.half(yEnd) + 0.4)} ${yEnd}`;
-        els.push(<path key={`f${b}${sign}`} d={`M${pts}Z`} fill={color} opacity={op} />);
-      }
-    }
+  const cid = `${uid}hair`;
+  const inner: ReactNode[] = [];
+  // Form: shadow on the right of the mass and along its lower edge, light on the crown.
+  inner.push(
+    <path key="shade" d={q(`M${CX + 18} ${f.top - 80}C${CX + 34} ${f.top} ${CX + f.templeW * 0.5} ${g.hlY + 8} ${CX + 20} ${f.chinY}L${CX + 200} ${f.chinY}L${CX + 200} ${f.top - 80}Z`)} fill={t.dark} opacity={0.42} />,
+    g.front.length ? <path key="rim" d={ribbon([...g.sideR.slice().reverse(), ...g.front.slice().reverse(), ...g.sideL].map((p) => [p[0], p[1] - 3] as Pt), () => 6)} fill={t.dark} opacity={0.35} /> : null,
+  );
+  inner.push(...texture(ctx, g, t));
+  if (s.part !== 0 && (s.fringe === "side" || s.fringe === "none")) {
+    const px = CX - g.dir * 18;
+    inner.push(<path key="part" d={q(`M${px} ${g.hlY + 4}Q${px + g.dir * 1.5} ${(g.hlY + f.top) / 2} ${px + g.dir * 5} ${f.top + 2}`)} stroke={mix(skin.base, t.base, 0.45)} {...sw(1.3)} />);
   }
-
-  // A soft shadow cast by the hair onto the forehead, drawn first so the hair sits over it.
-  if (!baldCap && !s.horseshoe) els.push(<path key="hls" d={hlPath} fill="none" stroke="#3a1a0e" opacity={0.2} {...sw(5)} transform="translate(0 2.2)" />);
-  void skin;
-  els.push(<path key="cap" d={region} fill={color} fillOpacity={s.density} stroke={baldCap ? "none" : INK} strokeOpacity={Math.min(1, s.density + 0.2)} {...sw(s.density < 0.8 ? 1.2 : 2.4)} />);
-
-  if (!baldCap) {
-    const cid = `${uid}hc`;
-    const inner: React.ReactNode[] = [];
-    // Form shadow: the hair is darker towards the sides and lower edge, lighter on the crown.
-    inner.push(<path key="form" d={`M${CX + 60} ${top + 70}L${CX + 60} ${top - 20}L${CX + 16} ${top - 20}Q${CX + 34} ${top + 26} ${CX + 24} ${top + 70}Z`} fill={dark} opacity={0.4} />);
-    if (s.sheen) inner.push(<path key="sheen" d={`M${CX - 28} ${top + 15}Q${CX - 4} ${top + 2} ${CX + 26} ${top + 13}`} fill="none" stroke={light} opacity={0.4} {...sw(3.6)} />);
-    inner.push(...texture(s, c, outer, hl.yL, dark, light, top, color));
-    if (hl.part) inner.push(<path key="part" d={`M${r1(hl.part[0])} ${r1(hl.part[1])}Q${r1(hl.part[0] + hl.dir * 4)} ${r1(top + 8)} ${r1(hl.part[0] + hl.dir * 10)} ${r1(top + 3)}`} fill="none" stroke={dark} {...sw(1.8)} />);
-    els.push(
-      <clipPath key="clip" id={cid}>
-        <path d={region} />
-      </clipPath>,
-      <g key="inner" clipPath={`url(#${cid})`}>{inner}</g>,
-    );
-    // Stray hairs just ahead of the hairline break up the cut-out edge.
-    if (!s.horseshoe && s.density > 0.8) {
-      const q = hl.pts;
-      els.push(<path key="stray" d={q.filter((_, i) => i % 2 === 1).map((p, i) => `M${r1(p[0])} ${r1(p[1])}l${i % 2 ? 1.4 : -1.2} ${2.2 + (i % 3) * 0.6}`).join("")} stroke={color} opacity={0.6} {...sw(0.9)} fill="none" />);
-    }
+  els.push(
+    <defs key="defs">
+      <path id={`${cid}d`} d={g.cap} />
+      <clipPath id={cid}>
+        <use href={`#${cid}d`} />
+      </clipPath>
+    </defs>,
+    <use key="cap" href={`#${cid}d`} fill={t.base} fillOpacity={s.density} />,
+    <g key="inner" clipPath={`url(#${cid})`} opacity={s.density}>
+      {inner}
+    </g>,
+  );
+  if (s.horseshoe) {
+    els.push(<path key="ink" d={g.cap} fill="none" stroke={INK} strokeWidth={MID} strokeLinejoin="round" />);
+    return <g>{els}</g>;
   }
-
-  // Strands that hang over the face (locs / braids) and short twist coils.
-  els.push(...frontStrands(s, c, color, dark, top));
-  void skin;
+  // Ink: a heavy silhouette, a lighter line where the hair meets the face.
+  const outerD = s.edge === "scallop" ? scallopPath(g.outer) : poly(g.outer);
+  const frontD = poly([...until(g.sideL, g.capBottom).slice().reverse(), ...g.front.slice().reverse(), ...until(g.sideR, g.capBottom)]);
+  els.push(<path key="ink" d={outerD} stroke={INK} {...sw(OUT * 0.9)} />, <path key="inkf" d={frontD} stroke={INK} {...sw(MID * 0.9)} />);
+  els.push(...strands(ctx, t));
   return <g>{els}</g>;
 }
 
-function texture(s: HairStyle, c: Contour, outer: Pt[], yL: number, dark: string, light: string, top: number, color: string): React.ReactNode[] {
-  const els: React.ReactNode[] = [];
-  const thick = s.top + 10;
-  void color;
+/** Directional clumps and separations (straight, wavy) or curl clusters (curly, coily), drawn inside the cap. */
+function texture(ctx: HairCtx, g: HairGeom, t: Tone): ReactNode[] {
+  const { style: s, f } = ctx;
+  const els: ReactNode[] = [];
+  const h = (i: number) => hash01(g.seed + 17, i);
   if (s.strands === "rows") {
     for (let i = -6; i <= 6; i++) {
-      const x0 = CX + i * 7.4;
-      const y0 = Math.max(yL - 1, 66);
-      els.push(<path key={`r${i}`} d={`M${x0} ${y0}Q${CX + i * 6.2} ${top + 6} ${CX + i * 2.6} ${top - 1}`} fill="none" stroke={dark} opacity={0.7} {...sw(1.6)} />, <path key={`rl${i}`} d={`M${x0 + 2} ${y0}Q${CX + i * 6.2 + 2} ${top + 6} ${CX + i * 2.6 + 1.6} ${top - 1}`} fill="none" stroke={light} opacity={0.35} {...sw(1)} />);
+      const x0 = CX + i * 10.5;
+      const pts = along([[x0, g.hlY + 2], [CX + i * 8, f.top + 18], [CX + i * 3.5, f.top - 2]], 5);
+      els.push(<path key={`r${i}`} d={ribbon(pts, () => 6)} fill={t.light} opacity={0.32} />, <path key={`rd${i}`} d={ribbon(pts.map((p) => [p[0] + 5, p[1]] as Pt), () => 1.4)} fill={t.dark} opacity={0.8} />);
     }
     return els;
   }
-  if (s.horseshoe) return els;
-  if (s.texture === "straight") {
-    // Directional strand groups sweeping from the crown towards the hairline and sides.
-    for (let i = -7; i <= 7; i++) {
-      const x1 = CX + i * 8.4;
-      const bow = i * 1.6;
-      const d = `M${CX + i * 2.6} ${top - 1}Q${CX + i * 6 + bow} ${top + thick * 0.55} ${x1} ${yL + 2}`;
-      els.push(<path key={`t${i}`} d={d} fill="none" stroke={i % 2 ? dark : light} opacity={i % 2 ? 0.5 : 0.28} {...sw(i % 3 ? 0.9 : 1.4)} />);
+  if (s.texture === "straight" || s.texture === "wavy") {
+    // Clumps spread over the whole mass, each following the way the hair is brushed: out from the crown,
+    // then forward and across towards the fringe. Lit clumps on the upper left, dark partings everywhere.
+    const origin: Pt = [CX - g.dir * 12, f.top - g.thickTop * 0.35];
+    const sweep: Pt = s.fringe === "side" || s.fringe === "sweep" ? [g.dir * 0.7, 0.5] : s.fringe === "none" || s.fringe === "quiff" ? [0, -0.2] : [0, 0.6];
+    const minX = CX - f.skullW - g.thickSide - 6;
+    const maxX = CX + f.skullW + g.thickSide + 6;
+    const minY = f.top - g.thickTop - 8;
+    const gap = ctx.lite ? 15 : 10;
+    let k = 0;
+    for (let y = minY; y < g.capBottom + 4; y += gap * 0.8) {
+      for (let x = minX + ((Math.round(y) / gap) % 2) * gap * 0.5; x < maxX; x += gap) {
+        const p: Pt = [x + (h(k) - 0.5) * 5, y + (h(k + 500) - 0.5) * 4];
+        k++;
+        if (!g.shape.some((q) => inside(q, p))) continue;
+        const out = unit(sub(p, origin));
+        const frontness = clamp((p[1] - (g.hlY - 30)) / 30, 0, 1);
+        const v = unit([out[0] + sweep[0] * frontness, out[1] + sweep[1] * frontness]);
+        const len = 13 + h(k + 900) * 11;
+        const a: Pt = [p[0] - v[0] * len * 0.35, p[1] - v[1] * len * 0.35];
+        const bend = (s.texture === "wavy" ? 4 : 1.8) * (h(k + 1300) > 0.5 ? 1 : -1);
+        const m: Pt = [p[0] + v[0] * len * 0.15 - v[1] * bend, p[1] + v[1] * len * 0.15 + v[0] * bend];
+        const e: Pt = [p[0] + v[0] * len * 0.65, p[1] + v[1] * len * 0.65];
+        const pts = along([a, m, e], 3);
+        const lit = (p[0] < CX + 14 - (p[1] - minY) * 0.25 && h(k + 1700) > 0.25) || h(k + 1900) > 0.9;
+        if (lit) els.push(<path key={`hl${k}`} d={ribbon(pts, taper(2.4 + h(k + 2100) * 2.2, 0.15, 0.45))} fill={t.light} opacity={0.8} />);
+        else if (h(k + 2500) > 0.35) els.push(<path key={`sp${k}`} d={ribbon(pts, taper(1.3, 0.1, 0.6))} fill={t.dark} opacity={0.85} />);
+      }
     }
-  } else if (s.texture === "wavy") {
-    for (let i = -4; i <= 4; i++) {
-      els.push(
-        <path key={`w${i}`} d={`M${CX + i * 8 - 4} ${top + 5}q3 -4 6 0t6 0t6 0`} fill="none" stroke={dark} opacity={0.5} {...sw(1.3)} />,
-        <path key={`w2${i}`} d={`M${CX + i * 8 - 6} ${top + 14}q3 -4 6 0t6 0t6 0`} fill="none" stroke={light} opacity={0.3} {...sw(1.1)} />,
-        <path key={`w3${i}`} d={`M${CX + i * 8 - 3} ${top + 23}q3 -4 6 0t6 0`} fill="none" stroke={dark} opacity={0.32} {...sw(1.1)} />,
-      );
+    if (s.sheen) els.push(<path key="sheen" d={ribbon(along([[CX - 44, f.top + 14], [CX - 14, f.top - g.thickTop * 0.5 + 3], [CX + 18, f.top - g.thickTop * 0.42 + 6]], 6), taper(5, 0.5))} fill={t.light} opacity={0.55} />);
+    return els;
+  }
+  // Curly / coily: individual curls at varied angles and sizes, darker on the shadow side, catching light on the left.
+  const coil = s.texture === "coily";
+  const rad = coil ? 3.4 : 4.8;
+  const gapC = rad * (ctx.lite ? 3.6 : 2.5);
+  let k = 0;
+  for (let y = f.top - g.thickTop - 4; y < g.capBottom + 2; y += gapC * 0.82) {
+    for (let x = CX - f.skullW - g.thickSide - 8 + ((Math.round(y / gapC) % 2) * gapC) / 2; x < CX + f.skullW + g.thickSide + 8; x += gapC) {
+      const p: Pt = [x + (h(k) - 0.5) * rad, y + (h(k + 300) - 0.5) * rad];
+      k++;
+      if (!g.shape.some((q) => inside(q, p))) continue;
+      const r = rad * (0.75 + h(k + 600) * 0.5);
+      const a0 = h(k + 900) * Math.PI * 2;
+      const arc: Pt[] = Array.from({ length: 7 }, (_, i) => {
+        const a = a0 + (i / 6) * Math.PI * 1.35;
+        return [p[0] + Math.cos(a) * r, p[1] + Math.sin(a) * r * 0.85] as Pt;
+      });
+      const lit = p[0] < CX + 6 - (p[1] - f.top) * 0.3 && h(k + 1200) > 0.3;
+      els.push(<path key={`c${k}`} d={ribbon(arc, taper(coil ? 1.5 : 2, 0.2))} fill={lit ? t.light : t.dark} opacity={lit ? 0.85 : 0.8} />);
     }
-  } else {
-    // Curl and coil clusters on a jittered grid; the clip keeps them inside the silhouette.
-    const rows = Math.max(3, Math.round((yL - top) / 8));
-    for (let r = 0; r < rows; r++) {
-      const y = top + 5 + r * 8;
-      const n = 11;
-      for (let k = 0; k < n; k++) {
-        const x = CX - 46 - s.side + ((k + (r % 2) * 0.5) * (92 + 2 * s.side)) / n + ((r * 7 + k * 5) % 5) - 2;
-        const yy = y + ((r * 3 + k * 7) % 4) - 1.5;
-        const rad = s.texture === "coily" ? 2.6 : 3.3;
-        els.push(<path key={`c${r}-${k}`} d={`M${r1(x - rad)} ${r1(yy)}a${rad} ${rad} 0 1 1 ${r1(rad * 2)} 0`} fill="none" stroke={(r + k) % 3 ? dark : light} opacity={(r + k) % 3 ? 0.6 : 0.4} {...sw(1.1)} />);
+  }
+  return els;
+}
+
+/** Strands that hang in front of the face: locs, braids and twists. */
+function strands(ctx: HairCtx, t: Tone): ReactNode[] {
+  const { style: s, f, head } = ctx;
+  const els: ReactNode[] = [];
+  if (s.strands === "twists") {
+    for (let i = 0; i < 15; i++) {
+      const a = Math.PI + (Math.PI * (i + 0.5)) / 15;
+      const rx = head.half(f.top + 40) + 4;
+      const ry = f.top + 50 - (f.top - s.top * 1.5);
+      const x = CX + Math.cos(a) * rx * 0.94;
+      const y = f.top + 50 + Math.sin(a) * ry * 0.9;
+      const tip: Pt = [x + Math.cos(a) * 12, y + Math.sin(a) * 12];
+      els.push(<path key={`tw${i}`} d={ribbon([[x, y], tip], taper(8, 4, 0.4))} fill={i % 2 ? t.dark : t.base} stroke={INK} strokeWidth={FINE} strokeLinejoin="round" />);
+    }
+  }
+  if (s.strands === "locs" || s.strands === "braids") {
+    const braid = s.strands === "braids";
+    const short = s.back <= 1;
+    const wd = braid ? 7.5 : 10.5;
+    const draw = (key: string, pts: Pt[], i: number) => {
+      els.push(<path key={key} d={ribbon(pts, () => wd)} fill={i % 2 ? t.dark : t.base} stroke={INK} strokeWidth={FINE * 1.3} strokeLinejoin="round" />);
+      if (braid) els.push(<path key={`${key}b`} d={pts.slice(1).map((p, k) => q(`M${r1(p[0] - 3)} ${r1(p[1] - 2 + (k % 2))}l6 3`)).join("")} stroke={INK} opacity={0.55} {...sw(0.9)} />);
+      else els.push(<path key={`${key}h`} d={ribbon(pts.map((p) => [p[0] - 2, p[1]] as Pt), taper(1.6, 0.3))} fill={t.light} opacity={0.6} />);
+    };
+    // Fringe strands fall forward from the crown, fanning out, and stop at different lengths above the brows.
+    const fringe = braid ? 4 : 5;
+    for (let i = 0; i < fringe; i++) {
+      const u = (i + 0.5) / fringe - 0.5;
+      const ye = f.browY - 14 - hash01(ctx.index, i) * 16;
+      const x1 = CX + u * 2 * f.templeW * 0.62;
+      draw(`f${i}`, along([[CX + u * 30, f.top - 4], [lerp(CX + u * 30, x1, 0.6) + u * 10, (f.top + ye) / 2], [x1 + u * 14, ye]], 5), i);
+    }
+    // Side strands start at the temples and hang outside the face, over the ears and shoulders.
+    const per = braid ? 3 : 3;
+    for (const sign of [1, -1] as const) {
+      for (let j = 0; j < per; j++) {
+        const x0 = CX + sign * f.templeW * (0.62 + j * 0.14);
+        const y0 = f.top + 14 + j * 10;
+        const ye = short ? f.eyeY + 4 + j * 6 : f.chinY + 10 + j * 14;
+        const xe = CX + sign * (head.half(Math.min(ye, f.jawY), sign) + 4 + j * 8 + s.side);
+        draw(`s${sign}${j}`, along([[x0, y0], [CX + sign * (head.half(f.browY, sign) + 2 + j * 5), f.browY], [xe, ye]], 6), j);
       }
     }
   }
-  void outer;
   return els;
 }
-
-function frontStrands(s: HairStyle, c: Contour, color: string, dark: string, top: number): React.ReactNode[] {
-  const els: React.ReactNode[] = [];
-  if (s.strands === "twists") {
-    for (let i = 0; i < 12; i++) {
-      const a = Math.PI + (Math.PI * (i + 0.5)) / 12;
-      const rx = c.half(80) + s.side + 1;
-      const x = CX + Math.cos(a) * rx * 0.96;
-      const y = c.top + 26 + Math.sin(a) * (c.top + 26 - top) * 0.98;
-      const ox = Math.cos(a) * 9;
-      const oy = Math.sin(a) * 9;
-      els.push(
-        <path key={`tw${i}`} d={`M${r1(x)} ${r1(y)}l${r1(ox)} ${r1(oy)}`} stroke={INK} {...sw(8.4)} />,
-        <path key={`tc${i}`} d={`M${r1(x)} ${r1(y)}l${r1(ox)} ${r1(oy)}`} stroke={i % 2 ? dark : color} {...sw(5.6)} />,
-      );
-    }
-  }
-  if (s.strands === "locs") {
-    const short = s.back <= 1;
-    const items = short ? 9 : 10;
-    for (let i = 0; i < items; i++) {
-      const t = (i + 0.5) / items - 0.5;
-      const x0 = CX + t * 2 * (c.half(76) + s.side - 2);
-      const y0 = top + 10 + Math.abs(t) * 34;
-      const hang = short ? 28 + (i % 3) * 5 : 0;
-      const side = Math.abs(t) > 0.28;
-      if (!short && !side && i % 2) continue;
-      const yEnd = short ? y0 + hang + 6 : side ? 168 + (i % 3) * 8 : 96 + (i % 3) * 7;
-      const xEnd = side ? CX + t * 2 * (c.half(130) + s.side + 8) : x0 + (i % 2 ? 4 : -4);
-      const d = `M${r1(x0)} ${r1(y0)}C${r1(x0 + (xEnd - x0) * 0.2)} ${r1(y0 + (yEnd - y0) * 0.4)} ${r1(xEnd)} ${r1(yEnd - (yEnd - y0) * 0.35)} ${r1(xEnd)} ${r1(yEnd)}`;
-      els.push(<path key={`l${i}`} d={d} fill="none" stroke={INK} {...sw(10.4)} />, <path key={`lc${i}`} d={d} fill="none" stroke={i % 2 ? dark : color} {...sw(7.6)} />, <path key={`lh${i}`} d={d} fill="none" stroke={lighten(color, 0.16)} opacity={0.45} {...sw(1.2)} />);
-    }
-  }
-  if (s.strands === "braids") {
-    const items = s.back >= 3 ? 8 : 6;
-    for (let i = 0; i < items; i++) {
-      const t = (i + 0.5) / items - 0.5;
-      const x0 = CX + t * 2 * (c.half(76) + s.side - 2);
-      const y0 = top + 12 + Math.abs(t) * 30;
-      const side = Math.abs(t) > 0.2;
-      if (!side && i % 2) continue;
-      const yEnd = s.back >= 3 ? (side ? 186 : 110) : side ? 140 : 100;
-      const xEnd = side ? CX + t * 2 * (c.half(120) + s.side + 6) : x0;
-      const d = `M${r1(x0)} ${r1(y0)}C${r1(x0 + (xEnd - x0) * 0.1)} ${r1(y0 + 30)} ${r1(xEnd)} ${r1(yEnd - 40)} ${r1(xEnd)} ${r1(yEnd)}`;
-      els.push(<path key={`b${i}`} d={d} fill="none" stroke={INK} {...sw(8)} />, <path key={`bc${i}`} d={d} fill="none" stroke={color} {...sw(5.4)} />, <path key={`bd${i}`} d={d} fill="none" stroke={INK} opacity={0.5} strokeWidth={5.4} strokeDasharray="1.2 3.2" strokeLinecap="butt" />);
-    }
-  }
-  return els;
-}
-
-export const hairTint = (base: string, grey: number) => (grey > 0 ? mix(base, "#b8b8bb", grey * 0.85) : base);
