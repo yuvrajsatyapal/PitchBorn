@@ -275,7 +275,7 @@ export function flowHair(i: HairInput, o: FlowDesign): HairArt {
         <path d={ring([P(partX - 1.4, hl.y), P(partX + 1.4, hl.y), P(crownPart[0], crownPart[1] + 3)])} opacity={0.6} />
       </g>
     ),
-    front: (
+    mid: (
       <g>
         {L.art}
         {R.art}

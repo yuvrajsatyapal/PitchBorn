@@ -19,7 +19,7 @@ mkdirSync(out, { recursive: true });
 
 const base: PortraitModel = {
   f: REFERENCE_FACE, skin: "#d9a07a", iris: "#4a2e1a", hair: 4, hairColor: "#2a1c14", browColor: "#24170f", facial: 0, facialColor: "#2a1c14",
-  recede: 0, facialGrey: 0, lines: 0, youth: 0, freckles: false, scar: 0, mark: 0, accessory: 0, kit: "#b5232f", trim: "#f1ead8", background: "#2f3e55",
+  recede: 0, facialGrey: 0, lines: 0, youth: 0, freckles: false, scar: 0, mark: 0, accessory: 0, band: "#f1ead8", hairTip: null, kit: "#b5232f", trim: "#f1ead8", background: "#2f3e55",
 };
 
 let n = 0;

@@ -1,7 +1,7 @@
 import { SCARS, MARKS } from "@/engine/appearance/options";
 import type { FaceSpec, Head } from "./anatomy";
 import type { Skin } from "./face";
-import { q, CX, FINE, INK, OUT, sw } from "./geometry";
+import { q, CX, FINE, INK, MID, OUT, sw } from "./geometry";
 
 /**
  * Structure lines that deepen with age. The fold from nose to mouth is always faintly there (it is bone and muscle,
@@ -46,15 +46,33 @@ export function Details({ f, skin, freckles, scar, mark }: { f: FaceSpec; skin: 
 }
 
 /** A footballer's elastic headband across the forehead, over the hair. */
-export function Headband({ f, head }: { f: FaceSpec; head: Head }) {
+export function Headband({ f, head, color = "#f1ead8" }: { f: FaceSpec; head: Head; color?: string }) {
   const y = f.browY - 40;
   const wl = head.half(y, -1) + 2.5;
   const wr = head.half(y, 1) + 2.5;
   const d = q(`M${CX - wl} ${y + 2}Q${CX} ${y - 7} ${CX + wr} ${y + 2}L${CX + wr} ${y + 10}Q${CX} ${y + 1} ${CX - wl} ${y + 10}Z`);
   return (
     <g>
-      <path d={d} fill="#f1ead8" stroke={INK} strokeWidth={OUT * 0.75} strokeLinejoin="round" />
-      <path d={q(`M${CX + 10} ${y - 2}Q${CX + wr * 0.6} ${y - 1} ${CX + wr} ${y + 3}L${CX + wr} ${y + 10}Q${CX + wr * 0.6} ${y + 5} ${CX + 10} ${y + 5}Z`)} fill="#d9d0bd" />
+      <path d={d} fill={color} stroke={INK} strokeWidth={OUT * 0.75} strokeLinejoin="round" />
+      <path d={q(`M${CX + 10} ${y - 2}Q${CX + wr * 0.6} ${y - 1} ${CX + wr} ${y + 3}L${CX + wr} ${y + 10}Q${CX + wr * 0.6} ${y + 5} ${CX + 10} ${y + 5}Z`)} fill="#000" opacity={0.14} />
+    </g>
+  );
+}
+
+/** Simple glasses: two lenses on the eye line, a bridge, arms running back to the sides of the head. */
+export function Glasses({ f, head }: { f: FaceSpec; head: Head }) {
+  const e = f.eye;
+  const y = f.eyeY - 1;
+  const rx = e.w + 3;
+  const ry = Math.max(e.h + 4, 9);
+  const lens = (s: 1 | -1) => <rect key={s} x={CX + s * e.gap - rx} y={y - ry} width={rx * 2} height={ry * 2} rx={ry * 0.7} fill="#cfe3ea" fillOpacity={0.18} stroke={INK} strokeWidth={MID} />;
+  const arm = (s: 1 | -1) => q(`M${CX + s * (e.gap + rx)} ${y - ry * 0.4}L${CX + s * head.half(y, s)} ${y - ry * 0.6}`);
+  return (
+    <g>
+      {lens(1)}
+      {lens(-1)}
+      <path d={q(`M${CX - e.gap + rx} ${y - 2}Q${CX} ${y - 6} ${CX + e.gap - rx} ${y - 2}`)} {...sw(MID)} stroke={INK} />
+      <path d={`${arm(1)}${arm(-1)}`} {...sw(MID)} stroke={INK} />
     </g>
   );
 }

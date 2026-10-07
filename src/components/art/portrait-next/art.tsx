@@ -1,11 +1,11 @@
-import { Details, Headband } from "../portrait/details";
-import { FacialHair } from "../portrait/facialHair";
 import { CX } from "../portrait/geometry";
 import { HairBack, HairFront, HairOnSkin, hairGeometry, hairStyleOf, type HairCtx } from "../portrait/hair";
+import { GlassesNext, HeadbandNext, MarksNext } from "./accessories";
+import { anchorsFor } from "./anchors";
 import { BackdropNext } from "./backdrop";
 import { AgeLinesNext, BrowsNext, EarsNext, EyesNext, HeadInk, MouthNext, NoseNext, Planes, Sockets, type Detail } from "./face";
-import { StubbleNext } from "./facialHair";
-import { POC_IDS, drawHair } from "./hair";
+import { BeardNext, StubbleNext } from "./facialHair";
+import { POC_IDS, drawHair, extentOf, hairMeta } from "./hair";
 import { buildHeadNext } from "./head";
 import { KitBack, KitFront, necklineFor } from "./kit";
 import { NeckNext } from "./neck";
@@ -34,8 +34,9 @@ export function PortraitNext(props: { m: NextModel; uid: string; d: Detail; silh
 function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: string; d: Detail; silhouette?: boolean }) {
   const f = m.f;
   const head = buildHeadNext(f);
+  const a = anchorsFor(f, head);
   const t = skinTones(m.skin);
-  const ctx: HairCtx = { style: hairStyleOf(m.hair), index: m.hair, color: m.hairColor, f, head, recede: m.recede, skin: t, uid, lite: d === 0 };
+  const ctx: HairCtx = { style: hairStyleOf(m.hair), index: m.hair, color: m.hairColor, f, head, recede: m.recede, skin: t, uid, lite: d === 0, tip: m.hairTip };
   const g = hairGeometry(ctx);
   const clip = `${uid}head`;
   const line = necklineFor(f, m.collar);
@@ -45,8 +46,14 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
   const stubble = m.facial === 1 || m.facial === 2;
   const bald = m.hairStyle === "none";
   const pocId = m.hairStyle ?? POC_IDS[m.hair];
-  const next = !bald && pocId ? drawHair(pocId, { f, head, color: m.hairColor, skin: t, uid, d, recede: m.recede, seed: m.seed }) : null;
+  const next = !bald && pocId ? drawHair(pocId, { f, head, color: m.hairColor, skin: t, uid, d, recede: m.recede, seed: m.seed, tip: m.hairTip, band: m.band }) : null;
   const legacy = !bald && !next;
+  const meta = pocId ? hairMeta(pocId) : undefined;
+  // A style with its own headband ignores the accessory; otherwise the band wraps whatever hair is at that height.
+  const extent = next?.extent ?? (legacy ? extentOf(g.outer.slice().reverse()) : undefined);
+  const band = next?.band ?? (m.accessory === 1 ? HeadbandNext({ head, a, color: m.band, d, extent }) : null);
+  // An ear stud is only drawn where the ear shows.
+  const stud = m.accessory === 2 && (meta?.ears ?? "visible") !== "covered";
   // The head turns very slightly on the neck; the pivot sits at the top of the neck so nothing detaches.
   const tilt = `rotate(${f.tilt.toFixed(2)} ${CX} ${f.jawY + 10})`;
   if (silhouette) {
@@ -72,7 +79,11 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
         </g>
         <g transform={tilt}>
           <path d={head.path} fill="#d6d6d6" />
-          <g filter={black}>{next ? next.front : legacy && HairFront({ ctx, g })}</g>
+          <g filter={black}>
+            {next ? next.mid : legacy && HairFront({ ctx, g })}
+            {next?.band}
+            {next?.front}
+          </g>
         </g>
         <rect x={x + 1} y={y + 1} width={w - 2} height={h - 2} rx="15.5" fill="none" stroke="#999" strokeWidth={d === 0 ? 4 : 2} />
       </>
@@ -97,17 +108,19 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
       </defs>
       <g clipPath={`url(#${uid}card)`}>
         {BackdropNext({ base: m.background, uid, seed: m.seed, d, box })}
+        {/* 1. Hair behind the head and shoulders. */}
         <g transform={tilt}>
           {legacy && HairBack({ ctx })}
           {next?.back}
         </g>
-        {/* Shirt behind the neck (torso, inside of the opening, back of the collar), then the neck clipped to the
+        {/* 2. Shirt behind the neck (torso, inside of the opening, back of the collar), then the neck clipped to the
             opening, then the front of the collar: the neck goes into the shirt. */}
         {KitBack({ ...kitProps })}
         {NeckNext({ f, head, t, d, uid, line })}
         {KitFront({ ...kitProps })}
         <g transform={tilt}>
-          {EarsNext({ f, head, t, d, stud: m.accessory === 2 })}
+          {/* 3. Ears (over hair that goes behind them), the head, then everything that lies on the skin. */}
+          {EarsNext({ f, head, t, d, stud })}
           <use href={`#${uid}hp`} fill={t.base} />
           <g clipPath={`url(#${clip})`}>
             {Planes({ f, head, t, d, uid })}
@@ -118,15 +131,19 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
             {next?.onSkin}
           </g>
           {HeadInk({ head, d })}
-          {Details({ f, skin: t, freckles: m.freckles, scar: m.scar, mark: m.mark })}
+          {/* 4. Features, then facial hair over the lower face, then glasses on the nose. */}
+          {MarksNext({ f, a, t, d, freckles: m.freckles, scar: m.scar, mark: m.mark })}
           {NoseNext({ f, t, d })}
           {MouthNext({ f, t, d })}
           {EyesNext({ f, t, iris: m.iris, uid, d, lines: m.lines })}
           {BrowsNext({ f, color: m.browColor, d })}
-          {!stubble && FacialHair({ f, head, style: m.facial, color: m.facialColor, grey: m.facialGrey, youth: m.youth, skin: t, uid, lite: d === 0 })}
+          {!stubble && BeardNext({ f, head, a, t, style: m.facial, color: m.facialColor, youth: m.youth, d, uid })}
+          {m.accessory === 3 && GlassesNext({ f, head, a, d })}
+          {/* 5. The hair mass (its arms pass under it to the ears), a headband over it, then locks in front of the band. */}
           {legacy && HairFront({ ctx, g })}
+          {next?.mid}
+          {band}
           {next?.front}
-          {m.accessory === 1 && Headband({ f, head })}
         </g>
         {d === 2 && <rect x={x} y={y} width={w} height={h} filter={`url(#${uid}grain)`} opacity="0.3" style={{ mixBlendMode: "multiply" }} />}
       </g>

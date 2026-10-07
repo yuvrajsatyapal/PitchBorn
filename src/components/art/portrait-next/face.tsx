@@ -1,5 +1,6 @@
 import type { Head } from "../portrait/anatomy";
 import { CX, along, cubicAt, lerp, q, type Pt, type Seg } from "../portrait/geometry";
+import { earAnchor } from "./anchors";
 import type { NextSpec } from "./head";
 import { blob, noise1, pieces, ring, roughen, stroke, strokeLine } from "./ink";
 import { INK, type SkinTones } from "./palette";
@@ -363,13 +364,13 @@ export function MouthNext({ f, t, d }: { f: NextSpec; t: SkinTones; d: Detail })
 
 export function EarsNext({ f, head, t, d, stud }: { f: NextSpec; head: Head; t: SkinTones; d: Detail; stud?: boolean }) {
   const one = (s: 1 | -1) => {
-    const e = f.ear;
-    const dy = s > 0 ? f.asym.ear : 0;
-    const top = e.top + dy;
-    const bot = e.bot + dy * 0.6;
+    // The same ear geometry the anchors (earrings, hair over or behind the ear) use.
+    const ea = earAnchor(f, head, s);
+    const top = ea.top[1] + 5;
+    const bot = ea.bottom[1] - 1;
     const h = bot - top;
-    const w = e.w * (s > 0 ? 1.04 : 1);
-    const ax = CX + s * (head.half(top + h * 0.4, s) - 5);
+    const w = ea.w;
+    const ax = ea.root;
     const X = (dx: number) => ax + s * dx;
     const outer: Pt[] = [P(X(0), top + 3), P(X(w * 0.6), top - 5), P(X(w * 1.08), top + h * 0.2), P(X(w * 0.98), top + h * 0.52), P(X(w * 0.6), top + h * 0.78), P(X(w * 0.42), bot - 2), P(X(w * 0.12), bot + 1), P(X(-2), bot - 4)];
     const fill = ring(along(outer, 5));

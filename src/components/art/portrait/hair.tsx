@@ -16,6 +16,8 @@ export interface HairCtx {
   uid: string;
   /** Small sizes draw fewer clumps and curls; the silhouette and hairline stay the same. */
   lite?: boolean;
+  /** Second colour on the ends (frosted tips), if chosen. */
+  tip?: string | null;
 }
 
 export const hairStyleOf = (i: number): HairStyle => HAIR_STYLES[i] ?? HAIR_STYLES[0];
@@ -419,6 +421,8 @@ export function HairFront({ ctx, g }: { ctx: HairCtx; g: HairGeom }) {
     g.front.length ? <path key="rim" d={ribbon([...g.sideR.slice().reverse(), ...g.front.slice().reverse(), ...g.sideL].map((p) => [p[0], p[1] - 3] as Pt), () => 6)} fill={t.dark} opacity={0.35} /> : null,
   );
   inner.push(...texture(ctx, g, t));
+  // Frosted tips: the outer ends of the hair in the second colour (the cap clip keeps the inner half of the band).
+  if (ctx.tip) inner.push(<path key="tip" d={ribbon(g.outer.filter((p) => p[1] < g.hlY - 4), () => 12)} fill={ctx.tip} opacity={0.88} />);
   if (s.part !== 0 && (s.fringe === "side" || s.fringe === "none")) {
     const px = CX - g.dir * 18;
     inner.push(<path key="part" d={q(`M${px} ${g.hlY + 4}Q${px + g.dir * 1.5} ${(g.hlY + f.top) / 2} ${px + g.dir * 5} ${f.top + 2}`)} stroke={mix(skin.base, t.base, 0.45)} {...sw(1.3)} />);

@@ -3,7 +3,7 @@ import { Brows, EyeSockets, Ears, Eyes, FacePlanes, Mouth, Neck, Nose, Shirt, sk
 import { FacialHair } from "./facialHair";
 import { q, CX, INK, OUT, mix } from "./geometry";
 import { HairBack, HairFront, HairOnSkin, hairGeometry, hairStyleOf, type HairCtx } from "./hair";
-import { AgeLines, Details, Headband } from "./details";
+import { AgeLines, Details, Glasses, Headband } from "./details";
 
 /** Everything needed to draw one portrait, already resolved from the stored appearance. */
 export interface PortraitModel {
@@ -24,6 +24,9 @@ export interface PortraitModel {
   scar: number;
   mark: number;
   accessory: number;
+  /** Headband colour, and the secondary (frosted tip) hair colour if any. */
+  band: string;
+  hairTip: string | null;
   kit: string;
   trim: string;
   background: string;
@@ -37,7 +40,7 @@ export function PortraitArt({ m, uid, textured, lite = false }: { m: PortraitMod
   const f = m.f;
   const head = buildHead(f);
   const skin = skinPalette(m.skin);
-  const ctx: HairCtx = { style: hairStyleOf(m.hair), index: m.hair, color: m.hairColor, f, head, recede: m.recede, skin, uid, lite };
+  const ctx: HairCtx = { style: hairStyleOf(m.hair), index: m.hair, color: m.hairColor, f, head, recede: m.recede, skin, uid, lite, tip: m.hairTip };
   const g = hairGeometry(ctx);
   const clip = `${uid}head`;
   const { x, y, w, h } = VIEW;
@@ -86,7 +89,8 @@ export function PortraitArt({ m, uid, textured, lite = false }: { m: PortraitMod
         <Brows f={f} color={m.browColor} lite={lite} />
         <FacialHair f={f} head={head} style={m.facial} color={m.facialColor} grey={m.facialGrey} youth={m.youth} skin={skin} uid={uid} lite={lite} />
         <HairFront ctx={ctx} g={g} />
-        {m.accessory === 1 && <Headband f={f} head={head} />}
+        {(m.accessory === 1 || ctx.style.name === "Long Headband Curls") && <Headband f={f} head={head} color={m.band} />}
+        {m.accessory === 3 && <Glasses f={f} head={head} />}
         {textured && <rect x={x} y={y} width={w} height={h} filter={`url(#${uid}grain)`} opacity="0.35" style={{ mixBlendMode: "multiply" }} />}
       </g>
       <rect x={x + 1.5} y={y + 1.5} width={w - 3} height={h - 3} rx="15" fill="none" stroke={INK} strokeWidth="3" />

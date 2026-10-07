@@ -21,7 +21,7 @@ mkdirSync(out, { recursive: true });
 /** A fictional player: strong jaw, hooded eyes, soft-angled brows, straight nose, neutral mouth, light stubble. */
 export const REP: Appearance = {
   v: 2, skin: 3, face: 9, hair: 7, hairColor: 2, brow: 3, browColor: 2, eyes: 4, eyeColor: 2, nose: 0, mouth: 0, facial: 1, facialColor: 2, ear: 1,
-  freckles: 0, scar: 0, mark: 0, accessory: 0, headW: 50, headH: 50, eyeSp: 50, browAng: 50, noseSc: 50, earSc: 50, aging: 62,
+  freckles: 0, scar: 0, mark: 0, accessory: 0, headW: 50, headH: 50, eyeSp: 50, browAng: 50, noseSc: 50, earSc: 50, aging: 62, hairTip: 0, band: 0,
 };
 const AGE = 26;
 const KIT = "#b5232f";
