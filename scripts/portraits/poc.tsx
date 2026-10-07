@@ -32,9 +32,9 @@ const BG = "#2f3e55";
 
 let n = 0;
 const frame = (size: number, art: ReturnType<typeof createElement>, v = VIEW) =>
-  renderToStaticMarkup(createElement("svg", { width: size, height: Math.round((size * VIEW.h) / VIEW.w), viewBox: `${v.x} ${v.y} ${v.w} ${v.h}` }, art));
+  renderToStaticMarkup(createElement("svg", { width: size, height: Math.round((size * v.h) / v.w), viewBox: `${v.x} ${v.y} ${v.w} ${v.h}` }, art));
 export const A = (a: Appearance, size: number, age = AGE) => frame(size, createElement(PortraitArt, { m: modelFor(a, age, KIT, TRIM, BG), uid: `a${n++}`, textured: size >= 96, lite: size < 96 }));
-export const B = (a: Appearance, size: number, o: { age?: number; kit?: string; collar?: Collar; bg?: string; hairStyle?: string } = {}) =>
+export const B = (a: Appearance, size: number, o: { age?: number; kit?: string; collar?: Collar; bg?: string; hairStyle?: string; view?: { x: number; y: number; w: number; h: number } } = {}) =>
   frame(
     size,
     createElement(PortraitNext, {
@@ -42,7 +42,7 @@ export const B = (a: Appearance, size: number, o: { age?: number; kit?: string; 
       uid: `b${n++}`,
       d: detailFor(size),
     }),
-    viewFor(detailFor(size)),
+    o.view ?? viewFor(detailFor(size)),
   );
 
 const cell = (label: string, svg: string) => `<figure><figcaption>${label}</figcaption>${svg}</figure>`;
@@ -71,5 +71,24 @@ if (process.argv[1]?.endsWith("poc.tsx")) {
     ]),
   );
   writeFileSync(join(out, "collars.html"), page("Collars", [COLLARS.map((c, i) => cell(c, B(REP, 220, { collar: c, kit: ["#b5232f", "#1d4ea8", "#2e8b57", "#e2b007", "#f1ead8"][i] }))).join("")]));
+  // Neck into shirt: every collar against narrow, medium and wide necks (and a long face whose chin nears the
+  // collar), each with a close crop of the neckline.
+  const combos: [string, Appearance, number][] = [
+    ["narrow neck (Narrow face, head width 0, age 18)", { ...REP, face: 5, headW: 0 }, 18],
+    ["medium (representative)", REP, 26],
+    ["wide neck (Broad face, head width 100)", { ...REP, face: 6, headW: 100 }, 30],
+    ["long face, head height 100", { ...REP, face: 7, headH: 100, headW: 30 }, 24],
+  ];
+  const crop = { x: 70, y: 236, w: 160, h: 110 };
+  writeFileSync(
+    join(out, "neck.html"),
+    page(
+      "Neck into shirt: each collar × neck width (portrait, then a close crop of the neckline)",
+      COLLARS.map((c) =>
+        combos.map(([label, a, age]) => cell(`${c} · ${label}`, B(a, 170, { collar: c, age }) + B(a, 300, { collar: c, age, view: crop }))).join(""),
+      ),
+    ),
+  );
+  writeFileSync(join(out, "fixed.html"), page("Same portrait as the screenshot, after the fix", [cell("B", B(REP, 1000, REP_O))]));
   console.log("wrote", out);
 }
