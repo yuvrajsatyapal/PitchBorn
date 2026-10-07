@@ -2,9 +2,9 @@
 import { useState, type ReactNode } from "react";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Button, Tabs } from "@/components/ui";
-import { randomizeAppearance, type RandomScope } from "@/engine/appearance/generate";
+import { randomizeAppearance, supportsHairTips, type RandomScope } from "@/engine/appearance/generate";
 import {
-  ACCESSORIES, BROW_STYLES, COUNTS, EAR_STYLES, EYE_COLORS, EYE_COLOR_NAMES, EYE_SHAPES, FACE_SHAPES, FACIAL_HAIR, HAIR_COLORS, HAIR_COLOR_NAMES, HAIR_STYLES, MARKS,
+  ACCESSORIES, BAND_COLORS, BAND_COLOR_NAMES, BROW_STYLES, HAIR_TIP_COLORS, HAIR_TIP_NAMES, COUNTS, EAR_STYLES, EYE_COLORS, EYE_COLOR_NAMES, EYE_SHAPES, FACE_SHAPES, FACIAL_HAIR, HAIR_COLORS, HAIR_COLOR_NAMES, HAIR_STYLES, MARKS,
   MOUTH_STYLES, NOSE_STYLES, SCARS, SKIN_NAMES, SKIN_TONES, type AppearanceKey,
 } from "@/engine/appearance/options";
 import { Rng } from "@/engine/rng";
@@ -108,6 +108,7 @@ export function AppearanceEditor({ value, onChange, kit, previewAge = 19 }: { va
       <div className="grid gap-3">
         <Swatches label="Hair colour" value={value.hairColor} colors={HAIR_COLORS} names={HAIR_COLOR_NAMES} onChange={(v) => onChange({ ...value, hairColor: v, browColor: v, facialColor: v })} />
         <Swatches label="Eyebrow colour" value={value.browColor} colors={HAIR_COLORS} names={HAIR_COLOR_NAMES} onChange={(v) => set("browColor", v)} />
+        {supportsHairTips(value.hair) && <Swatches label="Tip colour" value={value.hairTip} colors={HAIR_TIP_COLORS} names={HAIR_TIP_NAMES} onChange={(v) => set("hairTip", v)} />}
       </div>
     ),
     eyes: (
@@ -142,6 +143,12 @@ export function AppearanceEditor({ value, onChange, kit, previewAge = 19 }: { va
         <Stepper label="Scar" value={value.scar} names={SCARS} onChange={(v) => set("scar", v)} />
         <Stepper label="Mark" value={value.mark} names={MARKS} onChange={(v) => set("mark", v)} />
         <Stepper label="Accessory" value={value.accessory} names={ACCESSORIES} onChange={(v) => set("accessory", v)} />
+        {(ACCESSORIES[value.accessory] === "Headband" || HAIR_STYLES[value.hair]?.name === "Long Headband Curls") && (
+          <Swatches label="Headband colour" value={value.band} colors={BAND_COLORS} names={BAND_COLOR_NAMES} onChange={(v) => set("band", v)} />
+        )}
+        {ACCESSORIES[value.accessory] !== "Headband" && HAIR_STYLES[value.hair]?.name === "Divine Ponytail" && (
+          <Swatches label="Hair tie colour" value={value.band} colors={BAND_COLORS} names={BAND_COLOR_NAMES} onChange={(v) => set("band", v)} />
+        )}
       </div>
     ),
   };

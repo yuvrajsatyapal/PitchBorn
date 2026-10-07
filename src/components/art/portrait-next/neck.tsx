@@ -1,4 +1,4 @@
-import type { Head } from "../portrait/anatomy";
+import type { FaceSpec, Head } from "../portrait/anatomy";
 import { CX, along, lerp, type Pt } from "../portrait/geometry";
 import type { Detail } from "./face";
 import type { NextSpec } from "./head";
@@ -15,7 +15,7 @@ export const SHIRT_Y = 297;
  * never shows outside the contour. The sides carry on well below the collar (into the V of a V-neck); everything
  * below the neckline is clipped away.
  */
-export function neckSides(f: NextSpec): { left: Pt[]; right: Pt[]; top: number } {
+export function neckSides(f: FaceSpec): { left: Pt[]; right: Pt[]; top: number } {
   const nw = f.neckW;
   const top = f.jawY - 30;
   const side = (s: 1 | -1) =>
@@ -66,7 +66,7 @@ export interface CollarCut {
   v?: boolean;
 }
 
-export function neckline(f: NextSpec, cut: CollarCut): Neckline {
+export function neckline(f: FaceSpec, cut: CollarCut): Neckline {
   const { right, left } = neckSides(f);
   const y = SHIRT_Y - 3;
   const neck = Math.max(halfAt(right, y), halfAt(left, y));

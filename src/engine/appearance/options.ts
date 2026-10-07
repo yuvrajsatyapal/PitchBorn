@@ -13,8 +13,9 @@ export interface Option {
 export const SKIN_TONES = ["#f8dfce", "#f1cdb0", "#e8b998", "#d9a07a", "#c68a60", "#b0724a", "#94593a", "#794530", "#5f3525", "#482819"] as const;
 export const SKIN_NAMES = ["Porcelain", "Fair", "Light", "Warm beige", "Tan", "Caramel", "Bronze", "Brown", "Deep brown", "Ebony"] as const;
 
-export const HAIR_COLORS = ["#16110d", "#2a1c14", "#3e281a", "#5b3a22", "#7d5632", "#a37a45", "#c9a45f", "#a9461f", "#7a2f1a", "#aeaeb0"] as const;
-export const HAIR_COLOR_NAMES = ["Jet black", "Black brown", "Dark brown", "Chestnut", "Light brown", "Dark blond", "Blond", "Ginger", "Auburn", "Silver"] as const;
+// Golden was appended later (the generator only hands it out with the Lion Afro), so older indices never move.
+export const HAIR_COLORS = ["#16110d", "#2a1c14", "#3e281a", "#5b3a22", "#7d5632", "#a37a45", "#c9a45f", "#a9461f", "#7a2f1a", "#aeaeb0", "#d6a645"] as const;
+export const HAIR_COLOR_NAMES = ["Jet black", "Black brown", "Dark brown", "Chestnut", "Light brown", "Dark blond", "Blond", "Ginger", "Auburn", "Silver", "Golden"] as const;
 
 export const EYE_COLORS = ["#2a1a10", "#5a3a1e", "#7d6a2a", "#3d7a52", "#3f78b5", "#7d8a96"] as const;
 export const EYE_COLOR_NAMES = ["Dark brown", "Brown", "Hazel", "Green", "Blue", "Grey"] as const;
@@ -64,6 +65,8 @@ export interface HairStyle extends Option {
   /** Only the sides and back remain. */
   horseshoe?: boolean;
   sheen?: boolean;
+  /** Iconic football hairstyle: rare, picked by its own draw, never by the everyday odds. */
+  iconic?: boolean;
 }
 
 const hs = (name: string, texture: HairTexture, p: Partial<Omit<HairStyle, "name" | "texture">>): HairStyle => ({
@@ -110,6 +113,14 @@ export const HAIR_STYLES: readonly HairStyle[] = [
   hs("Spiky", "straight", { top: 20, side: 2, edge: "spiky", end: 100, fringe: "messy", line: 66, fade: 1 }),
   hs("Undercut", "straight", { top: 21, side: 1, end: 100, fade: 3, fringe: "sweep", part: 1, line: 62, sheen: true }),
   hs("Bowl cut", "straight", { top: 11, side: 4, end: 100, fringe: "caesar", line: 76, back: 1 }),
+  // Iconic football hairstyles (generic names only). Appended so every existing index keeps its meaning; the values
+  // here are the current renderer's closest approximation, the improved renderer draws each one properly.
+  hs("Brazilian Crescent", "straight", { top: 0, side: 0, density: 0.3, end: 96, line: 70, iconic: true }),
+  hs("Frosted Faux Hawk", "straight", { top: 22, side: 0, edge: "spiky", end: 100, fade: 3, fringe: "quiff", line: 64, iconic: true }),
+  hs("Long Headband Curls", "curly", { top: 16, side: 11, edge: "scallop", end: 130, back: 3, line: 66, fringe: "curtain", iconic: true }),
+  hs("Lion Afro", "coily", { top: 46, side: 40, edge: "scallop", line: 66, end: 116, iconic: true }),
+  hs("Divine Ponytail", "straight", { top: 11, side: 2, end: 104, strands: "ponytail", back: 1, line: 64, sheen: true, iconic: true }),
+  hs("Dutch Dreads", "coily", { top: 16, side: 9, strands: "locs", back: 4, end: 126, line: 66, edge: "scallop", iconic: true }),
 ];
 
 // ------------------------------------------------------------------ facial features
@@ -125,7 +136,15 @@ export const FACIAL_HAIR = [
 ] as const;
 export const SCARS = ["None", "Cheek scar", "Eyebrow scar", "Chin scar"] as const;
 export const MARKS = ["None", "Beauty mark left", "Beauty mark right"] as const;
-export const ACCESSORIES = ["None", "Headband", "Ear stud"] as const;
+export const ACCESSORIES = ["None", "Headband", "Ear stud", "Glasses"] as const;
+
+/** Secondary hair colour for frosted or dyed tips (0: none; its swatch colour is only for the editor). */
+export const HAIR_TIP_COLORS = ["#d6d0c4", "#efe3bd", "#d9b35a", "#f4f1e8", "#c56a33", "#b9c3c9"] as const;
+export const HAIR_TIP_NAMES = ["None", "Platinum", "Golden", "Bleached", "Copper", "Ash"] as const;
+
+/** Headband colours (the first is the original cream). */
+export const BAND_COLORS = ["#f1ead8", "#1c1c1e", "#c8102e", "#1d4ea8", "#e2b007", "#2e8b57"] as const;
+export const BAND_COLOR_NAMES = ["Cream", "Black", "Red", "Blue", "Yellow", "Green"] as const;
 
 // ------------------------------------------------------------------ numeric geometry
 
@@ -158,6 +177,8 @@ export const geoValue = (key: keyof FaceGeometry, stored: number): number => {
 export const APPEARANCE_KEYS = [
   "skin", "face", "hair", "hairColor", "brow", "browColor", "eyes", "eyeColor", "nose", "mouth", "facial", "facialColor", "ear",
   "freckles", "scar", "mark", "accessory", "headW", "headH", "eyeSp", "browAng", "noseSc", "earSc", "aging",
+  // Appended later: older saves decode these as 0 (no tips, cream headband).
+  "hairTip", "band",
 ] as const;
 export type AppearanceKey = (typeof APPEARANCE_KEYS)[number];
 
@@ -179,4 +200,6 @@ export const COUNTS: Record<Exclude<AppearanceKey, "headW" | "headH" | "eyeSp" |
   scar: SCARS.length,
   mark: MARKS.length,
   accessory: ACCESSORIES.length,
+  hairTip: HAIR_TIP_COLORS.length,
+  band: BAND_COLORS.length,
 };

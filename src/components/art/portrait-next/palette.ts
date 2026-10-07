@@ -94,15 +94,33 @@ export interface HairTones {
   line: string;
 }
 
-export function hairTones(base: string): HairTones {
+/**
+ * How much dark hair and dark skin need separating (0 none .. 1 black hair on the deepest skin). Used to lift the
+ * hair's own highlight a little; the skin is never lightened.
+ */
+export function darkPair(hair: string, skin: string): number {
+  const lh = hexToHsl(hair)[2];
+  const ls = hexToHsl(skin)[2];
+  return Math.max(0, Math.min(1, (0.36 - ls) / 0.12)) * Math.max(0, Math.min(1, (0.21 - lh) / 0.1));
+}
+
+/**
+ * Tones for hair of one base colour. Against dark skin (`against`), dark hair keeps its base and shadow but its
+ * highlight is lifted and cooled a touch, so the hair separates from the face by value and temperature, not by an
+ * outline.
+ */
+export function hairTones(base: string, against?: string): HairTones {
   const [h, s, l] = hexToHsl(base);
   const veryDark = l < 0.14;
+  const b = against ? darkPair(base, against) : 0;
   return {
     base,
     shade: hslToHex([h, Math.min(1, s + 0.05), Math.max(0.03, l * 0.68)]),
     deep: hslToHex([h, Math.min(1, s + 0.08), Math.max(0.02, l * 0.42)]),
     // Black hair catches a cool sheen; brown and fair hair a warm one.
-    light: veryDark ? hslToHex([(h + 190) % 360, 0.12, 0.3]) : hslToHex([h + 4, Math.max(0, s - 0.06), Math.min(0.92, l + (1 - l) * 0.3)]),
+    light: veryDark
+      ? hslToHex([(h + 190) % 360, 0.12 + 0.05 * b, 0.3 + 0.09 * b])
+      : hslToHex([b > 0 ? (h + 200) % 360 : h + 4, Math.max(0, s - 0.06 - 0.1 * b), Math.min(0.92, l + (1 - l) * (0.3 + 0.08 * b))]),
     line: hslToHex([h, Math.min(1, s + 0.1), Math.max(0.02, l * 0.3)]),
   };
 }

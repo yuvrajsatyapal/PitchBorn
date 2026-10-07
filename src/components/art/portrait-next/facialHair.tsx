@@ -1,9 +1,10 @@
 import type { Head } from "../portrait/anatomy";
-import { CX, along, clamp, hash01, lerp, q, type Pt } from "../portrait/geometry";
+import { CX, add, along, clamp, hash01, lerp, q, scale, sub, unit, type Pt } from "../portrait/geometry";
+import type { Anchors } from "./anchors";
 import type { Detail } from "./face";
 import type { NextSpec } from "./head";
-import { roughen, stroke } from "./ink";
-import { mixHex, type SkinTones } from "./palette";
+import { noise1, pieces, ring, roughen, stroke, strokeLine } from "./ink";
+import { INK, darkPair, hairTones, mixHex, type SkinTones } from "./palette";
 
 const P = (x: number, y: number): Pt => [x, y];
 
@@ -47,8 +48,6 @@ function mouthHole(f: NextSpec, grow: number): Pt[] {
     return P(CX + Math.cos(a) * rx, cy + Math.sin(a) * ry * (Math.sin(a) < 0 ? 0.9 : 1));
   });
 }
-
-const ring = (pts: Pt[]) => `M${pts.map((p) => `${p[0]} ${p[1]}`).join("L")}Z`;
 
 /**
  * Stubble as tone, never as noise: a translucent wash of the hair colour over the beard area, built from stacked
@@ -107,4 +106,273 @@ export function StubbleNext({ f, head, t, color, heavy, youth, d, uid }: { f: Ne
       {marks.length > 0 && <path d={marks.join("")} opacity={0.4} />}
     </g>
   );
+}
+
+// ------------------------------------------------------------------ beards
+
+/** One piece of facial hair: its region (and a hole for the lips), the edge that is inked, and how hair grows on it. */
+interface Growth {
+  pts: Pt[];
+  hole?: Pt[];
+  /** The part of the outline that stands off the face (inked); the edge on the skin stays soft. */
+  edge?: Pt[];
+  /** "down": along the jaw and chin; "out": a moustache, from the centre to the corners. */
+  flow: "down" | "out";
+  /** Thin growth (straps, sideburns): how far the lit body sits above the shadow, so a band of shadow never turns
+   * into a dark outline. */
+  lift?: number;
+}
+
+const smooth01 = (t: number) => {
+  const x = clamp(t, 0, 1);
+  return x * x * (3 - 2 * x);
+};
+
+/** Where facial hair starts: the bottom of the hair's sideburn (the same point every hairline uses). */
+const burnY = (f: NextSpec) => f.ear.top + (f.ear.bot - f.ear.top) * 0.4;
+
+/** The head outline on one side between two heights. */
+const outline = (head: Head, s: 1 | -1, y0: number, y1: number) => (s > 0 ? head.rightPts : head.leftPts).filter((p) => p[1] >= y0 && p[1] <= y1);
+
+/** Outline points pushed off the face by the hair's thickness, which grows towards the chin. */
+function thick(f: NextSpec, pts: Pt[], drop: number, box: boolean): Pt[] {
+  const c = P(CX, f.eyeY);
+  return pts.map((p) => {
+    const t = smooth01((p[1] - (f.jawY - 28)) / (f.chinY - f.jawY + 28));
+    const q2 = add(p, scale(unit(sub(p, c)), 0.8 + drop * t));
+    return box ? P(q2[0], Math.min(q2[1], f.chinY + drop * 0.9)) : q2;
+  });
+}
+
+/** The cheek line: from one sideburn, under the cheekbone, round the mouth corner and under the nose to the other. */
+function cheekLine(f: NextSpec, head: Head, a: Anchors, y0: number, low: number, burnW: number): Pt[] {
+  const side = (s: 1 | -1): Pt[] => {
+    const cheek = s > 0 ? a.cheekR : a.cheekL;
+    const corner = s > 0 ? a.mouthR : a.mouthL;
+    // Under the cheekbone: between the cheek anchor and the jaw, never above the cheek.
+    const yK = Math.max(cheek[1] + 16, f.noseY - 4) + low * 9;
+    return [
+      P(CX + s * (head.half(y0, s) - burnW), y0),
+      P(CX + s * (head.half(yK, s) - 17 - low * 6), yK),
+      P(corner[0] + s * 9, corner[1] - 8 + low * 2),
+      P(CX + s * f.nose.w * 0.9, f.noseY + 4.5),
+    ];
+  };
+  return along([...side(-1), P(CX, f.noseY + 5.5), ...side(1).reverse()], 4);
+}
+
+/** The lips, with only a hair's width of skin round them. */
+function mouthGap(f: NextSpec): Pt[] {
+  const m = f.mouth;
+  const cy = f.mouthY + (m.lo - m.up) / 2;
+  const rx = m.w + 0.8;
+  const ry = (m.up + m.lo) / 2 + 0.7;
+  return Array.from({ length: 16 }, (_, i) => {
+    const t = (i / 16) * Math.PI * 2;
+    return P(CX + Math.cos(t) * rx, cy + Math.sin(t) * ry);
+  });
+}
+
+function jawBeard(f: NextSpec, head: Head, a: Anchors, o: { drop: number; low: number; box?: boolean; long?: number }): Growth {
+  const y0 = burnY(f) + 4;
+  let right = thick(f, outline(head, 1, y0, f.chinY + 1), o.drop, !!o.box);
+  let left = thick(f, outline(head, -1, y0, f.chinY + 1), o.drop, !!o.box);
+  const long = o.long ?? 0;
+  // A long beard leaves the jaw at the chin corners and hangs in a broad, rounded point.
+  if (long > 0) {
+    right = right.filter((p) => p[0] > CX + f.chinW * 0.9);
+    left = left.filter((p) => p[0] < CX - f.chinW * 0.9);
+  }
+  const yb = f.chinY + o.drop;
+  const bottom: Pt[] = long > 0 ? along([P(CX + f.chinW * 0.95, yb + long * 0.6), P(CX + f.chinW * 0.45, yb + long * 0.95), P(CX + 2, yb + long), P(CX - f.chinW * 0.45, yb + long * 0.93), P(CX - f.chinW * 0.95, yb + long * 0.6)], 4) : [];
+  const edge = [...right, ...bottom, ...left.slice().reverse()];
+  const cheek = cheekLine(f, head, a, y0, o.low, 9);
+  return { pts: [...edge, ...cheek], hole: mouthGap(f), edge: edge.filter((p) => p[1] > f.noseY), flow: "down" };
+}
+
+function moustache(f: NextSpec, a: Anchors, thick2: number, droop = 0): Growth {
+  const m = f.mouth;
+  const lipTop = f.mouthY - m.up;
+  const topY = Math.max(f.noseY + 5, lipTop - thick2 * 1.3);
+  const side = (s: 1 | -1): Pt[] => {
+    const corner = s > 0 ? a.mouthR : a.mouthL;
+    return [P(corner[0] + s * 3, corner[1] + 1.5 + droop), P(CX + s * m.w * 0.8, lipTop - thick2 * 0.7), P(CX + s * f.nose.w * 0.8, topY)];
+  };
+  const under = (s: 1 | -1): Pt[] => [P(CX + s * m.w * 0.55, lipTop + m.up * 0.45), P(CX + s * 2, lipTop + m.up * 0.2)];
+  // The top edge dips a little under the nose (the philtrum); the lower edge runs corner to corner over the lip.
+  const top = along([...side(-1), P(CX, topY + 1.2), ...side(1).reverse()], 4);
+  const lower = along([side(1)[0], ...under(1), ...under(-1).reverse(), side(-1)[0]], 4);
+  // Only the edge that hangs over the lip is inked; the top fades into the skin.
+  return { pts: [...top, ...lower.slice(1, -1)], edge: lower, flow: "out" };
+}
+
+
+function chinPatch(f: NextSpec, w: number, drop: number, fromLip = true): Growth {
+  const y0 = f.mouthY + f.mouth.lo + 2.4;
+  const pts = along([P(CX - w * 0.55, y0 + 0.5), P(CX - w * 0.2, fromLip ? y0 - 0.6 : y0 + 2), P(CX + w * 0.2, fromLip ? y0 - 0.6 : y0 + 2), P(CX + w * 0.55, y0 + 0.5), P(CX + w, f.chinY - 8), P(CX + w * 0.6, f.chinY + drop * 0.7), P(CX, f.chinY + drop), P(CX - w * 0.6, f.chinY + drop * 0.7), P(CX - w, f.chinY - 8)], 4);
+  return { pts, edge: pts.filter((p) => p[1] > f.chinY - 12), flow: "down" };
+}
+
+/**
+ * A chin beard: from under the lower lip, down over the chin and round the front of the jaw, following the face
+ * outline there (pushed out a little by its thickness), never a separate patch hanging below the chin.
+ */
+function chinBeard(f: NextSpec, head: Head, drop: number): Growth {
+  const m = f.mouth;
+  const reach = f.chinW + 13;
+  const yTop = f.mouthY + m.lo + 2.5;
+  const jaw = (s: 1 | -1) => thick(f, outline(head, s, yTop + 6, f.chinY + 1).filter((p) => Math.abs(p[0] - CX) <= reach), drop, false);
+  const right = jaw(1);
+  const left = jaw(-1).reverse();
+  const edge = [...right, ...left];
+  // Top: under the lip, slightly arched, out to where the jaw beard begins on each side.
+  const top = along([left[left.length - 1], P(CX - m.w * 0.55, yTop + 1), P(CX, yTop - 0.5), P(CX + m.w * 0.55, yTop + 1), right[0]], 4);
+  return { pts: [...edge, ...top.slice(1, -1)], edge, flow: "down" };
+}
+
+/** Sideburns and chops: a band down each side of the face from the hair's sideburn, its inner edge a little uneven. */
+function sideBand(f: NextSpec, head: Head, s: 1 | -1, y1: number, width: (t: number) => number): Growth {
+  const out = outline(head, s, burnY(f), y1).map((p) => P(p[0] + s * 1.2, p[1]));
+  const inn = out.map((p, i) => {
+    const t = i / Math.max(1, out.length - 1);
+    return P(p[0] - s * width(t) * (1 + 0.12 * noise1(31 + s, t * 6)) * (0.55 + 0.45 * smooth01(t / 0.15)), p[1]);
+  });
+  return { pts: [...out, ...roughen(inn, 0.5, 40 + s, 0.6).reverse()], edge: out, flow: "down", lift: 1.6 };
+}
+
+/**
+ * A chinstrap: hair growing along the jaw from sideburn to sideburn, not a line. Its width changes as it goes (thin
+ * where it leaves the sideburn, fuller round the chin, a little uneven all along), both edges are soft and only
+ * slightly irregular, and its shadow is a narrow band underneath.
+ */
+function strap(f: NextSpec, head: Head, w: number, seed: number): Growth {
+  const y0 = burnY(f) + 6;
+  const outer = [...outline(head, 1, y0, f.chinY + 1).map((p) => P(p[0] + 1.4, p[1])), ...outline(head, -1, y0, f.chinY + 1).reverse().map((p) => P(p[0] - 1.4, p[1]))];
+  const c = P(CX, f.eyeY + 10);
+  const n = outer.length - 1;
+  const inner = outer.map((p, i) => {
+    const u = i / n;
+    const ends = 0.4 + 0.6 * smooth01(u / 0.2) * smooth01((1 - u) / 0.2);
+    const chin = 1 + 0.3 * Math.max(0, 1 - Math.abs(u - 0.5) / 0.16);
+    return sub(p, scale(unit(sub(p, c)), w * ends * chin * (1 + 0.16 * noise1(seed, u * 11))));
+  });
+  return { pts: [...roughen(outer, 0.35, seed + 1, 0.7), ...roughen(inner, 0.7, seed + 2, 0.6).reverse()], edge: undefined, flow: "down", lift: 1.4 };
+}
+
+/** Facial hair styles (FACIAL_HAIR order) as growth regions fitted to this face. 1-2 are stubble, drawn as tone. */
+export function growthFor(f: NextSpec, head: Head, a: Anchors, style: number): Growth[] {
+  const m = f.mouth;
+  switch (style) {
+    case 3:
+      return [moustache(f, a, 4.2, 0.6)];
+    case 4:
+      return [moustache(f, a, 2.6)];
+    case 5:
+      return [chinPatch(f, m.w * 0.62, 4)];
+    case 6: {
+      const ringPts = along([P(CX - m.w - 3, f.mouthY + 1.5), P(CX - m.w - 6, f.mouthY + m.lo + 4), P(CX - f.chinW * 0.95, f.chinY - 6), P(CX, f.chinY + 4), P(CX + f.chinW * 0.95, f.chinY - 6), P(CX + m.w + 6, f.mouthY + m.lo + 4), P(CX + m.w + 3, f.mouthY + 1.5)], 4);
+      return [{ pts: ringPts, hole: mouthGap(f), edge: ringPts.filter((p) => p[1] > f.mouthY + m.lo + 6), flow: "down" }, moustache(f, a, 5, 1.5)];
+    }
+    case 7: {
+      const y = f.mouthY + m.lo + 2.6;
+      return [{ pts: along([P(CX - 4.5, y), P(CX + 4.5, y), P(CX + 2, y + 7.5), P(CX - 2, y + 7.5)], 3), flow: "down" }];
+    }
+    case 8:
+      return [jawBeard(f, head, a, { drop: 3, low: 0.5 })];
+    case 9:
+      return [jawBeard(f, head, a, { drop: 6, low: 0.9, box: true })];
+    case 10:
+      return [jawBeard(f, head, a, { drop: 11, low: 0 })];
+    case 11:
+      return [jawBeard(f, head, a, { drop: 12, low: 0, long: 32 })];
+    case 12:
+      return [chinBeard(f, head, 4)];
+    case 13:
+      return [sideBand(f, head, 1, f.noseY, () => 8), sideBand(f, head, -1, f.noseY, () => 8)];
+    case 14:
+      return [sideBand(f, head, 1, f.mouthY + 6, (t) => 8 + t * 14), sideBand(f, head, -1, f.mouthY + 6, (t) => 8 + t * 14)];
+    case 15:
+      return [strap(f, head, 6.5, Math.round(f.jawW * 7))];
+    default:
+      return [];
+  }
+}
+
+/**
+ * Beards and moustaches drawn by value, like the hair: a soft wash where growth starts on the cheek (never a ruled
+ * edge), the mass in the beard colour turning to shadow underneath and on the far side, a lit area on the upper
+ * left, and at larger sizes a few strokes in the direction of growth. Ink only where the beard stands off the face.
+ */
+export function BeardNext({ f, head, a, t, style, color, youth, d, uid }: { f: NextSpec; head: Head; a: Anchors; t: SkinTones; style: number; color: string; youth: number; d: Detail; uid: string }) {
+  const list = growthFor(f, head, a, style);
+  if (!list.length) return null;
+  const T = hairTones(color, t.base);
+  // Dark beard on dark skin: separated by a cooler, slightly lifted light on the beard mass and its growth, not by
+  // a heavier outline (the outline gets lighter instead).
+  const sep = darkPair(color, t.base);
+  const seed = style * 31 + Math.round(f.chinY);
+  // Young faces grow thinner beards.
+  const thin = 1 - 0.45 * youth;
+  return (
+    <g opacity={thin}>
+      {list.map((b, bi) => {
+        const id = `${uid}bd${bi}`;
+        const region = ring(b.pts) + (b.hole ? ring(b.hole) : "");
+        const xs = b.pts.map((p) => p[0]);
+        const ys = b.pts.map((p) => p[1]);
+        const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+        // Growth strokes: few, short, following the flow; dark on the far side, light on the lit side.
+        const dark: string[] = [];
+        const lit: string[] = [];
+        if (d > 0) {
+          const n = d === 2 ? 22 : 9;
+          for (let k = 0, tries = 0; k < n && tries < n * 6; tries++) {
+            const p = P(lerp(x0, x1, hash01(seed + bi, tries * 2)), lerp(y0, y1, hash01(seed + bi, tries * 2 + 1)));
+            if (!inside(b.pts, p) || (b.hole && inside(b.hole, p))) continue;
+            k++;
+            const dir = b.flow === "out" ? unit(P(Math.sign(p[0] - CX || 1) * 1, 0.55)) : unit(P((p[0] - CX) * 0.012, 1));
+            const len = 3.5 + hash01(seed, tries + 400) * 4;
+            const line = [sub(p, scale(dir, len * 0.4)), add(p, scale(dir, len * 0.6))];
+            (p[0] < CX - 6 && p[1] < lerp(y0, y1, 0.7) && hash01(seed, tries + 500) < 0.6 ? lit : dark).push(stroke(line, { w: d === 2 ? 0.9 : 1.2, start: 0.4, end: 0.15, steps: 2, seed: seed + tries }));
+          }
+        }
+        const mouthLine = b.hole && d > 0 ? strokeLine(b.hole.slice(1, 8), { w: 1, start: 0.2, end: 0.2, seed }) : "";
+        const ink = b.edge && b.edge.length > 2 ? pieces(b.edge, [[0, 1]], 1).map((p) => strokeLine(p, { w: d === 0 ? 2.2 : 1.6, start: 0.1, end: 0.1, peak: 0.6, seed: seed + 3, wobble: 0.15 })).join("") : "";
+        return (
+          <g key={bi}>
+            <defs>
+              <clipPath id={id}>
+                <path d={region} clipRule="evenodd" />
+              </clipPath>
+            </defs>
+            {/* Where growth starts on the skin: a slightly larger, translucent wash so the upper edge fades. */}
+            {d > 0 && <path d={ring(roughen(b.pts.map((p) => add(p, scale(unit(sub(p, P(CX, f.mouthY))), -1.6))), 1.2, seed + bi)) + (b.hole ? ring(b.hole) : "")} fill={mixHex(color, t.deep, 0.35)} fillRule="evenodd" opacity={0.3} />}
+            <path d={region} fill={T.shade} fillRule="evenodd" />
+            <g clipPath={`url(#${id})`}>
+              {/* The lit body: the region moved up and left, so a band of shadow stays underneath and on the right. */}
+              <path d={ring(b.pts.map((p) => P(p[0] - (b.lift ? 0.8 : 1.6), p[1] - (b.lift ?? (b.flow === "out" ? 1.4 : Math.min(4.5, (y1 - y0) * 0.16))))))} fill={T.base} />
+              {/* The far side of the jaw turns away from the light. */}
+              {b.flow === "down" && x1 - x0 > 40 && <path d={ring([P(CX + (x1 - CX) * 0.42, y0 - 4), P(x1 + 6, y0 - 4), P(x1 + 6, y1 + 6), P(CX + 4, y1 + 6), P(CX + (x1 - CX) * 0.3, lerp(y0, y1, 0.75))])} fill={T.shade} opacity={0.55} />}
+              {/* Light on the near cheek of the beard: a soft, uneven mass (cooler and a touch stronger on dark skin). */}
+              {d > 0 && <path d={ring(roughen(along([P(x0 - 6, lerp(y0, y1, 0.08)), P(lerp(x0, CX, 0.55), y0 + 2), P(CX - 8, lerp(y0, y1, 0.35)), P(lerp(x0, CX, 0.45), lerp(y0, y1, 0.62)), P(x0 - 4, lerp(y0, y1, 0.7)), P(x0 - 6, lerp(y0, y1, 0.08))], 5), 1.6, seed + bi + 9, 0.5))} fill={mixHex(T.base, T.light, 0.3 + 0.12 * sep)} opacity={0.45 + 0.1 * sep} />}
+              {dark.length > 0 && <path d={dark.join("")} fill={T.deep} opacity={0.55} />}
+              {lit.length > 0 && <path d={lit.join("")} fill={T.light} opacity={0.5 + 0.25 * sep} />}
+              {mouthLine && <path d={mouthLine} fill={T.deep} opacity={0.6} />}
+            </g>
+            {ink && <path d={ink} fill={INK} opacity={0.85 * (1 - 0.45 * sep)} />}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+function inside(shape: readonly Pt[], p: Pt): boolean {
+  let c = false;
+  for (let i = 0, j = shape.length - 1; i < shape.length; j = i++) {
+    const A = shape[i];
+    const B = shape[j];
+    if (A[1] > p[1] !== B[1] > p[1] && p[0] < ((B[0] - A[0]) * (p[1] - A[1])) / (B[1] - A[1]) + A[0]) c = !c;
+  }
+  return c;
 }

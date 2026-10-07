@@ -2,7 +2,133 @@
  * Hand-drawn line helpers. Every line is a filled brush stroke whose width swells and tapers along its length,
  * with a little deterministic unevenness, and can stop, break or fade instead of closing every shape.
  */
-import { along, hash01, q, ribbon, unit, type Pt } from "../portrait/geometry";
+import { add, along, hash01, scale, sub, unit, type Pt } from "../portrait/geometry";
+
+// ------------------------------------------------------------------ size-aware output
+
+/**
+ * Path output depends on the size the portrait is drawn at: points that can't move a pixel are dropped and
+ * coordinates are written only as precisely as they can show. Set for one synchronous render with `withDetail`.
+ */
+let tol = 0.12;
+let dec = 1;
+let lod: 0 | 1 | 2 = 2;
+const TOL = [0.8, 0.35, 0.12] as const;
+
+export function withDetail<T>(d: 0 | 1 | 2, fn: () => T): T {
+  const prev = [tol, dec, lod] as const;
+  tol = TOL[d];
+  dec = d === 0 ? 0 : 1;
+  lod = d;
+  try {
+    return fn();
+  } finally {
+    [tol, dec, lod] = prev;
+  }
+}
+
+/**
+ * Level of detail of the render in progress (0 thumbnail, 1 small, 2 full). Shape builders use it to choose how
+ * many samples or repeated parts to make, so a 48px portrait is built from few well-placed shapes rather than
+ * the full-size geometry thinned out afterwards.
+ */
+export const lodNow = () => lod;
+
+/** `full` at full size, scaled down for smaller renders (never below `min`). */
+export const lodCount = (full: number, min = 3) => Math.max(min, Math.round(full * [0.45, 0.7, 1][lod]));
+
+/** Douglas-Peucker: keep only the points that move the line by more than `t`. */
+export function simplify(pts: readonly Pt[], t = tol): readonly Pt[] {
+  const n = pts.length;
+  if (n < 4 || t <= 0) return pts;
+  const keep = new Uint8Array(n);
+  keep[0] = keep[n - 1] = 1;
+  const stack: [number, number][] = [[0, n - 1]];
+  const t2 = t * t;
+  while (stack.length) {
+    const [a, b] = stack.pop()!;
+    const [ax, ay] = pts[a];
+    const dx = pts[b][0] - ax;
+    const dy = pts[b][1] - ay;
+    const len2 = dx * dx + dy * dy || 1e-9;
+    let max = 0;
+    let idx = -1;
+    for (let i = a + 1; i < b; i++) {
+      const u = Math.max(0, Math.min(1, ((pts[i][0] - ax) * dx + (pts[i][1] - ay) * dy) / len2));
+      const ex = ax + u * dx - pts[i][0];
+      const ey = ay + u * dy - pts[i][1];
+      const d2 = ex * ex + ey * ey;
+      if (d2 > max) {
+        max = d2;
+        idx = i;
+      }
+    }
+    if (max > t2 && idx > 0) {
+      keep[idx] = 1;
+      stack.push([a, idx], [idx, b]);
+    }
+  }
+  return pts.filter((_, i) => keep[i]);
+}
+
+const num = (v: number) => (dec ? Math.round(v * 10) / 10 : Math.round(v));
+
+/**
+ * Path data written with plain M/L commands (the older hair code), thinned to what a thumbnail can show: each
+ * sub-path is simplified and rounded to whole units. Anything with curves or arcs is returned untouched.
+ */
+export function thinPath(d: string, t = TOL[0]): string {
+  if (/[^MLZ\d.\s-]/.test(d)) return d;
+  return d.replace(/M[^MZ]*Z?/g, (seg) => {
+    const pts = [...seg.matchAll(/(-?\d+\.?\d*)\s(-?\d+\.?\d*)/g)].map((m): Pt => [+m[1], +m[2]]);
+    const s = simplify(pts, t);
+    let out = "";
+    let px = NaN;
+    let py = NaN;
+    for (const p of s) {
+      const x = Math.round(p[0]);
+      const y = Math.round(p[1]);
+      if (x === px && y === py) continue;
+      out += `${out ? "L" : "M"}${x} ${y}`;
+      px = x;
+      py = y;
+    }
+    return out && seg.endsWith("Z") ? `${out}Z` : out;
+  });
+}
+
+/** A polyline or polygon as path data, simplified and rounded for the current size. */
+export function pathOf(pts: readonly Pt[], closed = true): string {
+  const s = simplify(pts);
+  let out = "";
+  let px = NaN;
+  let py = NaN;
+  for (const p of s) {
+    const x = num(p[0]);
+    const y = num(p[1]);
+    if (x === px && y === py) continue;
+    out += `${out ? "L" : "M"}${x} ${y}`;
+    px = x;
+    py = y;
+  }
+  return out && closed ? `${out}Z` : out;
+}
+
+/** Outline of a band whose width varies along a line (a brush stroke). */
+function ribbonPts(line: readonly Pt[], w: (u: number) => number): Pt[] {
+  const n = line.length;
+  if (n < 2) return [];
+  const L: Pt[] = [];
+  const R: Pt[] = [];
+  for (let i = 0; i < n; i++) {
+    const t = unit(sub(line[Math.min(n - 1, i + 1)], line[Math.max(0, i - 1)]));
+    const nr: Pt = [-t[1], t[0]];
+    const hw = w(i / (n - 1)) / 2;
+    L.push(add(line[i], scale(nr, hw)));
+    R.push(add(line[i], scale(nr, -hw)));
+  }
+  return [...L, ...R.reverse()];
+}
 
 /** Smooth deterministic 1D noise in [-1, 1]. */
 export function noise1(seed: number, x: number): number {
@@ -46,7 +172,7 @@ export function stroke(pts: readonly Pt[], o: StrokeOpts): string {
   const line = along(pts, o.steps ?? 6);
   const seed = o.seed ?? 1;
   const wob = o.wobble ?? 0.18;
-  return q(ribbon(line, (u) => Math.max(0.05, o.w * profile(u, o) * (1 + wob * noise1(seed, u * 5)))));
+  return pathOf(ribbonPts(line, (u) => Math.max(0.05, o.w * profile(u, o) * (1 + wob * noise1(seed, u * 5)))));
 }
 
 /** Sample a smooth curve and keep only the parts between the given [from, to] fractions (for broken lines). */
@@ -60,7 +186,7 @@ export function pieces(pts: readonly Pt[], keep: readonly (readonly [number, num
 export function strokeLine(line: readonly Pt[], o: StrokeOpts): string {
   const seed = o.seed ?? 1;
   const wob = o.wobble ?? 0.18;
-  return q(ribbon(line, (u) => Math.max(0.05, o.w * profile(u, o) * (1 + wob * noise1(seed, u * 5)))));
+  return pathOf(ribbonPts(line, (u) => Math.max(0.05, o.w * profile(u, o) * (1 + wob * noise1(seed, u * 5)))));
 }
 
 /** Push each point of a closed or open outline in or out along its normal by smooth noise: painted, not ruled. */
@@ -81,7 +207,7 @@ export function blob(pts: readonly Pt[], tension = 0.5): string {
   const n = line.length;
   // drop the duplicated tail so the closing segment isn't drawn twice
   const cut = line.slice(0, Math.max(3, n - 6));
-  return q(`M${cut.map((p) => `${p[0]} ${p[1]}`).join("L")}Z`);
+  return pathOf(cut);
 }
 
 /** Evenly spaced points along a polyline (spacing `step`), so displacements don't bunch up where the input is dense. */
@@ -107,4 +233,4 @@ export function resample(pts: readonly Pt[], step: number): Pt[] {
 }
 
 /** Closed path through points (no smoothing). */
-export const ring = (pts: readonly Pt[]) => q(`M${pts.map((p) => `${p[0]} ${p[1]}`).join("L")}Z`);
+export const ring = (pts: readonly Pt[]) => pathOf(pts);

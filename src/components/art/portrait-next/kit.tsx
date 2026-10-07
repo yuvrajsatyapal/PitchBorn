@@ -66,8 +66,8 @@ export function KitBack({ kit, trim, d, line }: KitProps) {
       <path d={body} fill={kit} />
       {/* Shadow plane on the far shoulder, light on the near one, and the shadow the collar casts on the chest. */}
       <path d={blob([P(CX + open * 0.5, y + 18), P(Ro[0] + 20, y + 12), P(332, 330), P(332, 364), P(CX + 74, 364), P(CX + 58, 334)], 0.45)} fill={c.shade} />
-      <path d={blob([P(Lo[0] - 46, 315), P(Lo[0] - 14, y + 10), P(Lo[0] + 6, y + 22), P(Lo[0] - 30, 327)], 0.5)} fill={c.light} opacity={0.55} />
-      <path d={strokeLine(line.frontOut.map((p) => P(p[0] + 1, p[1] + 3)), { w: 5, start: 0.3, end: 0.6, peak: 0.65, seed: 205 })} fill={c.shade} opacity={0.7} />
+      {d > 0 && <path d={blob([P(Lo[0] - 46, 315), P(Lo[0] - 14, y + 10), P(Lo[0] + 6, y + 22), P(Lo[0] - 30, 327)], 0.5)} fill={c.light} opacity={0.55} />}
+      {d > 0 && <path d={strokeLine(line.frontOut.map((p) => P(p[0] + 1, p[1] + 3)), { w: 5, start: 0.3, end: 0.6, peak: 0.65, seed: 205 })} fill={c.shade} opacity={0.7} />}
       {d > 0 && (
         <>
           <path d={stroke([P(60, 333), P(72, 343), P(77, 360)], { w: 2.4, start: 0.1, end: 0.2, seed: 201 })} fill={c.shade} />
@@ -125,8 +125,7 @@ export function KitFront({ kit, trim, collar, d, line }: KitProps) {
   }
   // The edge the neck disappears behind, and the outer shoulder line (the only heavy ink on the shirt).
   els.push(<path key="ci" d={strokeLine(frontIn, { w: 1.1, start: 0.5, end: 0.5, seed: 221, wobble: 0.1 })} fill={INK} opacity={0.75} />);
-  els.push(<path key="oR" d={stroke(right, { w: 2, start: 0.6, end: 0.1, peak: 0.2, seed: 241 })} fill={INK} />);
-  els.push(<path key="oL" d={stroke(left, { w: 1.5, start: 0.6, end: 0.1, peak: 0.2, seed: 243 })} fill={INK} />);
+  els.push(<path key="oRL" d={stroke(right, { w: 2, start: 0.6, end: 0.1, peak: 0.2, seed: 241 }) + stroke(left, { w: 1.5, start: 0.6, end: 0.1, peak: 0.2, seed: 243 })} fill={INK} />);
   return <g>{els}</g>;
 }
 

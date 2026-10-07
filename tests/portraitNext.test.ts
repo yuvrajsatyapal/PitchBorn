@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PortraitNext } from "../src/components/art/portrait-next/art";
 import { COLLARS, necklineFor } from "../src/components/art/portrait-next/kit";
 import { nextModelFor } from "../src/components/art/portrait-next/model";
+import { HAIR_LIBRARY } from "../src/components/art/portrait-next/hair";
 import { halfAt, neckSides } from "../src/components/art/portrait-next/neck";
 import { skinTones } from "../src/components/art/portrait-next/palette";
 import { CX } from "../src/components/art/portrait/geometry";
@@ -63,6 +64,28 @@ describe("improved portrait: the neck goes into the shirt", () => {
         expect(front).toBeGreaterThan(firstSkin);
         expect(head).toBeGreaterThan(front);
       }
+    }
+  });
+});
+
+describe("improved portrait: hair designs", () => {
+  const renderHair = (hairStyle: string, d: 0 | 1 | 2, uid = "h") =>
+    renderToStaticMarkup(createElement("svg", null, createElement(PortraitNext, { m: { ...nextModelFor({ ...base, face: 9 }, 26, KIT, TRIM), hairStyle }, uid, d })));
+
+  it("every design draws with the new techniques and is deterministic for the same player", () => {
+    for (const h of HAIR_LIBRARY) {
+      for (const d of [0, 1, 2] as const) {
+        const a = renderHair(h.id, d);
+        expect(a).toBe(renderHair(h.id, d));
+        expect(a.length).toBeGreaterThan(1000);
+      }
+    }
+  });
+
+  it("small portraits stay light: fewer elements than close-ups", () => {
+    for (const h of HAIR_LIBRARY) {
+      const count = (s: string) => (s.match(/<(path|circle|rect|use|ellipse)\b/g) ?? []).length;
+      expect(count(renderHair(h.id, 0))).toBeLessThan(count(renderHair(h.id, 2)));
     }
   });
 });

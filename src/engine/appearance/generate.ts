@@ -1,6 +1,6 @@
 import { Rng } from "../rng";
 import type { Appearance, LegacyAppearance } from "../types";
-import { APPEARANCE_KEYS, COUNTS, HAIR_STYLES } from "./options";
+import { ACCESSORIES, APPEARANCE_KEYS, COUNTS, HAIR_COLORS, HAIR_STYLES } from "./options";
 
 export type RandomScope = "all" | "face" | "hair";
 
@@ -35,6 +35,20 @@ const HAIR_ODDS: Record<string, number> = {
   "Slick back": 1, "Messy": 0.9, "Quiff": 0.9, "Mullet": 0.3, "Receding": 0.25, "Thinning": 0.1, "Sides only": 0.05, "Man bun": 0.3, "Ponytail": 0.25,
   "Caesar": 0.8, "Spiky": 0.6, "Undercut": 0.9, "Bowl cut": 0.12,
 };
+
+/** Everyday styles keep their original indices; iconic styles are appended after them. */
+const CORE_HAIR = HAIR_STYLES.filter((h) => !h.iconic);
+const ICONIC_HAIR = HAIR_STYLES.map((h, i) => [h, i] as const).filter(([h]) => h.iconic);
+/** Iconic styles together: about one player in seventy. */
+export const ICONIC_CHANCE = 0.014;
+/** Styles whose tips can take a second colour, and how often generated players have frosted tips with them. */
+const TIP_ODDS: Record<string, number> = { "Frosted Faux Hawk": 0.75, "Textured crop": 0.04, "Spiky": 0.08, "Quiff": 0.03, "Short dreads": 0.05, "Dreadlocks": 0.04, "Twists": 0.06 };
+/** Generated Lion Afros are often golden all through (the hair colour itself, never just the ends). */
+const GOLDEN = HAIR_COLORS.indexOf("#d6a645");
+const LION_GOLDEN_ODDS = 0.6;
+export const supportsHairTips = (hair: number) => (HAIR_STYLES[hair]?.name ?? "") in TIP_ODDS;
+/** Accessories the generator hands out (later ones are chosen in the editor). */
+const GENERATED_ACCESSORIES = ACCESSORIES.indexOf("Ear stud");
 
 const FACIAL_ODDS = [4.2, 3, 1.8, 0.9, 0.7, 1.1, 0.9, 0.5, 1.9, 1.2, 0.9, 0.2, 0.5, 0.6, 0.15, 0.5];
 
@@ -83,22 +97,33 @@ function roll(rng: Rng, into: Appearance, scope: RandomScope, bias?: LookBias): 
     into.freckles = rng.chance(into.skin <= 3 ? 0.14 : 0.04) ? 1 : 0;
     into.scar = rng.chance(0.05) ? rng.int(1, COUNTS.scar - 1) : 0;
     into.mark = rng.chance(0.06) ? rng.int(1, COUNTS.mark - 1) : 0;
-    into.accessory = rng.chance(0.07) ? rng.int(1, COUNTS.accessory - 1) : 0;
+    into.accessory = rng.chance(0.07) ? rng.int(1, GENERATED_ACCESSORIES) : 0;
   }
   if (scope === "all" || scope === "hair") {
     const dark = into.skin / (COUNTS.skin - 1);
+    const texture = (t: string) => (t === "coily" ? 0.45 + 1.3 * dark : t === "curly" ? 0.8 + 0.5 * dark : t === "straight" ? 1.35 - 0.8 * dark : 1);
     into.hair = pickWeighted(
       rng,
-      HAIR_STYLES.map((h) => {
-        const texture = h.texture === "coily" ? 0.45 + 1.3 * dark : h.texture === "curly" ? 0.8 + 0.5 * dark : h.texture === "straight" ? 1.35 - 0.8 * dark : 1;
-        return (HAIR_ODDS[h.name] ?? 1) * texture;
-      }),
+      CORE_HAIR.map((h) => (HAIR_ODDS[h.name] ?? 1) * texture(h.texture)),
     );
     into.hairColor = pickWeighted(rng, hairColorWeights(into.skin));
     into.browColor = rng.chance(0.18) ? clamp(into.hairColor + rng.int(-1, 1), 0, 8) : into.hairColor;
     into.facial = pickWeighted(rng, FACIAL_ODDS);
     into.facialColor = rng.chance(0.2) ? clamp(into.hairColor + rng.int(-1, 1), 0, 8) : into.hairColor;
   }
+  // Everything below was added later and draws only after all the original values, so a seed's original face,
+  // hair and colours never change.
+  if (scope === "all" || scope === "hair") {
+    const dark = into.skin / (COUNTS.skin - 1);
+    if (rng.chance(ICONIC_CHANCE)) {
+      const texture = (t: string) => (t === "coily" ? 0.45 + 1.3 * dark : t === "curly" ? 0.8 + 0.5 * dark : t === "straight" ? 1.35 - 0.8 * dark : 1);
+      into.hair = ICONIC_HAIR[pickWeighted(rng, ICONIC_HAIR.map(([h]) => texture(h.texture)))][1];
+      if (HAIR_STYLES[into.hair].name === "Lion Afro" && rng.chance(LION_GOLDEN_ODDS)) into.hairColor = GOLDEN;
+    }
+    const name = HAIR_STYLES[into.hair]?.name ?? "";
+    into.hairTip = rng.chance(TIP_ODDS[name] ?? 0) ? rng.int(1, COUNTS.hairTip - 1) : 0;
+  }
+  if (scope === "all" || scope === "face") into.band = rng.int(0, COUNTS.band - 1);
 }
 
 const blank = (): Appearance => ({ v: 2, ...(Object.fromEntries(APPEARANCE_KEYS.map((k) => [k, 0])) as Record<(typeof APPEARANCE_KEYS)[number], number>) });

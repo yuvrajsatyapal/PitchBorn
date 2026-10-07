@@ -1,4 +1,4 @@
-import { EYE_COLORS, HAIR_COLORS, SKIN_TONES, geoValue } from "@/engine/appearance/options";
+import { BAND_COLORS, EYE_COLORS, HAIR_COLORS, HAIR_TIP_COLORS, SKIN_TONES, geoValue } from "@/engine/appearance/options";
 import { ageLook } from "@/engine/appearance/age";
 import type { Appearance } from "@/engine/types";
 import { REFERENCE_FACE, type BrowSpec, type EyeSpec, type FaceSpec, type MouthSpec, type NoseSpec } from "./anatomy";
@@ -197,6 +197,8 @@ export function modelFor(a: Appearance, age: number, kit: string, trim: string, 
     scar: a.scar,
     mark: a.mark,
     accessory: a.accessory,
+    band: BAND_COLORS[a.band] ?? BAND_COLORS[0],
+    hairTip: a.hairTip > 0 ? HAIR_TIP_COLORS[a.hairTip] ?? null : null,
     kit,
     trim,
     background: background ?? backdropFor(a, kit),
