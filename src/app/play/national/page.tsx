@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
+import { RunBadge } from "@/components/game/CompetitionRun";
 import { PlayerModal } from "@/components/game/PlayerModal";
 import { TeamForm } from "@/components/game/widgets";
 import { Badge, Card, Empty, PageTitle, Stat, Table } from "@/components/ui";
@@ -66,6 +67,17 @@ export default function National() {
           </p>
         </Card>
         <div className="grid content-start gap-4">
+          <Card title="Tournament run">
+            {Object.values(g.competitions).filter((c) => c.kind === "international" && c.groups).length ? (
+              <ul className="grid gap-2 text-sm">
+                {Object.values(g.competitions).filter((c) => c.kind === "international" && c.groups).map((c) => (
+                  <li key={c.id} className="flex flex-wrap items-center gap-2"><b>{c.shortName}</b> <RunBadge comp={c} teamId={code} /></li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted">No tournament this summer.</p>
+            )}
+          </Card>
           <Card title="Matches this season">
             {fixtures.length ? (
               <ul className="grid gap-1 text-sm">

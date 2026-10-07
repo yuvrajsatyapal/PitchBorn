@@ -143,8 +143,8 @@ export const useGame = create<GameStore>((set, get) => ({
     try {
       let seasonRolled = false;
       for (let i = 0; i < weeks; i++) {
-        // Stop multi-week sims at anything that needs the player's attention.
-        if (i > 0 && (g.pending.length || g.user.decisions.length || g.user.offers.some((o) => o.status === "terms") || g.user.retired)) break;
+        // Multi-week sims run straight through: matches are quick-simmed and decisions use their fallback.
+        if (i > 0 && g.user.retired) break;
         const report = advanceTurn(g);
         if (report.newSeason) seasonRolled = true;
         if (weeks > 1 && i % 3 === 2) {

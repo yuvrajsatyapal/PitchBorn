@@ -23,10 +23,20 @@ export function scoutStars(g: GameState, p: Player): number {
 
 export function Stars({ value }: { value: number }) {
   return (
-    <span className="tracking-tight text-sun [text-shadow:1px_1px_0_var(--line)]" aria-label={`${value} of 5 stars`}>
-      {"★".repeat(Math.floor(value))}
-      {value % 1 ? "½" : ""}
-      <span className="text-paper-2 [text-shadow:none]">{"★".repeat(5 - Math.ceil(value))}</span>
+    <span className="inline-flex text-base leading-none" role="img" aria-label={`${value} of 5 stars`}>
+      {[0, 1, 2, 3, 4].map((i) => {
+        const fill = Math.max(0, Math.min(1, value - i));
+        return (
+          <span key={i} className="relative inline-block text-paper-2" aria-hidden>
+            ★&#xFE0E;
+            {fill > 0 && (
+              <span className="absolute inset-y-0 left-0 overflow-hidden text-sun [text-shadow:1px_1px_0_var(--line)]" style={{ width: `${fill * 100}%` }}>
+                ★&#xFE0E;
+              </span>
+            )}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -35,37 +45,42 @@ export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
   const kit = staticClub(p.clubId ?? "")?.colors.primary ?? "#2e8b57";
   return (
     <Card className="bg-sun-2" flat={false}>
-      <div className="flex flex-wrap items-center gap-4">
-        <Portrait look={p.look} size={96} kit={kit} />
+      <div className="flex items-center gap-3 sm:gap-4">
+        <span className="sm:hidden"><Portrait look={p.look} size={72} kit={kit} /></span>
+        <span className="hidden sm:block"><Portrait look={p.look} size={96} kit={kit} /></span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-3xl leading-none sm:text-4xl">{name(p)}</h1>
+          <div className="flex flex-wrap items-center gap-x-2">
+            <h1 className="font-display text-2xl leading-tight sm:text-4xl">{name(p)}</h1>
             <Flag code={p.nationality} className="text-lg" />
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2">
             <span>{POSITION_LABEL[p.position]}</span>
             <span>Age {age(g, p)}</span>
-            <span className="flex items-center gap-1">
-              <Crest clubId={p.clubId} size={18} /> {clubName(p.clubId)}
-              {p.loan && <Badge tone="sky">on loan</Badge>}
-            </span>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-            <Badge tone="paper">Value {formatMoney(p.value)}</Badge>
-            {p.contract && <Badge tone="paper">{formatMoney(p.contract.wage)}/wk · until {p.contract.expires + 1}</Badge>}
-            <Badge tone="paper">
-              Potential <Stars value={scoutStars(g, p)} />
-            </Badge>
-            {p.injury && <Badge tone="coral">🩹 {p.injury.type} · {p.injury.weeksLeft}w</Badge>}
-            {p.suspension > 0 && <Badge tone="coral">Suspended {p.suspension}</Badge>}
+          <div className="mt-1 hidden items-center gap-1 text-sm text-ink-2 sm:flex">
+            <Crest clubId={p.clubId} size={18} /> {clubName(p.clubId)}
+            {p.loan && <Badge tone="sky">on loan</Badge>}
           </div>
         </div>
-        <div className="text-center">
+        <div className="shrink-0 text-center">
           <div className="text-[11px] font-black uppercase tracking-widest text-muted">Overall</div>
-          <div className="scoreboard rounded-xl border-2 border-line bg-[#1b1712] px-3 py-1 text-4xl text-[#ffc62b]" data-testid="overall">
+          <div className="scoreboard rounded-xl border-2 border-line bg-[#1b1712] px-3 py-1 text-3xl text-[#ffc62b] sm:text-4xl" data-testid="overall">
             {ovr(p)}
           </div>
         </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <span className="flex items-center gap-1 text-ink-2 sm:hidden">
+          <Crest clubId={p.clubId} size={18} /> {clubName(p.clubId)}
+          {p.loan && <Badge tone="sky">on loan</Badge>}
+        </span>
+        <Badge tone="paper">Value {formatMoney(p.value)}</Badge>
+        {p.contract && <Badge tone="paper">{formatMoney(p.contract.wage)}/wk · until {p.contract.expires + 1}</Badge>}
+        <Badge tone="paper">
+          Potential <Stars value={scoutStars(g, p)} />
+        </Badge>
+        {p.injury && <Badge tone="coral">🩹 {p.injury.type} · {p.injury.weeksLeft}w</Badge>}
+        {p.suspension > 0 && <Badge tone="coral">Suspended {p.suspension}</Badge>}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Bar label="Fitness" value={p.fitness} tone={p.fitness < 70 ? "coral" : p.fitness < 85 ? "sun" : "pitch"} />

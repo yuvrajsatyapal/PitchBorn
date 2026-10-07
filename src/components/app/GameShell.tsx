@@ -6,7 +6,7 @@ import { SidebarAdSlot } from "@/ads/AdSlot";
 import { Logo } from "@/components/art/Logo";
 import { Crest } from "@/components/art/Crest";
 import { Button, LinkButton, Modal } from "@/components/ui";
-import { formatTurnDate, isTransferWindow, phaseOf, seasonLabel, windowName } from "@/engine/calendar";
+import { formatTurnDate, isTransferWindow, phaseOf, seasonLabel, weeksToNewYear, weeksToNextMonth, windowName } from "@/engine/calendar";
 import { BALANCE } from "@/engine/balance";
 import { clubName } from "@/engine/data/world";
 import { useGame, useGameState } from "@/game/store";
@@ -51,22 +51,26 @@ function SimMenu() {
   const busy = useGame((s) => s.busy);
   const [open, setOpen] = useState(false);
   if (!game || game.user.retired) return null;
-  const toSeasonEnd = Math.max(1, BALANCE.calendar.endOfSeasonTurn - game.turn + (game.turn > BALANCE.calendar.endOfSeasonTurn ? BALANCE.calendar.turnsPerSeason : 0));
-  const options = [
-    { label: "2 weeks", weeks: 2 },
-    { label: "4 weeks", weeks: 4 },
-    { label: game.turn > BALANCE.calendar.endOfSeasonTurn ? "To next season" : "To season end", weeks: game.turn > BALANCE.calendar.endOfSeasonTurn ? BALANCE.calendar.turnsPerSeason - game.turn + 1 : toSeasonEnd },
-  ];
+  const C = BALANCE.calendar;
+  const toNewYear = weeksToNewYear(game.season, game.turn);
+  const afterEnd = game.turn > C.endOfSeasonTurn;
+  const options: { label: string; weeks: number }[] = [{ label: "1 month", weeks: weeksToNextMonth(game.season, game.turn) }];
+  if (toNewYear !== null && game.turn <= C.endOfSeasonTurn) options.push({ label: "To winter break (1 Jan)", weeks: toNewYear });
+  options.push(
+    afterEnd
+      ? { label: "To next season", weeks: C.turnsPerSeason - game.turn + 1 }
+      : { label: "To season end", weeks: C.endOfSeasonTurn - game.turn + 1 },
+  );
   return (
     <>
-      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy || game.pending.length > 0} aria-label="Simulate several weeks" title="Simulate ahead">
+      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy} aria-label="Simulate several weeks" title="Simulate ahead">
         <span className="font-black">»</span>
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Simulate ahead">
         <p className="mb-4 text-sm text-ink-2">
-          Your matches are quick-simmed with sensible decisions. Simulation pauses whenever something needs you — offers, decisions or match days.
+          Your matches are quick-simmed with sensible decisions. Simulation only stops early if your career ends; open decisions fall back to their default and offers may lapse.
         </p>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2">
           {options.map((o) => (
             <Button
               key={o.label}
@@ -94,7 +98,7 @@ function TopBar() {
   const win = windowName(game.turn);
   return (
     <header className="sticky top-0 z-30 border-b-2 border-line bg-paper/95 backdrop-blur">
-      <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-3 py-2 sm:px-5">
+      <div className="mx-auto flex max-w-[1800px] items-center gap-3 px-3 py-2 sm:px-5">
         <Link href="/play" className="flex items-center gap-2 lg:hidden" aria-label="Dashboard">
           <Logo size={32} />
         </Link>
@@ -103,7 +107,7 @@ function TopBar() {
           <div className="min-w-0 leading-tight">
             <div className="truncate text-sm font-bold">{clubName(u.clubId, true)}</div>
             <div className="scoreboard truncate text-[11px] text-muted">
-              {formatTurnDate(game.season, game.turn)} · {seasonLabel(game.season)} · W{game.turn}
+              {formatTurnDate(game.season, game.turn)}<span className="hidden min-[420px]:inline"> · {seasonLabel(game.season)}</span> · W{game.turn}
             </div>
           </div>
         </div>
@@ -249,7 +253,7 @@ export function GameShell({ children }: { children: ReactNode }) {
       <SideNav />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <div className="mx-auto flex w-full max-w-[1600px] flex-1 gap-6 px-3 pb-28 pt-4 sm:px-5 lg:pb-10">
+        <div className="mx-auto flex w-full max-w-[1800px] flex-1 gap-6 px-3 pb-28 pt-4 sm:px-5 lg:pb-10">
           <main id="main" className="min-w-0 flex-1">
             {error && <div className="pb-card mb-4 bg-coral-2 p-3 text-sm">Something went wrong: {error}</div>}
             {children}

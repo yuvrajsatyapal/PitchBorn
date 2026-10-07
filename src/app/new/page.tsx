@@ -11,7 +11,7 @@ import { NAME_POOLS } from "@/engine/data/names";
 import { WORLD, country, stadium } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { POSITIONS, type Appearance, type Position } from "@/engine/types";
-import { playingTimeOutlook } from "@/engine/world/create";
+import { CUSTOM_LIMITS, playingTimeOutlook, sanitizeCustom, type CustomStart, type StartPath } from "@/engine/world/create";
 import { useGame } from "@/game/store";
 
 const STEPS = ["Identity", "Player", "Path & club", "Confirm"];
@@ -34,7 +34,8 @@ export default function NewCareer() {
   const [foot, setFoot] = useState<"L" | "R" | "B">("R");
   const [height, setHeight] = useState(180);
   const [look, setLook] = useState<Appearance>({ skin: 1, hair: 1, hairColor: 1, facial: 0, eyes: 1 });
-  const [path, setPath] = useState<"academy" | "late">("academy");
+  const [path, setPath] = useState<StartPath>("academy");
+  const [custom, setCustom] = useState<CustomStart>({ age: 19, overall: 62, potential: 82 });
   const [clubCountry, setClubCountry] = useState("ENG");
   const [tier, setTier] = useState(2);
   const [clubId, setClub] = useState<string>("");
@@ -58,7 +59,7 @@ export default function NewCareer() {
   const start = async () => {
     setErr(null);
     try {
-      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, difficulty });
+      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty });
       router.push("/play");
     } catch (e) {
       setErr((e as Error).message);
@@ -68,7 +69,7 @@ export default function NewCareer() {
   if (busy) return <div className="grid min-h-screen place-items-center"><LoadingScreen label={busy} /></div>;
 
   const playingTimeHint = (prestige: number) => {
-    const { outlook, level, start: you } = playingTimeOutlook(prestige, path);
+    const { outlook, level, start: you } = playingTimeOutlook(prestige, path, custom);
     const map = { good: { t: "Good minutes", tone: "pitch" as const }, fight: { t: "Fight for minutes", tone: "sun" as const }, few: { t: "Few minutes", tone: "coral" as const } };
     return { ...map[outlook], level, you };
   };
@@ -181,10 +182,11 @@ export default function NewCareer() {
         {step === 2 && (
           <div className="grid gap-4">
             <Card title="How does it start?">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 {[
                   { id: "academy" as const, t: "Academy prospect · age 17", d: "Raw but full of potential. Expect to fight for minutes — loans can help." },
                   { id: "late" as const, t: "Late starter · age 20", d: "Closer to the first team now, a little less ceiling." },
+                  { id: "custom" as const, t: "Custom", d: "Set your own starting age, ability and potential." },
                 ].map((o) => (
                   <button key={o.id} onClick={() => setPath(o.id)} aria-pressed={path === o.id} className={`rounded-2xl border-2 border-line p-4 text-left ${path === o.id ? "bg-sun-2 shadow-[3px_3px_0_var(--shadow)]" : "bg-card"}`}>
                     <div className="font-display text-xl">{o.t}</div>
@@ -192,6 +194,33 @@ export default function NewCareer() {
                   </button>
                 ))}
               </div>
+              {path === "custom" && (
+                <div className="mt-4 grid gap-4 rounded-2xl border-2 border-line bg-paper-2/60 p-4 sm:grid-cols-3">
+                  {(
+                    [
+                      ["age", "Age", "Younger players have more growing to do."],
+                      ["overall", "Overall", "How good you are on day one."],
+                      ["potential", "Potential", "Your hidden ceiling. Never below your overall."],
+                    ] as const
+                  ).map(([k, label, hint]) => (
+                    <label key={k} className="grid gap-1 text-sm font-bold">
+                      <span className="flex items-baseline justify-between">
+                        {label}
+                        <span className="scoreboard text-lg">{custom[k]}</span>
+                      </span>
+                      <input
+                        type="range"
+                        min={CUSTOM_LIMITS[k][0]}
+                        max={CUSTOM_LIMITS[k][1]}
+                        value={custom[k]}
+                        onChange={(e) => setCustom(sanitizeCustom({ ...custom, [k]: Number(e.target.value) }))}
+                        className="accent-[var(--pitch)]"
+                      />
+                      <span className="text-xs font-normal text-muted">{hint}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
               <div className="mt-4 text-sm font-bold">Difficulty</div>
               <Tabs value={difficulty} onChange={setDiff} items={[{ id: "relaxed", label: "Easy" }, { id: "standard", label: "Medium" }, { id: "hardcore", label: "Hard" }]} />
             </Card>
@@ -242,9 +271,9 @@ export default function NewCareer() {
                   {birthCountry !== nationality && <> · born in {country(birthCountry)?.name}</>} · {POSITION_LABEL[position]} · {height} cm · {foot === "R" ? "Right" : foot === "L" ? "Left" : "Two"}-footed
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-sm">
-                  <Crest clubId={club.id} size={28} /> {path === "academy" ? "Academy" : "First-team squad"} at <b>{club.name}</b>
+                  <Crest clubId={club.id} size={28} /> {path === "academy" || (path === "custom" && custom.age <= 18) ? "Academy" : "First-team squad"} at <b>{club.name}</b>
                 </div>
-                <div className="mt-1 text-xs text-muted">Season 2026/27 · difficulty {{ relaxed: "Easy", standard: "Medium", hardcore: "Hard" }[difficulty]}. Your true potential is hidden — scouts will give you hints.</div>
+                <div className="mt-1 text-xs text-muted">Season 2026/27 · {path === "custom" ? `age ${custom.age}, ${custom.overall} overall, ${custom.potential} potential` : path === "academy" ? "age 17" : "age 20"} · difficulty {{ relaxed: "Easy", standard: "Medium", hardcore: "Hard" }[difficulty]}. Your true potential is hidden — scouts will give you hints.</div>
               </div>
             </div>
             {err && <div className="mt-3 rounded-xl border-2 border-line bg-coral-2 p-2 text-sm">{err}</div>}

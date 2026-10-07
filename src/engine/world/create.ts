@@ -155,18 +155,53 @@ export function generateVirtualPool(state: GameState, rng: Rng, code: CountryCod
 }
 
 /** Expected starting overall for a new career (path only — fair regardless of club). */
-export function expectedStartingOverall(_prestige: number, path: "academy" | "late"): number {
-  return STARTING_OVERALL[path];
+export function expectedStartingOverall(_prestige: number, path: StartPath, custom?: CustomStart): number {
+  return path === "custom" && custom ? custom.overall : STARTING_OVERALL[path === "custom" ? "late" : path];
 }
 
 export type PlayingTimeOutlook = "good" | "fight" | "few";
 
 /** How likely early first-team minutes are, from the gap to the squad's level. */
-export function playingTimeOutlook(prestige: number, path: "academy" | "late"): { outlook: PlayingTimeOutlook; level: number; start: number } {
+export function playingTimeOutlook(prestige: number, path: StartPath, custom?: CustomStart): { outlook: PlayingTimeOutlook; level: number; start: number } {
   const level = clubLevel(prestige);
-  const start = expectedStartingOverall(prestige, path);
+  const start = expectedStartingOverall(prestige, path, custom);
   const gap = level - start;
   return { outlook: gap <= 9 ? "good" : gap <= 15 ? "fight" : "few", level: Math.round(level), start: Math.round(start) };
+}
+
+export type StartPath = "academy" | "late" | "custom";
+
+/** Fully player-chosen starting point. */
+export interface CustomStart {
+  age: number;
+  overall: number;
+  potential: number;
+}
+
+export const CUSTOM_LIMITS = { age: [16, 36], overall: [40, 92], potential: [40, 99] } as const;
+
+export function sanitizeCustom(c: CustomStart): CustomStart {
+  const age = Math.round(clamp(c.age, CUSTOM_LIMITS.age[0], CUSTOM_LIMITS.age[1]));
+  const overall = Math.round(clamp(c.overall, CUSTOM_LIMITS.overall[0], CUSTOM_LIMITS.overall[1]));
+  return { age, overall, potential: Math.round(clamp(c.potential, overall, CUSTOM_LIMITS.potential[1])) };
+}
+
+interface StartProfile {
+  age: number;
+  overall: number;
+  potential: number | null;
+  reputation: number;
+  youth: boolean;
+  contractYears: number;
+}
+
+function startProfile(input: NewCareerInput): StartProfile {
+  if (input.path === "custom" && input.custom) {
+    const c = sanitizeCustom(input.custom);
+    return { age: c.age, overall: c.overall, potential: c.potential, reputation: clamp((c.overall - 55) * 2, 5, 90), youth: c.age <= 18, contractYears: c.age <= 21 ? 2 : 3 };
+  }
+  const academy = input.path === "academy";
+  return { age: academy ? 17 : 20, overall: STARTING_OVERALL[academy ? "academy" : "late"], potential: null, reputation: academy ? 8 : 15, youth: academy, contractYears: 2 };
 }
 
 export interface NewCareerInput {
@@ -180,7 +215,9 @@ export interface NewCareerInput {
   height: number;
   look: Appearance;
   clubId: string;
-  path: "academy" | "late";
+  path: StartPath;
+  /** Used when path is "custom". */
+  custom?: CustomStart;
   seed?: string;
   difficulty?: GameState["settings"]["difficulty"];
   /** Restrict the simulated world (stress tests). */
@@ -191,14 +228,15 @@ export interface NewCareerInput {
 export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInput): Player {
   const season = state.season;
   const club = state.clubs[input.clubId];
-  const age = input.path === "academy" ? 17 : 20;
+  const start = startProfile(input);
+  const age = start.age;
   const level = clubLevel(club.reputation);
   // Starting ability: academy kids are raw; late starters are closer to the senior squad.
-  const startOvr = clamp(STARTING_OVERALL[input.path] + rng.normal(0, 1.2), 56, 72);
+  const startOvr = start.potential === null ? clamp(start.overall + rng.normal(0, 1.2), 56, 72) : start.overall;
   void level;
   const diff = input.difficulty ?? "standard";
   const potBase = input.path === "academy" ? 89 : 85;
-  const potential = clamp(potBase + rng.normal(0, 4) + (diff === "relaxed" ? 2 : diff === "hardcore" ? -2 : 0), 76, 97);
+  const potential = start.potential ?? clamp(potBase + rng.normal(0, 4) + (diff === "relaxed" ? 2 : diff === "hardcore" ? -2 : 0), 76, 97);
   const attrs = generateAttributes(rng, input.position, startOvr, input.height);
   const hidden = randomHidden(rng, input.position, potential);
   hidden.professionalism = Math.max(hidden.professionalism, 55);
@@ -226,7 +264,7 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
     injuries: 0,
     suspension: 0,
     yellowAccum: 0,
-    reputation: input.path === "academy" ? 8 : 15,
+    reputation: start.reputation,
     intlReputation: 3,
     value: 0,
     season: {},
@@ -242,10 +280,10 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   p.contract = {
     clubId: club.id,
     wage: wageFor(ovr, club.reputation, "prospect"),
-    expires: season + (input.path === "academy" ? 2 : 2),
+    expires: season + start.contractYears,
     signed: season,
     role: "prospect",
-    youth: input.path === "academy",
+    youth: start.youth,
   };
   p.value = marketValue(p, season);
   // The user's playing style has to be earned on the pitch; only temperament is there from the start.
@@ -279,7 +317,7 @@ export function createWorld(input: NewCareerInput): GameState {
     user: {
       playerId: "",
       startSeason: season,
-      startAge: input.path === "academy" ? 17 : 20,
+      startAge: startProfile(input).age,
       startClubId: input.clubId,
       startTier: staticLeague(staticClub(input.clubId)?.leagueId ?? "")?.tier ?? 1,
       agent: NO_AGENT,
@@ -353,7 +391,7 @@ export function createWorld(input: NewCareerInput): GameState {
   state.rng = rng.state();
   addTimeline(state, {
     kind: "start",
-    title: input.path === "academy" ? `Joined the ${staticClub(input.clubId)?.shortName} academy` : `Signed first professional deal with ${staticClub(input.clubId)?.shortName}`,
+    title: startProfile(input).youth ? `Joined the ${staticClub(input.clubId)?.shortName} academy` : `Signed first professional deal with ${staticClub(input.clubId)?.shortName}`,
     detail: `Aged ${state.user.startAge}, ${country(input.nationality)?.name} · ${input.position}`,
   });
   void BALANCE;

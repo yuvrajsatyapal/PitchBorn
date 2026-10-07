@@ -3,6 +3,7 @@ import { useState } from "react";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
+import { RunBadge } from "@/components/game/CompetitionRun";
 import { LeagueTable } from "@/components/game/LeagueTable";
 import { Badge, Card, Empty, PageTitle, Table, Tabs } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
@@ -149,6 +150,7 @@ export default function Competitions() {
         <div className="grid gap-4">
           {cups.length ? cups.map((c) => (
             <Card key={c.id} title={<span className="flex items-center gap-2"><Flag code={c.countryCode} /> {c.name}</span>} action={c.winner ? <Badge tone="sun">🏆 {teamLabel(c.winner, true)}</Badge> : undefined}>
+              {p.clubId && <div className="mb-3 flex flex-wrap items-center gap-2 text-sm"><span className="font-bold">Your club:</span><RunBadge comp={c} teamId={p.clubId} /></div>}
               <KnockoutRounds comp={c} highlight={highlight} />
             </Card>
           )) : <Empty title="Cups start soon" />}
@@ -158,6 +160,7 @@ export default function Competitions() {
         <div className="grid gap-4">
           {conts.length ? conts.map((c) => (
             <Card key={c.id} title={c.name} action={c.winner ? <Badge tone="sun">🏆 {teamLabel(c.winner, true)}</Badge> : undefined}>
+              {p.clubId && <div className="mb-3 flex flex-wrap items-center gap-2 text-sm"><span className="font-bold">Your club:</span><RunBadge comp={c} teamId={p.clubId} /></div>}
               <GroupTables comp={c} highlight={highlight} />
               <div className="mt-4"><KnockoutRounds comp={c} highlight={highlight} /></div>
             </Card>
@@ -168,6 +171,7 @@ export default function Competitions() {
         <div className="grid gap-4">
           {intl.length ? intl.map((c) => (
             <Card key={c.id} title={c.name} action={c.winner ? <Badge tone="sun">🏆 {teamLabel(c.winner)}</Badge> : undefined}>
+              <div className="mb-3 flex flex-wrap items-center gap-2 text-sm"><span className="font-bold">Your country:</span><RunBadge comp={c} teamId={p.intl.tiedTo ?? p.nationality} /></div>
               <GroupTables comp={c} highlight={highlight} />
               <div className="mt-4"><KnockoutRounds comp={c} highlight={highlight} /></div>
             </Card>

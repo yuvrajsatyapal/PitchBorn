@@ -82,3 +82,25 @@ export function monthIndex(turn: number): number {
 export function isMonthEnd(turn: number): boolean {
   return turn >= C.seasonStart + 3 && turn <= C.seasonEnd && turn % C.monthLength === 3;
 }
+
+const DAY = 86_400_000;
+
+/** Weeks to advance so the displayed date lands as close as possible to `target` (at least one week). */
+export function weeksToDate(season: number, turn: number, target: Date): number {
+  const now = turnDate(season, turn).getTime();
+  return Math.max(1, Math.round((target.getTime() - now) / (7 * DAY)));
+}
+
+/** The same day next month (19 Sep -> 19 Oct), as a weekly-turn count. */
+export function weeksToNextMonth(season: number, turn: number): number {
+  const d = turnDate(season, turn);
+  const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()));
+  return weeksToDate(season, turn, next);
+}
+
+/** Weeks to the turn dated closest to 1 January of the season's second calendar year, or null once it has passed. */
+export function weeksToNewYear(season: number, turn: number): number | null {
+  const newYear = new Date(Date.UTC(season + 1, 0, 1));
+  if (turnDate(season, turn).getTime() >= newYear.getTime() - 3 * DAY) return null;
+  return weeksToDate(season, turn, newYear);
+}

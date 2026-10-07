@@ -163,3 +163,11 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
+
+/* A bare `grid` would size its single implicit column to its widest child; let it shrink instead so scrollable
+   children (tabs, tables) never push the page sideways on phones. grid-cols-* utilities still win. */
+@layer base {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
