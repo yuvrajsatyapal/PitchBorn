@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type Tone = "sun" | "pitch" | "plum" | "coral" | "sky" | "paper" | "ink";
 const TONE_BG: Record<Tone, string> = {
@@ -155,7 +156,9 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
   if (!open) return null;
-  return (
+  // Rendered into <body>: inside a parent with backdrop-filter (the sticky top bar) `position: fixed` is relative to
+  // that parent, not the viewport, which clips the dialog.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
       <div
         ref={ref}
@@ -174,7 +177,8 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

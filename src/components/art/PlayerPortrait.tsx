@@ -1,8 +1,8 @@
 import { memo, useId, useMemo } from "react";
 import { appearanceKey } from "@/engine/appearance/generate";
 import type { Appearance } from "@/engine/types";
-import { PortraitArt, VIEW } from "./portrait/art";
-import { modelFor } from "./portrait/specs";
+import { PortraitNext, detailFor, viewFor } from "./portrait-next/art";
+import { nextModelFor } from "./portrait-next/model";
 
 export type PortraitSize = "small" | "medium" | "large" | number;
 const PX: Record<"small" | "medium" | "large", number> = { small: 40, medium: 72, large: 120 };
@@ -19,20 +19,18 @@ export interface PlayerPortraitProps {
   background?: string;
 }
 
-const VIEWBOX = `${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`;
-
 function PortraitSvg({ appearance, age = 24, kit = "#2e8b57", size = "medium", className = "", background }: PlayerPortraitProps) {
   const px = typeof size === "number" ? size : PX[size];
-  // The retro print and the finest strands only show (and only cost) at larger sizes.
-  const textured = px >= 96;
-  const lite = px < 96;
+  // Thumbnails crop tight on the face and drop the finest strands; larger sizes show shoulders and full detail.
+  const d = detailFor(px);
+  const view = viewFor(d);
   const kitMain = typeof kit === "string" ? kit : kit.primary;
   const trim = typeof kit === "string" ? "#f1ead8" : kit.secondary ?? "#f1ead8";
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const model = useMemo(() => modelFor(appearance, age, kitMain, trim, background), [appearance, age, kitMain, trim, background]);
+  const model = useMemo(() => nextModelFor(appearance, age, kitMain, trim, background), [appearance, age, kitMain, trim, background]);
   return (
-    <svg width={px} height={Math.round((px * VIEW.h) / VIEW.w)} viewBox={VIEWBOX} className={className} role="img" aria-label="Player portrait">
-      <PortraitArt m={model} uid={uid} textured={textured} lite={lite} />
+    <svg width={px} height={Math.round((px * view.h) / view.w)} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className={className} role="img" aria-label="Player portrait">
+      <PortraitNext m={model} uid={uid} d={d} />
     </svg>
   );
 }

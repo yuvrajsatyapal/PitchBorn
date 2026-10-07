@@ -54,12 +54,17 @@ function SimMenu() {
   const C = BALANCE.calendar;
   const toNewYear = weeksToNewYear(game.season, game.turn);
   const afterEnd = game.turn > C.endOfSeasonTurn;
-  const options: { label: string; weeks: number }[] = [{ label: "1 month", weeks: weeksToNextMonth(game.season, game.turn) }];
-  if (toNewYear !== null && game.turn <= C.endOfSeasonTurn) options.push({ label: "To winter break (1 Jan)", weeks: toNewYear });
+  // Before the season ends, no option runs past it: the summer tournament and transfer window stay ahead of you.
+  const toEnd = C.endOfSeasonTurn - game.turn + 1;
+  const fits = (weeks: number) => afterEnd || weeks < toEnd;
+  const options: { label: string; weeks: number }[] = [];
+  const month = weeksToNextMonth(game.season, game.turn);
+  if (fits(month)) options.push({ label: "1 month", weeks: month });
+  if (toNewYear !== null && game.turn <= C.endOfSeasonTurn && fits(toNewYear)) options.push({ label: "To winter break (1 Jan)", weeks: toNewYear });
   options.push(
     afterEnd
       ? { label: "To next season", weeks: C.turnsPerSeason - game.turn + 1 }
-      : { label: "To season end", weeks: C.endOfSeasonTurn - game.turn + 1 },
+      : { label: "To season end", weeks: toEnd },
   );
   return (
     <>
@@ -70,7 +75,7 @@ function SimMenu() {
         <p className="mb-4 text-sm text-ink-2">
           Your matches are quick-simmed with sensible decisions. Simulation only stops early if your career ends; open decisions fall back to their default and offers may lapse.
         </p>
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2">
           {options.map((o) => (
             <Button
               key={o.label}

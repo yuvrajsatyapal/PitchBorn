@@ -40,8 +40,9 @@ export function nextModelFor(a: Appearance, age: number, kit: string, trim: stri
   const v = (i: number) => hash01(seed, i) * 2 - 1;
   const f: NextSpec = {
     ...m.f,
-    // Young faces carry a little more fullness; lines of age hollow the cheek a touch.
-    hollow: s.hollow - m.youth * 0.5 + m.lines * 0.25 + v(1) * 0.12,
+    // Teenage faces carry a little more fullness. The head outline must not change between adult ages (age shows in
+    // lines and hair colour, never in the silhouette), so ageing lines no longer hollow the cheek.
+    hollow: s.hollow - m.youth * 0.5 + v(1) * 0.12,
     templeDip: s.templeDip + v(2) * 0.2,
     tilt: v(3) * 1.6,
     cheekAsym: v(4) * 1.4,

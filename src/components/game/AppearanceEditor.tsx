@@ -1,5 +1,5 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Button, Tabs } from "@/components/ui";
 import { randomizeAppearance, supportsHairTips, type RandomScope } from "@/engine/appearance/generate";
@@ -7,6 +7,7 @@ import {
   ACCESSORIES, BAND_COLORS, BAND_COLOR_NAMES, BROW_STYLES, HAIR_TIP_COLORS, HAIR_TIP_NAMES, COUNTS, EAR_STYLES, EYE_COLORS, EYE_COLOR_NAMES, EYE_SHAPES, FACE_SHAPES, FACIAL_HAIR, HAIR_COLORS, HAIR_COLOR_NAMES, HAIR_STYLES, MARKS,
   MOUTH_STYLES, NOSE_STYLES, SCARS, SKIN_NAMES, SKIN_TONES, type AppearanceKey,
 } from "@/engine/appearance/options";
+import { POC_IDS } from "@/components/art/portrait-next/hair";
 import { Rng } from "@/engine/rng";
 import type { Appearance } from "@/engine/types";
 
@@ -24,8 +25,10 @@ const CATS: { id: Cat; label: string }[] = [
   { id: "details", label: "Details" },
 ];
 
+/** Only the hairstyles drawn by the improved portrait renderer are offered; the older designs stay valid in saves. */
+const NEW_HAIR = HAIR_STYLES.flatMap((h, i) => (h.iconic || POC_IDS[i] ? [i] : []));
+
 const PREVIEW_AGES = [
-  { id: "18", label: "18" },
   { id: "26", label: "26" },
   { id: "34", label: "34" },
   { id: "40", label: "40" },
@@ -83,12 +86,21 @@ function Slider({ label, value, onChange }: { label: string; value: number; onCh
 }
 
 /** Character creator "Look" panel: big portrait on top, category tabs, one panel of options at a time. */
-export function AppearanceEditor({ value, onChange, kit, previewAge = 19 }: { value: Appearance; onChange: (a: Appearance) => void; kit?: string; previewAge?: number }) {
+export function AppearanceEditor({ value, onChange, kit, previewAge = 17 }: { value: Appearance; onChange: (a: Appearance) => void; kit?: string; previewAge?: number }) {
   const [cat, setCat] = useState<Cat>("face");
   const [age, setAge] = useState<string>("");
   const set = (k: AppearanceKey, v: number) => onChange({ ...value, [k]: v });
-  const roll = (scope: RandomScope) => onChange(randomizeAppearance(value, scope, Rng.fromSeed(`${Date.now()}-${Math.random()}`)));
+  const roll = (scope: RandomScope) => {
+    const rng = Rng.fromSeed(`${Date.now()}-${Math.random()}`);
+    const next = randomizeAppearance(value, scope, rng);
+    if (scope !== "face" && !NEW_HAIR.includes(next.hair)) next.hair = rng.pick(NEW_HAIR);
+    onChange(next);
+  };
   const shownAge = age ? Number(age) : previewAge;
+  // A look generated with one of the older designs moves to the closest-numbered new one so the picker matches the portrait.
+  useEffect(() => {
+    if (!NEW_HAIR.includes(value.hair)) onChange({ ...value, hair: NEW_HAIR.reduce((b, i) => (Math.abs(i - value.hair) < Math.abs(b - value.hair) ? i : b), NEW_HAIR[0]) });
+  }, [value, onChange]);
 
   const panel: Record<Cat, ReactNode> = {
     face: (
@@ -103,7 +115,14 @@ export function AppearanceEditor({ value, onChange, kit, previewAge = 19 }: { va
       </div>
     ),
     skin: <Swatches label="Skin tone" value={value.skin} colors={SKIN_TONES} names={SKIN_NAMES} onChange={(v) => set("skin", v)} />,
-    hair: <Stepper label="Hairstyle" value={value.hair} names={HAIR_STYLES.map((h) => h.name)} onChange={(v) => set("hair", v)} />,
+    hair: (
+      <Stepper
+        label="Hairstyle"
+        value={Math.max(0, NEW_HAIR.indexOf(value.hair))}
+        names={NEW_HAIR.map((i) => HAIR_STYLES[i].name)}
+        onChange={(v) => set("hair", NEW_HAIR[v])}
+      />
+    ),
     hairColor: (
       <div className="grid gap-3">
         <Swatches label="Hair colour" value={value.hairColor} colors={HAIR_COLORS} names={HAIR_COLOR_NAMES} onChange={(v) => onChange({ ...value, hairColor: v, browColor: v, facialColor: v })} />
