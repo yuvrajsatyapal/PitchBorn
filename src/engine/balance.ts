@@ -55,6 +55,10 @@ export const BALANCE = {
     /** How much the last few training weeks move monthly growth (normal training = ×1). */
     trainingWeight: 0.3,
     seasonNoise: 1.4,
+    /** Speed training works fully up to this age, then slowly. */
+    speedTrainingAge: 28,
+    /** Pace and acceleration start to fade from this age. */
+    speedDeclineAge: 32,
   },
   training: {
     /** Direct attribute gain per focused drill week (before intensity, age and potential gap). */

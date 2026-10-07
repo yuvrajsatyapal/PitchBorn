@@ -38,6 +38,7 @@ export const ATTR_GROUPS: { label: string; keys: AttrKey[] }[] = [
 ];
 
 export const PHYSICAL: AttrKey[] = ["pace", "acceleration", "stamina", "strength"];
+export const SPEED: AttrKey[] = ["pace", "acceleration"];
 
 export function positionGroup(p: Position): PositionGroup {
   if (p === "GK") return "GK";
@@ -107,9 +108,12 @@ export function applyGrowth(
   points: number,
   focus?: AttrKey[],
   physicalDecline = 0,
+  /** Attributes that neither lose points to general decline nor to `physicalDecline`. */
+  protect: AttrKey[] = [],
 ): void {
   const w = POSITION_WEIGHTS[position];
-  const keys = Object.keys(w) as AttrKey[];
+  const all = Object.keys(w) as AttrKey[];
+  const keys = points < 0 && protect.length ? all.filter((k) => !protect.includes(k)) : all;
   if (points !== 0) {
     // Convert overall points into attribute increments (role weights sum to 1).
     const steps = Math.max(1, Math.round(Math.abs(points) * 4));
@@ -122,7 +126,7 @@ export function applyGrowth(
     }
   }
   if (physicalDecline > 0) {
-    for (const k of PHYSICAL) attrs[k] = r2(clamp(attrs[k] - physicalDecline * rng.range(0.6, 1.4), 1, 99));
+    for (const k of PHYSICAL) if (!protect.includes(k)) attrs[k] = r2(clamp(attrs[k] - physicalDecline * rng.range(0.6, 1.4), 1, 99));
   }
 }
 

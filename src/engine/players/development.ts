@@ -1,7 +1,7 @@
 import { BALANCE } from "../balance";
 import { clamp, r1, r2, Rng } from "../rng";
 import type { AttrKey, ClubState, GameState, Player, TrainingFocus, TrainingPlan } from "../types";
-import { applyGrowth, overallFor } from "./attributes";
+import { applyGrowth, overallFor, SPEED } from "./attributes";
 import { ageOf } from "./generate";
 import { applyInjury, injuryRiskFactor, rollInjury } from "./injuries";
 
@@ -12,7 +12,7 @@ export const TRAINING_FOCUS: Record<TrainingFocus, { label: string; attrs: AttrK
   finishing: { label: "Finishing", attrs: ["finishing", "composure", "longShots"], blurb: "Shooting drills, composure in front of goal." },
   passing: { label: "Passing", attrs: ["passing", "vision", "firstTouch"], blurb: "Rondos, switches of play, weight of pass." },
   dribbling: { label: "Dribbling", attrs: ["dribbling", "firstTouch", "acceleration"], blurb: "Close control and 1v1 work." },
-  pace: { label: "Speed", attrs: ["pace", "acceleration"], blurb: "Sprint mechanics. Gains slow after 24." },
+  pace: { label: "Speed", attrs: ["pace", "acceleration"], blurb: "Sprint mechanics. Gains slow after 28; speed fades slowly from 32." },
   physical: { label: "Physical", attrs: ["strength", "stamina"], blurb: "Gym and conditioning — tiring." },
   defending: { label: "Defending", attrs: ["tackling", "positioning", "heading"], blurb: "Shape, duels and aerial work." },
   setPieces: { label: "Set Pieces", attrs: ["crossing", "longShots", "heading"], blurb: "Deliveries, free kicks and attacking corners." },
@@ -79,6 +79,12 @@ export function developPlayer(state: GameState, rng: Rng, p: Player, ctx: DevCon
     if (ovr >= p.hidden.potential - 0.5) growth = Math.min(growth, 0.05);
   }
   let physical = 0;
+  // Raw speed holds until the early thirties, then fades slowly (≈1/season at 32, ≈3–4 by 36).
+  const keepSpeed = age < D.speedDeclineAge;
+  if (!keepSpeed) {
+    const speedLoss = ((1 + 0.7 * (age - D.speedDeclineAge)) * (1.25 - p.hidden.professionalism / 220)) / ticksPerSeason;
+    for (const k of SPEED) p.attrs[k] = r2(clamp(p.attrs[k] - speedLoss * rng.range(0.6, 1.4), 1, 99));
+  }
   if (age >= p.hidden.peakAge) {
     // Per-season decline grows gently with years past peak (≈1.4 → 3.5 overall/season).
     const years = age - p.hidden.peakAge + 0.5;
@@ -86,7 +92,8 @@ export function developPlayer(state: GameState, rng: Rng, p: Player, ctx: DevCon
     growth -= decline * 0.65;
     physical = decline * 1.3;
   }
-  applyGrowth(rng, p.attrs, p.position, growth, ctx.focus, physical);
+  // Speed has its own curve above, so general decline never takes it.
+  applyGrowth(rng, p.attrs, p.position, growth, ctx.focus, physical, SPEED);
   return growth;
 }
 
@@ -165,8 +172,10 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
   const keys = focus.length ? focus : (Object.keys(p.attrs) as AttrKey[]).filter((k) => !["reflexes", "handling", "diving", "kicking", "command"].includes(k) || p.position === "GK");
   const capMul = gapMul(p);
   for (const k of keys) {
-    const speedPenalty = (k === "pace" || k === "acceleration") && age > 24 ? 0.4 : 1;
-    p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * int.growth * ageMul * capMul * speedPenalty * (1 + boost) * (focus.length ? 1 : 0.45), 1, 99));
+    // Speed responds to sprint work until 28, then only slowly.
+    const isSpeed = SPEED.includes(k);
+    const kAgeMul = isSpeed ? (age <= D.speedTrainingAge ? Math.max(ageMul, 0.7) : 0.25) : ageMul;
+    p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * int.growth * kAgeMul * capMul * (1 + boost) * (focus.length ? 1 : 0.45), 1, 99));
   }
   p.sharpness = clamp(p.sharpness + (plan.intensity === "intense" ? 3 : 1.5), 0, 100);
   return {
