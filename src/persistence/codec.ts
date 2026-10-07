@@ -17,7 +17,16 @@ const LOOK_KEYS = ["skin", "hair", "hairColor", "facial", "eyes"] as const;
 const encStat = (s: StatLine): number[] => STAT_KEYS.map((k) => s[k]);
 const decStat = (a: number[]): StatLine => Object.fromEntries(STAT_KEYS.map((k, i) => [k, a[i] ?? 0])) as unknown as StatLine;
 
-type EncodedPlayer = Omit<Player, "attrs" | "hidden" | "season" | "career" | "history" | "look" | "month"> & {
+/** Traits are stored as one short string per player ("id:xp:since;id:xp:since") to keep saves small. */
+const encTraits = (t: Player["traits"]): string | undefined => (t ? t.map((x) => `${x.id}:${Math.round(x.xp * 10) / 10}:${x.since}`).join(";") : undefined);
+const decTraits = (s: string | undefined): Player["traits"] =>
+  s === undefined ? undefined : s === "" ? [] : s.split(";").map((part) => {
+    const [id, xp, since] = part.split(":");
+    return { id, xp: Number(xp), since: Number(since) };
+  });
+
+type EncodedPlayer = Omit<Player, "attrs" | "hidden" | "season" | "career" | "history" | "look" | "month" | "traits"> & {
+  tr?: string;
   attrs: number[];
   hidden: number[];
   season: Record<string, number[]>;
@@ -30,8 +39,10 @@ type EncodedPlayer = Omit<Player, "attrs" | "hidden" | "season" | "career" | "hi
 type EncodedHistory = Omit<SeasonRecord, "stats" | "byCompetition"> & { stats: number[]; byCompetition?: Record<string, number[]> };
 
 function encodePlayer(p: Player): EncodedPlayer {
+  const { traits, ...rest } = p;
   return {
-    ...p,
+    ...rest,
+    tr: encTraits(traits),
     attrs: ALL_ATTRS.map((k) => p.attrs[k]),
     hidden: HIDDEN_KEYS.map((k) => p.hidden[k]),
     season: Object.fromEntries(Object.entries(p.season).map(([k, s]) => [k, encStat(s)])),
@@ -47,8 +58,10 @@ function encodePlayer(p: Player): EncodedPlayer {
 }
 
 function decodePlayer(e: EncodedPlayer): Player {
+  const { tr, ...restE } = e;
   const p: Player = {
-    ...e,
+    ...restE,
+    traits: decTraits(tr),
     attrs: Object.fromEntries(ALL_ATTRS.map((k, i) => [k, e.attrs[i]])) as Attributes,
     hidden: Object.fromEntries(HIDDEN_KEYS.map((k, i) => [k, e.hidden[i]])) as unknown as Hidden,
     season: Object.fromEntries(Object.entries(e.season).map(([k, a]) => [k, decStat(a)])),
@@ -62,6 +75,7 @@ function decodePlayer(e: EncodedPlayer): Player {
     look: Object.fromEntries(LOOK_KEYS.map((k, i) => [k, e.look[i]])) as unknown as Player["look"],
     month: { apps: e.month[0], ratingSum: e.month[1], goals: e.month[2], assists: e.month[3] },
   };
+  if (!p.traits) delete p.traits;
   return p;
 }
 

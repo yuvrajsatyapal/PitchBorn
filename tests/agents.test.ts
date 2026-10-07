@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from "../src/engine/world/helpers";
 import { describe, expect, it } from "vitest";
 import { agentMarket, agentWeeklyFee, canHireAgent, chargeCommission, hireAgent, NO_AGENT, payAgent, releaseAgent } from "../src/engine/career/agents";
 import { advanceTurn } from "../src/engine/season/advance";
@@ -102,6 +103,6 @@ describe("save migration", () => {
     expect(m.user.agent.name).toBe("Old Agent");
     expect(m.user.agent.weeklyFee).toBeGreaterThan(0);
     expect(m.user.bank).toBe(250_000);
-    expect(m.schemaVersion).toBe(4);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
   });
 });

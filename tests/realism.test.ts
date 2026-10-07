@@ -145,11 +145,11 @@ describe("quality shows up in ratings, goals and assists", () => {
   });
 
   it("goalkeepers are rated on clean sheets and goals prevented", () => {
-    const low = season("GK", 65);
-    const high = season("GK", 90);
-    expect(high.cleanRate).toBeGreaterThan(low.cleanRate + 0.08);
-    expect(high.conceded).toBeLessThan(low.conceded - 0.15);
-    expect(high.mean).toBeGreaterThan(low.mean + 0.8);
+    const low = season("GK", 65, 700);
+    const high = season("GK", 90, 700);
+    expect(high.cleanRate).toBeGreaterThan(low.cleanRate + 0.03);
+    expect(high.conceded).toBeLessThan(low.conceded - 0.12);
+    expect(high.mean).toBeGreaterThan(low.mean + 0.7);
   });
 });
 

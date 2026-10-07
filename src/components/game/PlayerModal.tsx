@@ -2,6 +2,7 @@
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { Portrait } from "@/components/art/Portrait";
+import { TraitStrip } from "@/components/game/PlayIdentity";
 import { AttrValue, Badge, Modal } from "@/components/ui";
 import { clubName, staticClub } from "@/engine/data/world";
 import { ATTR_GROUPS, ATTR_LABEL, POSITION_LABEL } from "@/engine/players/attributes";
@@ -32,6 +33,7 @@ export function PlayerModal({ g, p, onClose }: { g: GameState; p: Player | null;
             {p.intl.caps > 0 && <Badge tone="sky">{p.intl.caps} caps</Badge>}
             {p.injury && <Badge tone="coral">Injured</Badge>}
           </div>
+          <div className="mt-2"><TraitStrip p={p} /></div>
         </div>
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">

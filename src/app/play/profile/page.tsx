@@ -1,5 +1,6 @@
 "use client";
 import { Crest } from "@/components/art/Crest";
+import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { PlayerHero, scoutStars, Stars } from "@/components/game/widgets";
 import { AttrValue, Badge, Card, PageTitle, Table } from "@/components/ui";
@@ -10,26 +11,12 @@ import { seasonLabel } from "@/engine/calendar";
 import { age, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 
-function trait(v: number, hi: string, lo: string) {
-  return v >= 72 ? hi : v <= 32 ? lo : null;
-}
-
 export default function Profile() {
   const g = useGameState();
   if (!g) return null;
   const p = user(g);
   const isGK = p.position === "GK";
   const groups = ATTR_GROUPS.filter((gr) => (isGK ? gr.label !== "Defending" || true : gr.label !== "Goalkeeping"));
-  // Hidden values are never shown directly — the staff describe them.
-  const traits = [
-    trait(p.hidden.professionalism, "Model professional", "Casual trainer"),
-    trait(p.hidden.consistency, "Consistent", "Streaky"),
-    trait(p.hidden.bigMatch, "Big-game player", "Nervous on big nights"),
-    trait(p.hidden.ambition, "Hungry for success", "Content"),
-    trait(p.hidden.loyalty, "Loyal", "Mercenary streak"),
-    trait(100 - p.hidden.injuryProneness, "Durable", "Injury prone"),
-    trait(p.hidden.adaptability, "Settles anywhere", "Homesick abroad"),
-  ].filter(Boolean) as string[];
   const posOverall = (["GK", "CB", "RB", "LB", "DM", "CM", "AM", "RW", "LW", "ST"] as const).map((pos) => ({ pos, v: overallFor(p.attrs, pos) })).sort((a, b) => b.v - a.v).slice(0, 4);
   return (
     <div className="grid gap-4">
@@ -58,9 +45,6 @@ export default function Profile() {
             <div className="mb-2 flex items-center gap-2 text-sm">
               Potential: <Stars value={scoutStars(g, p)} />
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {traits.length ? traits.map((t) => <Badge key={t} tone="plum">{t}</Badge>) : <span className="text-sm text-muted">No standout personality traits yet.</span>}
-            </div>
             <div className="mt-3 text-sm">
               <div className="mb-1 font-bold">Best positions</div>
               <div className="flex flex-wrap gap-1.5">
@@ -72,6 +56,7 @@ export default function Profile() {
               </div>
             </div>
           </Card>
+          <PlayIdentityCard g={g} p={p} />
           <IconicShowcase g={g} limit={3} title="Memories" />
           <Card title="Bio">
             <dl className="grid grid-cols-2 gap-y-1.5 text-sm">

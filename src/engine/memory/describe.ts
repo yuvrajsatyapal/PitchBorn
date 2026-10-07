@@ -5,6 +5,7 @@
  */
 import { clubName } from "../data/world";
 import type { GameState, Memory, MemoryKind } from "../types";
+import { traitDef } from "../traits/registry";
 import { tierOf } from "./score";
 
 export const MEMORY_ICON: Record<MemoryKind, string> = {
@@ -14,7 +15,7 @@ export const MEMORY_ICON: Record<MemoryKind, string> = {
   "major-injury": "🩹", "injury-comeback": "💪",
   "big-transfer": "✍️", "controversial-transfer": "🌶️", "transfer-rejected": "✋", "return-to-club": "❤️", captaincy: "©️",
   promotion: "⬆️", relegation: "⬇️", "contract-dispute": "📝", "financial-exit": "💸", "manager-conflict": "😤", "career-decision": "🧭",
-  retirement: "👋", "final-match": "🔔",
+  retirement: "👋", "final-match": "🔔", identity: "🧬",
 };
 
 export const MEMORY_GROUP: Record<MemoryKind, "Matches" | "Honours" | "Moves" | "Career"> = {
@@ -22,7 +23,7 @@ export const MEMORY_GROUP: Record<MemoryKind, "Matches" | "Honours" | "Moves" | 
   "hat-trick": "Matches", haul: "Matches", comeback: "Matches", "final-goal": "Matches", "final-winner": "Matches", "famous-upset": "Matches", "injury-comeback": "Matches", "final-match": "Matches",
   trophy: "Honours", "first-title": "Honours", "continental-trophy": "Honours", "intl-trophy": "Honours", record: "Honours", award: "Honours", promotion: "Honours",
   "big-transfer": "Moves", "controversial-transfer": "Moves", "transfer-rejected": "Moves", "return-to-club": "Moves", "financial-exit": "Moves", "contract-dispute": "Moves",
-  "major-injury": "Career", captaincy: "Career", relegation: "Career", "manager-conflict": "Career", "career-decision": "Career", retirement: "Career",
+  "major-injury": "Career", identity: "Career", captaincy: "Career", relegation: "Career", "manager-conflict": "Career", "career-decision": "Career", retirement: "Career",
 };
 
 const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -100,6 +101,14 @@ export function describeMemory(state: GameState, m: Memory): MemoryView {
     case "financial-exit": t = dflt("Left a club in crisis", `You moved on from ${name(m.clubId)} as the money ran out.`); break;
     case "manager-conflict": t = dflt("Falling out", `A bitter rift with the manager at ${club}.`); break;
     case "career-decision": t = dflt("A defining decision", String(m.data?.title ?? "A choice that shaped your career")); break;
+    case "identity": {
+      const def = traitDef(String(m.data?.trait ?? ""));
+      const from = traitDef(String(m.data?.from ?? ""));
+      t = m.data?.event === "evolved"
+        ? dflt("Reinvented", `Your game evolved${from ? `: ${from.name} gave way to ${def?.name ?? "a new style"}` : ` into ${def?.name ?? "a new style"}`}.`)
+        : dflt(`Signature ${def?.name ?? "style"}`, `${pick(m.id, ["Your game became defined by", "Defenders learned to fear", "You made your own"])} ${def?.name ?? "a style"}.`);
+      break;
+    }
     case "retirement": t = dflt("Retirement", `You hung up your boots after ${Number(m.data?.apps ?? 0)} appearances and ${Number(m.data?.goals ?? 0)} goals.`); break;
     case "final-match": t = dflt("The final match", `${vs || "Your last game"}${Number(m.data?.goals ?? 0) > 0 ? `, with ${games(Number(m.data?.goals))} of your own` : ""}.`); break;
     default: t = dflt("A memory", "");

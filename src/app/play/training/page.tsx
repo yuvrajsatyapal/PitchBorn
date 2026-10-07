@@ -1,5 +1,6 @@
 "use client";
 import { RewardedButton } from "@/ads/RewardedButton";
+import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { AttrValue, Badge, Card, PageTitle } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
 import { ATTR_LABEL } from "@/engine/players/attributes";
@@ -27,6 +28,7 @@ export default function Training() {
           🩹 You&apos;re in rehab ({p.injury.type}, {p.injury.weeksLeft} week{p.injury.weeksLeft === 1 ? "" : "s"} left). Training resumes when you&apos;re fit.
         </Card>
       )}
+      <PlayIdentityCard g={g} p={p} title="Taking shape" />
       <Card title="Focus">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {focuses.map((f) => {

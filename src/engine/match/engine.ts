@@ -13,6 +13,7 @@
  */
 import { BALANCE } from "../balance";
 import { overallFor } from "../players/attributes";
+import type { MatchFx, SignalKey } from "../traits/types";
 import { clamp, type Rng } from "../rng";
 import type { Attributes, AttrKey, Position } from "../types";
 
@@ -31,6 +32,8 @@ export interface MatchPlayerInput {
   bigMatch: number;
   consistency: number;
   isUser?: boolean;
+  /** Behavioural modifiers from the player's traits (see engine/traits). */
+  fx?: MatchFx;
 }
 
 export interface TeamInput {
@@ -95,6 +98,8 @@ export interface PlayerLine {
   conceded: number;
   /** Goalkeepers: expected goals from the shots on target they faced (for "goals prevented"). */
   xgFaced?: number;
+  /** Counts of trait-relevant actions (shots by type, chances created, interceptions…): evidence for trait development. */
+  acts?: Partial<Record<SignalKey, number>>;
 }
 
 export interface DecisionOption {
@@ -143,9 +148,19 @@ interface LivePlayer {
   onPitch: boolean;
   /** This match's random form swing (fraction of ability). */
   dayForm: number;
+  fx?: MatchFx;
   eff: Record<AttrKey, number>;
   condition: number;
 }
+
+/** Trait effects summed over the XI on the pitch (cached with the team's strength). */
+interface TeamAgg {
+  freqHeader: number; freqLong: number; freq1v1: number;
+  againstFreqHeader: number; againstFreqLong: number; againstFreq1v1: number;
+  againstXgOpen: number; againstXgHeader: number; againstXgLong: number; againstXg1v1: number;
+}
+
+const NEUTRAL_AGG: TeamAgg = { freqHeader: 0, freqLong: 0, freq1v1: 0, againstFreqHeader: 1, againstFreqLong: 1, againstFreq1v1: 1, againstXgOpen: 1, againstXgHeader: 1, againstXgLong: 1, againstXg1v1: 1 };
 
 interface LiveTeam {
   input: TeamInput;
@@ -163,12 +178,16 @@ interface LiveTeam {
   yellows: number;
   reds: number;
   possessionTicks: number;
-  cache?: { mid: number; att: number; def: number; gk: number };
+  cache?: { mid: number; att: number; def: number; gk: number; agg: TeamAgg };
 }
 
 type ChanceType = "open" | "header" | "long" | "oneonone" | "penalty" | "freekick";
 
 const XG_BASE: Record<ChanceType, number> = { open: 0.12, header: 0.095, long: 0.04, oneonone: 0.34, penalty: 0.76, freekick: 0.065 };
+
+const XG_KEY: Record<ChanceType, keyof MatchFx> = { open: "xgOpen", header: "xgHeader", long: "xgLong", oneonone: "xg1v1", freekick: "xgFree", penalty: "xgPen" };
+const SHOT_ACT: Partial<Record<ChanceType, SignalKey>> = { open: "shotOpen", header: "shotHeader", long: "shotLong", oneonone: "shot1v1" };
+const GOAL_ACT: Partial<Record<ChanceType, SignalKey>> = { open: "goalOpen", header: "goalHeader", long: "goalLong", oneonone: "goal1v1" };
 
 const SHOOT_WEIGHT: Record<Position, number> = { GK: 0, CB: 0.28, RB: 0.32, LB: 0.32, DM: 0.4, CM: 0.85, AM: 1.5, RW: 1.6, LW: 1.6, ST: 2.7 };
 const HEADER_WEIGHT: Record<Position, number> = { GK: 0, CB: 1.1, RB: 0.2, LB: 0.2, DM: 0.5, CM: 0.5, AM: 0.4, RW: 0.6, LW: 0.6, ST: 2.8 };
@@ -203,13 +222,20 @@ function zonesOf(eff: Record<AttrKey, number>): [number, number, number] {
   return [z(MID_KEYS), z(ATT_KEYS), z(DEF_KEYS)];
 }
 
+/** Zone strengths including trait effects (small multipliers, already scaled by how well attributes support them). */
+function zonesOfFx(eff: Record<AttrKey, number>, fx?: MatchFx): [number, number, number] {
+  const z = zonesOf(eff);
+  return fx ? [z[0] * (fx.zoneMid ?? 1), z[1] * (fx.zoneAtt ?? 1), z[2] * (fx.zoneDef ?? 1)] : z;
+}
+
 function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm: number): LivePlayer {
   // A good or bad day: it changes how the player actually performs, so it shows in goals and ratings alike.
   const condition = conditionFactor(input) * (1 + dayForm);
   // Bench players get their effective attributes lazily when they come on.
   const eff = started ? effective(input, condition) : (input.attrs as Record<AttrKey, number>);
   return {
-    zones: started ? zonesOf(eff) : [0, 0, 0],
+    zones: started ? zonesOfFx(eff, input.fx) : [0, 0, 0],
+    fx: input.fx,
     input,
     condition,
     eff,
@@ -248,8 +274,8 @@ export class MatchEngine {
     const mk = (t: TeamInput, side: Side): LiveTeam => ({
       input: t,
       side,
-      players: t.starters.map((p) => makeLive(p, side, true, rng.normal(0, M.dayFormSd))),
-      bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd))),
+      players: t.starters.map((p) => makeLive(p, side, true, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)))),
+      bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)))),
       subsUsed: 0,
       subWindows: 0,
       goals: 0, shots: 0, onTarget: 0, xg: 0, corners: 0, fouls: 0, yellows: 0, reds: 0, possessionTicks: 0,
@@ -293,7 +319,8 @@ export class MatchEngine {
       for (const p of on) {
         const pw = weights[p.input.slot];
         if (pw <= 0) continue;
-        sum += p.zones[zi] * (0.88 + 0.12 * (p.energy / 100)) * pw;
+        const fast = p.fx?.fast && this.minute < 20 ? 1 + p.fx.fast : 1;
+        sum += p.zones[zi] * (0.88 + 0.12 * (p.energy / 100)) * pw * fast;
         w += pw;
       }
       return w ? sum / w : 40;
@@ -307,11 +334,32 @@ export class MatchEngine {
     const def = zoneAvg(2, DEF_W);
     const keeper = on.find((p) => p.input.slot === "GK");
     const gk = keeper ? (this.val(keeper, "reflexes") + this.val(keeper, "diving") + this.val(keeper, "handling") + this.val(keeper, "command") * 0.5) / 3.5 : 25;
+    let teamMid = 0, teamAtt = 0, teamDef = 0;
+    let agg: TeamAgg | undefined;
+    for (const p of on) {
+      const fx = p.fx;
+      if (!fx) continue;
+      agg ??= { ...NEUTRAL_AGG };
+      teamMid += fx.teamMid ?? 0;
+      teamAtt += fx.teamAtt ?? 0;
+      teamDef += fx.teamDef ?? 0;
+      agg.freqHeader += fx.freqHeader ?? 0;
+      agg.freqLong += fx.freqLong ?? 0;
+      agg.freq1v1 += fx.freq1v1 ?? 0;
+      agg.againstFreqHeader *= fx.againstFreqHeader ?? 1;
+      agg.againstFreqLong *= fx.againstFreqLong ?? 1;
+      agg.againstFreq1v1 *= fx.againstFreq1v1 ?? 1;
+      agg.againstXgOpen *= fx.againstXgOpen ?? 1;
+      agg.againstXgHeader *= fx.againstXgHeader ?? 1;
+      agg.againstXgLong *= fx.againstXgLong ?? 1;
+      agg.againstXg1v1 *= fx.againstXg1v1 ?? 1;
+    }
     t.cache = {
-      mid: mid * penalty * homeBoost,
-      att: att * penalty * homeBoost * (1 + mentality * 0.03),
-      def: def * penalty * homeBoost * (1 - mentality * 0.03),
+      mid: mid * penalty * homeBoost * (1 + clamp(teamMid, -0.05, 0.06)),
+      att: att * penalty * homeBoost * (1 + mentality * 0.03) * (1 + clamp(teamAtt, -0.05, 0.06)),
+      def: def * penalty * homeBoost * (1 - mentality * 0.03) * (1 + clamp(teamDef, -0.05, 0.06)),
       gk,
+      agg: agg ?? NEUTRAL_AGG,
     };
     return t.cache;
   }
@@ -321,7 +369,14 @@ export class MatchEngine {
     this.teams.away.cache = undefined;
   }
 
-  private pickWeighted(t: LiveTeam, weight: Record<Position, number>, attr: AttrKey, exclude?: LivePlayer, exp = 1): LivePlayer | undefined {
+  /** Preference multiplier from a player's traits for up to two selection keys. */
+  private pref(p: LivePlayer, k1?: keyof MatchFx, k2?: keyof MatchFx): number {
+    const fx = p.fx;
+    if (!fx) return 1;
+    return (k1 ? (fx[k1] ?? 1) : 1) * (k2 ? (fx[k2] ?? 1) : 1);
+  }
+
+  private pickWeighted(t: LiveTeam, weight: Record<Position, number>, attr: AttrKey, exclude?: LivePlayer, exp = 1, k1?: keyof MatchFx, k2?: keyof MatchFx): LivePlayer | undefined {
     // Hot path: avoid allocations.
     let total = 0;
     const players = t.players;
@@ -330,7 +385,7 @@ export class MatchEngine {
       if (!p.onPitch || p === exclude) continue;
       const w = weight[p.input.slot];
       if (w <= 0) continue;
-      const v = exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp);
+      const v = (exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp)) * (k1 ? this.pref(p, k1, k2) : 1);
       total += w * v;
     }
     if (total <= 0) return undefined;
@@ -341,7 +396,7 @@ export class MatchEngine {
       if (!p.onPitch || p === exclude) continue;
       const w = weight[p.input.slot];
       if (w <= 0) continue;
-      const v = exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp);
+      const v = (exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp)) * (k1 ? this.pref(p, k1, k2) : 1);
       r -= w * v;
       last = p;
       if (r <= 0) return p;
@@ -360,7 +415,7 @@ export class MatchEngine {
     const before = this.events.length;
     this.minute++;
     this.tickEnergy();
-    if (this.minute % 6 === 0) this.invalidate();
+    if (this.minute % 6 === 0 || this.minute === 20) this.invalidate();
     this.playPhase();
     if (!this.pending) this.afterPhase();
     return this.events.slice(before);
@@ -438,7 +493,7 @@ export class MatchEngine {
         if (!p.onPitch) continue;
         const stamina = p.input.attrs.stamina;
         const drain = (0.55 - stamina / 300) * (this.half === 3 ? 1.2 : 1);
-        p.energy = clamp(p.energy - 3 * Math.max(0.12, drain), 5, 100);
+        p.energy = clamp(p.energy - 3 * Math.max(0.12, drain) * (p.fx?.drain ?? 1), 5, 100);
       }
     }
   }
@@ -470,9 +525,12 @@ export class MatchEngine {
     if (!this.rng.chance(pChance)) {
       // Defensive success — credit a defender occasionally.
       if (this.rng.chance(0.35)) {
-        const d = this.pickWeighted(def, DEFEND_WEIGHT, "tackling");
+        // Winning the ball back: a tackle or a read-the-play interception.
+        const inter = this.rng.chance(0.4);
+        const d = this.pickWeighted(def, DEFEND_WEIGHT, inter ? "positioning" : "tackling", undefined, 1, inter ? "intercept" : "tackle");
         if (d) {
           d.line.tackles++;
+          if (inter) this.act(d, "intercept");
           this.bump(d, 0.06);
           if (d.input.isUser && this.input.interactive && this.canAsk() && this.rng.chance(0.22)) {
             this.askDefend(d, att, def);
@@ -486,29 +544,73 @@ export class MatchEngine {
     this.createChance(att, def);
   }
 
-  private chooseChanceType(): ChanceType {
+  /** The kind of chance that arises. Both sides' traits tilt the mix: crossers and target men bring headers, a sweeper keeper takes away one-on-ones. */
+  private chooseChanceType(att: LiveTeam, def: LiveTeam): ChanceType {
+    const a = this.strength(att).agg;
+    const d = this.strength(def).agg;
+    const hdr = clamp((1 + a.freqHeader) * d.againstFreqHeader, 0.55, 1.5);
+    const lng = clamp((1 + a.freqLong) * d.againstFreqLong, 0.55, 1.5);
+    const one = clamp((1 + a.freq1v1) * d.againstFreq1v1, 0.55, 1.6);
     const r = this.rng.next();
-    if (r < M.penaltyPerChance) return "penalty";
-    if (r < M.penaltyPerChance + 0.19) return "header";
-    if (r < M.penaltyPerChance + 0.41) return "long";
-    if (r < M.penaltyPerChance + 0.5) return "oneonone";
+    const pen = M.penaltyPerChance;
+    const h = 0.19 * hdr;
+    const l = 0.22 * lng;
+    const o = 0.09 * one;
+    if (r < pen) return "penalty";
+    if (r < pen + h) return "header";
+    if (r < pen + h + l) return "long";
+    if (r < pen + h + l + o) return "oneonone";
     return "open";
   }
 
+  private act(p: LivePlayer | undefined, k: SignalKey, n = 1) {
+    if (!p) return;
+    const a = (p.line.acts ??= {});
+    a[k] = (a[k] ?? 0) + n;
+  }
+
+  /** Trait effect on a shot's quality: how well the taker does it, and the defending side's and keeper's traits. */
+  private traitXg(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType): number {
+    let m = 1;
+    const fx = shooter.fx;
+    if (fx) {
+      m *= (fx[XG_KEY[type]] as number | undefined) ?? 1;
+      const imp = this.input.importance - 1;
+      let adj = (fx.bigMatch ?? 0) * 0.05 * imp;
+      const diff = att.goals - def.goals;
+      if (this.minute >= 75 && Math.abs(diff) <= 1) adj += (fx.clutch ?? 0) * 0.06;
+      if (type === "oneonone" || type === "penalty") adj += (fx.composure ?? 0) * 0.04;
+      m *= clamp(1 + adj, 0.8, 1.25);
+    }
+    if (creator?.fx?.xgCreated) m *= creator.fx.xgCreated;
+    const ag = this.strength(def).agg;
+    m *= type === "open" ? ag.againstXgOpen : type === "header" ? ag.againstXgHeader : type === "long" ? ag.againstXgLong : type === "oneonone" ? ag.againstXg1v1 : 1;
+    const gk = this.onPitch(def).find((p) => p.input.slot === "GK")?.fx;
+    if (gk) {
+      if (type === "penalty") m *= gk.penSave ?? 1;
+      else {
+        m *= gk.save ?? 1;
+        if (type === "oneonone") m *= gk.save1v1 ?? 1;
+        if (type === "header") m *= gk.claim ?? 1;
+      }
+    }
+    return clamp(m, 0.6, 1.5);
+  }
+
   private createChance(att: LiveTeam, def: LiveTeam, forced?: ChanceType, forcedShooter?: LivePlayer, forcedCreator?: LivePlayer | null, xgMul = 1) {
-    const type = forced ?? this.chooseChanceType();
+    const type = forced ?? this.chooseChanceType(att, def);
     let shooter: LivePlayer | undefined = forcedShooter;
     if (!shooter) {
-      if (type === "header") shooter = this.pickWeighted(att, HEADER_WEIGHT, "heading", undefined, M.pickExponent);
-      else if (type === "long" || type === "freekick") shooter = this.pickWeighted(att, LONG_WEIGHT, "longShots", undefined, M.pickExponent);
+      if (type === "header") shooter = this.pickWeighted(att, HEADER_WEIGHT, "heading", undefined, M.pickExponent, "shootHeader");
+      else if (type === "long" || type === "freekick") shooter = this.pickWeighted(att, LONG_WEIGHT, "longShots", undefined, M.pickExponent, "shootLong");
       else if (type === "penalty") shooter = this.onPitch(att).sort((x, y) => this.val(y, "finishing") + this.val(y, "composure") - this.val(x, "finishing") - this.val(x, "composure"))[0];
-      else shooter = this.pickWeighted(att, SHOOT_WEIGHT, "finishing", undefined, M.pickExponent);
+      else shooter = this.pickWeighted(att, SHOOT_WEIGHT, "finishing", undefined, M.pickExponent, "shoot", type === "oneonone" ? "shoot1v1" : undefined);
     }
     if (!shooter) return;
     let creator: LivePlayer | undefined | null = forcedCreator;
     if (creator === undefined) {
       const assistProb = type === "header" ? 0.92 : type === "oneonone" ? 0.85 : type === "open" ? 0.72 : 0;
-      creator = this.rng.chance(assistProb) ? this.pickWeighted(att, CREATE_WEIGHT, type === "header" ? "crossing" : "vision", shooter, M.pickExponent) ?? null : null;
+      creator = this.rng.chance(assistProb) ? this.pickWeighted(att, CREATE_WEIGHT, type === "header" ? "crossing" : "vision", shooter, M.pickExponent, "create", type === "header" ? "createCross" : type === "oneonone" ? "createThrough" : "createOpen") ?? null : null;
     }
 
     // Key moments for the user's player.
@@ -539,12 +641,16 @@ export class MatchEngine {
     const bigMatch = 1 + ((shooter.input.bigMatch - 50) / 50) * 0.06 * (this.input.importance - 1);
     let xg = XG_BASE[type] * Math.exp((q - 73) / M.xgSlope) * pressure * bigMatch * xgMul;
     xg *= Math.exp(-(sDef.gk - 73) / 70) * keeperMul;
+    xg *= this.traitXg(att, def, shooter, creator, type);
     xg = clamp(xg, 0.01, type === "penalty" ? 0.92 : 0.8);
     att.shots++;
     att.xg += xg;
     shooter.line.shots++;
+    const shotAct = SHOT_ACT[type];
+    if (shotAct) this.act(shooter, shotAct);
     if (creator) {
       creator.line.keyPasses++;
+      this.act(creator, type === "header" ? "chanceCross" : type === "oneonone" ? "chanceThrough" : "chanceOpen");
       this.bump(creator, 0.1);
     }
     const sideTag = att.side;
@@ -566,6 +672,8 @@ export class MatchEngine {
       if (keeper) {
         keeper.line.saves++;
         keeper.line.xgFaced = (keeper.line.xgFaced ?? 0) + Math.max(xg, 0.05);
+        if (type === "oneonone") this.act(keeper, "save1v1");
+        else if (type === "header") this.act(keeper, "claim");
         this.bump(keeper, 0.2);
       }
       this.bump(shooter, 0.04);
@@ -580,6 +688,7 @@ export class MatchEngine {
       const blocker = this.pickWeighted(def, DEFEND_WEIGHT, "positioning");
       if (blocker) {
         blocker.line.tackles++;
+        this.act(blocker, "block");
         this.bump(blocker, 0.08);
       }
       att.corners += this.rng.chance(0.5) ? 1 : 0;
@@ -607,6 +716,9 @@ export class MatchEngine {
   private scoreGoal(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType, desc: string) {
     att.goals++;
     shooter.line.goals++;
+    const goalAct = GOAL_ACT[type];
+    if (goalAct) this.act(shooter, goalAct);
+    if (this.minute >= 75 && Math.abs(att.goals - def.goals) <= 1) this.act(shooter, "lateGoal");
     this.bump(shooter, type === "penalty" ? 0.7 : 1.05);
     if (creator) {
       creator.line.assists++;
@@ -632,15 +744,16 @@ export class MatchEngine {
   }
 
   private foul(def: LiveTeam, att: LiveTeam, dangerous: boolean) {
-    const fouler = this.pickWeighted(def, DEFEND_WEIGHT, "tackling");
+    const fouler = this.pickWeighted(def, DEFEND_WEIGHT, "tackling", undefined, 1, "foul");
     if (!fouler) return;
     def.fouls++;
     fouler.line.fouls++;
     this.bump(fouler, -0.05);
     const card = this.rng.next();
-    const redP = M.redPerFoul * (dangerous ? 2 : 1);
+    const cardMul = fouler.fx?.card ?? 1;
+    const redP = M.redPerFoul * (dangerous ? 2 : 1) * cardMul;
     if (card < redP) this.sendOff(def, fouler, "a reckless challenge");
-    else if (card < redP + M.yellowPerFoul * (dangerous ? 1.5 : 1)) {
+    else if (card < redP + M.yellowPerFoul * (dangerous ? 1.5 : 1) * cardMul) {
       fouler.line.yellow++;
       def.yellows++;
       this.bump(fouler, -0.35);
@@ -727,7 +840,7 @@ export class MatchEngine {
     off.onPitch = false;
     off.line.minuteOff = this.minute;
     pick.eff = effective(pick.input, pick.condition);
-    pick.zones = zonesOf(pick.eff);
+    pick.zones = zonesOfFx(pick.eff, pick.fx);
     pick.onPitch = true;
     pick.input = { ...pick.input, slot };
     pick.line.slot = slot;

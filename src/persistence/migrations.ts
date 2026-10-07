@@ -6,6 +6,7 @@
 import type { GameState } from "../engine/types";
 import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
 import { backfillMemories } from "../engine/memory/backfill";
+import { initialTraits } from "../engine/traits/assign";
 import { SCHEMA_VERSION } from "../engine/world/helpers";
 
 type RawState = Record<string, unknown> & { schemaVersion?: number };
@@ -64,6 +65,24 @@ MIGRATIONS[3] = (s) => {
     backfillMemories(s as unknown as GameState);
   } catch {
     user.memories = []; // never let memories block loading a career
+  }
+  return s;
+};
+
+MIGRATIONS[4] = (s) => {
+  // v4 → v5: player traits. Everyone gets a deterministic starting set; the user starts with temperament only.
+  const state = s as unknown as GameState;
+  const user = (s.user ?? {}) as Record<string, unknown>;
+  user.traitLog ??= [];
+  s.user = user;
+  try {
+    for (const p of Object.values(state.players ?? {})) {
+      if (p.traits) continue;
+      p.traits = initialTraits(p, state.season, { tier: p.isUser ? "user" : "npc" });
+      if (!p.traits.length) delete p.traits;
+    }
+  } catch {
+    // Traits are an enhancement: a save must always load.
   }
   return s;
 };

@@ -7,6 +7,7 @@
 import { staticClub } from "../data/world";
 import type { MatchResult } from "../match/engine";
 import { overallFor } from "../players/attributes";
+import { traitDef } from "../traits/registry";
 import { ageOf } from "../players/generate";
 import type { Competition, Fixture, GameState, Memory, MemoryKind, TransferOffer } from "../types";
 import { userPlayer } from "../world/helpers";
@@ -331,13 +332,14 @@ export function rememberTransfer(state: GameState, from: string | null, to: stri
   return out;
 }
 
-export function rememberRejection(state: GameState, o: TransferOffer): Memory | null {
+export function rememberRejection(state: GameState, o: TransferOffer, loyal = false): Memory | null {
   const u = userPlayer(state);
   const cur = clubRep(state, u.clubId);
   const rep = clubRep(state, o.fromClubId);
-  if (rep < cur + 10 && rep < 80) return null;
-  const f = new Factors().add("Turned down a bigger club", 16 + Math.min(20, (rep - cur) * 0.9)).add("Big fee", o.fee > 0 ? Math.min(10, Math.log10(o.fee / 1e6 + 1) * 8) : 0);
-  return recordMemory(state, { kind: "transfer-rejected", clubId: u.clubId, opponentId: o.fromClubId, transfer: { from: u.clubId, to: o.fromClubId, fee: o.fee }, tags: ["transfer"], factors: f, key: o.id });
+  if (rep < cur + 10 && rep < 80 && !loyal) return null;
+  const f = new Factors().add("Turned down a bigger club", 16 + Math.min(20, Math.max(0, rep - cur) * 0.9)).add("Big fee", o.fee > 0 ? Math.min(10, Math.log10(o.fee / 1e6 + 1) * 8) : 0);
+  if (loyal) f.add("Loyalty to the club", 14);
+  return recordMemory(state, { kind: "transfer-rejected", clubId: u.clubId, opponentId: o.fromClubId, transfer: { from: u.clubId, to: o.fromClubId, fee: o.fee }, tags: loyal ? ["transfer", "loyalty"] : ["transfer"], factors: f, key: o.id, data: loyal ? { loyal: true } : undefined });
 }
 
 export function rememberContractDispute(state: GameState, clubId: string | null, detail: string): Memory | null {
@@ -382,6 +384,26 @@ export function rememberDecision(state: GameState, eventId: string, optionId: st
     factors: new Factors().add("A defining decision", pts),
     key: `${eventId}-${optionId}`,
     data: { event: eventId, option: optionId, title },
+  });
+}
+
+// --------------------------------------------------------------------------- identity
+
+/** A trait reaching its signature stage, or a player's game evolving: the moments that define what kind of footballer you are. */
+export function rememberIdentity(state: GameState, id: string, event: "signature" | "evolved", from?: string): Memory | null {
+  const def = traitDef(id);
+  if (!def) return null;
+  const u = userPlayer(state);
+  const f = new Factors()
+    .add(event === "signature" ? `Signature ${def.name}` : `Reinvention: ${def.name}`, 28 + def.rarity * 4 + (event === "evolved" ? 4 : 0))
+    .add("Young talent", ageOf(u, state.season) <= 23 ? 6 : 0);
+  return recordMemory(state, {
+    kind: "identity",
+    clubId: u.clubId,
+    tags: ["identity", event],
+    factors: f,
+    key: `${id}-${event}`,
+    data: { trait: id, event, ...(from ? { from } : {}) },
   });
 }
 

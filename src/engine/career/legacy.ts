@@ -2,6 +2,7 @@ import { clubName, staticLeague } from "../data/world";
 import { positionGroup } from "../players/attributes";
 import { ageOf } from "../players/generate";
 import type { GameState, LegacyResult } from "../types";
+import { identityOf } from "../traits/identity";
 import { userPlayer } from "../world/helpers";
 
 export const LEGACY_TIERS: [number, string][] = [
@@ -43,7 +44,8 @@ export function careerStories(state: GameState): string[] {
 
   if (early || u.awards.some((a) => a.id === "rising-star")) stories.push("Wonderkid — a teenage sensation who announced themselves early.");
   if (peakAge >= 28 && hist.length >= 6 && peak - (hist[2]?.overall ?? peak) >= 10) stories.push("Late Bloomer — the best came after most had written them off.");
-  if (spans[0] && spans[0].seasons >= 10 && spans.length <= 2) stories.push(`One-Club Legend — ${spans[0].seasons} seasons in the colours of ${clubName(spans[0].clubId)}.`);
+  const stands = u.loyaltyStands ?? 0;
+  if (spans[0] && spans[0].seasons >= (stands ? 8 : 10) && spans.length <= 2) stories.push(`One-Club Legend — ${spans[0].seasons} seasons in the colours of ${clubName(spans[0].clubId)}${stands ? `, and ${stands === 1 ? "a bigger move" : `${stands} bigger moves`} turned down to stay` : ""}.`);
   if (spans.length >= 7) stories.push(`Journeyman — ${spans.length} clubs, a career lived out of a suitcase.`);
   if (serious.length && hist.some((h) => h.season > serious[0].season && h.stats.apps >= 25 && h.stats.ratingSum / Math.max(1, h.stats.apps) >= 7)) stories.push("Injury Comeback — fought back from a career-threatening injury.");
   if (golden >= 1 || p.reputation >= 92) stories.push(golden >= 3 ? `Superstar — ${golden} Golden Pitch awards; one of the faces of the sport.` : "Superstar — the world knew the name.");
@@ -52,6 +54,8 @@ export function careerStories(state: GameState): string[] {
   if (tierAtStart >= 3 && reachedTop) stories.push("Lower-League Rise — from the third tier to the top flight.");
   const lastSeasons = hist.slice(-3);
   if (lastSeasons.length === 3 && lastSeasons.every((h) => h.age >= 34 && h.stats.apps >= 25 && h.stats.ratingSum / Math.max(1, h.stats.apps) >= 6.8)) stories.push("Veteran Leader — still starting week in, week out deep into their thirties.");
+  const identity = identityOf(state, p);
+  stories.unshift(`${identity.label.charAt(0).toUpperCase()}${identity.label.slice(1)} — ${identity.lines[0] ?? "a footballer of their own kind"}`);
   if (!stories.length) stories.push("A professional career — earned every minute on the pitch.");
   return stories;
 }
@@ -98,9 +102,11 @@ export function computeLegacy(state: GameState): LegacyResult {
   add(`Reputation ${Math.round(p.reputation)}`, p.reputation * 0.3);
   const records = state.records.filter((r) => r.playerId === p.id).length;
   add(`${records} world records`, records * 15);
+  add(`${u.loyaltyStands ?? 0} times you stayed when a bigger club came calling`, (u.loyaltyStands ?? 0) * 3);
   const score = parts.reduce((s, x) => s + x.points, 0);
   const tier = legacyTier(score);
   const stories = careerStories(state);
   const headline = `${p.firstName} ${p.lastName}: ${tier}`;
-  return { score, tier, breakdown: parts.sort((a, b) => b.points - a.points), stories, headline };
+  const identity = identityOf(state, p);
+  return { score, tier, breakdown: parts.sort((a, b) => b.points - a.points), stories, headline, identity };
 }

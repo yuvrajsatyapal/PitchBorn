@@ -1,4 +1,5 @@
 import { BALANCE } from "../balance";
+import { moveScoreDelta, stayBonus } from "../traits/career";
 import { clubName, staticClub, staticLeague } from "../data/world";
 import { overallFor, positionGroup } from "../players/attributes";
 import { marketValue, wageFor, formatMoney } from "../players/economy";
@@ -53,7 +54,7 @@ export function playerWillJoin(state: GameState, p: Player, buyer: ClubState, wa
   const wageGain = p.contract ? wage / Math.max(1, p.contract.wage) : 2;
   const loyalty = p.hidden.loyalty / 100;
   const ambition = p.hidden.ambition / 100;
-  const score = repGap * (0.6 + ambition) + (wageGain - 1) * 30 - loyalty * 8 + (p.listed ? 10 : 0);
+  const score = repGap * (0.6 + ambition) + (wageGain - 1) * 30 - loyalty * 8 + (p.listed ? 10 : 0) + moveScoreDelta(state, p, buyer, wageGain);
   return score > -2;
 }
 
@@ -183,7 +184,7 @@ export function processExpiringContracts(state: GameState, rng: Rng): void {
     const age = ageOf(p, state.season + 1);
     const o = ovr(p);
     const wanted = (o >= level - 7 && age <= 32) || (age <= 22 && p.hidden.potential >= level - 2);
-    const stays = wanted && rng.chance(0.78 + p.hidden.loyalty / 500);
+    const stays = wanted && rng.chance(clamp(0.78 + p.hidden.loyalty / 500 + stayBonus(state, p), 0.3, 0.97));
     if (stays) {
       p.contract = { ...p.contract, expires: state.season + rng.int(1, age > 30 ? 2 : 4), wage: wageFor(o, club.reputation, p.contract.role === "prospect" && age > 20 ? "rotation" : p.contract.role), signed: state.season + 1 };
     } else {

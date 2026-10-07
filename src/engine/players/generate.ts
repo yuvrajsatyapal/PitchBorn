@@ -1,4 +1,5 @@
 import { BALANCE } from "../balance";
+import { initialTraits } from "../traits/assign";
 import { country } from "../data/world";
 import { poolFor } from "../data/names";
 import { clamp, type Rng } from "../rng";
@@ -161,6 +162,7 @@ export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
     trophies: 0,
     month: { apps: 0, ratingSum: 0, goals: 0, assists: 0 },
   };
+  p.traits = initialTraits(p, o.season);
   // Seed plausible past career numbers for veterans so records/caps feel lived-in.
   const seasonsPlayed = Math.max(0, o.age - 19);
   if (seasonsPlayed > 0 && !o.virtual) {

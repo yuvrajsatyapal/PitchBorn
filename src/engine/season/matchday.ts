@@ -1,5 +1,8 @@
 import { BALANCE } from "../balance";
 import { agentSkill } from "../career/agents";
+import { baseRivalry } from "../memory/rivalry";
+import { recordMatchEvidence } from "../traits/develop";
+import { careerProfile, resolveMatchFx } from "../traits/effects";
 import { detectInjuryComeback, detectMatchMemory, noteLastMatch, rememberMajorInjury } from "../memory/detect";
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
 import { country, stadium, staticClub, clubName } from "../data/world";
@@ -56,6 +59,7 @@ function toInput(p: Player, slot: Player["position"]): MatchPlayerInput {
     bigMatch: p.hidden.bigMatch,
     consistency: p.hidden.consistency,
     isUser: p.isUser,
+    fx: resolveMatchFx(p.traits, p.attrs),
   };
 }
 
@@ -100,6 +104,27 @@ function importanceOf(comp: Competition | undefined, f: Fixture): number {
   return 1;
 }
 
+/**
+ * How much this match matters, beyond its competition: derbies, the run-in of a title race or a
+ * relegation fight. Drives "big-game" behaviour (traits such as Big-Game Performer).
+ */
+export function matchImportance(state: GameState, comp: Competition | undefined, f: Fixture): number {
+  let imp = importanceOf(comp, f);
+  if (!comp || comp.kind !== "league" || !state.clubs[f.home] || !state.clubs[f.away]) return imp;
+  imp += 0.6 * baseRivalry(f.home, f.away);
+  const table = comp.table;
+  if (table && state.turn >= BALANCE.calendar.seasonEnd - 7) {
+    const pos = (id: string) => table.findIndex((r) => r.team === id) + 1;
+    const n = table.length;
+    const stakes = (id: string) => {
+      const p = pos(id);
+      return p > 0 && (p <= 2 || p > n - 4);
+    };
+    if (stakes(f.home) || stakes(f.away)) imp += 0.5;
+  }
+  return Math.min(2.6, imp);
+}
+
 export function buildTeamInput(state: GameState, teamId: string, sel: Selection): TeamInput {
   return {
     id: teamId,
@@ -132,7 +157,7 @@ export function prepareMatch(state: GameState, fixture: Fixture, rng: Rng, opts:
     away: buildTeamInput(state, fixture.away, away),
     neutral: fixture.neutral,
     knockout,
-    importance: importanceOf(comp, fixture),
+    importance: matchImportance(state, comp, fixture),
     detail: opts.detail,
     interactive: opts.interactive,
   };
@@ -242,11 +267,14 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     p.form = Math.round((p.form * 0.68 + line.rating * 0.32) * 100) / 100;
     const won = line.side === "home" ? homeWon : awayWon;
     const lost = line.side === "home" ? awayWon : homeWon;
-    p.morale = r1(clamp(p.morale + (won ? BALANCE.morale.winBoost : lost ? -BALANCE.morale.lossPenalty : 0.3) + (line.rating - 6.6) * 1.2, 5, 100));
+    const cp = careerProfile(p);
+    p.morale = r1(clamp(p.morale + (won ? BALANCE.morale.winBoost : lost ? -BALANCE.morale.lossPenalty : 0.3) * cp.moraleSwing + (line.rating - 6.6) * 1.2, 5, 100));
+    // Everyone in the user's own matches is observed: their habits can turn into traits too.
+    if (involvesUser) recordMatchEvidence(state, p, line, { importance: matchImportance(state, comp, fixture) });
     const keeperBonus = line.slot === "GK" && line.conceded === 0 && stat.minutes >= 60 ? 0.12 : 0;
     const repDelta = (line.rating - 6.5) * 0.22 * repWeight + (line.goals * 0.12 + keeperBonus) * repWeight;
     if (comp.kind === "continental" || nat) p.intlReputation = r1(clamp(p.intlReputation + repDelta * 1.2, 0, 100));
-    const mediaBoost = p.isUser && repDelta > 0 ? 1 + (agentSkill(state, "media") - 30) / 300 : 1;
+    const mediaBoost = (p.isUser && repDelta > 0 ? 1 + (agentSkill(state, "media") - 30) / 300 : 1) * (repDelta > 0 ? cp.media : 1);
     p.reputation = r1(clamp(p.reputation + repDelta * mediaBoost, 0, 100));
     if (line.red) p.suspension += line.yellow >= 2 ? 1 : 2;
     if (comp.kind === "league" && line.yellow === 1 && !line.red) {

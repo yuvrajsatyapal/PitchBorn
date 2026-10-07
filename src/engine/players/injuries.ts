@@ -1,5 +1,6 @@
 import { BALANCE } from "../balance";
 import { clamp, r2, type Rng } from "../rng";
+import { injuryTraitFactor } from "../traits/effects";
 import type { Injury, InjurySeverity, Player } from "../types";
 
 interface InjuryType {
@@ -38,8 +39,7 @@ export const SEVERITY_LABEL: Record<InjurySeverity, string> = {
 export function injuryRiskFactor(p: Player): number {
   const prone = 0.6 + (p.hidden.injuryProneness / 100) * BALANCE.injuries.pronenessScale * 0.6;
   const tired = p.fitness < BALANCE.fitness.riskHigh ? BALANCE.injuries.lowFitnessMultiplier : p.fitness < BALANCE.fitness.riskMild ? 1.3 : 1;
-  const age = p.birthYear ? 1 : 1;
-  return prone * tired * age;
+  return prone * tired * injuryTraitFactor(p);
 }
 
 export function rollInjury(rng: Rng, p: Player, opts: { context: "match" | "training"; seriousAllowed: boolean }): Injury {

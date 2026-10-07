@@ -29,6 +29,9 @@ import { ensureMinimumSquads, processExpiringContracts, processRetirements, refr
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
 import { refreshRecall } from "../memory/recall";
+import { weeklyPersonality, mentorsOf } from "../traits/career";
+import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
+import { careerProfile } from "../traits/effects";
 import { rememberManagerConflict, rememberPromotionOrRelegation, rememberRecord, rememberRetirement } from "../memory/detect";
 import { receiveIncome } from "../career/money";
 import { assignRoles } from "../world/create";
@@ -203,6 +206,7 @@ function userWeekly(state: GameState, rng: Rng): void {
   const out = runTraining(state, rng, p, u.training, trainingBoost);
   u.lastTraining = { note: out.note, injured: out.injured };
   if (out.injured) addNews(state, { kind: "injury", title: `Training injury: ${out.injured}`, body: out.note, important: true });
+  trainingTick(state, p, u.training.focus, u.training.intensity);
   u.trainingHistory.push(out.growthMultiplier);
   if (u.trainingHistory.length > 4) u.trainingHistory.shift();
   reserveMatch(state, rng, out.growthMultiplier);
@@ -212,6 +216,7 @@ function userWeekly(state: GameState, rng: Rng): void {
     receiveIncome(state, p.contract.wage);
   }
   payAgent(state);
+  weeklyPersonality(state);
   if (u.relationships.manager < 18 && p.clubId && state.turn >= C.seasonStart + 4) rememberManagerConflict(state);
   // A good agent keeps spirits up.
   p.morale = clamp(p.morale + (agentSkill(state, "care") - 30) / 400, 0, 100);
@@ -230,13 +235,17 @@ function userWeekly(state: GameState, rng: Rng): void {
 
 function monthlyDevelopment(state: GameState, rng: Rng): void {
   const u = state.user;
+  const mentorCache = new Map<string, number>();
   for (const p of Object.values(state.players)) {
     if (p.retired) continue;
     const club = p.clubId ? state.clubs[p.clubId] ?? null : null;
     let trainingMultiplier = 1;
     if (p.isUser) {
-      trainingMultiplier = trainingGrowthMultiplier(u.trainingHistory);
+      trainingMultiplier = trainingGrowthMultiplier(u.trainingHistory) * careerProfile(p).training;
+      fadeProgress(p);
     }
+    // Experienced teammates who take youngsters under their wing help them develop.
+    if (p.clubId && ageOf(p, state.season) <= 21) trainingMultiplier *= 1 + 0.05 * Math.min(2, mentorsOf(state, p.clubId, mentorCache));
     developPlayer(state, rng, p, { club, trainingMultiplier }, 12.5);
     if (!p.virtual) p.value = marketValue(p, state.season);
   }
@@ -555,6 +564,7 @@ function rollover(state: GameState, rng: Rng): void {
   processRetirements(state, rng);
   internationalRetirements(state, rng);
   applyMoves(state);
+  reviewAllTraits(state);
   const prevSeason = state.season;
   state.season++;
   state.turn = 1;

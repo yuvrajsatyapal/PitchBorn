@@ -1,6 +1,7 @@
 import { BALANCE } from "../balance";
 import { clamp, r1, r2, Rng } from "../rng";
 import type { AttrKey, ClubState, GameState, Player, TrainingFocus, TrainingPlan } from "../types";
+import { careerProfile } from "../traits/effects";
 import { applyGrowth, overallFor, SPEED } from "./attributes";
 import { ageOf } from "./generate";
 import { applyInjury, injuryRiskFactor, rollInjury } from "./injuries";
@@ -175,7 +176,7 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
     // Speed responds to sprint work until 28, then only slowly.
     const isSpeed = SPEED.includes(k);
     const kAgeMul = isSpeed ? (age <= D.speedTrainingAge ? Math.max(ageMul, 0.7) : 0.25) : ageMul;
-    p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * int.growth * kAgeMul * capMul * (1 + boost) * (focus.length ? 1 : 0.45), 1, 99));
+    p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * int.growth * kAgeMul * capMul * (1 + boost) * careerProfile(p).training * (focus.length ? 1 : 0.45), 1, 99));
   }
   p.sharpness = clamp(p.sharpness + (plan.intensity === "intense" ? 3 : 1.5), 0, 100);
   return {

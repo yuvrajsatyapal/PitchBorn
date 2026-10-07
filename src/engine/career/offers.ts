@@ -9,6 +9,7 @@ import type { ClubState, ContractTerms, GameState, Player, SquadRole, TransferOf
 import { clubLevel } from "../world/create";
 import { agentSkill, chargeCommission } from "./agents";
 import { rememberContractDispute, rememberRejection, rememberTransfer } from "../memory/detect";
+import { loyaltyStand, settlingEffect } from "../traits/career";
 import { receiveIncome } from "./money";
 import { addNews, addTimeline, addToSquad, nextId, removeFromSquad, squadOf, userPlayer } from "../world/helpers";
 
@@ -226,7 +227,7 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   if (action.type === "reject") {
     o.status = "rejected";
     o.history.push("You turned the offer down.");
-    if (o.kind !== "renewal" && o.kind !== "loan") rememberRejection(state, o);
+    if (o.kind !== "renewal" && o.kind !== "loan" && !loyaltyStand(state, o)) rememberRejection(state, o);
     if (o.kind === "renewal") state.user.relationships.board = clamp(state.user.relationships.board - 6, 0, 100);
     return { ok: true, message: "Offer rejected." };
   }
@@ -322,8 +323,9 @@ function completeOffer(state: GameState, o: TransferOffer) {
   state.user.transfers.push({ season, turn: state.turn, from, to: club.id, fee: o.fee, kind: o.kind });
   rememberTransfer(state, from, club.id, o.fee);
   state.user.transferRequest = false;
-  state.user.relationships = { ...state.user.relationships, manager: 52, teammates: 48, supporters: 50, board: 55 };
-  p.morale = clamp(p.morale + 10, 0, 100);
+  const settle = settlingEffect(p, from ? staticClub(from)?.countryCode : undefined, staticClub(club.id)?.countryCode);
+  state.user.relationships = { ...state.user.relationships, manager: clamp(52 + settle.manager, 30, 80), teammates: 48, supporters: 50, board: 55 };
+  p.morale = clamp(p.morale + 10 + settle.morale, 0, 100);
   state.transferLog.push({ season, turn: state.turn, playerId: p.id, name: `${p.firstName} ${p.lastName}`, from, to: club.id, fee: o.fee });
   addTimeline(state, {
     kind: "transfer",

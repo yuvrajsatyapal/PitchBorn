@@ -34,6 +34,28 @@ export interface Hidden {
   peakAge: number;
 }
 
+/** Registry id of a player trait (see engine/traits/registry.ts). */
+export type TraitId = string;
+export type TraitStage = "emerging" | "established" | "signature";
+
+/** A trait a player currently has. `xp` is internal progress; the stage is derived from it. */
+export interface OwnedTrait {
+  id: TraitId;
+  xp: number;
+  /** Season in which the trait was acquired. */
+  since: number;
+}
+
+export interface TraitEvent {
+  season: number;
+  turn: number;
+  id: TraitId;
+  kind: "gained" | "upgraded" | "weakened" | "lost" | "evolved";
+  stage?: TraitStage;
+  /** For evolutions: the trait it grew out of. */
+  from?: TraitId;
+}
+
 export type SquadRole = "star" | "first" | "rotation" | "backup" | "prospect";
 
 export interface Contract {
@@ -146,6 +168,10 @@ export interface Player {
   month: { apps: number; ratingSum: number; goals: number; assists: number };
   /** Wants a move (unhappy NPC) */
   listed?: boolean;
+  /** How the player tends to play: playstyle, technical, mental, physical and personality traits. */
+  traits?: OwnedTrait[];
+  /** Behaviour evidence towards traits not yet owned (tracked for the user and players in the user's matches). */
+  traitProgress?: Record<TraitId, number>;
 }
 
 export type FormationId = "4-3-3" | "4-4-2" | "4-2-3-1" | "3-5-2" | "5-3-2" | "4-1-4-1";
@@ -391,7 +417,7 @@ export type MemoryKind =
   | "major-injury" | "injury-comeback"
   | "big-transfer" | "controversial-transfer" | "transfer-rejected" | "return-to-club" | "captaincy"
   | "promotion" | "relegation" | "contract-dispute" | "financial-exit" | "manager-conflict" | "career-decision"
-  | "retirement" | "final-match";
+  | "retirement" | "final-match" | "identity";
 
 export type RecallReason = "anniversary" | "origin" | "former-club" | "opponent-history" | "venue" | "grudge";
 
@@ -482,6 +508,12 @@ export interface UserCareer {
   startClubId: ClubId;
   startTier: number;
   agent: Agent;
+  /** Identity-defining trait developments (gained, upgraded, weakened, evolved). */
+  traitLog: TraitEvent[];
+  /** Training can only add trait progress up to a budget per season: season → trait → points used. */
+  traitTraining?: { season: number; used: Record<TraitId, number> };
+  /** Times the user turned down a bigger move out of loyalty. */
+  loyaltyStands?: number;
   /** Career memories, strongest context first at display time. */
   memories: Memory[];
   /** This week's "from the vault" recall, chosen by engine/memory/recall.ts. */
@@ -545,6 +577,8 @@ export interface LegacyResult {
   breakdown: { label: string; points: number }[];
   stories: string[];
   headline: string;
+  /** What kind of footballer this was, from traits, stats and career (see engine/traits/identity.ts). */
+  identity?: { label: string; lines: string[]; traits: TraitId[] };
 }
 
 export interface SeasonArchive {

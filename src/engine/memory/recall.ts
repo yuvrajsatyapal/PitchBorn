@@ -7,6 +7,7 @@
 import { clubName, stadium, staticClub } from "../data/world";
 import type { GameState, Memory, RecallReason, VaultItem } from "../types";
 import { addNews, userPlayer } from "../world/helpers";
+import { traitDef } from "../traits/registry";
 import { describeMemory } from "./describe";
 
 const ANNIVERSARIES = [1, 5, 10, 15, 20];
@@ -61,6 +62,7 @@ export function recallPhrase(m: Memory): string {
     case "financial-exit": return "leaving a club in crisis";
     case "manager-conflict": return "that falling-out";
     case "career-decision": return "that defining decision";
+    case "identity": return m.data?.event === "evolved" ? "reinventing your game" : `becoming a signature ${traitDef(String(m.data?.trait ?? ""))?.name ?? "talent"}`;
     default: return "that moment";
   }
 }

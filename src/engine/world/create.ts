@@ -1,5 +1,6 @@
 import { BALANCE } from "../balance";
 import { agentMarket, NO_AGENT } from "../career/agents";
+import { initialTraits } from "../traits/assign";
 import { setupSeason } from "../competitions/setup";
 import { WORLD, country, leaguesInPlay, stadium, staticClub, staticLeague } from "../data/world";
 import type { StaticManager } from "../data/schema";
@@ -247,6 +248,8 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
     youth: input.path === "academy",
   };
   p.value = marketValue(p, season);
+  // The user's playing style has to be earned on the pitch; only temperament is there from the start.
+  p.traits = initialTraits(p, season, { tier: "user" });
   return p;
 }
 
@@ -281,6 +284,7 @@ export function createWorld(input: NewCareerInput): GameState {
       startTier: staticLeague(staticClub(input.clubId)?.leagueId ?? "")?.tier ?? 1,
       agent: NO_AGENT,
       memories: [],
+      traitLog: [],
       bank: BALANCE.agents.startingBank,
       relationships: { manager: 55, teammates: 55, supporters: 50, board: 50, agent: 60 },
       priorities: input.priorities ?? { money: 1, playingTime: 1, ambition: 1, loyalty: 1 },

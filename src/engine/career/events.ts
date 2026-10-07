@@ -5,10 +5,11 @@ import { clamp, type Rng } from "../rng";
 import type { GameState, Player, Relationships } from "../types";
 import { addNews, addTimeline, nextId, userPlayer } from "../world/helpers";
 import { rememberCaptaincy, rememberDecision } from "../memory/detect";
+import { careerProfile } from "../traits/effects";
 import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
 
 const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
-const sponsorValue = (s: GameState, p: Player) => Math.round(p.reputation * p.reputation * 120 * (0.8 + agentSkill(s, "media") / 150));
+const sponsorValue = (s: GameState, p: Player) => Math.round(p.reputation * p.reputation * 120 * (0.8 + agentSkill(s, "media") / 150) * careerProfile(p).media);
 
 interface Effect {
   morale?: number;
@@ -176,8 +177,36 @@ const EVENTS: CareerEventDef[] = [
     fallback: "loyal",
   },
   {
+    id: "touchline-row", weight: 1.4, cooldown: 30,
+    when: (s, p) => !!p.clubId && careerProfile(p).friction >= 0.4 && s.turn > 8 && s.turn < 42,
+    title: () => "Words with the manager",
+    body: () => "A heated exchange on the training ground. The manager wants to know where you stand.",
+    options: [
+      { id: "apologise", label: "Apologise", hint: "Clears the air; pride dented", effect: () => ({ rel: { manager: 5, teammates: 1 }, morale: -1 }) },
+      { id: "stand", label: "Stand your ground", hint: "Fans like the fire; the manager doesn't", effect: () => ({ rel: { manager: -8, supporters: 3 }, morale: 3 }) },
+      { id: "private", label: "Ask to speak privately", hint: "Calmer, a little progress", effect: () => ({ rel: { manager: 2 } }) },
+    ],
+    fallback: "private",
+  },
+  {
+    id: "dressing-room-speech", weight: 1.2, cooldown: 36,
+    when: (s, p) => !!p.clubId && careerProfile(p).leader >= 0.4 && s.turn > 10 && s.turn < 42 && s.user.relationships.teammates < 85,
+    title: () => "The dressing room looks to you",
+    body: () => "Results have been mixed and the mood is flat. The younger players are waiting for someone to speak.",
+    options: [
+      { id: "rally", label: "Rally the squad", hint: "Teammates respond", effect: () => ({ rel: { teammates: 7, manager: 2 }, morale: 2 }) },
+      { id: "quiet", label: "A quiet word with the captain", hint: "Low-key", effect: () => ({ rel: { teammates: 3, manager: 3 } }) },
+    ],
+    fallback: "quiet",
+  },
+  {
     id: "captaincy", weight: 1, cooldown: 60,
-    when: (s, p) => !!p.clubId && ageOf(p, s.season) >= 25 && s.user.relationships.teammates > 70 && s.user.relationships.manager > 65 && s.clubs[p.clubId]?.captain !== p.id,
+    when: (s, p) => {
+      if (!p.clubId || s.clubs[p.clubId]?.captain === p.id) return false;
+      const leader = careerProfile(p).leader >= 0.4;
+      // Natural leaders are given the armband sooner and with a little less goodwill than others.
+      return ageOf(p, s.season) >= (leader ? 22 : 25) && s.user.relationships.teammates > (leader ? 58 : 70) && s.user.relationships.manager > (leader ? 55 : 65);
+    },
     title: () => "Handed the captain's armband",
     body: (s, p) => `The manager names you club captain of ${clubName(p.clubId)}.`,
     effect: (s, p) => {

@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from "../src/engine/world/helpers";
 import { describe, expect, it } from "vitest";
 import type { MatchResult } from "../src/engine/match/engine";
 import { describeMemory } from "../src/engine/memory/describe";
@@ -156,7 +157,7 @@ describe("old saves", () => {
     const kinds = m.user.memories.map((x) => x.kind);
     expect(kinds).toEqual(expect.arrayContaining(["debut", "trophy"]));
     expect(m.user.memories.every((x) => x.backfilled)).toBe(true);
-    expect(m.schemaVersion).toBe(4);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
   });
 });
 

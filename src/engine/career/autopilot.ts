@@ -10,6 +10,8 @@ import type { Rng } from "../rng";
 import type { GameState, SquadRole, TrainingFocus } from "../types";
 import { userPlayer } from "../world/helpers";
 import { agentMarket, canHireAgent, hireAgent, releaseAgent } from "./agents";
+import { movePressure } from "../traits/career";
+import { careerProfile } from "../traits/effects";
 import { resolveDecision } from "./events";
 import { negotiate, setTransferRequest } from "./offers";
 
@@ -60,7 +62,9 @@ export function autopilotStep(state: GameState, rng: Rng): void {
     }
     const repGain = club.reputation - currentRep;
     const settled = p.contract && state.season - p.contract.signed < 2;
-    const wantsMove = !p.clubId || (repGain >= 14 && !settled) || repGain >= 22 || (!playing && roleScore >= 3 && repGain >= -8 && !settled) || (u.transferRequest && repGain >= -5);
+    const stay = movePressure(state, p).crisis ? 0 : careerProfile(p).loyalty;
+    const need = (cp: number) => cp + (stay >= 0.35 ? 10 : 0);
+    const wantsMove = !p.clubId || (repGain >= need(14) && !settled) || repGain >= need(22) || (!playing && roleScore >= 3 && repGain >= -8 && !settled) || (u.transferRequest && repGain >= -5);
     if (wantsMove && (roleScore >= 2 || !p.clubId || age <= 21)) {
       const res = negotiate(state, o.id, { type: "counter", wage: Math.round(o.terms.wage * rng.range(1.05, 1.2)) }, rng);
       if (!res.completed && state.user.offers.find((x) => x.id === o.id)?.status === "terms") negotiate(state, o.id, { type: "accept" }, rng);

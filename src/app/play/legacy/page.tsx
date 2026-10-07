@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { Portrait } from "@/components/art/Portrait";
+import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { Card, LinkButton, PageTitle, Stat, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
@@ -40,6 +41,7 @@ export default function Legacy() {
             <div className="mt-2 flex items-center gap-2 text-sm">
               <Flag code={p.nationality} /> {p.position} · {seasonLabel(g.user.startSeason)} – {seasonLabel(g.user.retiredSeason ?? g.season)}
             </div>
+            {legacy.identity && <div className="mt-2 text-sm font-bold capitalize opacity-90">Remembered as a {legacy.identity.label}</div>}
             <div className="mt-4 flex items-end gap-3">
               <span className="scoreboard rounded-xl border-2 border-line bg-black px-4 py-1 text-5xl text-sun">{Math.round(legacy.score)}</span>
               <span className="font-display text-3xl">{legacy.tier}</span>
@@ -64,6 +66,7 @@ export default function Legacy() {
         <Stat label="Caps" value={p.intl.caps} />
         <Stat label="Peak OVR" value={g.user.peakOverall} tone="plum" />
       </div>
+      <PlayIdentityCard g={g} p={p} title="How you played" />
       <IconicShowcase g={g} limit={6} final title="Iconic Moments" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="The story">

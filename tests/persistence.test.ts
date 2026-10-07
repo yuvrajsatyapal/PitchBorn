@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from "../src/engine/world/helpers";
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { advanceTurn } from "../src/engine/season/advance";
@@ -28,7 +29,7 @@ describe("migrations", () => {
     delete s.user.trainingHistory;
     delete s.user.rewardCooldowns;
     const m = migrateState(s);
-    expect(m.schemaVersion).toBe(4);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
     expect(m.user.trainingHistory).toEqual([]);
   });
   it("refuses saves from the future", () => {
