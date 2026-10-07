@@ -8,7 +8,7 @@ test.describe("advertising architecture", () => {
     const count = await slots.count();
     // Placeholder provider in E2E builds → slots render with labels.
     for (let i = 0; i < count; i++) {
-      await expect(slots.nth(i)).toContainText("Advertisement");
+      await expect(slots.nth(i)).toContainText("Ad / Sponsor");
       expect(await slots.nth(i).evaluate((el) => !!el.closest("nav"))).toBe(false);
     }
     if (info.project.name === "desktop") await expect(page.locator('[data-ad-slot="rail-right"]')).toBeVisible();

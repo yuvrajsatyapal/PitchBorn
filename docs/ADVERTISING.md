@@ -1,4 +1,4 @@
-# Advertising architecture
+# Ads & sponsors architecture
 
 Ads are infrastructure, not gameplay. The engine never imports `src/ads`. The game is fully playable with ads disabled, blocked, failing, slow or offline.
 
@@ -6,7 +6,7 @@ Ads are infrastructure, not gameplay. The engine never imports `src/ads`. The ga
 - `config.ts` — **central placement & frequency config**: placement ids, allowed pages, device (desktop/mobile/all), format (rail/inline/banner), reserved min height, priority; rules: `maxSlotsPerPage` (3), `neverOn` pages (new career, career/contract negotiation, training, settings, legacy), blocked game states, rail minimum viewport (1440 px), rewarded toggle.
 - `providers.ts` — `AdProvider` interface (`init`, `render`, `destroy`, `supportsRewarded`, `showRewarded`). Implementations: `none`, `placeholder` (labelled dev/test boxes), `adsense` (loads only with credentials **and** a consent choice; non-personalised via `data-npa` unless consent granted).
 - `AdContext.tsx` — provider root, readiness, consent subscription, `useSuppressAds()` (live match screen suppresses all ads).
-- `AdSlot.tsx` — `AdSlot`, `InlineAdSlot`, `ResponsiveAdSlot`, `SidebarAdSlot`, `MobileAdSlot`. Reserve space up front (no layout shift), "Advertisement" label, collapse gracefully on failure/timeout (8 s) or when unfilled.
+- `AdSlot.tsx` — `AdSlot`, `InlineAdSlot`, `ResponsiveAdSlot`, `SidebarAdSlot`, `MobileAdSlot`. Reserve space up front (no layout shift), "Ad / Sponsor" label, collapse gracefully on failure/timeout (8 s) or when unfilled.
 - `ConsentBanner.tsx` / `consent.ts` — consent **integration point** (shown only when a real provider is configured). It is not a certified CMP.
 - `RewardedButton.tsx` — optional rewarded ads; hidden unless the provider can verify completion; rewards are granted only on `completed && verified`.
 

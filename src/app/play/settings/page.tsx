@@ -129,9 +129,9 @@ export default function Settings() {
           <div className="mb-2 mt-4 text-sm font-bold">Theme</div>
           <Tabs value={theme} onChange={applyTheme} items={[{ id: "system", label: "System" }, { id: "light", label: "Light" }, { id: "dark", label: "Dark" }]} />
         </Card>
-        <Card title="Advertising & privacy">
+        <Card title="Ads, sponsors & privacy">
           <p className="text-sm text-ink-2">
-            Pitchborn is free. Ads are optional infrastructure: the game works fully if ads are blocked, fail or are disabled.
+            Pitchborn is free. Ad and sponsor spaces are optional: the game works fully if they are blocked, fail or are disabled.
           </p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
             <Badge>Provider: {adProviderId()}</Badge>
