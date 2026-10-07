@@ -36,7 +36,7 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
   const head = buildHeadNext(f);
   const a = anchorsFor(f, head);
   const t = skinTones(m.skin);
-  const ctx: HairCtx = { style: hairStyleOf(m.hair), index: m.hair, color: m.hairColor, f, head, recede: m.recede, skin: t, uid, lite: d === 0, tip: m.hairTip };
+  const ctx: HairCtx = { style: hairStyleOf(m.hair), index: m.hair, color: m.hairColor, f, head, recede: m.recede, skin: t, uid, lite: d === 0, thumb: d === 0, tip: m.hairTip };
   const g = hairGeometry(ctx);
   const clip = `${uid}head`;
   const line = necklineFor(f, m.collar);
@@ -50,7 +50,8 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
   const legacy = !bald && !next;
   const meta = pocId ? hairMeta(pocId) : undefined;
   // A style with its own headband ignores the accessory; otherwise the band wraps whatever hair is at that height.
-  const extent = next?.extent ?? (legacy ? extentOf(g.outer.slice().reverse()) : undefined);
+  // Shaved and very short styles have no outline to wrap a headband around: it sits on the head itself.
+  const extent = next?.extent ?? (legacy && g.outer.length ? extentOf(g.outer.slice().reverse()) : undefined);
   const band = next?.band ?? (m.accessory === 1 ? HeadbandNext({ head, a, color: m.band, d, extent }) : null);
   // An ear stud is only drawn where the ear shows.
   const stud = m.accessory === 2 && (meta?.ears ?? "visible") !== "covered";

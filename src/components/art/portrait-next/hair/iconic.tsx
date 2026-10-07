@@ -7,7 +7,7 @@
 import { CX, along, clamp, hash01, lerp, sub, unit, type Pt } from "../../portrait/geometry";
 import { HeadbandNext } from "../accessories";
 import { anchorsFor } from "../anchors";
-import { noise1, resample, ring, strokeLine } from "../ink";
+import { lodCount, lodNow, noise1, resample, ring, strokeLine } from "../ink";
 import { INK, hairTones, mixHex } from "../palette";
 import {
   ClipDefs,
@@ -348,18 +348,21 @@ function corkscrew(path: readonly Pt[], o: { w: number; coils: number; swing: nu
   const line = resampleN(along(path, 6), 40);
   const n = line.length;
   const coils: Corkscrew["coils"] = [];
-  for (let j = 0; j < o.coils; j++) {
-    const u = (j + 0.6) / o.coils;
+  // Fewer, rounder coils at thumbnail size: the chain still reads as a curl, with a fraction of the geometry.
+  const count = lodCount(o.coils, 3);
+  const fat = lodNow() === 0 ? 1.2 : 1;
+  for (let j = 0; j < count; j++) {
+    const u = (j + 0.6) / count;
     const i = Math.min(n - 2, Math.round(u * (n - 1)));
     const t = unit(sub(line[i + 1], line[Math.max(0, i - 1)]));
     const side = (j % 2 ? 1 : -1) * (hash01(o.seed, j) < 0.2 ? -0.4 : 1);
-    const rx = (o.w / 2) * lerp(1, 0.62, u) * (0.9 + 0.2 * hash01(o.seed, j + 9));
-    coils.push({ c: P(line[i][0] - t[1] * o.swing * side, line[i][1] + t[0] * o.swing * side), rx, ry: rx * 0.72, rot: Math.atan2(t[1], t[0]) + Math.PI / 2 });
+    const rx = (o.w / 2) * fat * lerp(1, 0.62, u) * (0.9 + 0.2 * hash01(o.seed, j + 9));
+    coils.push({ c: P(line[i][0] - t[1] * o.swing * side, line[i][1] + t[0] * o.swing * side), rx, ry: rx * (lodNow() === 0 ? 0.85 : 0.72), rot: Math.atan2(t[1], t[0]) + Math.PI / 2 });
   }
   return { core: lockOutline(path, { w: o.w * 0.55, root: 0.8, peak: 0.2, tip: 0.4, round: true, seed: o.seed }), coils, k: o.k };
 }
 
-const ellipse = (c: Pt, rx: number, ry: number, rot: number, from = 0, to = Math.PI * 2, steps = 14): Pt[] =>
+const ellipse = (c: Pt, rx: number, ry: number, rot: number, from = 0, to = Math.PI * 2, steps = lodCount(14, 6)): Pt[] =>
   Array.from({ length: steps + 1 }, (_, i) => {
     const a = lerp(from, to, i / steps);
     const x = Math.cos(a) * rx;
@@ -516,7 +519,7 @@ export function headbandCurlsHair(i: HairInput): HairArt {
     onSkin: (
       <g fill={skin.shade}>
         <path d={castBelow(along([P(CX - 90, yBand + 9), P(CX, yBand + 12), P(CX + 90, yBand + 9)], 3), 0.5, 2.5, f.top)} opacity={0.55} />
-        <path d={curlsFront.map((c) => [ring(offset(c.core, 1.8, 2.6)), ...c.coils.map((q) => ring(ellipse(P(q.c[0] + 1.8, q.c[1] + 2.6), q.rx, q.ry, q.rot, 0, Math.PI * 2, 8)))].join("")).join("")} opacity={0.5} />
+        <path d={curlsFront.map((c) => [ring(offset(c.core, 1.8, 2.6)), ...(d === 0 ? [] : c.coils.map((q) => ring(ellipse(P(q.c[0] + 1.8, q.c[1] + 2.6), q.rx, q.ry, q.rot, 0, Math.PI * 2, 8))))].join("")).join("")} opacity={0.5} />
       </g>
     ),
     mid: (

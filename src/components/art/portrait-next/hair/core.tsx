@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import type { FaceSpec, Head } from "../../portrait/anatomy";
 import { CX, add, along, clamp, dist, hash01, lerp, sampleSegs, scale, splineSegs, sub, unit, type Pt } from "../../portrait/geometry";
 import type { Detail } from "../face";
-import { noise1, pieces, resample, ring, roughen, strokeLine } from "../ink";
+import { lodNow, noise1, pieces, resample, ring, roughen, strokeLine } from "../ink";
 import type { SkinTones } from "../palette";
 
 export const P = (x: number, y: number): Pt => [x, y];
@@ -175,7 +175,8 @@ export function bumped(pts: Pt[], bumps: readonly Bump[], profile: (x: number) =
  * odd larger lobe come from the seed, so the edge never reads as a regular scallop.
  */
 export function lobedEdge(pts: Pt[], o: { seed: number; spacing: readonly [number, number]; amp: readonly [number, number]; big?: number; sign?: number; step?: number }): Pt[] {
-  const step = o.step ?? 1.4;
+  // Coarser sampling at small sizes: the lobes are several units wide, so the outline keeps its shape.
+  const step = o.step ?? [3.2, 1.9, 1.4][lodNow()];
   const res = resample(pts, step);
   const len = Math.max(1, (res.length - 1) * step);
   const bumps: Bump[] = [];

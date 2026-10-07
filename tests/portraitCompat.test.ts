@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { PlayerPortrait } from "../src/components/art/PlayerPortrait";
 import { anchorsFor } from "../src/components/art/portrait-next/anchors";
-import { PortraitNext } from "../src/components/art/portrait-next/art";
+import { PortraitNext, detailFor } from "../src/components/art/portrait-next/art";
 import { HAIR_LIBRARY, POC_IDS, hairMeta } from "../src/components/art/portrait-next/hair";
 import { buildHeadNext } from "../src/components/art/portrait-next/head";
 import { nextModelFor } from "../src/components/art/portrait-next/model";
@@ -121,15 +121,28 @@ describe("portrait compatibility: every combination draws", () => {
     }
   });
 
-  it("small portraits of the iconic styles stay light", () => {
+  // Budget for a 48px portrait. Every hairstyle must fit it: a style that doesn't gets a lighter small-size version
+  // (fewer, larger shapes via the level of detail), never a bigger budget.
+  const MAX_CHARS_48 = 20_000;
+  const MAX_ELEMENTS_48 = 110;
+  const elements = (s: string) => (s.match(/<(path|circle|rect|use|ellipse)\b/g) ?? []).length;
+
+  it("small portraits of the iconic styles stay light and are lighter than the large ones", () => {
     for (const name of ICONIC_NAMES) {
       const small = render({ hair: iconicIndex(name), hairTip: 2 }, 0);
       const large = render({ hair: iconicIndex(name), hairTip: 2 }, 2);
-      const count = (s: string) => (s.match(/<(path|circle|rect|use|ellipse)\b/g) ?? []).length;
-      expect(count(small)).toBeLessThan(count(large));
-      expect(count(small)).toBeLessThan(110);
-      expect(small.length).toBeLessThan(20_000);
+      expect(elements(small)).toBeLessThan(elements(large));
+      expect(small.length).toBeLessThan(large.length);
     }
+  });
+
+  it("every hairstyle fits the 48px budget (reports all failures at once)", () => {
+    const failures: string[] = [];
+    HAIR_STYLES.forEach((h, hair) => {
+      const svg = render({ hair, hairTip: supportsHairTips(hair) ? 2 : 0 }, detailFor(48));
+      if (svg.length > MAX_CHARS_48 || elements(svg) > MAX_ELEMENTS_48) failures.push(`${h.name}: ${svg.length} chars, ${elements(svg)} elements`);
+    });
+    expect(failures).toEqual([]);
   });
 });
 
@@ -232,16 +245,33 @@ describe("portrait compatibility: generation", () => {
 
   it("existing players keep their generated look; an iconic roll changes only the hairstyle", () => {
     let iconic = 0;
+    let otherIconic = 0;
+    let goldenLions = 0;
     for (const [i, key] of Object.entries(GOLDEN)) {
       const a = generateAppearance(`golden-${i}`);
       const now = APPEARANCE_KEYS.slice(0, 24).map((k) => a[k]);
       const was = key.split(".").map(Number);
-      if (HAIR_STYLES[a.hair].iconic) {
-        iconic++;
-        expect(now.filter((v, j) => j !== 2 && v !== was[j])).toEqual([]);
-      } else expect(now).toEqual(was);
+      const changed = now.flatMap((v, j) => (v !== was[j] ? [APPEARANCE_KEYS[j]] : []));
+      if (!HAIR_STYLES[a.hair].iconic) {
+        expect(now).toEqual(was);
+        continue;
+      }
+      iconic++;
+      // An iconic roll replaces the hairstyle. Only a Lion Afro may also turn Golden; nothing else moves.
+      if (HAIR_STYLES[a.hair].name === "Lion Afro") {
+        expect(changed.filter((k) => k !== "hair" && k !== "hairColor")).toEqual([]);
+        if (changed.includes("hairColor")) {
+          expect(a.hairColor).toBe(HAIR_COLORS.indexOf("#d6a645"));
+          goldenLions++;
+        }
+      } else {
+        expect(changed).toEqual(["hair"]);
+        otherIconic++;
+      }
     }
     expect(iconic).toBeGreaterThan(0);
+    expect(otherIconic).toBeGreaterThan(0);
+    expect(goldenLions).toBeGreaterThan(0);
   });
 
   it("iconic styles are rare overall, all six occur, and squads rarely carry more than one", () => {
@@ -304,6 +334,39 @@ describe("portrait compatibility: generation", () => {
     }
   });
 
+  it("only a Lion Afro iconic roll can turn Golden, only some do, and no other colour or value moves", () => {
+    const golden = HAIR_COLORS.indexOf("#d6a645");
+    let lions = 0;
+    let goldenLions = 0;
+    let otherIconic = 0;
+    for (let i = 0; i < 40_000 && (lions < 30 || otherIconic < 30); i++) {
+      const a = generateAppearance(`rule-${i}`);
+      const name = HAIR_STYLES[a.hair].name;
+      if (name === "Lion Afro") {
+        lions++;
+        if (a.hairColor === golden) goldenLions++;
+      } else if (HAIR_STYLES[a.hair].iconic) {
+        otherIconic++;
+        expect(a.hairColor).not.toBe(golden);
+      } else {
+        expect(a.hairColor).not.toBe(golden);
+      }
+    }
+    expect(goldenLions).toBeGreaterThan(0);
+    expect(goldenLions).toBeLessThan(lions);
+    expect(otherIconic).toBeGreaterThan(0);
+  });
+
+  it("the same player id always gets the same iconic decision and the same colour", () => {
+    for (let i = 0; i < 3000; i++) {
+      const a = generateAppearance(`again-${i}`);
+      const b = generateAppearance(`again-${i}`);
+      expect(b.hair).toBe(a.hair);
+      expect(b.hairColor).toBe(a.hairColor);
+      expect(b).toEqual(a);
+    }
+  });
+
   it("styles that take a second colour draw it", () => {
     const tip = HAIR_TIP_COLORS[2];
     for (const name of ["Frosted Faux Hawk", "Textured crop", "Dreadlocks", "Dutch Dreads"]) {
@@ -329,5 +392,67 @@ describe("portrait compatibility: saves", () => {
     const a = sanitizeAppearance({ ...base, hairTip: 99, band: -4 });
     expect(a.hairTip).toBe(COUNTS.hairTip - 1);
     expect(a.band).toBe(0);
+  });
+});
+
+describe("portrait compatibility: stress", () => {
+  const N = 300;
+  const SIZES = [48, 96, 220] as const;
+  const AGES = [16, 19, 23, 27, 31, 35, 39];
+  const elements = (s: string) => (s.match(/<(path|circle|rect|use|ellipse)\b/g) ?? []).length;
+
+  /** Deterministic players that cover every face shape, hairstyle (iconic included), beard, accessory and age. */
+  const player = (i: number): { a: Appearance; age: number } => {
+    const g = generateAppearance(`stress-${i}`);
+    const a: Appearance = {
+      ...g,
+      face: i % COUNTS.face,
+      hair: (i * 7) % COUNTS.hair,
+      facial: (i * 5) % COUNTS.facial,
+      accessory: (i * 3) % COUNTS.accessory,
+      scar: i % 9 === 0 ? 1 : g.scar,
+      hairTip: 0,
+      headW: (i * 37) % 101,
+      headH: (i * 53) % 101,
+      eyeSp: (i * 29) % 101,
+      earSc: (i * 41) % 101,
+      aging: (i * 17) % 101,
+    };
+    return { a: { ...a, hairTip: supportsHairTips(a.hair) ? i % COUNTS.hairTip : 0 }, age: AGES[i % AGES.length] };
+  };
+
+  it("300 deterministic players draw valid, repeatable portraits at 48, 96 and 220px within the 48px budget", () => {
+    const stats = { sum: 0, max: 0, maxHair: "", elSum: 0, elMax: 0, elMaxHair: "" };
+    const over: string[] = [];
+    for (let i = 0; i < N; i++) {
+      const { a, age } = player(i);
+      expect(sanitizeAppearance(a)).toEqual(a);
+      for (const k of APPEARANCE_KEYS) expect(Number.isFinite(a[k])).toBe(true);
+      const m = nextModelFor(a, age, KIT, TRIM);
+      const anchors = anchorsFor(m.f, buildHeadNext(m.f));
+      const flat = (v: unknown): number[] => (typeof v === "number" ? [v] : v && typeof v === "object" ? Object.values(v).flatMap(flat) : []);
+      const nums = flat(anchors);
+      expect(nums.length).toBeGreaterThan(20);
+      for (const n of nums) expect(Number.isFinite(n)).toBe(true);
+      for (const px of SIZES) {
+        const d = detailFor(px);
+        const draw = () => renderToStaticMarkup(createElement("svg", null, createElement(PortraitNext, { m, uid: `s${i}`, d })));
+        const svg = draw();
+        expectValid(svg);
+        expect(svg).toMatch(/<path\b/);
+        expect(draw()).toBe(svg);
+        if (px !== 48) continue;
+        const els = elements(svg);
+        const name = HAIR_STYLES[a.hair].name;
+        stats.sum += svg.length;
+        stats.elSum += els;
+        if (svg.length > stats.max) Object.assign(stats, { max: svg.length, maxHair: name });
+        if (els > stats.elMax) Object.assign(stats, { elMax: els, elMaxHair: name });
+        if (svg.length > 20_000 || els > 110) over.push(`player ${i} (${name}): ${svg.length} chars, ${els} elements`);
+      }
+    }
+    // Diagnostics for the review: printed only when this fails, and kept in the assertion message.
+    expect(over, JSON.stringify({ avgChars: Math.round(stats.sum / N), ...stats })).toEqual([]);
+    if (process.env.PORTRAIT_STATS) console.log("stress 48px", { avgChars: Math.round(stats.sum / N), maxChars: stats.max, maxCharsHair: stats.maxHair, avgElements: Math.round(stats.elSum / N), maxElements: stats.elMax, maxElementsHair: stats.elMaxHair });
   });
 });

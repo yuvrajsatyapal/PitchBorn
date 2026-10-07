@@ -12,18 +12,30 @@ import { add, along, hash01, scale, sub, unit, type Pt } from "../portrait/geome
  */
 let tol = 0.12;
 let dec = 1;
+let lod: 0 | 1 | 2 = 2;
 const TOL = [0.8, 0.35, 0.12] as const;
 
 export function withDetail<T>(d: 0 | 1 | 2, fn: () => T): T {
-  const prev = [tol, dec];
+  const prev = [tol, dec, lod] as const;
   tol = TOL[d];
   dec = d === 0 ? 0 : 1;
+  lod = d;
   try {
     return fn();
   } finally {
-    [tol, dec] = prev;
+    [tol, dec, lod] = prev;
   }
 }
+
+/**
+ * Level of detail of the render in progress (0 thumbnail, 1 small, 2 full). Shape builders use it to choose how
+ * many samples or repeated parts to make, so a 48px portrait is built from few well-placed shapes rather than
+ * the full-size geometry thinned out afterwards.
+ */
+export const lodNow = () => lod;
+
+/** `full` at full size, scaled down for smaller renders (never below `min`). */
+export const lodCount = (full: number, min = 3) => Math.max(min, Math.round(full * [0.45, 0.7, 1][lod]));
 
 /** Douglas-Peucker: keep only the points that move the line by more than `t`. */
 export function simplify(pts: readonly Pt[], t = tol): readonly Pt[] {
@@ -60,6 +72,30 @@ export function simplify(pts: readonly Pt[], t = tol): readonly Pt[] {
 }
 
 const num = (v: number) => (dec ? Math.round(v * 10) / 10 : Math.round(v));
+
+/**
+ * Path data written with plain M/L commands (the older hair code), thinned to what a thumbnail can show: each
+ * sub-path is simplified and rounded to whole units. Anything with curves or arcs is returned untouched.
+ */
+export function thinPath(d: string, t = TOL[0]): string {
+  if (/[^MLZ\d.\s-]/.test(d)) return d;
+  return d.replace(/M[^MZ]*Z?/g, (seg) => {
+    const pts = [...seg.matchAll(/(-?\d+\.?\d*)\s(-?\d+\.?\d*)/g)].map((m): Pt => [+m[1], +m[2]]);
+    const s = simplify(pts, t);
+    let out = "";
+    let px = NaN;
+    let py = NaN;
+    for (const p of s) {
+      const x = Math.round(p[0]);
+      const y = Math.round(p[1]);
+      if (x === px && y === py) continue;
+      out += `${out ? "L" : "M"}${x} ${y}`;
+      px = x;
+      py = y;
+    }
+    return out && seg.endsWith("Z") ? `${out}Z` : out;
+  });
+}
 
 /** A polyline or polygon as path data, simplified and rounded for the current size. */
 export function pathOf(pts: readonly Pt[], closed = true): string {
