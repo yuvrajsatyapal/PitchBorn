@@ -9,6 +9,16 @@ import { z } from "zod";
 
 export const HexColor = z.string().regex(/^#[0-9a-f]{6}$/i);
 
+/** A real head coach at snapshot time (Wikidata P286, CC0). */
+export const ManagerSchema = z.object({
+  name: z.string().min(2),
+  /** Pitchborn country code when the coach's citizenship is one of our nations. */
+  nationality: z.string().optional(),
+  since: z.number().int().optional(),
+  wikidata: z.string().optional(),
+});
+export type StaticManager = z.infer<typeof ManagerSchema>;
+
 export const CountrySchema = z.object({
   code: z.string().regex(/^[A-Z]{3}$/),
   name: z.string().min(2),
@@ -20,6 +30,7 @@ export const CountrySchema = z.object({
   namePool: z.string(),
   /** Has simulated domestic leagues. */
   hasLeagues: z.boolean(),
+  manager: ManagerSchema.optional(),
 });
 export type Country = z.infer<typeof CountrySchema>;
 
@@ -49,6 +60,7 @@ export const ClubSchema = z.object({
   /** Pitchborn prestige 1-100 derived from historical results, tier and stadium size. */
   prestige: z.number().min(1).max(100),
   wikidata: z.string().optional(),
+  manager: ManagerSchema.optional(),
   sources: z.array(z.string()),
 });
 export type Club = z.infer<typeof ClubSchema>;

@@ -21,7 +21,7 @@ export const DATA_SOURCES: DataSource[] = [
     url: "https://www.wikidata.org/",
     license: "CC0 1.0 (structured data)",
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
-    usage: "Current league membership, stadium names, capacities, founding years, club colours, cities, coordinates.",
+    usage: "Current league membership, stadium names, capacities, founding years, club colours, cities, coordinates, and current head coaches of clubs and national teams.",
     redistributable: true,
   },
   {
@@ -98,3 +98,14 @@ export const OPENFOOTBALL_CLUB_FILES: Record<string, string> = {
 };
 
 export const FOOTBALL_JSON_SEASONS = ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25"];
+
+/** English Wikipedia titles for national teams whose article isn't "<Country> national football team". */
+export const NATIONAL_TEAM_TITLES: Record<string, string> = {
+  IRL: "Republic of Ireland national football team",
+  CZE: "Czech Republic national football team",
+  TUR: "Turkey national football team",
+  CIV: "Ivory Coast national football team",
+  USA: "United States men's national soccer team",
+  CAN: "Canada men's national soccer team",
+  AUS: "Australia men's national soccer team",
+};

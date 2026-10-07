@@ -21,8 +21,9 @@ import {
 } from "../../src/engine/data/schema";
 import { computeTable, type FootballJsonMatch, parseOpenFootballClubs } from "./lib/openfootball";
 import { colorToHex, displayName, makeAbbreviation, nameKey, pickColors, slugify } from "./lib/normalize";
+import { reduceManagers } from "./lib/managers";
 import { reduceWikidata, type WikidataClub } from "./lib/wikidata";
-import { DATA_SOURCES, FOOTBALL_JSON_SEASONS, LEAGUE_SOURCES, OPENFOOTBALL_CLUB_FILES } from "./sources";
+import { DATA_SOURCES, FOOTBALL_JSON_SEASONS, LEAGUE_SOURCES, NATIONAL_TEAM_TITLES, OPENFOOTBALL_CLUB_FILES } from "./sources";
 
 const ROOT = process.cwd();
 const RAW = join(ROOT, "data", "raw");
@@ -333,6 +334,48 @@ const leagues: League[] = LEAGUE_SOURCES.map((l) => {
     abstraction: Boolean(l.abstraction),
   };
 });
+
+// --------------------------------------------------------------- Managers
+// Real head coaches at snapshot time. Curated corrections in data/curated/managers.json
+// win over Wikidata ("null" removes a manager so the game generates one).
+interface ManagerOverride { name: string; nationality?: string; since?: number }
+const managerOverrides = readJson<{ clubs: Record<string, ManagerOverride | null>; national: Record<string, ManagerOverride | null> }>(
+  join(ROOT, "data", "curated", "managers.json"),
+);
+const countryByName = new Map(countries.map((c) => [c.name.toLowerCase(), c.code]));
+const clubByQid = new Map(clubs.filter((c) => c.wikidata).map((c) => [c.wikidata as string, c]));
+const clubManagersFile = join(RAW, "wikidata", "managers-clubs.json");
+if (existsSync(clubManagersFile)) {
+  const raw = readJson<{ results: { bindings: [] } }>(clubManagersFile).results.bindings;
+  const found = reduceManagers(raw, (qid) => clubByQid.get(qid)?.countryCode, countryByName);
+  for (const [qid, m] of found) {
+    const club = clubByQid.get(qid);
+    if (club) club.manager = { name: m.name, nationality: m.nationality, since: m.since, wikidata: m.wikidata };
+  }
+}
+for (const [qid, ov] of Object.entries(managerOverrides.clubs)) {
+  const club = clubByQid.get(qid);
+  if (!club) continue;
+  if (ov === null) delete club.manager;
+  else club.manager = { ...ov, wikidata: undefined };
+}
+const nationalFile = join(RAW, "wikidata", "managers-national.json");
+const codeByTitle = new Map(countries.map((c) => [NATIONAL_TEAM_TITLES[c.code] ?? `${c.name} national football team`, c.code]));
+if (existsSync(nationalFile)) {
+  const raw = readJson<{ results: { bindings: [] } }>(nationalFile).results.bindings;
+  const found = reduceManagers(raw, (_qid, b) => codeByTitle.get(b.teamTitle?.value ?? ""), countryByName);
+  for (const m of found.values()) {
+    const country = countries.find((c) => c.code === m.teamCountry);
+    if (country) country.manager = { name: m.name, nationality: m.nationality, since: m.since, wikidata: m.wikidata };
+  }
+}
+for (const [code, ov] of Object.entries(managerOverrides.national)) {
+  const country = countries.find((c) => c.code === code);
+  if (!country) continue;
+  if (ov === null) delete country.manager;
+  else country.manager = { ...ov, wikidata: undefined };
+}
+log(`- Managers: ${clubs.filter((c) => c.manager).length}/${clubs.length} clubs and ${countries.filter((c) => c.manager).length}/${countries.length} national teams have a real head coach (Wikidata P286 + curated corrections); the rest are generated in-game.`);
 
 const usedCountries = new Set(clubs.map((c) => c.countryCode));
 const dataset: Dataset = {

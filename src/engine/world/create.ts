@@ -1,6 +1,7 @@
 import { BALANCE } from "../balance";
 import { setupSeason } from "../competitions/setup";
 import { WORLD, country, leaguesInPlay, stadium, staticClub, staticLeague } from "../data/world";
+import type { StaticManager } from "../data/schema";
 import { bestFormation } from "../match/lineup";
 import { overallFor } from "../players/attributes";
 import { clubRevenue, marketValue, wageFor } from "../players/economy";
@@ -105,6 +106,12 @@ export function generateSquad(state: GameState, rng: Rng, club: ClubState, seaso
   return players;
 }
 
+/** Real head coach at snapshot time when known; otherwise a generated one. Successors are always generated. */
+function startingManager(real: StaticManager | undefined, generatedName: string, generatedNat: CountryCode, quality: number, generatedSince: number, season: number): ClubState["manager"] {
+  if (!real) return { name: generatedName, quality, since: generatedSince, nationality: generatedNat };
+  return { name: real.name, quality, since: Math.min(season, real.since ?? season), nationality: real.nationality ?? "" };
+}
+
 function createClubState(rng: Rng, id: string, season: number): ClubState {
   const st = staticClub(id);
   if (!st) throw new Error(`unknown club ${id}`);
@@ -118,7 +125,7 @@ function createClubState(rng: Rng, id: string, season: number): ClubState {
     balance: Math.round(clubRevenue(st.prestige, tier, cap) * rng.range(0.15, 0.45)),
     formation: "4-3-3",
     style: { pressing: rng.next(), tempo: rng.next(), directness: rng.next() },
-    manager: { name: managerName(rng, mgrNat), quality: Math.round(clamp(st.prestige * 0.7 + rng.normal(20, 8), 20, 99)), since: season - rng.int(0, 4), nationality: mgrNat },
+    manager: startingManager(st.manager, managerName(rng, mgrNat), mgrNat, Math.round(clamp(st.prestige * 0.7 + rng.normal(20, 8), 20, 99)), season - rng.int(0, 4), season),
     youth: Math.round(clamp(st.prestige * 0.8 + rng.normal(10, 12), 10, 99)),
     facilities: Math.round(clamp(st.prestige * 0.9 + rng.normal(5, 8), 10, 99)),
     squad: [],
@@ -319,7 +326,8 @@ export function createWorld(input: NewCareerInput): GameState {
   }
 
   for (const c of WORLD.countries) {
-    const nt: NationalTeamState = { code: c.code, strength: c.strength, squad: [], manager: managerName(rng, c.code), form: [], titles: [] };
+    const generated = managerName(rng, c.code);
+    const nt: NationalTeamState = { code: c.code, strength: c.strength, squad: [], manager: c.manager?.name ?? generated, form: [], titles: [] };
     state.nationalTeams[c.code] = nt;
     const pool = generateVirtualPool(state, rng, c.code, season, c.hasLeagues ? 8 : 24);
     for (const p of pool) state.players[p.id] = p;

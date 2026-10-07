@@ -2,7 +2,7 @@
 
 | Source | Licence | Used for |
 |---|---|---|
-| [Wikidata](https://www.wikidata.org/) | CC0 1.0 | League membership, stadiums & capacities, founding years, colours, cities, coordinates |
+| [Wikidata](https://www.wikidata.org/) | CC0 1.0 | League membership, stadiums & capacities, founding years, colours, cities, coordinates, current head coaches (P286) of clubs and national teams |
 | [OpenFootball clubs](https://github.com/openfootball/clubs) | CC0 1.0 | Canonical names and aliases for cross-source matching |
 | [OpenFootball football.json](https://github.com/openfootball/football.json) | CC0 1.0 | Real results 2020-21 → 2024-25 → historical tables and prestige |
 | [flag-icons](https://github.com/lipis/flag-icons) | MIT | Country flags |

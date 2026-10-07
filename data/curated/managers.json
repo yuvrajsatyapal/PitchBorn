@@ -1,0 +1,5 @@
+{
+  "_note": "Curated corrections to head coaches imported from Wikidata (P286). Keyed by club Wikidata QID or Pitchborn country code. An object replaces the imported coach; null removes it so the game generates a fictional one. Use only to fix factual errors or vandalism.",
+  "clubs": {},
+  "national": {}
+}

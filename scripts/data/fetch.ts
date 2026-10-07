@@ -5,11 +5,12 @@
  *
  *   npm run data:fetch
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import {
   FOOTBALL_JSON_SEASONS,
   LEAGUE_SOURCES,
+  NATIONAL_TEAM_TITLES,
   OPENFOOTBALL_CLUB_FILES,
   USER_AGENT,
   WIKIDATA_ENDPOINT,
@@ -70,6 +71,46 @@ async function fetchWikidata() {
   }
 }
 
+const coachFields = `
+  OPTIONAL {
+    ?team p:P286 ?st . ?st ps:P286 ?coach .
+    FILTER NOT EXISTS { ?st pq:P582 ?end }
+    OPTIONAL { ?st pq:P580 ?start }
+    OPTIONAL { ?coach wdt:P27 ?cit }
+    OPTIONAL { ?coachArticle schema:about ?coach ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?coachTitle }
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,mul". }`;
+
+/** Current head coaches (Wikidata P286) for every club candidate and national team. */
+async function fetchManagers() {
+  console.log("Wikidata head coaches…");
+  const qids = new Set<string>();
+  for (const league of LEAGUE_SOURCES) {
+    const raw = JSON.parse(await readFile(join(RAW_DIR, "wikidata", `clubs-${league.id}.json`), "utf8")) as { results: { bindings: { club?: { value: string } }[] } };
+    for (const b of raw.results.bindings) if (b.club) qids.add(b.club.value.split("/").pop() as string);
+  }
+  const all = [...qids];
+  const bindings: unknown[] = [];
+  for (let i = 0; i < all.length; i += 80) {
+    const values = all.slice(i, i + 80).map((q) => `wd:${q}`).join(" ");
+    const q = `SELECT ?team ?coach ?coachLabel ?coachTitle ?start ?citLabel WHERE { VALUES ?team { ${values} } ${coachFields} }`;
+    const body = await fetchText(`${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(q)}`, { headers: { Accept: "application/sparql-results+json" } });
+    bindings.push(...(JSON.parse(body) as { results: { bindings: unknown[] } }).results.bindings);
+    await new Promise((r) => setTimeout(r, 1200));
+  }
+  await save("wikidata/managers-clubs.json", JSON.stringify({ results: { bindings } }));
+
+  const countries = (JSON.parse(await readFile(join(process.cwd(), "data", "curated", "countries.json"), "utf8")) as { countries: { code: string; name: string }[] }).countries;
+  const titles = countries.map((c) => `"${(NATIONAL_TEAM_TITLES[c.code] ?? `${c.name} national football team`).replace(/"/g, '\\"')}"@en`).join(" ");
+  const nq = `SELECT ?teamTitle ?team ?coach ?coachLabel ?coachTitle ?start ?citLabel WHERE {
+  VALUES ?teamTitle { ${titles} }
+  ?teamArticle schema:name ?teamTitle ; schema:isPartOf <https://en.wikipedia.org/> ; schema:about ?team .
+  ${coachFields}
+}`;
+  const nbody = await fetchText(`${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(nq)}`, { headers: { Accept: "application/sparql-results+json" } });
+  await save("wikidata/managers-national.json", nbody);
+}
+
 async function fetchOpenFootballClubs() {
   console.log("OpenFootball clubs…");
   for (const [country, path] of Object.entries(OPENFOOTBALL_CLUB_FILES)) {
@@ -94,7 +135,12 @@ async function fetchFootballJson() {
 }
 
 async function main() {
+  if (process.argv.includes("--managers-only")) {
+    await fetchManagers();
+    return;
+  }
   await fetchWikidata();
+  await fetchManagers();
   if (!process.argv.includes("--wikidata-only")) await fetchOpenFootballClubs();
   if (!process.argv.includes("--wikidata-only")) await fetchFootballJson();
   await save("FETCHED_AT.txt", new Date().toISOString() + "\n");
