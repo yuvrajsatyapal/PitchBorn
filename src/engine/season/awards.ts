@@ -1,4 +1,5 @@
 import { clubName, country, leaguesInPlay, staticLeague } from "../data/world";
+import { rememberAward, rememberTrophy } from "../memory/detect";
 import { overallFor, positionGroup } from "../players/attributes";
 import { ageOf, avgRating, emptyStat, addStat } from "../players/generate";
 import type { AwardRecord, Competition, GameState, Player, StatLine } from "../types";
@@ -11,6 +12,7 @@ function record(state: GameState, a: Omit<AwardRecord, "season">, opts: { timeli
   const isUser = a.playerId === state.user.playerId;
   if (isUser) {
     state.user.awards.push(rec);
+    rememberAward(state, a.id, a.name, a.scope, a.clubId);
     if (opts.timeline !== false) addTimeline(state, { kind: "award", title: `${a.name}${a.scope ? ` — ${a.scope}` : ""}`, detail: a.value });
     addNews(state, { kind: "award", title: `You win ${a.name}!`, body: [a.scope, a.value].filter(Boolean).join(" · "), important: true });
     state.players[a.playerId].morale = Math.min(100, state.players[a.playerId].morale + 6);
@@ -159,6 +161,7 @@ export function worldAwards(state: GameState): AwardRecord[] {
     addNews(state, { kind: "award", title: `Golden Pitch: you finished #${rank + 1}`, body: `Won by ${winner ? fullName(winner.p) : "—"}.`, important: rank < 10 });
     if (rank < 3) {
       state.user.awards.push({ season: state.season, id: "golden-pitch-podium", name: `Golden Pitch — ${rank === 1 ? "2nd" : "3rd"} place`, scope: "World", playerId: state.user.playerId });
+      rememberAward(state, "golden-pitch-podium", `Golden Pitch — ${rank === 1 ? "2nd" : "3rd"} place`, "World", state.user.playerId ? userPlayer(state).clubId : null);
       addTimeline(state, { kind: "award", title: `Golden Pitch podium (${rank === 1 ? "2nd" : "3rd"})` });
     }
   }
@@ -186,6 +189,7 @@ export function awardTrophy(state: GameState, comp: Competition): void {
       state.user.trophies.push({ season: state.season, compId: comp.id, name: comp.name, kind: comp.kind, clubId: nat ? undefined : comp.winner, country: nat ? comp.winner : undefined });
       addTimeline(state, { kind: "trophy", title: `${comp.name} winner`, detail: nat ? country(comp.winner)?.name : clubName(comp.winner) });
       addNews(state, { kind: "award", title: `Champions! You win the ${comp.name}`, important: true });
+      rememberTrophy(state, comp, appeared ? p.season[comp.id]?.apps ?? 0 : 0);
       state.user.relationships.supporters = Math.min(100, state.user.relationships.supporters + 6);
     }
   }

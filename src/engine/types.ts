@@ -382,6 +382,56 @@ export interface ActiveBoost {
   source: "reward" | "event";
 }
 
+export type MemoryKind =
+  | "debut" | "first-goal" | "intl-debut" | "first-intl-goal"
+  | "derby-winner" | "late-winner" | "winner-goal" | "hat-trick" | "haul" | "comeback" | "final-goal" | "final-winner" | "famous-upset"
+  | "trophy" | "first-title" | "continental-trophy" | "intl-trophy" | "record" | "award"
+  | "major-injury" | "injury-comeback"
+  | "big-transfer" | "controversial-transfer" | "transfer-rejected" | "return-to-club" | "captaincy"
+  | "promotion" | "relegation" | "contract-dispute" | "financial-exit" | "manager-conflict" | "career-decision"
+  | "retirement" | "final-match";
+
+export type MemoryTier = "iconic" | "major" | "notable" | "minor";
+
+/**
+ * A structured career memory. Only ids and numbers are stored; titles and sentences
+ * are generated from this at display time (see engine/memory/describe.ts).
+ */
+export interface Memory {
+  id: string;
+  kind: MemoryKind;
+  season: number;
+  turn: number;
+  /** Player's age when it happened. */
+  age: number;
+  clubId?: ClubId | null;
+  opponentId?: string;
+  compId?: string;
+  compName?: string;
+  stage?: string;
+  fixtureId?: string;
+  minute?: number;
+  /** Final score from the user's side: [for, against]. */
+  score?: [number, number];
+  outcome?: "win" | "draw" | "loss";
+  /** Club whose stadium hosted it (for "return to the ground" recall). */
+  venueClubId?: ClubId;
+  /** 0–100, computed from context. */
+  importance: number;
+  /** How the importance was built: [factor, raw points]. */
+  factors: [string, number][];
+  participants?: PlayerId[];
+  manager?: { name: string; clubId?: ClubId };
+  rivalId?: ClubId;
+  transfer?: { from: ClubId | null; to: ClubId; fee: number };
+  trophy?: { season: number; compId: string };
+  tags: string[];
+  data?: Record<string, number | string | boolean>;
+  /** Times resurfaced and when last (turn index), for anti-spam. */
+  recall?: { shown: number; lastTurnIndex?: number };
+  backfilled?: boolean;
+}
+
 export type AgentTier = "none" | "rookie" | "established" | "top" | "super";
 
 export interface AgentSkills {
@@ -419,6 +469,14 @@ export interface UserCareer {
   startClubId: ClubId;
   startTier: number;
   agent: Agent;
+  /** Career memories, strongest context first at display time. */
+  memories: Memory[];
+  /** The user's most recent match, kept for the "final match" memory. */
+  lastMatch?: { fixtureId: string; compId: string; opponentId: string; score: [number, number]; minutes: number; goals: number; assists: number; rating: number; season: number; turn: number };
+  /** Pending injury comeback to remember: set on a long injury, cleared on the first match back. */
+  comebackFrom?: { type: string; weeks: number; season: number };
+  /** Grudges and rivalries the user's own career created: club id → heat 0–1. */
+  rivalHeat?: Record<ClubId, number>;
   /** Money in hand: wages, bonuses and deals in; agent fees and commission out. */
   bank: number;
   agentUnpaidWeeks?: number;

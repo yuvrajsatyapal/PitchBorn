@@ -1,5 +1,6 @@
 import { BALANCE } from "../balance";
 import { agentSkill } from "../career/agents";
+import { detectInjuryComeback, detectMatchMemory, noteLastMatch, rememberMajorInjury } from "../memory/detect";
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
 import { country, stadium, staticClub, clubName } from "../data/world";
 import { MatchEngine, type MatchInput, type MatchPlayerInput, type MatchResult, type TeamInput } from "../match/engine";
@@ -282,6 +283,7 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     applyInjury(rng, p, injury);
     if (p.id === userId && injury.weeksLeft > 0) {
       state.user.injuryHistory.push({ season: state.season, type: injury.type, weeks: injury.totalWeeks });
+      rememberMajorInjury(state, injury.type, injury.totalWeeks);
       addNews(state, { kind: "injury", title: `Injury: ${injury.type}`, body: `Expected out for ${injury.totalWeeks} week${injury.totalWeeks === 1 ? "" : "s"}.`, important: true });
       if (injury.totalWeeks >= 8) addTimeline(state, { kind: "injury", title: `${injury.type}`, detail: `Out for ${injury.totalWeeks} weeks` });
     }
@@ -373,6 +375,9 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
     body: `${comp.name}${fixture.stage ? ` · ${fixture.stage}` : ""} · ${verdict} display (${line.rating.toFixed(1)})${line.goals ? ` · ${line.goals} goal${line.goals > 1 ? "s" : ""}` : ""}${line.assists ? ` · ${line.assists} assist${line.assists > 1 ? "s" : ""}` : ""}${res.motm === u.id ? " · Player of the Match" : ""}`,
     important: res.motm === u.id || line.goals > 0,
   });
+  noteLastMatch(state, fixture, line, mine, theirs);
+  detectMatchMemory(state, fixture, comp, res, line);
+  detectInjuryComeback(state, fixture, comp, line);
   void resultText;
   void fullName;
   void overallFor;

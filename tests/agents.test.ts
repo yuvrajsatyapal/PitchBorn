@@ -102,6 +102,6 @@ describe("save migration", () => {
     expect(m.user.agent.name).toBe("Old Agent");
     expect(m.user.agent.weeklyFee).toBeGreaterThan(0);
     expect(m.user.bank).toBe(250_000);
-    expect(m.schemaVersion).toBe(3);
+    expect(m.schemaVersion).toBe(4);
   });
 });

@@ -28,6 +28,7 @@ import { clamp, Rng } from "../rng";
 import { ensureMinimumSquads, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
+import { rememberManagerConflict, rememberPromotionOrRelegation, rememberRecord, rememberRetirement } from "../memory/detect";
 import { receiveIncome } from "../career/money";
 import { assignRoles } from "../world/create";
 import { hireManager, releaseManager } from "../world/managers";
@@ -210,6 +211,7 @@ function userWeekly(state: GameState, rng: Rng): void {
     receiveIncome(state, p.contract.wage);
   }
   payAgent(state);
+  if (u.relationships.manager < 18 && p.clubId && state.turn >= C.seasonStart + 4) rememberManagerConflict(state);
   // A good agent keeps spirits up.
   p.morale = clamp(p.morale + (agentSkill(state, "care") - 30) / 400, 0, 100);
   // Playing-time morale: regulars expect to start.
@@ -391,6 +393,7 @@ function updateRecords(state: GameState): void {
     const prev = state.records.find((x) => x.id === r.id);
     if (r.playerId === uid && prev?.playerId !== uid) {
       addTimeline(state, { kind: "record", title: `Record: ${r.label}`, detail: String(r.value) });
+      rememberRecord(state, r.label, r.value);
       addNews(state, { kind: "career", title: `New record: ${r.label}`, body: `${r.value}`, important: true });
     }
   }
@@ -447,6 +450,7 @@ function seasonEnd(state: GameState, rng: Rng): void {
     const up = (staticLeague(myMove.to)?.tier ?? 9) < (staticLeague(state.clubs[myClub].leagueId)?.tier ?? 9);
     addTimeline(state, { kind: up ? "promotion" : "relegation", title: `${up ? "Promoted" : "Relegated"} with ${clubName(myClub)}`, detail: `To the ${staticLeague(myMove.to)?.name}` });
     addNews(state, { kind: "club", title: up ? `Promotion! ${clubName(myClub)} go up` : `Heartbreak: ${clubName(myClub)} relegated`, important: true });
+    rememberPromotionOrRelegation(state, up, myClub, totalSeason(u).apps);
     state.user.relationships.supporters = clamp(state.user.relationships.supporters + (up ? 8 : -4), 0, 100);
   }
 
@@ -539,6 +543,7 @@ export function retireUser(state: GameState, reason = "You announce your retirem
   addTimeline(state, { kind: "retirement", title: "Retired from professional football", detail: reason });
   addNews(state, { kind: "career", title: "End of an era", body: reason, important: true });
   u.legacy = computeLegacy(state);
+  rememberRetirement(state);
   state.pending = [];
   u.offers = u.offers.map((o) => (o.status === "terms" || o.status === "club-pending" ? { ...o, status: "withdrawn" as const } : o));
 }

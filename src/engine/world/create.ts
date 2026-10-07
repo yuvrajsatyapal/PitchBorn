@@ -280,6 +280,7 @@ export function createWorld(input: NewCareerInput): GameState {
       startClubId: input.clubId,
       startTier: staticLeague(staticClub(input.clubId)?.leagueId ?? "")?.tier ?? 1,
       agent: NO_AGENT,
+      memories: [],
       bank: BALANCE.agents.startingBank,
       relationships: { manager: 55, teammates: 55, supporters: 50, board: 50, agent: 60 },
       priorities: input.priorities ?? { money: 1, playingTime: 1, ambition: 1, loyalty: 1 },

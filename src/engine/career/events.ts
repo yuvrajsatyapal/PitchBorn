@@ -4,6 +4,7 @@ import { ageOf } from "../players/generate";
 import { clamp, type Rng } from "../rng";
 import type { GameState, Player, Relationships } from "../types";
 import { addNews, addTimeline, nextId, userPlayer } from "../world/helpers";
+import { rememberCaptaincy, rememberDecision } from "../memory/detect";
 import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
 
 const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
@@ -180,7 +181,10 @@ const EVENTS: CareerEventDef[] = [
     title: () => "Handed the captain's armband",
     body: (s, p) => `The manager names you club captain of ${clubName(p.clubId)}.`,
     effect: (s, p) => {
-      if (p.clubId) s.clubs[p.clubId].captain = p.id;
+      if (p.clubId) {
+        s.clubs[p.clubId].captain = p.id;
+        rememberCaptaincy(s, p.clubId);
+      }
       addTimeline(s, { kind: "milestone", title: `Named captain of ${clubName(p.clubId)}` });
       return { morale: 8, reputation: 2, rel: { board: 5 } };
     },
@@ -246,6 +250,7 @@ export function resolveDecision(state: GameState, decisionId: string, optionId: 
   if (!ev || !opt) return "Nothing happens.";
   apply(state, userPlayer(state), opt.effect(state, userPlayer(state)));
   addNews(state, { kind: "event", title: d.title, body: `You chose: ${opt.label}.` });
+  rememberDecision(state, ev.id, opt.id, d.title);
   return `You chose: ${opt.label}.`;
 }
 

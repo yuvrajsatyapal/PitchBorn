@@ -8,6 +8,7 @@ import { clamp, type Rng } from "../rng";
 import type { ClubState, ContractTerms, GameState, Player, SquadRole, TransferOffer } from "../types";
 import { clubLevel } from "../world/create";
 import { agentSkill, chargeCommission } from "./agents";
+import { rememberContractDispute, rememberRejection, rememberTransfer } from "../memory/detect";
 import { receiveIncome } from "./money";
 import { addNews, addTimeline, addToSquad, nextId, removeFromSquad, squadOf, userPlayer } from "../world/helpers";
 
@@ -215,6 +216,7 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   if (action.type === "reject") {
     o.status = "rejected";
     o.history.push("You turned the offer down.");
+    if (o.kind !== "renewal" && o.kind !== "loan") rememberRejection(state, o);
     if (o.kind === "renewal") state.user.relationships.board = clamp(state.user.relationships.board - 6, 0, 100);
     return { ok: true, message: "Offer rejected." };
   }
@@ -238,6 +240,7 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   if (o.patience <= 0) {
     o.status = "withdrawn";
     o.history.push(`${clubName(o.fromClubId)} walk away from talks.`);
+    if (o.kind === "renewal") rememberContractDispute(state, p.clubId, "renewal");
     return { ok: false, message: `${clubName(o.fromClubId)} have withdrawn the offer.` };
   }
   const newWage = Math.round(Math.min(o.maxWage, (o.terms.wage + Math.min(ask, o.maxWage * 1.1)) / 2) / 100) * 100;
@@ -305,6 +308,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
   receiveIncome(state, o.terms.signingBonus);
   chargeCommission(state, o.terms.wage, o.terms.signingBonus);
   state.user.transfers.push({ season, turn: state.turn, from, to: club.id, fee: o.fee, kind: o.kind });
+  rememberTransfer(state, from, club.id, o.fee);
   state.user.transferRequest = false;
   state.user.relationships = { ...state.user.relationships, manager: 52, teammates: 48, supporters: 50, board: 55 };
   p.morale = clamp(p.morale + 10, 0, 100);

@@ -5,6 +5,7 @@
  */
 import type { GameState } from "../engine/types";
 import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
+import { backfillMemories } from "../engine/memory/backfill";
 import { SCHEMA_VERSION } from "../engine/world/helpers";
 
 type RawState = Record<string, unknown> & { schemaVersion?: number };
@@ -51,6 +52,19 @@ MIGRATIONS[2] = (s) => {
   }
   user.bank ??= Math.max(5000, Math.round(Number(user.earnings ?? 0)));
   s.user = user;
+  return s;
+};
+
+MIGRATIONS[3] = (s) => {
+  // v3 → v4: career memories, rebuilt from what older saves recorded.
+  const user = (s.user ?? {}) as Record<string, unknown>;
+  user.memories ??= [];
+  s.user = user;
+  try {
+    backfillMemories(s as unknown as GameState);
+  } catch {
+    user.memories = []; // never let memories block loading a career
+  }
   return s;
 };
 
