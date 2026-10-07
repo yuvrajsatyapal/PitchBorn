@@ -2,6 +2,7 @@
 import { Crest } from "@/components/art/Crest";
 import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
+import { RivalriesCard } from "@/components/game/RivalCards";
 import { PlayerHero, scoutStars, Stars } from "@/components/game/widgets";
 import { AttrValue, Badge, Card, PageTitle, Table } from "@/components/ui";
 import { clubName, countryName } from "@/engine/data/world";
@@ -22,6 +23,7 @@ export default function Profile() {
     <div className="grid gap-4">
       <PageTitle kicker="My player" title="Player profile" />
       <PlayerHero g={g} p={p} />
+      <RivalriesCard g={g} />
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card title="Attributes">
           <div className="grid gap-4 sm:grid-cols-2">

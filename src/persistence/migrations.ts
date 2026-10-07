@@ -6,6 +6,7 @@
 import { fromLegacy, isLegacyAppearance, sanitizeAppearance } from "../engine/appearance/generate";
 import type { GameState, LegacyAppearance } from "../engine/types";
 import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
+import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
 import { initialTraits } from "../engine/traits/assign";
@@ -111,6 +112,15 @@ MIGRATIONS[6] = (s) => {
   return s;
 };
 
+MIGRATIONS[7] = (s) => {
+  // v7 → v8: emergent player rivalries. Old saves start with none; the transfer scan starts from today.
+  const user = (s.user ?? {}) as Record<string, unknown>;
+  const log = Array.isArray((s as { transferLog?: unknown[] }).transferLog) ? (s as { transferLog: unknown[] }).transferLog.length : 0;
+  user.rivalry ??= { rivals: [], candidates: {}, transferScan: log, lastFormedIndex: -999 };
+  s.user = user;
+  return s;
+};
+
 export class MigrationError extends Error {}
 
 export function migrateState(raw: RawState): GameState {
@@ -131,6 +141,11 @@ export function migrateState(raw: RawState): GameState {
     sanitizeSagas(state);
   } catch {
     if (state.user) state.user.sagas = [];
+  }
+  try {
+    sanitizeRivalry(state);
+  } catch {
+    if (state.user) state.user.rivalry = { rivals: [], candidates: {}, transferScan: state.transferLog?.length ?? 0, lastFormedIndex: -999 };
   }
   return state;
 }

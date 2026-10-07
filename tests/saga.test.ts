@@ -12,6 +12,7 @@ import { checkInvariants } from "../src/engine/validate";
 import { removeFromSquad, userPlayer } from "../src/engine/world/helpers";
 import { decodeState, encodeState } from "../src/persistence/codec";
 import { migrateState } from "../src/persistence/migrations";
+import { SCHEMA_VERSION } from "../src/engine/world/helpers";
 import { newCareer } from "./helpers";
 
 const ALWAYS = { chance: () => true } as unknown as Rng;
@@ -496,7 +497,7 @@ describe("saga persistence", () => {
     raw.schemaVersion = 6;
     const m = migrateState(raw as never);
     expect(m.user.sagas).toEqual([]);
-    expect(m.schemaVersion).toBe(7);
+    expect(m.schemaVersion).toBe(SCHEMA_VERSION);
     const noField = JSON.parse(JSON.stringify(base)) as Record<string, unknown> & { user: Record<string, unknown> };
     delete noField.user.sagas;
     expect(migrateState(noField as never).user.sagas).toEqual([]);

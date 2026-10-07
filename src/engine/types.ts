@@ -437,6 +437,82 @@ export interface TransferSaga {
   snapshot: { reputation: number; value: number; requested: boolean; yearsLeft: number };
 }
 
+export type RivalEventKind = "formed" | "meeting" | "race" | "award" | "transfer" | "intl" | "incident" | "media" | "record" | "cooled" | "ended";
+
+export interface RivalMeeting {
+  season: number;
+  turn: number;
+  fixtureId: string;
+  compId: string;
+  compName: string;
+  stage?: string;
+  intl: boolean;
+  /** Team goals: yours, theirs. */
+  score: [number, number];
+  /** Goals scored by the two players themselves. */
+  myGoals: number;
+  theirGoals: number;
+  result: "win" | "draw" | "loss";
+  /** How much the meeting moved the rivalry. */
+  weight: number;
+  note?: string;
+}
+
+export interface RivalEvent {
+  season: number;
+  turn: number;
+  kind: RivalEventKind;
+  text: string;
+}
+
+/** Another player who has become a recurring character in the user's career. */
+export interface PlayerRival {
+  playerId: PlayerId;
+  /** Kept so the story survives if the player is later removed from the world. */
+  name: string;
+  clubId?: ClubId | null;
+  since: { season: number; turn: number };
+  /** 0–100. Rises with meaningful moments, fades with distance and time. */
+  intensity: number;
+  peak: number;
+  status: "active" | "dormant" | "ended";
+  endedReason?: string;
+  causes: string[];
+  lastContactIndex: number;
+  /** Media contribution so far (capped: media alone never makes a rival). */
+  media: number;
+  lastNewsIndex: number;
+  h2h: { meetings: number; wins: number; draws: number; losses: number; myGoals: number; theirGoals: number };
+  meetings: RivalMeeting[];
+  events: RivalEvent[];
+}
+
+/** A player who is accumulating evidence but is not (yet) a rival. */
+export interface RivalCandidate {
+  points: number;
+  /** Points from international meetings, which need a higher bar on their own. */
+  intl: number;
+  /** Points from media comparisons (capped, and never enough alone). */
+  media: number;
+  /** Points from plain, ordinary meetings, which are capped: playing someone often is not a rivalry. */
+  plain?: number;
+  causes: string[];
+  lastIndex: number;
+  /** Meetings seen so far, kept so the head-to-head is complete if the player becomes a rival. */
+  meetings: RivalMeeting[];
+  /** Short notes on what built the points, kept for the timeline if the player becomes a rival. */
+  events: RivalEvent[];
+}
+
+export interface RivalryState {
+  rivals: PlayerRival[];
+  candidates: Record<PlayerId, RivalCandidate>;
+  /** How far into `transferLog` the weekly scan has read. */
+  transferScan: number;
+  lastFormedIndex: number;
+  lastMediaIndex?: number;
+}
+
 export interface CareerDecision {
   id: string;
   kind: "event";
@@ -489,7 +565,7 @@ export type MemoryKind =
   | "major-injury" | "injury-comeback"
   | "big-transfer" | "controversial-transfer" | "transfer-rejected" | "return-to-club" | "captaincy"
   | "promotion" | "relegation" | "contract-dispute" | "financial-exit" | "manager-conflict" | "career-decision"
-  | "retirement" | "final-match" | "identity" | "transfer-saga";
+  | "retirement" | "final-match" | "identity" | "transfer-saga" | "rivalry";
 
 export type RecallReason = "anniversary" | "origin" | "former-club" | "opponent-history" | "venue" | "grudge";
 
@@ -610,6 +686,8 @@ export interface UserCareer {
   offers: TransferOffer[];
   /** Transfer sagas: at most one active, plus the most recent finished ones (they drive cooldowns). */
   sagas: TransferSaga[];
+  /** Emergent player rivalries. */
+  rivalry: RivalryState;
   decisions: CareerDecision[];
   awards: AwardRecord[];
   trophies: TrophyRecord[];

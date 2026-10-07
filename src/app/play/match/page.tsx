@@ -1,9 +1,12 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { LiveMatch } from "@/components/game/LiveMatch";
+import { rivalHref } from "@/components/game/RivalCards";
 import { MemoryLane } from "@/components/game/VaultCard";
+import { matchPreview } from "@/engine/career/rivalry/engine";
 import { rivalryLevel } from "@/engine/memory/rivalry";
 import { Badge, Button, Card, Empty, PageTitle, Rating, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
@@ -139,6 +142,15 @@ export default function MatchDay() {
             <span className="scoreboard text-3xl">VS</span>
             <div className="flex flex-col items-center gap-1"><Crest clubId={fixture.away} size={70} /><b>{teamLabel(fixture.away)}</b></div>
           </div>
+          {(() => {
+            const preview = matchPreview(g, fixture, comp);
+            return preview ? (
+              <Link href={rivalHref(preview.rival.playerId)} className="mx-auto mb-3 block max-w-xl rounded-xl border-2 border-line bg-card p-2.5 text-center text-sm" data-testid="rival-preview">
+                <span className="font-black">⚔️ Rivalry · </span>
+                {preview.line}
+              </Link>
+            ) : null;
+          })()}
           <MemoryLane g={g} fixtureId={fixture.id} />
           <p className="mb-4 text-center text-sm">
             {(() => {

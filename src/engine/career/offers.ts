@@ -10,6 +10,7 @@ import { clubLevel } from "../world/create";
 import { agentSkill, chargeCommission } from "./agents";
 import { rememberContractDispute, rememberRejection, rememberTransfer } from "../memory/detect";
 import { loyaltyStand, settlingEffect } from "../traits/career";
+import { noteUserTransfer } from "./rivalry/engine";
 import { receiveIncome } from "./money";
 import { addNews, addTimeline, addToSquad, nextId, removeFromSquad, squadOf, userPlayer } from "../world/helpers";
 
@@ -357,6 +358,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
   chargeCommission(state, o.terms.wage, o.terms.signingBonus);
   state.user.transfers.push({ season, turn: state.turn, from, to: club.id, fee: o.fee, kind: o.kind });
   rememberTransfer(state, from, club.id, o.fee);
+  noteUserTransfer(state, club.id);
   state.user.transferRequest = false;
   const settle = settlingEffect(p, from ? staticClub(from)?.countryCode : undefined, staticClub(club.id)?.countryCode);
   state.user.relationships = { ...state.user.relationships, manager: clamp(52 + settle.manager, 30, 80), teammates: 48, supporters: 50, board: 55 };

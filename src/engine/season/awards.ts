@@ -1,5 +1,6 @@
 import { clubName, country, leaguesInPlay, staticLeague } from "../data/world";
 import { keeperScore } from "../players/keeper";
+import { noteAwardDuel } from "../career/rivalry/engine";
 import { rememberAward, rememberTrophy } from "../memory/detect";
 import { overallFor, positionGroup } from "../players/attributes";
 import { ageOf, avgRating, emptyStat, addStat } from "../players/generate";
@@ -110,12 +111,19 @@ export function seasonAwards(state: GameState): AwardRecord[] {
       })
       .filter((x) => x.score > 0);
     if (!scored.length) continue;
-    const pots = [...scored].sort((a, b) => b.score - a.score)[0];
+    const byScore = [...scored].sort((a, b) => b.score - a.score);
+    const pots = byScore[0];
+    if (byScore[1]) {
+      const gap = pots.score - byScore[1].score;
+      noteAwardDuel(state, "pots", "Player of the Season", pots.p.id, byScore[1].p.id, gap < 1.5 ? 1 : gap < 4 ? 3 : 9);
+    }
     const major = l.tier === 1 || players.some((p) => p.isUser);
     out.push(record(state, { id: "pots", name: "Player of the Season", scope: l.name, playerId: pots.p.id, clubId: pots.p.clubId, value: `${pots.s.goals}G ${pots.s.assists}A · avg ${avgRating(pots.s).toFixed(2)}` }, { news: major ? `${fullName(pots.p)} is the ${l.name} Player of the Season` : undefined }));
     const young = scored.filter((x) => ageOf(x.p, state.season) <= 21).sort((a, b) => b.score - a.score)[0];
     if (young) out.push(record(state, { id: "ypots", name: "Young Player of the Season", scope: l.name, playerId: young.p.id, clubId: young.p.clubId, value: `Age ${ageOf(young.p, state.season)}` }));
-    const scorer = [...scored].sort((a, b) => b.s.goals - a.s.goals || a.s.minutes - b.s.minutes)[0];
+    const byGoals = [...scored].sort((a, b) => b.s.goals - a.s.goals || a.s.minutes - b.s.minutes);
+    const scorer = byGoals[0];
+    if (scorer && byGoals[1] && scorer.s.goals > 0) noteAwardDuel(state, "topscorer", "Golden Boot", scorer.p.id, byGoals[1].p.id, scorer.s.goals - byGoals[1].s.goals);
     if (scorer && scorer.s.goals > 0) out.push(record(state, { id: "topscorer", name: "Golden Boot", scope: l.name, playerId: scorer.p.id, clubId: scorer.p.clubId, value: `${scorer.s.goals} goals` }, { news: major ? `${fullName(scorer.p)} wins the ${l.name} Golden Boot (${scorer.s.goals})` : undefined }));
     const assister = [...scored].sort((a, b) => b.s.assists - a.s.assists)[0];
     if (assister && assister.s.assists > 0) out.push(record(state, { id: "topassist", name: "Playmaker Award", scope: l.name, playerId: assister.p.id, clubId: assister.p.clubId, value: `${assister.s.assists} assists` }));

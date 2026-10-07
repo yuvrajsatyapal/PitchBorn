@@ -330,6 +330,7 @@ export function createWorld(input: NewCareerInput): GameState {
       timeline: [],
       offers: [],
       sagas: [],
+      rivalry: { rivals: [], candidates: {}, transferScan: 0, lastFormedIndex: -999 },
       decisions: [],
       awards: [],
       trophies: [],

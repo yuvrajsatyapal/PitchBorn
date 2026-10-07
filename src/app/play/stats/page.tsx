@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { RivalStatsCard } from "@/components/game/RivalCards";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { Card, PageTitle, Stat, Table, Tabs } from "@/components/ui";
@@ -127,6 +128,7 @@ export default function Stats() {
         <p className="mt-2 text-xs text-muted">Pre-career totals are not included in breakdowns; career totals count every senior match.</p>
       </Card>
       <InlineAdSlot placementId="history-break" />
+      <RivalStatsCard g={g} />
       <Card title="Detailed this season">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {p.position === "GK" ? (

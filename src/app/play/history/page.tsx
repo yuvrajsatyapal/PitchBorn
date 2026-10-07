@@ -1,6 +1,7 @@
 "use client";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Flag } from "@/components/art/Flag";
+import { RivalryHistoryCard } from "@/components/game/RivalCards";
 import { Card, Empty, PageTitle, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import type { TimelineKind } from "@/engine/types";
@@ -27,6 +28,7 @@ export default function History() {
   return (
     <div className="grid gap-4">
       <PageTitle kicker="Your story so far" title="Career History" />
+      <RivalryHistoryCard g={g} />
       <Card title="Timeline">
         {seasons.length ? (
           <ol className="relative grid gap-5 border-l-[3px] border-line pl-5">

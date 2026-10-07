@@ -4,6 +4,7 @@ import { ageOf } from "../players/generate";
 import type { GameState, LegacyResult } from "../types";
 import { identityOf } from "../traits/identity";
 import { userPlayer } from "../world/helpers";
+import { rivalryStory } from "./rivalry/engine";
 
 export const LEGACY_TIERS: [number, string][] = [
   [650, "All-Time Great"],
@@ -42,6 +43,8 @@ export function careerStories(state: GameState): string[] {
   const majorTournament = u.trophies.some((t) => t.kind === "international");
   const serious = u.injuryHistory.filter((i) => i.weeks >= 12);
 
+  const rivalStory = rivalryStory(state);
+  if (rivalStory) stories.push(rivalStory);
   if (early || u.awards.some((a) => a.id === "rising-star")) stories.push("Wonderkid — a teenage sensation who announced themselves early.");
   if (peakAge >= 28 && hist.length >= 6 && peak - (hist[2]?.overall ?? peak) >= 10) stories.push("Late Bloomer — the best came after most had written them off.");
   const stands = u.loyaltyStands ?? 0;

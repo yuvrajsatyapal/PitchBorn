@@ -3,6 +3,7 @@ import { agentSkill } from "../career/agents";
 import { baseRivalry } from "../memory/rivalry";
 import { recordMatchEvidence } from "../traits/develop";
 import { careerProfile, resolveMatchFx } from "../traits/effects";
+import { noteMatch } from "../career/rivalry/engine";
 import { detectInjuryComeback, detectMatchMemory, noteLastMatch, rememberMajorInjury } from "../memory/detect";
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
 import { country, stadium, staticClub, clubName } from "../data/world";
@@ -405,6 +406,7 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
     important: res.motm === u.id || line.goals > 0,
   });
   noteLastMatch(state, fixture, line, mine, theirs);
+  noteMatch(state, fixture, comp, res, line);
   detectMatchMemory(state, fixture, comp, res, line);
   detectInjuryComeback(state, fixture, comp, line);
   void resultText;

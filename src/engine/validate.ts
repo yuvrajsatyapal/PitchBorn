@@ -68,6 +68,9 @@ export function checkInvariants(state: GameState): Invariant {
     for (const id of s.offerIds) if (!state.user.offers.some((o) => o.id === id)) issues.push(`saga ${s.id} references missing offer ${id}`);
     if (s.deadlineIndex < state.turnIndex) issues.push(`saga ${s.id} is active past its deadline`);
   }
+  const rivals = state.user.rivalry?.rivals ?? [];
+  if (rivals.filter((r) => r.status === "active").length > 3) issues.push("more than three active rivalries");
+  for (const r of rivals) if (r.intensity < 0 || r.intensity > 100) issues.push(`rival ${r.playerId} intensity out of range`);
   if (!state.players[state.user.playerId]) issues.push("user player missing");
   return { ok: issues.length === 0, issues };
 }

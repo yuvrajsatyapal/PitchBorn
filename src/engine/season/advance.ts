@@ -14,6 +14,7 @@ import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
 import { divertToSaga, stepSagas } from "../career/saga/engine";
+import { noteRecord, weeklyRivalry } from "../career/rivalry/engine";
 import { RUMOUR_MIN_REPUTATION } from "../career/saga/eligibility";
 import { leagueCompId, progressKnockouts, refreshLeagueTables, setupSeason } from "../competitions/setup";
 import { clubName, leaguesInPlay, stadium, staticClub, staticLeague } from "../data/world";
@@ -334,6 +335,7 @@ export function advanceTurn(state: GameState): AdvanceReport {
     }
     checkUserContract(state, rng);
     stepSagas(state, rng);
+    weeklyRivalry(state);
     expireOffers(state);
     maybeCareerEvent(state, rng);
     expireDecisions(state);
@@ -413,6 +415,9 @@ function updateRecords(state: GameState): void {
       addTimeline(state, { kind: "record", title: `Record: ${r.label}`, detail: String(r.value) });
       rememberRecord(state, r.label, r.value);
       addNews(state, { kind: "career", title: `New record: ${r.label}`, body: `${r.value}`, important: true });
+      if (prev && prev.playerId !== uid) noteRecord(state, prev.playerId, true, r.label);
+    } else if (prev?.playerId === uid && r.playerId !== uid) {
+      noteRecord(state, r.playerId, false, r.label);
     }
   }
   state.records = records;

@@ -11,6 +11,7 @@ import { traitDef } from "../traits/registry";
 import { ageOf } from "../players/generate";
 import type { Competition, Fixture, GameState, Memory, MemoryKind, TransferOffer, TransferSaga } from "../types";
 import { userPlayer } from "../world/helpers";
+import { rivalMatchBonus } from "../career/rivalry/engine";
 import { bumpRivalHeat, rivalryLevel } from "./rivalry";
 import { agePoints, Factors, stagePoints } from "./score";
 import { recordMemory } from "./store";
@@ -95,6 +96,11 @@ export function detectMatchMemory(state: GameState, fixture: Fixture, comp: Comp
     f.add("Derby / rivalry", level * 24);
     tags.push("derby");
   } else if (level > 0) f.add("Local rivalry", level * 10);
+  const duel = rivalMatchBonus(state, fixture.id);
+  if (duel) {
+    f.add(`Face to face with your rival, ${duel.rival.name}`, duel.bonus);
+    tags.push("rivalry");
+  }
   if (!nat && oppRep >= 85) f.add("Elite opponent", 4);
   else if (!nat && oppRep >= 75) f.add("Strong opponent", 2);
   f.add("Young talent", agePoints(age) && age <= 21 ? agePoints(age) : 0);

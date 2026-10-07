@@ -12,6 +12,7 @@ import { overallFor } from "../../players/attributes";
 import { formatMoney, marketValue } from "../../players/economy";
 import { clamp, Rng } from "../../rng";
 import { rememberSaga } from "../../memory/detect";
+import { noteSagaCompetition } from "../rivalry/engine";
 import { baseRivalry, bumpRivalHeat } from "../../memory/rivalry";
 import { careerProfile } from "../../traits/effects";
 import type { CareerDecision, ClubId, ClubState, ContractTerms, GameState, Player, SagaOutcome, SagaStage, TransferOffer, TransferSaga } from "../../types";
@@ -170,6 +171,7 @@ function finish(state: GameState, s: TransferSaga, outcome: SagaOutcome, text: s
   log(state, s, s.stage, text);
   if (news && outcome !== "completed") addNews(state, { kind: "transfer", title: `The ${clubName(s.clubId)} saga ends`, body: text, important: true });
   rememberSaga(state, s);
+  noteSagaCompetition(state, s);
 }
 
 function complete(state: GameState, s: TransferSaga, o: TransferOffer): void {
