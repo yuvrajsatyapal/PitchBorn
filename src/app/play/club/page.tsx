@@ -56,7 +56,7 @@ export default function ClubPage() {
               <div><dt className="text-xs text-muted">Capacity</dt><dd className="font-semibold">{stad?.capacity.toLocaleString()}</dd></div>
               <div><dt className="text-xs text-muted">City</dt><dd className="font-semibold">{st.city}</dd></div>
               <div><dt className="text-xs text-muted">Founded</dt><dd className="font-semibold">{st.founded ?? "—"}</dd></div>
-              <div><dt className="text-xs text-muted">Manager</dt><dd className="flex items-center gap-1 font-semibold">{club.manager.nationality && <Flag code={club.manager.nationality} />} {club.manager.name}</dd></div>
+              <div><dt className="text-xs text-muted">Manager</dt><dd className="flex items-center gap-1 font-semibold">{club.manager.nationality && <Flag code={club.manager.nationality} />} {club.manager.name}{club.manager.born ? <span className="font-normal text-muted">({g.season - club.manager.born})</span> : null}</dd></div>
               <div><dt className="text-xs text-muted">Formation</dt><dd className="font-semibold">{club.formation}</dd></div>
             </dl>
           </div>

@@ -3,136 +3,175 @@
   "clubs": {
     "Q248188": {
       "name": "Paul Warne",
-      "nationality": "ENG"
+      "nationality": "ENG",
+      "born": 1973
     },
     "Q18750": {
       "name": "Gary Caldwell",
-      "nationality": "SCO"
+      "nationality": "SCO",
+      "born": 1982
     },
     "Q646281": {
       "name": "Adrián Colunga",
-      "nationality": "ESP"
+      "nationality": "ESP",
+      "born": 1985
     },
     "Q2128712": {
       "name": "Kiko Ramírez",
-      "nationality": "ESP"
+      "nationality": "ESP",
+      "born": 1970
     },
     "Q720872": {
       "name": "Yago Iglesias",
-      "nationality": "ESP"
+      "nationality": "ESP",
+      "born": 1982
     },
     "Q30587901": {
       "name": "Raúl Llona",
-      "nationality": "ESP"
+      "nationality": "ESP",
+      "born": 1976
     },
     "Q908820": {
       "name": "Natxo González",
-      "nationality": "ESP"
+      "nationality": "ESP",
+      "born": 1966
     },
     "Q856024": {
       "name": "Josep Maria Gené",
-      "nationality": "ESP"
+      "nationality": "ESP",
+      "born": 1981
     },
     "Q2511257": {
       "name": "Guille Fernández",
-      "nationality": "ESP"
+      "nationality": "ESP",
+      "born": 1989
     },
     "Q608988": {
       "name": "Romain Philippoteaux",
-      "nationality": "FRA"
+      "nationality": "FRA",
+      "born": 1988
     },
     "Q1465560": {
-      "name": "Gabriel Santos"
+      "name": "Gabriel Santos",
+      "nationality": "POR",
+      "born": 1987
     },
     "Q298279": {
       "name": "Christophe Gosselin",
-      "nationality": "FRA"
+      "nationality": "FRA",
+      "born": 1976
     },
     "Q2868152": {
       "name": "Alexandre Demougeot",
-      "nationality": "FRA"
+      "nationality": "FRA",
+      "born": 1982
     },
     "Q265105": {
-      "name": "Dorian Chacon Cordon"
+      "name": "Dorian Chacon Cordon",
+      "nationality": "FRA",
+      "born": 1991
     },
     "Q3555461": {
-      "name": "Damien Mayenga"
+      "name": "Damien Mayenga",
+      "nationality": "FRA",
+      "born": 1987
     },
     "Q3076548": {
-      "name": "Hakim Malek"
+      "name": "Hakim Malek",
+      "nationality": "FRA",
+      "born": 1972
     },
     "Q32494": {
       "name": "Miron Muslić",
-      "nationality": "AUT"
+      "nationality": "AUT",
+      "born": 1982
     },
     "Q14551982": {
       "name": "Alois Schwartz",
-      "nationality": "GER"
+      "nationality": "GER",
+      "born": 1967
     },
     "Q170117": {
       "name": "Achim Beierlorzer",
-      "nationality": "GER"
+      "nationality": "GER",
+      "born": 1968
     },
     "Q759482": {
       "name": "Fabio Pecchia",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1973
     },
     "Q289707": {
       "name": "Attilio Tesser",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1958
     },
     "Q430993": {
       "name": "Davide Possanzini",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1976
     },
     "Q1136016": {
       "name": "Federico Coppitelli",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1985
     },
     "Q2276413": {
       "name": "Andrea Chiappella",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1987
     },
     "Q13381": {
       "name": "Gaetano Fontana",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1970
     },
     "Q610621": {
       "name": "Fabrizio Castori",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1954
     },
     "Q2018": {
       "name": "Emilio Longo",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1973
     },
     "Q289029": {
       "name": "Agenore Maurizi",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1964
     },
     "Q2095117": {
       "name": "Fabio Brini",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1957
     },
     "Q7863279": {
       "name": "Andrea Zanchetta",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1975
     },
     "Q944876": {
       "name": "Federico Valente",
-      "nationality": "ITA"
+      "nationality": "SUI",
+      "born": 1975
     },
     "Q107222619": {
       "name": "Ciro Ginestra",
-      "nationality": "ITA"
+      "nationality": "ITA",
+      "born": 1979
     }
   },
   "national": {
     "SWE": {
       "name": "Graham Potter",
-      "nationality": "ENG"
+      "nationality": "ENG",
+      "born": 1975
     },
     "ALG": {
-      "name": "Ibrahim Hamdani"
+      "name": "Ibrahim Hamdani",
+      "nationality": "ALG",
+      "born": 1978
     },
     "GHA": null
   },

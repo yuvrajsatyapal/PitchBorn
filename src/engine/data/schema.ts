@@ -15,6 +15,7 @@ export const ManagerSchema = z.object({
   /** Pitchborn country code when the coach's citizenship is one of our nations. */
   nationality: z.string().optional(),
   since: z.number().int().optional(),
+  born: z.number().int().optional(),
   wikidata: z.string().optional(),
 });
 export type StaticManager = z.infer<typeof ManagerSchema>;

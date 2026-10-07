@@ -30,7 +30,7 @@ export function hireManager(state: GameState, rng: Rng, club: ClubState, fallbac
   if (candidates.length && rng.chance(0.75)) {
     const pick = rng.weighted(candidates, (m) => Math.pow(Math.max(1, m.quality - floor), 2));
     pool.splice(pool.indexOf(pick), 1);
-    return { name: pick.name, quality: pick.quality, since: state.season, nationality: pick.nationality };
+    return { name: pick.name, quality: pick.quality, since: state.season, nationality: pick.nationality, born: pick.born };
   }
   return { name: managerName(rng, fallbackNat), quality: Math.round(clamp(club.reputation * 0.7 + rng.normal(20, 8), 20, 99)), since: state.season, nationality: fallbackNat };
 }
@@ -39,7 +39,7 @@ export function hireManager(state: GameState, rng: Rng, club: ClubState, fallbac
 export function releaseManager(state: GameState, manager: ClubState["manager"]): void {
   const pool = managerPool(state);
   if (pool.some((m) => m.name === manager.name)) return;
-  pool.push({ name: manager.name, nationality: manager.nationality, quality: Math.max(20, manager.quality - 2) });
+  pool.push({ name: manager.name, nationality: manager.nationality, quality: Math.max(20, manager.quality - 2), born: manager.born });
   if (pool.length > MAX_POOL) {
     pool.sort((a, b) => b.quality - a.quality);
     pool.length = MAX_POOL;

@@ -157,7 +157,7 @@ export interface ClubState {
   balance: number; // euros
   formation: FormationId;
   style: { pressing: number; tempo: number; directness: number }; // 0-1
-  manager: { name: string; quality: number; since: number; nationality: CountryCode };
+  manager: { name: string; quality: number; since: number; nationality: CountryCode; born?: number };
   youth: number; // academy quality 1-100
   facilities: number; // training facilities 1-100
   squad: PlayerId[];

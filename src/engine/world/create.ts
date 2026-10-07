@@ -109,7 +109,7 @@ export function generateSquad(state: GameState, rng: Rng, club: ClubState, seaso
 /** Real head coach at snapshot time when known; otherwise a generated one. Successors are always generated. */
 function startingManager(real: StaticManager | undefined, generatedName: string, generatedNat: CountryCode, quality: number, generatedSince: number, season: number): ClubState["manager"] {
   if (!real) return { name: generatedName, quality, since: generatedSince, nationality: generatedNat };
-  return { name: real.name, quality, since: Math.min(season, real.since ?? season), nationality: real.nationality ?? "" };
+  return { name: real.name, quality, since: Math.min(season, real.since ?? season), nationality: real.nationality ?? "", born: real.born };
 }
 
 function createClubState(rng: Rng, id: string, season: number): ClubState {

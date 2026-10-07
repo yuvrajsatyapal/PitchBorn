@@ -17,6 +17,7 @@ export default function National() {
   const p = user(g);
   const code = p.intl.tiedTo ?? p.nationality;
   const nt = g.nationalTeams[code];
+  const ntCoach = country(code)?.manager?.name === nt?.manager ? country(code)?.manager : undefined;
   const squad = (nt?.squad ?? []).map((id) => g.players[id]).filter(Boolean).sort((a, b) => ovr(b) - ovr(a));
   const inSquad = nt?.squad.includes(p.id);
   const alt = !p.intl.tiedTo && p.altNationality ? g.nationalTeams[p.altNationality] : undefined;
@@ -59,7 +60,10 @@ export default function National() {
           ) : (
             <Empty title="Squad announced before the next international window" icon="🌍" />
           )}
-          <p className="mt-2 text-xs text-muted">Manager: {nt?.manager}. Squads are picked on current ability, form and reputation.</p>
+          <p className="mt-2 flex flex-wrap items-center gap-1 text-xs text-muted">
+            Manager: {ntCoach?.nationality && <Flag code={ntCoach.nationality} />} <b className="text-ink">{nt?.manager}</b>
+            {ntCoach?.born ? ` (${g.season - ntCoach.born})` : ""}. Squads are picked on current ability, form and reputation.
+          </p>
         </Card>
         <div className="grid content-start gap-4">
           <Card title="Matches this season">

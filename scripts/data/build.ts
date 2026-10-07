@@ -339,7 +339,7 @@ const leagues: League[] = LEAGUE_SOURCES.map((l) => {
 // --------------------------------------------------------------- Managers
 // Real head coaches at snapshot time. Curated corrections in data/curated/managers.json
 // win over Wikidata ("null" removes a manager so the game generates one).
-interface ManagerOverride { name: string; nationality?: string; since?: number }
+interface ManagerOverride { name: string; nationality?: string; since?: number; born?: number }
 const managerOverrides = readJson<{ clubs: Record<string, ManagerOverride | null>; national: Record<string, ManagerOverride | null>; freeAgents?: FreeAgentManager[] }>(
   join(ROOT, "data", "curated", "managers.json"),
 );
