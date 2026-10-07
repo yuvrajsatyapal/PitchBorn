@@ -160,6 +160,1560 @@
       "name": "Ciro Ginestra",
       "nationality": "ITA",
       "born": 1979
+    },
+    "Q50602": {
+      "name": "Enzo Maresca",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1980
+    },
+    "Q1130849": {
+      "name": "Andoni Iraola",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1982
+    },
+    "Q9617": {
+      "name": "Mikel Arteta",
+      "nationality": "ESP",
+      "since": 2019,
+      "born": 1982
+    },
+    "Q9616": {
+      "name": "Xabi Alonso",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1982
+    },
+    "Q18716": {
+      "name": "Matthias Jaissle",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1988
+    },
+    "Q18711": {
+      "name": "Unai Emery",
+      "nationality": "ESP",
+      "since": 2022,
+      "born": 1972
+    },
+    "Q19453": {
+      "name": "Fabian Hürzeler",
+      "nationality": "GER",
+      "since": 2024,
+      "born": 1993
+    },
+    "Q18656": {
+      "name": "Michael Carrick",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1981
+    },
+    "Q18741": {
+      "name": "Roberto De Zerbi",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1979
+    },
+    "Q19467": {
+      "name": "Pierre Sage",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1979
+    },
+    "Q19571": {
+      "name": "Keith Andrews",
+      "nationality": "IRL",
+      "since": 2025,
+      "born": 1980
+    },
+    "Q19568": {
+      "name": "Marco Rose",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1976
+    },
+    "Q5794": {
+      "name": "David Moyes",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1963
+    },
+    "Q18708": {
+      "name": "Álvaro Arbeloa",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q19490": {
+      "name": "Oliver Glasner",
+      "nationality": "AUT",
+      "since": 2026,
+      "born": 1974
+    },
+    "Q9653": {
+      "name": "Gary O'Neil",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q1128631": {
+      "name": "Daniel Farke",
+      "nationality": "GER",
+      "since": 2023,
+      "born": 1977
+    },
+    "Q18739": {
+      "name": "Régis Le Bris",
+      "nationality": "FRA",
+      "since": 2024,
+      "born": 1976
+    },
+    "Q19580": {
+      "name": "Frank Lampard",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1978
+    },
+    "Q19477": {
+      "name": "Sergej Jakirović",
+      "since": 2025,
+      "born": 1977
+    },
+    "Q18747": {
+      "name": "Nuno Espírito Santo",
+      "nationality": "POR",
+      "since": 2025,
+      "born": 1974
+    },
+    "Q19500": {
+      "name": "César Peixoto",
+      "nationality": "POR",
+      "since": 2026,
+      "born": 1980
+    },
+    "Q19458": {
+      "name": "Nicky Hayen",
+      "nationality": "BEL",
+      "since": 2026,
+      "born": 1980
+    },
+    "Q18732": {
+      "name": "Tonda Eckert",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1993
+    },
+    "Q19607": {
+      "name": "Chris Wilder",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1967
+    },
+    "Q18661": {
+      "name": "Kim Hellberg",
+      "nationality": "SWE",
+      "since": 2025,
+      "born": 1988
+    },
+    "Q18744": {
+      "name": "Ryan Mason",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1991
+    },
+    "Q19487": {
+      "name": "Alex Neil",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1981
+    },
+    "Q18721": {
+      "name": "Philippe Clement",
+      "nationality": "BEL",
+      "since": 2025,
+      "born": 1974
+    },
+    "Q19446": {
+      "name": "Valérien Ismaël",
+      "nationality": "FRA",
+      "since": 2025,
+      "born": 1975
+    },
+    "Q19456": {
+      "name": "Roy Hodgson",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1947
+    },
+    "Q18659": {
+      "name": "Alan Sheehan",
+      "nationality": "IRL",
+      "since": 2025,
+      "born": 1986
+    },
+    "Q2714": {
+      "name": "Alessio Dionisi",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1980
+    },
+    "Q19604": {
+      "name": "John Mousinho",
+      "nationality": "ENG",
+      "since": 2023,
+      "born": 1986
+    },
+    "Q18529": {
+      "name": "Phil Parkinson",
+      "nationality": "ENG",
+      "since": 2021,
+      "born": 1968
+    },
+    "Q19451": {
+      "name": "Steven Schumacher",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1984
+    },
+    "Q19462": {
+      "name": "Nathan Jones",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1973
+    },
+    "Q19612": {
+      "name": "Jason Euell",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1977
+    },
+    "Q19470": {
+      "name": "John Eustace",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1980
+    },
+    "Q18723": {
+      "name": "Julien Stéphan",
+      "nationality": "FRA",
+      "since": 2025,
+      "born": 1980
+    },
+    "Q18736": {
+      "name": "Mark Robins",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1970
+    },
+    "Q18662": {
+      "name": "Aaron Ramsey",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1991
+    },
+    "Q19444": {
+      "name": "Chris Davies",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1985
+    },
+    "Q18519": {
+      "name": "Michael Skubala",
+      "nationality": "ENG",
+      "since": 2023,
+      "born": 1983
+    },
+    "Q19481": {
+      "name": "Gary Rowett",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1974
+    },
+    "Q18520": {
+      "name": "Jack Wilshere",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1992
+    },
+    "Q19498": {
+      "name": "Henrik Pedersen",
+      "nationality": "DEN",
+      "since": 2025,
+      "born": 1978
+    },
+    "Q48946": {
+      "name": "Aaron Ramsey",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1991
+    },
+    "Q19473": {
+      "name": "Liam Manning",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1985
+    },
+    "Q18729": {
+      "name": "Leam Richardson",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1980
+    },
+    "Q18526": {
+      "name": "Dave Challinor",
+      "nationality": "ENG",
+      "since": 2021,
+      "born": 1976
+    },
+    "Q48953": {
+      "name": "Michael Duff",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1978
+    },
+    "Q19442": {
+      "name": "Conor Hourihane",
+      "nationality": "IRL",
+      "since": 2025,
+      "born": 1991
+    },
+    "Q19449": {
+      "name": "Steve Bruce",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1961
+    },
+    "Q19595": {
+      "name": "Richie Wellens",
+      "nationality": "ENG",
+      "since": 2022,
+      "born": 1980
+    },
+    "Q48947": {
+      "name": "Miron Muslić",
+      "nationality": "AUT",
+      "since": 2025,
+      "born": 1982
+    },
+    "Q48879": {
+      "name": "Graham Alexander",
+      "nationality": "ENG",
+      "since": 2023,
+      "born": 1972
+    },
+    "Q19598": {
+      "name": "Stuart Maynard",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1981
+    },
+    "Q19589": {
+      "name": "Grant McCann",
+      "nationality": "ENG",
+      "since": 2023,
+      "born": 1980
+    },
+    "Q1584552": {
+      "name": "Andy Woodman",
+      "nationality": "ENG",
+      "since": 2021,
+      "born": 1971
+    },
+    "Q19495": {
+      "name": "Darren Ferguson",
+      "nationality": "ENG",
+      "since": 2023,
+      "born": 1972
+    },
+    "Q9426": {
+      "name": "Alex Revell",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1983
+    },
+    "Q18522": {
+      "name": "Nigel Clough",
+      "nationality": "ENG",
+      "since": 2020,
+      "born": 1966
+    },
+    "Q48851": {
+      "name": "Johnnie Jackson",
+      "nationality": "ENG",
+      "since": 2022,
+      "born": 1982
+    },
+    "Q48929": {
+      "name": "Gary Bowyer",
+      "nationality": "ENG",
+      "since": 2024,
+      "born": 1971
+    },
+    "Q18509": {
+      "name": "Neil Harris",
+      "nationality": "ENG",
+      "since": 2025,
+      "born": 1977
+    },
+    "Q7156": {
+      "name": "Hansi Flick",
+      "nationality": "GER",
+      "since": 2024,
+      "born": 1965
+    },
+    "Q8682": {
+      "name": "José Mourinho",
+      "nationality": "POR",
+      "since": 2026,
+      "born": 1963
+    },
+    "Q8701": {
+      "name": "Diego Simeone",
+      "nationality": "ARG",
+      "since": 2011,
+      "born": 1970
+    },
+    "Q8687": {
+      "name": "Edin Terzić",
+      "nationality": "CRO",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q8723": {
+      "name": "Manuel Pellegrini",
+      "since": 2020,
+      "born": 1953
+    },
+    "Q12297": {
+      "name": "Iñigo Pérez",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1988
+    },
+    "Q10315": {
+      "name": "Pellegrino Matarazzo",
+      "nationality": "USA",
+      "since": 2025,
+      "born": 1978
+    },
+    "Q10286": {
+      "name": "Luis Miguel Ramis",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1970
+    },
+    "Q8749": {
+      "name": "Claudio Giráldez",
+      "nationality": "ESP",
+      "since": 2024,
+      "born": 1988
+    },
+    "Q10329": {
+      "name": "Luis García",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1973
+    },
+    "Q10333": {
+      "name": "Javier Aguirre",
+      "nationality": "MEX",
+      "since": 2026,
+      "born": 1959
+    },
+    "Q223620": {
+      "name": "Quique Sánchez Flores",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1965
+    },
+    "Q8806": {
+      "name": "José Bordalás",
+      "nationality": "ESP",
+      "since": 2023,
+      "born": 1964
+    },
+    "Q10300": {
+      "name": "Beñat San José",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1979
+    },
+    "Q12236": {
+      "name": "José Alberto",
+      "nationality": "ESP",
+      "since": 2022,
+      "born": 1982
+    },
+    "Q8823": {
+      "name": "Luís Castro",
+      "nationality": "POR",
+      "since": 2025,
+      "born": 1980
+    },
+    "Q8780": {
+      "name": "Manolo González",
+      "nationality": "ESP",
+      "since": 2024,
+      "born": 1979
+    },
+    "Q10512": {
+      "name": "Martín Anselmi",
+      "nationality": "ARG",
+      "since": 2026,
+      "born": 1985
+    },
+    "Q8760": {
+      "name": "Antonio Hidalgo",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1979
+    },
+    "Q8857": {
+      "name": "Juan Francisco Funes",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1983
+    },
+    "Q11945": {
+      "name": "Quique Álvarez",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1975
+    },
+    "Q8835": {
+      "name": "Luis García",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1973
+    },
+    "Q11979": {
+      "name": "Luis García",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1973
+    },
+    "Q460448": {
+      "name": "Albert Celades",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1975
+    },
+    "Q856119": {
+      "name": "Rubén Albés",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1985
+    },
+    "Q8812": {
+      "name": "Pacheta",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1968
+    },
+    "Q10319": {
+      "name": "Fran Escribá",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1965
+    },
+    "Q10407": {
+      "name": "García Pimienta",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1974
+    },
+    "Q271574": {
+      "name": "Julián Calero",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1971
+    },
+    "Q10499": {
+      "name": "Iván Ania",
+      "nationality": "ESP",
+      "since": 2023,
+      "born": 1978
+    },
+    "Q770740": {
+      "name": "Beñat San José",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1979
+    },
+    "Q12168": {
+      "name": "David Gallego",
+      "nationality": "ESP",
+      "since": 2022,
+      "born": 1972
+    },
+    "Q12278": {
+      "name": "Borja Jiménez",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1985
+    },
+    "Q576285": {
+      "name": "Alberto González",
+      "nationality": "ESP",
+      "since": 2024,
+      "born": 1979
+    },
+    "Q852079": {
+      "name": "Sergio Francisco",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1979
+    },
+    "Q582342": {
+      "name": "Curro Torres",
+      "nationality": "ESP",
+      "since": 2021,
+      "born": 1977
+    },
+    "Q743557": {
+      "name": "Johan Plat",
+      "nationality": "NED",
+      "since": 2025,
+      "born": 1987
+    },
+    "Q1386854": {
+      "name": "Carles Manso",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1990
+    },
+    "Q1067737": {
+      "name": "Sergio Rodríguez",
+      "nationality": "ESP",
+      "born": 1978
+    },
+    "Q216661": {
+      "name": "Álvaro Cervera",
+      "nationality": "ESP",
+      "since": 2024,
+      "born": 1965
+    },
+    "Q843396": {
+      "name": "Alejandro Menéndez",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1966
+    },
+    "Q611653": {
+      "name": "Guillermo Fernández Romo",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1979
+    },
+    "Q108708": {
+      "name": "Mere",
+      "nationality": "ESP",
+      "since": 2018,
+      "born": 1969
+    },
+    "Q10308": {
+      "name": "Emilio Larraz",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1968
+    },
+    "Q10383": {
+      "name": "Jorge Romero",
+      "nationality": "ESP",
+      "born": 1985
+    },
+    "Q12260": {
+      "name": "Ferran Costa",
+      "nationality": "ESP",
+      "born": 1994
+    },
+    "Q11963": {
+      "name": "Sergio Mora",
+      "nationality": "ESP",
+      "born": 1979
+    },
+    "Q12230": {
+      "name": "Curro Torres",
+      "nationality": "ESP",
+      "born": 1977
+    },
+    "Q257984": {
+      "name": "Luis César Sampedro",
+      "nationality": "ESP",
+      "since": 2025,
+      "born": 1966
+    },
+    "Q847105": {
+      "name": "Albert Aguilà",
+      "nationality": "ESP",
+      "born": 1970
+    },
+    "Q726810": {
+      "name": "Mikel Llorente",
+      "nationality": "ESP",
+      "since": 2024,
+      "born": 1983
+    },
+    "Q579901": {
+      "name": "Aitor Calle",
+      "nationality": "ESP",
+      "since": 2021,
+      "born": 1976
+    },
+    "Q20278773": {
+      "name": "Dani Mori",
+      "nationality": "ESP",
+      "since": 2021,
+      "born": 1976
+    },
+    "Q78345783": {
+      "name": "Gustavo Siviero",
+      "nationality": "ARG",
+      "born": 1969
+    },
+    "Q515516": {
+      "name": "Natxo González",
+      "nationality": "ESP",
+      "since": 2024,
+      "born": 1966
+    },
+    "Q483020": {
+      "name": "Luis Enrique",
+      "nationality": "ESP",
+      "since": 2023,
+      "born": 1970
+    },
+    "Q180305": {
+      "name": "Filipe Luís",
+      "nationality": "BRA",
+      "since": 2026,
+      "born": 1985
+    },
+    "Q132885": {
+      "name": "Bruno Génésio",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1966
+    },
+    "Q19516": {
+      "name": "Davide Ancelotti",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1989
+    },
+    "Q185163": {
+      "name": "Olivier Pantaloni",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1967
+    },
+    "Q704": {
+      "name": "Paulo Fonseca",
+      "nationality": "POR",
+      "since": 2025,
+      "born": 1973
+    },
+    "Q191843": {
+      "name": "Yannick Cahuzac",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1985
+    },
+    "Q218372": {
+      "name": "Julien Lachuer",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1977
+    },
+    "Q19509": {
+      "name": "Franck Haise",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1971
+    },
+    "Q126334": {
+      "name": "Hugo Oliveira",
+      "nationality": "POR",
+      "since": 2026,
+      "born": 1979
+    },
+    "Q210864": {
+      "name": "Patrick Videira",
+      "nationality": "FRA",
+      "since": 2024,
+      "born": 1977
+    },
+    "Q19518": {
+      "name": "Jens Berthel Askou",
+      "nationality": "DEN",
+      "since": 2026,
+      "born": 1982
+    },
+    "Q182876": {
+      "name": "Will Still",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1993
+    },
+    "Q845137": {
+      "name": "Stéphane Gilli",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1974
+    },
+    "Q328658": {
+      "name": "Didier Digard",
+      "nationality": "FRA",
+      "since": 2024,
+      "born": 1986
+    },
+    "Q1051013": {
+      "name": "Liam Rosenior",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1984
+    },
+    "Q48911": {
+      "name": "Alexandre Dujeux",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1976
+    },
+    "Q501693": {
+      "name": "Stéphane Dumont",
+      "nationality": "FRA",
+      "since": 2024,
+      "born": 1982
+    },
+    "Q208228": {
+      "name": "Nicolas Usaï",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1974
+    },
+    "Q192071": {
+      "name": "Grégory Poirier",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q19513": {
+      "name": "Zoumana Camara",
+      "nationality": "FRA",
+      "since": 2025,
+      "born": 1979
+    },
+    "Q19521": {
+      "name": "Ian Cathro",
+      "nationality": "ENG",
+      "since": 2026,
+      "born": 1986
+    },
+    "Q221525": {
+      "name": "Luc Holtz",
+      "since": 2026,
+      "born": 1969
+    },
+    "Q503317": {
+      "name": "Baptiste Ridira",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q870182": {
+      "name": "David Guion",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1967
+    },
+    "Q19523": {
+      "name": "Oswald Tanchot",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1973
+    },
+    "Q459148": {
+      "name": "Sylvain Ripoll",
+      "nationality": "FRA",
+      "since": 2024,
+      "born": 1971
+    },
+    "Q1140695": {
+      "name": "Laurent Guyot",
+      "nationality": "FRA",
+      "since": 2021,
+      "born": 1970
+    },
+    "Q19512": {
+      "name": "Vincent Hognon",
+      "nationality": "FRA",
+      "since": 2025,
+      "born": 1974
+    },
+    "Q209509": {
+      "name": "Olivier Frapolli",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1971
+    },
+    "Q760736": {
+      "name": "David Vignes",
+      "since": 2026,
+      "born": 1975
+    },
+    "Q2619514": {
+      "name": "Mathieu Chabert",
+      "nationality": "FRA",
+      "born": 1979
+    },
+    "Q212269": {
+      "name": "Nicolas Rabuel",
+      "nationality": "FRA",
+      "since": 2022,
+      "born": 1978
+    },
+    "Q369349": {
+      "name": "Didier Ollé-Nicolle",
+      "nationality": "FRA",
+      "since": 2016,
+      "born": 1961
+    },
+    "Q522283": {
+      "name": "Damien Perrinelle",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q1132418": {
+      "name": "Jean-Luc Vannuchi",
+      "nationality": "FRA",
+      "born": 1970
+    },
+    "Q270051": {
+      "name": "Olivier Pantaloni",
+      "nationality": "FRA",
+      "since": 2014,
+      "born": 1967
+    },
+    "Q208399": {
+      "name": "Réginald Ray",
+      "nationality": "FRA",
+      "since": 2025,
+      "born": 1969
+    },
+    "Q866884": {
+      "name": "Omar Daf",
+      "nationality": "SEN",
+      "since": 2023,
+      "born": 1977
+    },
+    "Q193377": {
+      "name": "Bruno Baltazar",
+      "nationality": "POR",
+      "since": 2024,
+      "born": 1977
+    },
+    "Q3076567": {
+      "name": "Bruno Luzi",
+      "nationality": "FRA",
+      "born": 1965
+    },
+    "Q1515369": {
+      "name": "Michaël Isabey",
+      "nationality": "FRA",
+      "born": 1975
+    },
+    "Q867320": {
+      "name": "Didier Ollé-Nicolle",
+      "nationality": "FRA",
+      "born": 1961
+    },
+    "Q74030": {
+      "name": "Nicolas Rabuel",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1978
+    },
+    "Q822021": {
+      "name": "René Lobello",
+      "nationality": "FRA",
+      "since": 2018,
+      "born": 1963
+    },
+    "Q1573797": {
+      "name": "Laurent Bénier",
+      "nationality": "FRA",
+      "born": 1966
+    },
+    "Q1753870": {
+      "name": "Didier Ollé-Nicolle",
+      "nationality": "FRA",
+      "born": 1961
+    },
+    "Q15789": {
+      "name": "Vincent Kompany",
+      "nationality": "BEL",
+      "since": 2024,
+      "born": 1986
+    },
+    "Q104761": {
+      "name": "Carles Martínez Novell",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1984
+    },
+    "Q41420": {
+      "name": "Niko Kovač",
+      "nationality": "CRO",
+      "since": 2025,
+      "born": 1972
+    },
+    "Q702455": {
+      "name": "Martín Demichelis",
+      "nationality": "ARG",
+      "since": 2026,
+      "born": 1981
+    },
+    "Q38245": {
+      "name": "Adi Hütter",
+      "nationality": "AUT",
+      "since": 2026,
+      "born": 1970
+    },
+    "Q106394": {
+      "name": "Julian Schuster",
+      "nationality": "GER",
+      "since": 2024,
+      "born": 1985
+    },
+    "Q105254": {
+      "name": "Urs Fischer",
+      "nationality": "SUI",
+      "since": 2025,
+      "born": 1966
+    },
+    "Q4512": {
+      "name": "Sebastian Hoeneß",
+      "nationality": "GER",
+      "since": 2023,
+      "born": 1982
+    },
+    "Q141971": {
+      "name": "Mauro Lustrinelli",
+      "nationality": "SUI",
+      "since": 2026,
+      "born": 1976
+    },
+    "Q101959": {
+      "name": "Jan-Moritz Lichte",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1980
+    },
+    "Q51976": {
+      "name": "Daniel Thioune",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1974
+    },
+    "Q22707": {
+      "name": "Christian Ilzer",
+      "nationality": "AUT",
+      "since": 2024,
+      "born": 1978
+    },
+    "Q97905916": {
+      "name": "Manuel Baum",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1979
+    },
+    "Q104770": {
+      "name": "René Wagner",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1988
+    },
+    "Q692691": {
+      "name": "Horst Steffen",
+      "nationality": "GER",
+      "born": 1969
+    },
+    "Q51974": {
+      "name": "Merlin Polzin",
+      "nationality": "GER",
+      "since": 2024,
+      "born": 1991
+    },
+    "Q160532": {
+      "name": "Ralf Kettemann",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1986
+    },
+    "Q101859": {
+      "name": "Dieter Hecking",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1964
+    },
+    "Q162251": {
+      "name": "Frank Schmidt",
+      "nationality": "GER",
+      "since": 2007,
+      "born": 1974
+    },
+    "Q105861": {
+      "name": "Uwe Rösler",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1969
+    },
+    "Q6463": {
+      "name": "Marcel Rapp",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1979
+    },
+    "Q157828": {
+      "name": "Tim Walter",
+      "since": 2026,
+      "born": 1976
+    },
+    "Q105844": {
+      "name": "Daniel Scherning",
+      "nationality": "GER",
+      "since": 2022,
+      "born": 1984
+    },
+    "Q102720": {
+      "name": "Stefan Leitl",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1977
+    },
+    "Q107818": {
+      "name": "Claus-Dieter Wollitz",
+      "nationality": "GER",
+      "since": 2021,
+      "born": 1965
+    },
+    "Q479351": {
+      "name": "Florian Kohfeldt",
+      "nationality": "GER",
+      "since": 2024,
+      "born": 1982
+    },
+    "Q105853": {
+      "name": "Alois Schwartz",
+      "nationality": "GER",
+      "born": 1967
+    },
+    "Q33748": {
+      "name": "Lars Barlemann",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1973
+    },
+    "Q316865": {
+      "name": "Benno Möhlmann",
+      "nationality": "GER",
+      "since": 2016,
+      "born": 1954
+    },
+    "Q8466": {
+      "name": "Torsten Lieberknecht",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1973
+    },
+    "Q153539": {
+      "name": "Thomas Kleine",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1978
+    },
+    "Q15786": {
+      "name": "Miroslav Klose",
+      "nationality": "GER",
+      "since": 2024,
+      "born": 1978
+    },
+    "Q141931": {
+      "name": "Markus Kauczinski",
+      "nationality": "GER",
+      "born": 1970
+    },
+    "Q151747": {
+      "name": "Alexander Ende",
+      "since": 2026,
+      "born": 1979
+    },
+    "Q142005": {
+      "name": "Alois Schwartz",
+      "nationality": "GER",
+      "born": 1967
+    },
+    "Q157463": {
+      "name": "Rüdiger Ziehl",
+      "nationality": "GER",
+      "born": 1978
+    },
+    "Q154053": {
+      "name": "André Schubert",
+      "nationality": "GER",
+      "since": 2018,
+      "born": 1971
+    },
+    "Q131603": {
+      "name": "Michael Köllner",
+      "nationality": "GER",
+      "born": 1970
+    },
+    "Q265570": {
+      "name": "Mersad Selimbegović",
+      "born": 1982
+    },
+    "Q639525": {
+      "name": "Uwe Koschinat",
+      "nationality": "GER",
+      "since": 2018,
+      "born": 1971
+    },
+    "Q170134": {
+      "name": "Bernhard Trares",
+      "nationality": "GER",
+      "since": 2018,
+      "born": 1965
+    },
+    "Q310621": {
+      "name": "Markus Kauczinski",
+      "nationality": "GER",
+      "born": 1970
+    },
+    "Q160530": {
+      "name": "Daniel Thioune",
+      "nationality": "GER",
+      "since": 2017,
+      "born": 1974
+    },
+    "Q153535": {
+      "name": "Peter Schubert",
+      "nationality": "GER",
+      "since": 2013,
+      "born": 1966
+    },
+    "Q535785": {
+      "name": "Torsten Ziegner",
+      "nationality": "GER",
+      "since": 2021,
+      "born": 1978
+    },
+    "Q316855": {
+      "name": "Torsten Ziegner",
+      "nationality": "GER",
+      "since": 2018,
+      "born": 1978
+    },
+    "Q155218": {
+      "name": "Christian Neidhart",
+      "nationality": "GER",
+      "born": 1968
+    },
+    "Q695008": {
+      "name": "Marian Wilhelm",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1988
+    },
+    "Q154293": {
+      "name": "Torsten Lieberknecht",
+      "nationality": "GER",
+      "since": 2018,
+      "born": 1973
+    },
+    "Q158121": {
+      "name": "Heiko Herrlich",
+      "nationality": "GER",
+      "born": 1972
+    },
+    "Q665920": {
+      "name": "Ramazan Yıldırım",
+      "nationality": "TUR",
+      "born": 1975
+    },
+    "Q631": {
+      "name": "Cristian Chivu",
+      "since": 2025,
+      "born": 1981
+    },
+    "Q2641": {
+      "name": "Massimiliano Allegri",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1967
+    },
+    "Q1422": {
+      "name": "Luciano Spalletti",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1959
+    },
+    "Q1543": {
+      "name": "Ruben Amorim",
+      "nationality": "POR",
+      "since": 2026,
+      "born": 1985
+    },
+    "Q1886": {
+      "name": "Maurizio Sarri",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1959
+    },
+    "Q2609": {
+      "name": "Gennaro Gattuso",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1978
+    },
+    "Q2739": {
+      "name": "Gian Piero Gasperini",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1958
+    },
+    "Q2052": {
+      "name": "Paolo Vanoli",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1972
+    },
+    "Q1893": {
+      "name": "Raffaele Palladino",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1984
+    },
+    "Q1120838": {
+      "name": "Cesc Fàbregas",
+      "nationality": "ESP",
+      "since": 2024,
+      "born": 1987
+    },
+    "Q2768": {
+      "name": "Ignazio Abate",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1987
+    },
+    "Q2074": {
+      "name": "Daniele De Rossi",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1983
+    },
+    "Q2798": {
+      "name": "Kosta Runjaić",
+      "nationality": "GER",
+      "since": 2024,
+      "born": 1971
+    },
+    "Q2693": {
+      "name": "Alberto Gilardino",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1982
+    },
+    "Q289482": {
+      "name": "Ivan Jurić",
+      "nationality": "CRO",
+      "since": 2026,
+      "born": 1975
+    },
+    "Q1900": {
+      "name": "Fabio Pisacane",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1986
+    },
+    "Q13391": {
+      "name": "Eusebio Di Francesco",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1969
+    },
+    "Q8603": {
+      "name": "Alberto Aquilani",
+      "nationality": "ITA",
+      "born": 1984
+    },
+    "Q501245": {
+      "name": "Giovanni Stroppa",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1968
+    },
+    "Q845043": {
+      "name": "Leandro Greco",
+      "nationality": "ITA",
+      "since": 2024,
+      "born": 1986
+    },
+    "Q8639": {
+      "name": "Paolo Sammarco",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q6703": {
+      "name": "Fabio Caserta",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1978
+    },
+    "Q652516": {
+      "name": "Fabio Caserta",
+      "nationality": "ITA",
+      "since": 2021,
+      "born": 1978
+    },
+    "Q6641": {
+      "name": "Fabio Caserta",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1978
+    },
+    "Q16848949": {
+      "name": "Alessandro Diamanti",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1983
+    },
+    "Q2674": {
+      "name": "Filippo Inzaghi",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1973
+    },
+    "Q289613": {
+      "name": "Paolo Bianco",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1977
+    },
+    "Q16344": {
+      "name": "Fabrizio Castori",
+      "nationality": "ITA",
+      "since": 2022,
+      "born": 1954
+    },
+    "Q2037": {
+      "name": "Marco Zaffaroni",
+      "nationality": "ITA",
+      "since": 2021,
+      "born": 1969
+    },
+    "Q8476": {
+      "name": "Domenico Toscano",
+      "nationality": "ITA",
+      "since": 2019,
+      "born": 1971
+    },
+    "Q1457": {
+      "name": "Angelo Gregucci",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1964
+    },
+    "Q8408": {
+      "name": "Ezio Capuano",
+      "nationality": "ITA",
+      "born": 1965
+    },
+    "Q8623": {
+      "name": "Cristiano Lucarelli",
+      "nationality": "ITA",
+      "born": 1975
+    },
+    "Q298217": {
+      "name": "Ezio Capuano",
+      "nationality": "ITA",
+      "born": 1965
+    },
+    "Q56542463": {
+      "name": "Domenico Di Carlo",
+      "nationality": "ITA",
+      "born": 1964
+    },
+    "Q8615": {
+      "name": "Roberto Donadoni",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1963
+    },
+    "Q847587": {
+      "name": "Pasquale Marino",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1962
+    },
+    "Q6690": {
+      "name": "Franco Lerda",
+      "nationality": "ITA",
+      "since": 2022,
+      "born": 1967
+    },
+    "Q6630": {
+      "name": "Valerio Bertotto",
+      "nationality": "ITA",
+      "since": 2020,
+      "born": 1973
+    },
+    "Q2710": {
+      "name": "Alberto Colombo",
+      "nationality": "ITA",
+      "since": 2022,
+      "born": 1974
+    },
+    "Q29390": {
+      "name": "Giacomo Modica",
+      "nationality": "ITA",
+      "since": 2023,
+      "born": 1964
+    },
+    "Q139399": {
+      "name": "Gianluca Grassadonia",
+      "nationality": "ITA",
+      "born": 1972
+    },
+    "Q8416": {
+      "name": "Eugenio Corini",
+      "nationality": "ITA",
+      "born": 1970
+    },
+    "Q6767": {
+      "name": "Roberto Breda",
+      "nationality": "ITA",
+      "since": 2018,
+      "born": 1969
+    },
+    "Q120881664": {
+      "name": "Giovanni Cusatis",
+      "nationality": "ITA",
+      "since": 2021,
+      "born": 1967
+    },
+    "Q2246447": {
+      "name": "Ricardo Chéu",
+      "nationality": "POR",
+      "born": 1981
+    },
+    "Q1520422": {
+      "name": "Giacomo Modica",
+      "nationality": "ITA",
+      "born": 1964
     }
   },
   "national": {
@@ -173,7 +1727,234 @@
       "nationality": "ALG",
       "born": 1978
     },
-    "GHA": null
+    "GHA": null,
+    "ENG": {
+      "name": "Thomas Tuchel",
+      "nationality": "GER",
+      "since": 2025,
+      "born": 1973
+    },
+    "ESP": {
+      "name": "Luis de la Fuente",
+      "nationality": "ESP",
+      "since": 2023,
+      "born": 1961
+    },
+    "GER": {
+      "name": "Jürgen Klopp",
+      "nationality": "GER",
+      "since": 2026,
+      "born": 1967
+    },
+    "ITA": {
+      "name": "Roberto Mancini",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1965
+    },
+    "FRA": {
+      "name": "Zinedine Zidane",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1972
+    },
+    "SCO": {
+      "name": "Sébastien Pocognoli",
+      "nationality": "BEL",
+      "since": 2026,
+      "born": 1987
+    },
+    "WAL": {
+      "name": "Craig Bellamy",
+      "nationality": "WAL",
+      "since": 2024,
+      "born": 1979
+    },
+    "NIR": {
+      "name": "Michael O'Neill",
+      "nationality": "NIR",
+      "since": 2022,
+      "born": 1969
+    },
+    "IRL": {
+      "name": "Heimir Hallgrímsson",
+      "since": 2024,
+      "born": 1967
+    },
+    "POR": {
+      "name": "Jorge Jesus",
+      "nationality": "POR",
+      "since": 2026,
+      "born": 1954
+    },
+    "NED": {
+      "name": "Xavi",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1980
+    },
+    "BEL": {
+      "name": "Mark van Bommel",
+      "nationality": "NED",
+      "since": 2026,
+      "born": 1977
+    },
+    "SUI": {
+      "name": "Murat Yakin",
+      "nationality": "SUI",
+      "since": 2021,
+      "born": 1974
+    },
+    "AUT": {
+      "name": "Ralf Rangnick",
+      "nationality": "GER",
+      "since": 2022,
+      "born": 1958
+    },
+    "DEN": {
+      "name": "Brian Riemer",
+      "nationality": "DEN",
+      "since": 2024,
+      "born": 1978
+    },
+    "NOR": {
+      "name": "Ståle Solbakken",
+      "nationality": "NOR",
+      "since": 2020,
+      "born": 1968
+    },
+    "POL": {
+      "name": "Jan Urban",
+      "nationality": "POL",
+      "since": 2025,
+      "born": 1962
+    },
+    "CRO": {
+      "name": "Slaven Bilić",
+      "nationality": "CRO",
+      "since": 2026,
+      "born": 1968
+    },
+    "SRB": {
+      "name": "Veljko Paunović",
+      "nationality": "SRB",
+      "since": 2025,
+      "born": 1977
+    },
+    "CZE": {
+      "name": "Santi Denia",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1974
+    },
+    "TUR": {
+      "name": "Vincenzo Montella",
+      "nationality": "ITA",
+      "since": 2023,
+      "born": 1974
+    },
+    "UKR": {
+      "name": "Andrea Maldera",
+      "nationality": "ITA",
+      "since": 2026,
+      "born": 1971
+    },
+    "BRA": {
+      "name": "Carlo Ancelotti",
+      "nationality": "ITA",
+      "since": 2025,
+      "born": 1959
+    },
+    "ARG": {
+      "name": "Lionel Scaloni",
+      "nationality": "ARG",
+      "since": 2018,
+      "born": 1978
+    },
+    "URU": {
+      "name": "Diego Forlán",
+      "nationality": "URU",
+      "since": 2026,
+      "born": 1979
+    },
+    "COL": {
+      "name": "Néstor Lorenzo",
+      "nationality": "ARG",
+      "since": 2022,
+      "born": 1966
+    },
+    "MEX": {
+      "name": "Rafael Márquez",
+      "nationality": "MEX",
+      "since": 2026,
+      "born": 1979
+    },
+    "USA": {
+      "name": "Mauricio Pochettino",
+      "nationality": "ARG",
+      "since": 2024,
+      "born": 1972
+    },
+    "CAN": {
+      "name": "Jesse Marsch",
+      "nationality": "USA",
+      "since": 2024,
+      "born": 1974
+    },
+    "SEN": {
+      "name": "Patrick Vieira",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1976
+    },
+    "CIV": {
+      "name": "Hervé Renard",
+      "nationality": "FRA",
+      "since": 2026,
+      "born": 1968
+    },
+    "NGA": {
+      "name": "Éric Chelle",
+      "nationality": "FRA",
+      "since": 2025,
+      "born": 1978
+    },
+    "CMR": {
+      "name": "Marc Brys",
+      "nationality": "BEL",
+      "since": 2024,
+      "born": 1962
+    },
+    "MAR": {
+      "name": "Mohamed Ouahbi",
+      "nationality": "MAR",
+      "since": 2026,
+      "born": 1976
+    },
+    "EGY": {
+      "name": "Hossam Hassan",
+      "nationality": "EGY",
+      "since": 2024,
+      "born": 1966
+    },
+    "JPN": {
+      "name": "Hajime Moriyasu",
+      "nationality": "JPN",
+      "since": 2018,
+      "born": 1968
+    },
+    "KOR": {
+      "name": "Robert Moreno",
+      "nationality": "ESP",
+      "since": 2026,
+      "born": 1977
+    },
+    "AUS": {
+      "name": "Tony Popovic",
+      "nationality": "AUS",
+      "since": 2024,
+      "born": 1973
+    }
   },
   "freeAgents": [
     {
