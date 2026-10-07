@@ -22,6 +22,31 @@ export function rivalryLevel(state: GameState, myClub?: string | null, opponent?
   return Math.min(1, base + heat);
 }
 
+export interface Rival {
+  clubId: ClubId;
+  level: number;
+  label: string;
+}
+
+export function rivalryLabel(level: number): string {
+  return level >= 0.85 ? "Fierce rivalry" : level >= 0.6 ? "Heated rivalry" : level >= 0.4 ? "Local rivalry" : "Bad blood";
+}
+
+/** The clubs that matter most to a club's supporters (and to you), strongest first. */
+export function rivalsOf(state: GameState, clubId: ClubId, limit = 4): Rival[] {
+  const out = new Map<ClubId, number>();
+  for (const [a, b] of Array.from(PAIRS.keys(), (k) => k.split("|") as [string, string])) {
+    const other = a === clubId ? b : b === clubId ? a : null;
+    if (other && state.clubs[other]) out.set(other, rivalryLevel(state, clubId, other));
+  }
+  for (const [other, heat] of Object.entries(state.user.rivalHeat ?? {})) if (heat >= 0.2 && other !== clubId && state.clubs[other] && !out.has(other)) out.set(other, rivalryLevel(state, clubId, other));
+  return [...out.entries()]
+    .filter(([, level]) => level >= 0.3)
+    .sort((x, y) => y[1] - x[1])
+    .slice(0, limit)
+    .map(([id, level]) => ({ clubId: id, level, label: rivalryLabel(level) }));
+}
+
 /** Moments with a club (a late winner, a bitter exit) make it matter more to this player. */
 export function bumpRivalHeat(state: GameState, clubId: ClubId | undefined | null, amount: number): void {
   if (!clubId) return;

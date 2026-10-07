@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { Portrait } from "@/components/art/Portrait";
+import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { Card, LinkButton, PageTitle, Stat, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import { LEGACY_TIERS } from "@/engine/career/legacy";
@@ -54,6 +55,7 @@ export default function Legacy() {
         <Stat label="Caps" value={p.intl.caps} />
         <Stat label="Peak OVR" value={g.user.peakOverall} tone="plum" />
       </div>
+      <IconicShowcase g={g} limit={6} final title="Iconic Moments" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="The story">
           <ul className="grid gap-2">

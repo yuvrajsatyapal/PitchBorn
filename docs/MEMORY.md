@@ -26,4 +26,11 @@ Weight = importance × reason × freshness; below 48 nothing shows. Restraint: 3
 Schema v3 → v4 rebuilds what older saves recorded (debut, firsts, trophies, awards, moves, promotions, retirement), flagged `backfilled`; minutes and scorelines can't be recovered.
 
 ## UI
-`/play/memories` — Iconic Moments (`MemoryCard` shows how each score was built). Phase 3 (next): rivalry screens, profile/history integration, retirement showcase.
+- `/play/memories` — **Iconic Moments**: your defining moments, then everything remembered with filters; each card opens to show how its score was built.
+- **Dashboard**: *From the vault* card (recall) and, after retirement, a highlight reel.
+- **Match day**: *Memory lane* (recall) and a 🔥 Derby badge for rivalry fixtures.
+- **News**: occasional "memory" items.
+- **Player profile**: a Memories card.
+- **History**: timeline entries that became major memories are starred.
+- **Club page**: Rivalries card (fierce / heated / local / bad blood) with your best moment against each rival.
+- **Legacy**: Iconic Moments highlight reel (top six in the order they happened) plus the final match.

@@ -5,6 +5,7 @@ import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { Kit } from "@/components/art/Kit";
 import { PlayerModal } from "@/components/game/PlayerModal";
+import { RivalryCard } from "@/components/game/RivalryCard";
 import { TeamForm } from "@/components/game/widgets";
 import { Badge, Bar, Card, Empty, PageTitle, Stat, Table, Tabs } from "@/components/ui";
 import { clubName, staticClub, staticLeague, stadium } from "@/engine/data/world";
@@ -81,6 +82,7 @@ export default function ClubPage() {
           <p className="mt-3 text-xs text-muted">Good performances earn the manager&apos;s trust (more starts). Supporters love goals; the board hates transfer requests.</p>
         </Card>
       </div>
+      <RivalryCard g={g} clubId={club.id} />
       <MobileAdSlot placementId="mobile-inline" />
       <Card title={`Squad (${squad.length})`} action={<Tabs value={sort} onChange={setSort} items={[{ id: "pos", label: "Position" }, { id: "ovr", label: "OVR" }, { id: "age", label: "Age" }, { id: "value", label: "Value" }]} />}>
         <Table>

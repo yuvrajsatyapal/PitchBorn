@@ -1,5 +1,6 @@
 "use client";
 import { Crest } from "@/components/art/Crest";
+import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { PlayerHero, scoutStars, Stars } from "@/components/game/widgets";
 import { AttrValue, Badge, Card, PageTitle, Table } from "@/components/ui";
 import { clubName, countryName } from "@/engine/data/world";
@@ -71,6 +72,7 @@ export default function Profile() {
               </div>
             </div>
           </Card>
+          <IconicShowcase g={g} limit={3} title="Memories" />
           <Card title="Bio">
             <dl className="grid grid-cols-2 gap-y-1.5 text-sm">
               <dt className="text-muted">Position</dt>

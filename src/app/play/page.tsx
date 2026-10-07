@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
+import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { VaultCard } from "@/components/game/VaultCard";
 import { DecisionCards, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, TeamForm } from "@/components/game/widgets";
 import { Badge, Card, Empty, LinkButton, Sparkline, Stat } from "@/components/ui";
@@ -28,12 +29,15 @@ export default function Dashboard() {
 
   if (g.user.retired) {
     return (
-      <Card title="Career over" tone="plum">
-        <p className="mb-3">You have retired from professional football. Your legacy has been written.</p>
-        <LinkButton href="/play/legacy" tone="plum">
-          View legacy ▸
-        </LinkButton>
-      </Card>
+      <div className="grid gap-4">
+        <Card title="Career over" tone="plum">
+          <p className="mb-3">You have retired from professional football. Your legacy has been written.</p>
+          <LinkButton href="/play/legacy" tone="plum">
+            View legacy ▸
+          </LinkButton>
+        </Card>
+        <IconicShowcase g={g} limit={3} final />
+      </div>
     );
   }
 

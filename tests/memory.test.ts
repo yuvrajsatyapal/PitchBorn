@@ -159,3 +159,17 @@ describe("old saves", () => {
     expect(m.schemaVersion).toBe(4);
   });
 });
+
+describe("rival lists", () => {
+  it("lists a club's biggest rivals strongest first, including ones your career created", async () => {
+    const { rivalsOf } = await import("../src/engine/memory/rivalry");
+    const s = veteran("mem-rivals");
+    const r = rivalsOf(s, "eng-ipswich-town");
+    expect(r[0]).toMatchObject({ clubId: "eng-norwich-city", label: "Fierce rivalry" });
+    expect(r.every((x, i) => i === 0 || r[i - 1].level >= x.level)).toBe(true);
+    s.user.rivalHeat = { "eng-reading": 0.3 };
+    expect(rivalsOf(s, "eng-ipswich-town", 10).find((x) => x.clubId === "eng-reading")).toMatchObject({ label: "Bad blood" });
+    s.user.rivalHeat = { "eng-reading": 0.1 };
+    expect(rivalsOf(s, "eng-ipswich-town", 10).some((x) => x.clubId === "eng-reading")).toBe(false);
+  });
+});

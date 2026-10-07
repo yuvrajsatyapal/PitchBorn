@@ -4,6 +4,7 @@ import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { LiveMatch } from "@/components/game/LiveMatch";
 import { MemoryLane } from "@/components/game/VaultCard";
+import { rivalryLevel } from "@/engine/memory/rivalry";
 import { Badge, Button, Card, Empty, PageTitle, Rating, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import type { Fixture, GameState } from "@/engine/types";
@@ -11,6 +12,12 @@ import { name, scoreText, teamLabel, user, userFixtures } from "@/game/selectors
 import { teamSelection } from "@/engine/season/matchday";
 import { canRequestRest } from "@/engine/season/advance";
 import { useGame, useGameState } from "@/game/store";
+
+function derbyLevel(g: GameState, f: Fixture): number {
+  const me = user(g).clubId;
+  if (!me || (f.home !== me && f.away !== me)) return 0;
+  return rivalryLevel(g, me, f.home === me ? f.away : f.home);
+}
 
 function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
   const comp = g.competitions[f.compId];
@@ -123,7 +130,10 @@ export default function MatchDay() {
       <PageTitle kicker={`${seasonLabel(g.season)} · Week ${g.turn}`} title="Match Day" />
       {fixture && comp ? (
         <Card tone="coral" className="mb-5">
-          <div className="text-[11px] font-black uppercase tracking-widest">{comp.name}{fixture.stage ? ` · ${fixture.stage}` : ""}{fixture.neutral ? " · neutral venue" : ""}</div>
+          <div className="text-[11px] font-black uppercase tracking-widest">
+            {comp.name}{fixture.stage ? ` · ${fixture.stage}` : ""}{fixture.neutral ? " · neutral venue" : ""}
+            {derbyLevel(g, fixture) >= 0.5 && <span className="ml-2 rounded-full border-2 border-line bg-sun px-2 py-0.5 text-ink" data-testid="derby-badge">🔥 Derby</span>}
+          </div>
           <div className="my-4 flex items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-1"><Crest clubId={fixture.home} size={70} /><b>{teamLabel(fixture.home)}</b></div>
             <span className="scoreboard text-3xl">VS</span>
