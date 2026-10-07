@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, describe, expect, it } from "vitest";
-import { CeremonyResults, sceneView } from "../src/components/game/Ceremony";
+import { CeremonyResults, PodiumStage, sceneView } from "../src/components/game/Ceremony";
 import { buildScenes } from "../src/engine/awards/ceremony";
 import type { GameState, PlayerRival } from "../src/engine/types";
 import { advanceTurn } from "../src/engine/season/advance";
@@ -16,6 +16,8 @@ beforeAll(() => {
 }, 120000);
 
 const html = (g: GameState, scene: ReturnType<typeof buildScenes>[number]) => renderToStaticMarkup(sceneView(g, g.ceremony!, scene) as never);
+/** The judged awards end on the podium's final state; this is that picture. */
+const podium = (g: GameState, id: string) => renderToStaticMarkup(createElement(PodiumStage, { g, r: g.ceremony!.results.find((x) => x.id === id)!, revealed: 3, uid: g.user.playerId }));
 const text = (h: string) => h.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
 
 /** Put the user into the first nominee slot of an award (as winner) or a later slot. */
@@ -43,21 +45,23 @@ describe("ceremony presentation", () => {
     const scenes = buildScenes(ready.ceremony!);
     const i = scenes.findIndex((x) => x.kind === "award" && x.id === "pots" && x.phase === "nominees");
     const nominees = text(html(ready, scenes[i]));
-    const reveal = text(html(ready, scenes[i + 1]));
     expect(nominees).toContain("The nominees");
     expect(nominees).not.toContain("And the winner is");
-    expect(reveal).toContain("And the winner is");
-    expect(reveal).toContain(ready.players[ready.ceremony!.results.find((r) => r.id === "pots")!.winnerId].lastName);
+    expect(nominees).not.toContain("1ST");
+    const final = text(podium(ready, "pots"));
+    expect(final).toContain("AND THE WINNER IS");
+    expect(final).toContain(ready.players[ready.ceremony!.results.find((r) => r.id === "pots")!.winnerId].lastName);
+    // A statistical award is revealed at once, without a podium.
+    const boot = scenes.find((x) => x.kind === "award" && x.id === "topscorer")!;
+    expect(text(html(ready, boot))).toContain("And the winner is");
     // No internal numbers leak into the page.
-    expect(nominees + reveal).not.toMatch(/score|index|AwardScore/i);
+    expect(nominees + final).not.toMatch(/score|index|AwardScore/i);
   });
 
   it("when the user wins, it says so", () => {
     const s = structuredClone(ready);
     place(s, "pots", 0);
-    const scenes = buildScenes(s.ceremony!);
-    const winner = scenes.find((x) => x.kind === "award" && x.id === "pots" && x.phase === "winner")!;
-    const t = text(html(s, winner));
+    const t = text(podium(s, "pots"));
     expect(t).toContain("That's you");
     expect(text(renderToStaticMarkup(createElement(CeremonyResults, { g: s, c: s.ceremony! })))).toContain("Player of the Season");
   });
@@ -65,8 +69,7 @@ describe("ceremony presentation", () => {
   it("when the user loses a race they were in, it says they were in the running", () => {
     const s = structuredClone(ready);
     place(s, "pots", 2);
-    const winner = buildScenes(s.ceremony!).find((x) => x.kind === "award" && x.id === "pots" && x.phase === "winner")!;
-    const t = text(html(s, winner));
+    const t = text(podium(s, "pots"));
     expect(t).not.toContain("That's you");
     expect(t).toContain("in the running");
   });
@@ -80,8 +83,7 @@ describe("ceremony presentation", () => {
     s.user.rivalry.rivals.push(rival);
     place(s, "pots", 1);
     void me;
-    const winner = buildScenes(s.ceremony!).find((x) => x.kind === "award" && x.id === "pots" && x.phase === "winner")!;
-    expect(text(html(s, winner))).toContain("Your rival takes the honour");
+    expect(text(podium(s, "pots"))).toContain("Your rival takes the honour");
     expect(text(html(s, { kind: "yours" }))).toContain("Your rival");
   });
 

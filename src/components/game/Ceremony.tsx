@@ -1,10 +1,12 @@
 "use client";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Crest } from "@/components/art/Crest";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Badge, Button, Card } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import { buildScenes, type Scene } from "@/engine/awards/ceremony";
 import { careerHonours } from "@/engine/awards/honours";
+import { PODIUM_TIMING, PODIUM_TIMING_REDUCED, hasPodiumReveal, inContention, podiumPlaces, schedulePodium } from "@/engine/awards/podium";
 import { primaryRival } from "@/engine/career/rivalry/engine";
 import { clubName, staticClub } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
@@ -61,20 +63,115 @@ function Heading({ kicker, title, trophy }: { kicker: string; title: string; tro
   );
 }
 
-function AwardScene({ g, r, phase, uid }: { g: GameState; r: AwardResult; phase: "nominees" | "winner"; uid: string }) {
+
+const PLACE = { 3: { icon: "🥉", label: "3RD" }, 2: { icon: "🥈", label: "2ND" }, 1: { icon: "🏆", label: "1ST" } } as const;
+
+const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
+function usePrefersReducedMotion(): boolean {
+  return useSyncExternalStore(
+    (notify) => {
+      const q = window.matchMedia(REDUCED_QUERY);
+      q.addEventListener("change", notify);
+      return () => q.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(REDUCED_QUERY).matches,
+    () => false,
+  );
+}
+
+/**
+ * The podium reveal, as a pure picture of "how many places have been announced". The ranking is the stored order of
+ * the nominees; this only decides what is on screen.
+ */
+export function PodiumStage({ g, r, revealed, uid }: { g: GameState; r: AwardResult; revealed: number; uid: string }) {
+  const places = podiumPlaces(r.nominees.length);
+  const latest = revealed > 0 ? places[revealed - 1] : null;
+  const remaining = new Set(inContention(r.nominees.length, revealed));
+  const finished = revealed >= places.length;
+  const shown = r.nominees.slice(0, 4);
+  const alphabetical = shown.map((n, i) => ({ n, i })).sort((a, b) => byNameThenId(g)(a.n, b.n));
+  const kicker = `${r.scope} · ${r.tier === "major" ? "Major award" : "Special award"}`;
+  return (
+    <div data-testid="podium" data-revealed={revealed}>
+      <Heading kicker={kicker} title={r.name} trophy={TROPHY[r.id]} />
+      <div className="mx-auto min-h-[16rem] max-w-2xl" aria-live="polite">
+        {latest === null && <p className="py-10 text-center text-sm font-semibold text-ink-2" data-testid="podium-wait">The envelope is opened…</p>}
+        {latest !== null && latest !== 1 && (
+          <div key={latest} className="anim-pop" data-testid={`podium-place-${latest}`}>
+            <Card tone="paper" className="text-center">
+              <div className="text-xs font-black uppercase tracking-widest text-muted">{PLACE[latest as 2 | 3].icon} {PLACE[latest as 2 | 3].label} PLACE</div>
+              <div className="my-2 flex justify-center"><Face g={g} id={r.nominees[latest - 1].playerId} size={latest === 2 ? 96 : 76} /></div>
+              <div className={`font-display leading-tight ${latest === 2 ? "text-2xl" : "text-xl"}`}>{nameOf(g, r.nominees[latest - 1].playerId)}</div>
+              <div className="flex justify-center"><ClubLine clubId={r.nominees[latest - 1].clubId} /></div>
+              <p className="mt-1 text-xs text-ink-2">{r.nominees[latest - 1].reason}</p>
+            </Card>
+          </div>
+        )}
+        {latest === 1 && (
+          <div key="winner" className="anim-pop" data-testid="podium-place-1">
+            <Card tone={r.nominees[0].playerId === uid ? "sun" : "paper"} className="border-4 text-center shadow-[6px_6px_0_var(--shadow)]">
+              <div className="text-sm font-black uppercase tracking-widest">🏆 1ST — AND THE WINNER IS…</div>
+              <div className="my-3 flex justify-center"><Face g={g} id={r.nominees[0].playerId} size={160} /></div>
+              <div className="break-words font-display text-4xl uppercase leading-tight sm:text-5xl">{nameOf(g, r.nominees[0].playerId)}</div>
+              <div className="mt-1 flex justify-center"><ClubLine clubId={r.nominees[0].clubId} /></div>
+              <p className="mt-2 text-sm font-semibold">{r.nominees[0].reason}</p>
+              {r.nominees[0].playerId === uid && <p className="mt-3 font-bold" data-testid="you-won">That&apos;s you — {r.name}!</p>}
+              {r.nominees[0].playerId !== uid && r.nominees.some((n) => n.playerId === uid) && <p className="mt-3 text-sm font-semibold">You were in the running, but not this year.</p>}
+              {r.nominees[0].playerId !== uid && primaryRival(g)?.playerId === r.nominees[0].playerId && <p className="mt-1 text-sm font-semibold">Your rival takes the honour.</p>}
+            </Card>
+          </div>
+        )}
+      </div>
+      <p className="mx-auto mb-2 mt-4 max-w-2xl text-center text-[11px] font-black uppercase tracking-widest text-muted">{finished ? "The podium" : "Still in contention"}</p>
+      <ul className="mx-auto grid max-w-2xl gap-2" data-testid="finalists">
+        {alphabetical.map(({ n, i }) => {
+          const placeIdx = i < 3 ? places.findIndex((p) => p === i + 1) : -1;
+          const out = !remaining.has(i);
+          const label = i >= 3 ? "Nominee" : placeIdx >= 0 && placeIdx < revealed ? `${PLACE[(i + 1) as 1 | 2 | 3].icon} ${PLACE[(i + 1) as 1 | 2 | 3].label}` : null;
+          return (
+            <li key={n.playerId} data-state={out ? "out" : "in"} className={`flex min-w-0 items-center gap-3 rounded-xl border-2 border-line p-2 transition-all duration-500 ${out ? "scale-[0.98] bg-paper-2 opacity-40" : "bg-card"} ${n.playerId === uid ? "ring-2 ring-sun" : ""}`}>
+              <Face g={g} id={n.playerId} size={40} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-bold">{nameOf(g, n.playerId)}{n.playerId === uid ? " (You)" : ""}</span>
+                <ClubLine clubId={n.clubId} />
+              </span>
+              {label && <Badge tone={i === 0 ? "sun" : "paper"}>{label}</Badge>}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/** Runs the 3rd → 2nd → 1st sequence once, automatically. Restarts from 3rd if the scene is shown again. */
+function PodiumScene({ g, r, uid, onDone }: { g: GameState; r: AwardResult; uid: string; onDone?: () => void }) {
+  const [revealed, setRevealed] = useState(0);
+  const reduced = usePrefersReducedMotion();
+  useEffect(() => {
+    const places = podiumPlaces(r.nominees.length).length;
+    return schedulePodium(places, reduced ? PODIUM_TIMING_REDUCED : PODIUM_TIMING, setRevealed, () => onDone?.());
+    // The reveal is presentation only. The scene is keyed, so it starts from the beginning every time it is shown.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r.id, r.leagueId, reduced]);
+  return <PodiumStage g={g} r={r} revealed={revealed} uid={uid} />;
+}
+
+function AwardScene({ g, r, phase, uid, onPodiumDone }: { g: GameState; r: AwardResult; phase: "nominees" | "winner"; uid: string; onPodiumDone?: () => void }) {
   const kicker = `${r.scope} · ${r.tier === "statistical" ? "Statistical award" : r.tier === "special" ? "Special award" : "Major award"}`;
   if (phase === "nominees") {
     const list = [...r.nominees].sort(byNameThenId(g));
     return (
       <div key={`${r.id}-n`} className="anim-slide">
         <Heading kicker={kicker} title={r.name} trophy={TROPHY[r.id]} />
-        <p className="mb-3 text-center text-sm text-ink-2">The nominees</p>
+        <p className="mb-3 text-center text-sm text-ink-2">The nominees{hasPodiumReveal(r) ? " — the top three will be announced in turn" : ""}</p>
         <ul className="mx-auto grid max-w-2xl gap-2">
           {list.map((n) => <NomineeCard key={n.playerId} g={g} n={n} user={n.playerId === uid} />)}
         </ul>
       </div>
     );
   }
+  if (hasPodiumReveal(r)) return <PodiumScene key={`${r.id}-p`} g={g} r={r} uid={uid} onDone={onPodiumDone} />;
   const w = r.nominees[0];
   const youWon = w.playerId === uid;
   const youNominated = r.nominees.some((n) => n.playerId === uid);
@@ -201,7 +298,7 @@ export function SeasonStory({ g, c }: { g: GameState; c: SeasonCeremony }) {
   );
 }
 
-export function sceneView(g: GameState, c: SeasonCeremony, scene: Scene) {
+export function sceneView(g: GameState, c: SeasonCeremony, scene: Scene, onPodiumDone?: () => void) {
   const uid = g.user.playerId;
   switch (scene.kind) {
     case "opening":
@@ -215,7 +312,7 @@ export function sceneView(g: GameState, c: SeasonCeremony, scene: Scene) {
       );
     case "award": {
       const r = c.results.find((x) => x.id === scene.id);
-      return r ? <AwardScene g={g} r={r} phase={scene.phase} uid={uid} /> : null;
+      return r ? <AwardScene g={g} r={r} phase={scene.phase} uid={uid} onPodiumDone={onPodiumDone} /> : null;
     }
     case "team":
       return <TeamScene g={g} c={c} uid={uid} />;
@@ -246,19 +343,21 @@ export function CeremonyResults({ g, c }: { g: GameState; c: SeasonCeremony }) {
   );
 }
 
-export function CeremonyControls({ c, step, total, onNext, onBack, onSkip, busy }: { c: SeasonCeremony; step: number; total: number; onNext: () => void; onBack: () => void; onSkip: () => void; busy: boolean }) {
+export function CeremonyControls({ c, step, total, onNext, onBack, onSkip, busy, revealing = false }: { c: SeasonCeremony; step: number; total: number; onNext: () => void; onBack: () => void; onSkip: () => void; busy: boolean; revealing?: boolean }) {
   const last = step >= total - 1;
   const scenes = buildScenes(c);
   const next = scenes[step + 1];
   const here = scenes[step];
   const reveal = here?.kind === "award" && here.phase === "nominees" && next?.kind === "award" && next.phase === "winner";
+  const nextAward = next?.kind === "award" ? c.results.find((r) => r.id === next.id) : undefined;
+  const podium = reveal && !!nextAward && hasPodiumReveal(nextAward);
   return (
     <div className="mx-auto mt-5 flex w-full max-w-2xl flex-wrap items-center justify-between gap-2">
       <Button tone="paper" size="sm" className="min-h-[44px]" onClick={onBack} disabled={step === 0 || busy}>‹ Back</Button>
       <span className="text-xs text-muted" aria-live="polite">{step + 1} / {total}</span>
       <div className="flex gap-2">
         <Button tone="paper" size="sm" className="min-h-[44px]" onClick={onSkip} disabled={busy}>Skip ceremony</Button>
-        <Button tone="sun" size="sm" className="min-h-[44px]" onClick={onNext} disabled={busy} data-testid="ceremony-next">{last ? "Finish" : reveal ? "Reveal winner ▸" : "Next ▸"}</Button>
+        <Button tone="sun" size="sm" className="min-h-[44px]" onClick={onNext} disabled={busy || revealing} data-testid="ceremony-next">{revealing ? "Revealing…" : last ? "Finish" : podium ? "Start reveal ▸" : reveal ? "Reveal winner ▸" : "Next ▸"}</Button>
       </div>
     </div>
   );

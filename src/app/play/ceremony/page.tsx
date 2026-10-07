@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { CeremonyControls, CeremonyResults, sceneView } from "@/components/game/Ceremony";
 import { Button, Card, Empty, LinkButton, PageTitle } from "@/components/ui";
 import { buildScenes } from "@/engine/awards/ceremony";
+import { hasPodiumReveal } from "@/engine/awards/podium";
 import { seasonLabel } from "@/engine/calendar";
 import { useGame, useGameState } from "@/game/store";
 
@@ -14,6 +16,8 @@ export default function CeremonyPage() {
   const step = useGame((s) => s.ceremonyStep);
   const finish = useGame((s) => s.ceremonyFinish);
   const busy = !!useGame((s) => s.busy);
+  // The scene whose podium reveal has finished. Presentation only, never saved: after a reload it starts again.
+  const [doneStep, setDoneStep] = useState(-1);
   if (!g) return null;
   const c = g.ceremony;
   if (!c) {
@@ -60,21 +64,30 @@ export default function CeremonyPage() {
 
   const at = Math.min(c.step, scenes.length - 1);
   const scene = scenes[at];
+  const sceneAward = scene.kind === "award" && scene.phase === "winner" ? c.results.find((r) => r.id === scene.id) : undefined;
+  const revealing = !!sceneAward && hasPodiumReveal(sceneAward) && doneStep !== at;
   return (
     <div className="grid gap-4" data-testid="ceremony">
       <PageTitle kicker={c.leagueName} title={title} />
-      <div className="min-h-[22rem]">{sceneView(g, c, scene)}</div>
+      <div className="min-h-[22rem]">{sceneView(g, c, scene, () => setDoneStep(at))}</div>
       <CeremonyControls
         c={c}
         step={at}
         total={scenes.length}
         busy={busy}
-        onBack={() => step(at - 1)}
+        revealing={revealing}
+        onBack={() => {
+          setDoneStep(-1);
+          step(at - 1);
+        }}
         onNext={async () => {
           if (at >= scenes.length - 1) {
             await finish("watched");
             router.push("/play");
-          } else step(at + 1);
+          } else {
+            setDoneStep(-1);
+            step(at + 1);
+          }
         }}
         onSkip={async () => {
           await finish("skipped");
