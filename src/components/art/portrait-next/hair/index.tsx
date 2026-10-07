@@ -4,7 +4,7 @@
  */
 import { coilyHair, type CoilyDesign } from "./coily";
 import type { HairArt, HairInput } from "./core";
-import { backMass, flowHair, type FlowDesign } from "./flow";
+import { flowHair, type FlowDesign } from "./flow";
 import { locsHair, type LocsDesign } from "./locs";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
 
@@ -41,19 +41,16 @@ const TEXTURED_CROP: CropDesign = {
   side: 1,
   sides: "taper",
   drop: 4,
-  // One large lock, a couple of small ones, and gaps where the edge lifts: never evenly spaced teeth.
+  // Wide locks that overlap into one fringe: one long, one medium, short ones at the sides, one small lift showing
+  // forehead. Tips curve on; nothing is evenly spaced.
   locks: [
-    { u: 0.12, w: 12, len: 6, lean: -2 },
-    { u: 0.27, w: 16, len: 14, lean: -5, bend: -1.5 },
-    { u: 0.4, w: 10, len: 8, lean: -3 },
-    { u: 0.49, w: 18, len: 21, lean: -6, bend: -2 },
-    { u: 0.67, w: 14, len: 12, lean: -4, bend: 1 },
-    { u: 0.84, w: 10, len: 5, lean: -1.5 },
+    { u: 0.13, w: 17, len: 7, lean: -2 },
+    { u: 0.3, w: 20, len: 14, lean: -5, bend: -1.5 },
+    { u: 0.49, w: 22, len: 21, lean: -6, bend: -2 },
+    { u: 0.7, w: 18, len: 11, lean: -3.5, bend: 1 },
+    { u: 0.87, w: 14, len: 6, lean: -1.5 },
   ],
-  lifts: [
-    { u: 0.58, w: 0.06, a: 3 },
-    { u: 0.92, w: 0.07, a: 2.5 },
-  ],
+  lifts: [{ u: 0.62, w: 0.05, a: 2.5 }],
   tufts: [
     { u: 0.17, w: 0.05, a: 2.5, lean: -2 },
     { u: 0.29, w: 0.07, a: 5, lean: -3 },
@@ -63,24 +60,25 @@ const TEXTURED_CROP: CropDesign = {
   ],
 };
 
-const MULLET_TOP: CropDesign = {
+// A mullet: a short, feathered top swept back from the parting, sides kept above the ears, and a long back that
+// flows down behind the neck onto the shoulders.
+const CLASSIC_MULLET: FlowDesign = {
   kind: "straight",
-  top: 11,
-  side: 1.5,
-  sides: "taper",
-  drop: 3,
-  locks: [
-    { u: 0.18, w: 13, len: 8, lean: -2 },
-    { u: 0.36, w: 15, len: 12, lean: -3, bend: -1 },
-    { u: 0.55, w: 13, len: 9, lean: 2 },
-    { u: 0.74, w: 15, len: 11, lean: 3, bend: 1 },
-  ],
-  lifts: [{ u: 0.46, w: 0.06, a: 2.5 }],
-  tufts: [
-    { u: 0.22, w: 0.06, a: 3, lean: -2 },
-    { u: 0.45, w: 0.07, a: 4, lean: -1 },
-    { u: 0.7, w: 0.06, a: 3.5, lean: 2 },
-  ],
+  part: -5,
+  top: 12,
+  side: 4,
+  end: (f) => f.ear.top + 4,
+  cover: 1,
+  arch: 0.3,
+  flare: 0.05,
+  wave: 0.8,
+  locks: 3,
+  reach: [0.82, 1],
+  strands: 0,
+  loose: false,
+  flick: 0.18,
+  // The long back starts below the ears, so the short sides show between it and the top.
+  back: { from: (f) => f.ear.bot - 6, end: () => 332, spread: 20, masses: 2 },
 };
 
 const MEDIUM_AFRO: CoilyDesign = {
@@ -92,8 +90,8 @@ const MEDIUM_AFRO: CoilyDesign = {
   edge: { spacing: [7, 14], amp: [1.2, 3.2], big: 0.18 },
   fringe: { spacing: [6, 11], amp: [0.6, 1.8] },
   cluster: { r: [3.6, 6], lobes: 3, squash: 0.8 },
-  groups: 5,
-  curls: 9,
+  groups: 3,
+  curls: 5,
   curlR: [1.8, 2.8],
 };
 
@@ -101,42 +99,45 @@ const CURLY_FADE: CoilyDesign = {
   kind: "straight",
   shape: "cap",
   top: 18,
-  side: 4,
+  side: 2.5,
   sides: "fade",
   edge: { spacing: [9, 17], amp: [2.5, 5.5], big: 0.25 },
-  // A few curl groups hang over the forehead, different sizes, with gaps between: not a scalloped line.
+  // Three curl groups of different size hang over the forehead with gaps between; the rest of the edge is calm.
   fringe: {
-    spacing: [5, 10],
-    amp: [0.6, 1.8],
+    spacing: [10, 16],
+    amp: [0.3, 1],
     drop: 2,
     tips: [
-      { u: 0.22, w: 0.09, a: 6, lean: -1 },
-      { u: 0.4, w: 0.12, a: 10, lean: -2 },
-      { u: 0.63, w: 0.08, a: 5, lean: 1 },
-      { u: 0.8, w: 0.1, a: 7.5, lean: 2 },
+      { u: 0.24, w: 0.1, a: 6, lean: -1 },
+      { u: 0.44, w: 0.13, a: 10, lean: -2 },
+      { u: 0.76, w: 0.1, a: 7, lean: 2 },
     ],
   },
   cluster: { r: [2.8, 4.4], lobes: 3, squash: 0.75 },
-  groups: 4,
-  curls: 10,
+  groups: 3,
+  curls: 6,
   curlR: [1.8, 3],
 };
 
-const MEDIUM_DREADS: LocsDesign = { kind: "irregular", end: 322, fringe: 2, side: 3, back: 4, w: [9, 12.5] };
+// Thirteen major locks: 2 + 2 behind, 3 + 4 framing the face (the extra one on a seeded side), 2 over the forehead.
+const MEDIUM_DREADS: LocsDesign = { kind: "irregular", end: 324, fringe: 2, side: 3, back: 2, w: [12, 16.5] };
 
 const LONG_FLOW: FlowDesign = {
   kind: "straight",
-  part: 6,
+  part: 7,
   top: 10,
   side: 8,
-  end: () => 338,
+  end: () => 334,
   cover: 5,
   arch: 0.25,
   flare: 0.12,
-  wave: 1.5,
-  tips: 4,
-  tipLen: [8, 20],
-  back: { from: (f) => f.eyeY - 4, end: () => 352, spread: 6, tips: 5 },
+  wave: 4,
+  locks: 4,
+  reach: [0.8, 1],
+  strands: 0,
+  loose: true,
+  flick: 0.08,
+  back: { from: (f) => f.eyeY - 4, end: () => 352, spread: 6, masses: 2 },
 };
 
 const CLASSIC_CURTAINS: FlowDesign = {
@@ -148,10 +149,13 @@ const CLASSIC_CURTAINS: FlowDesign = {
   cover: 3,
   arch: 0.75,
   flare: 0.07,
-  wave: 0,
-  tips: 2,
-  tipLen: [4, 9],
-  back: { from: (f) => f.eyeY, end: (f) => f.jawY + 10, spread: 2, tips: 3 },
+  wave: 1.5,
+  locks: 3,
+  reach: [0.78, 1],
+  strands: 2,
+  loose: false,
+  flick: 0.14,
+  back: { from: (f) => f.eyeY, end: (f) => f.jawY + 10, spread: 2, masses: 1 },
 };
 
 export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => HairArt })[] = [
@@ -165,10 +169,7 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "brazilian-crescent", name: "Brazilian Crescent", category: "iconic", hairType: "straight", length: "shaved", rarity: "legendary", minimumAge: 18, maximumAge: 34, eraWeight: { retro: 1, modern: 0.3 }, supportsRecedingHairline: false }), draw: (i) => crescentHair(i) },
   {
     ...meta({ id: "classic-mullet", name: "Classic Mullet", category: "mullet", hairType: "wavy", length: "medium", rarity: "rare", minimumAge: 17, maximumAge: 38, eraWeight: { retro: 1, modern: 0.3 }, supportsHeadband: true }),
-    draw: (i) => {
-      const top = cropHair(i, MULLET_TOP);
-      return { ...top, back: backMass(i, { from: (f) => f.ear.top + 2, end: () => 328, spread: 22, tips: 4, tone: 0.25 }, 6) };
-    },
+    draw: (i) => flowHair(i, CLASSIC_MULLET),
   },
 ];
 

@@ -224,6 +224,10 @@ export interface LockOpts {
   round?: boolean;
   /** Small, smooth unevenness of the width. */
   wobble?: number;
+  /** Slow swelling and pinching along the length (0 even .. ~0.3 lumpy). */
+  swell?: number;
+  /** A flattened, wider section: where (0-1) and how much wider. */
+  flat?: { u: number; k: number };
   seed: number;
   steps?: number;
 }
@@ -244,7 +248,8 @@ export function lockOutline(path: readonly Pt[], o: LockOpts): Pt[] {
     const t = unit(sub(line[Math.min(n - 1, i + 1)], line[Math.max(0, i - 1)]));
     const nr: Pt = [-t[1], t[0]];
     const k = u < peak ? lerp(root, 1, smooth(u / peak)) : lerp(1, tip, smooth((u - peak) / (1 - peak)));
-    const hw = (o.w / 2) * k * (1 + wob * noise1(o.seed, u * 7));
+    const flat = o.flat ? 1 + o.flat.k * lobe((u - o.flat.u) / 0.2) : 1;
+    const hw = (o.w / 2) * k * flat * (1 + wob * noise1(o.seed, u * 7) + (o.swell ?? 0) * noise1(o.seed + 3, u * 2.6));
     L.push(add(line[i], scale(nr, hw)));
     R.push(add(line[i], scale(nr, -hw)));
     hwEnd = hw;
@@ -263,6 +268,19 @@ export function lockOutline(path: readonly Pt[], o: LockOpts): Pt[] {
 }
 
 export const taperedLock = (path: readonly Pt[], o: LockOpts) => ring(lockOutline(path, o));
+
+/** Bend a control polyline: each interior point is pushed sideways a little (a lock is never a clean curve). */
+export function bend(pts: readonly Pt[], seed: number, amp: number): Pt[] {
+  return pts.map((p, i) => {
+    if (i === 0 || i === pts.length - 1) return p;
+    const t = unit(sub(pts[i + 1], pts[i - 1]));
+    const k = (hash01(seed, i + 61) - 0.5) * 2 * amp;
+    return P(p[0] - t[1] * k, p[1] + t[0] * k);
+  });
+}
+
+/** The same outline moved: a contact shadow under an overlapping lock, or a cast shadow on the skin. */
+export const offset = (pts: readonly Pt[], dx: number, dy: number): Pt[] => pts.map((p) => P(p[0] + dx, p[1] + dy));
 
 /** A directional highlight (or separation) along part of a flow line. */
 export function hairStroke(path: readonly Pt[], o: { from: number; to: number; w: number; seed: number; start?: number; end?: number; peak?: number }): string {
@@ -349,7 +367,7 @@ export function silhouetteInk(pts: readonly Pt[], d: Detail, seed: number, keep:
  * Hair seen as colour on the skin (shaved scalps, short and faded sides): a vertical gradient, never dots. A soft
  * edge (blur) only at close-up size, where it shows and where few portraits are on screen.
  */
-export function fadeRegion(id: string, region: string, color: string, d: Detail, g: { y0: number; y1: number; o0: number; o1: number }) {
+export function fadeRegion(id: string, region: string, color: string, d: Detail, g: { y0: number; y1: number; o0: number; o1: number; mid?: readonly [number, number] }) {
   return (
     <g>
       <defs>
@@ -360,6 +378,7 @@ export function fadeRegion(id: string, region: string, color: string, d: Detail,
         )}
         <linearGradient id={`${id}g`} gradientUnits="userSpaceOnUse" x1="0" y1={g.y0} x2="0" y2={g.y1}>
           <stop offset="0" stopColor={color} stopOpacity={g.o0} />
+          {g.mid && <stop offset={g.mid[0]} stopColor={color} stopOpacity={g.mid[1]} />}
           <stop offset="1" stopColor={color} stopOpacity={g.o1} />
         </linearGradient>
       </defs>

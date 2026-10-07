@@ -2,7 +2,7 @@ import type { Head } from "../portrait/anatomy";
 import { CX, along, clamp, hash01, lerp, q, type Pt } from "../portrait/geometry";
 import type { Detail } from "./face";
 import type { NextSpec } from "./head";
-import { roughen, stroke } from "./ink";
+import { ring, roughen, stroke } from "./ink";
 import { mixHex, type SkinTones } from "./palette";
 
 const P = (x: number, y: number): Pt => [x, y];
@@ -48,7 +48,7 @@ function mouthHole(f: NextSpec, grow: number): Pt[] {
   });
 }
 
-const ring = (pts: Pt[]) => `M${pts.map((p) => `${p[0]} ${p[1]}`).join("L")}Z`;
+
 
 /**
  * Stubble as tone, never as noise: a translucent wash of the hair colour over the beard area, built from stacked

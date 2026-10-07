@@ -1,7 +1,7 @@
 import type { Head } from "../portrait/anatomy";
 import { CX, along, cubicAt, lerp, q, type Pt, type Seg } from "../portrait/geometry";
 import type { NextSpec } from "./head";
-import { blob, noise1, pieces, roughen, stroke, strokeLine } from "./ink";
+import { blob, noise1, pieces, ring, roughen, stroke, strokeLine } from "./ink";
 import { INK, type SkinTones } from "./palette";
 
 /** 0 small (list thumbnails), 1 medium, 2 large close-ups. Detail is added, never just scaled. */
@@ -27,12 +27,15 @@ export function HeadInk({ head, d }: { head: Head; d: Detail }) {
   // Dome: one line from the left temple over the crown to the right temple, light where the light falls on it.
   const dome = [...L.slice(0, tL + 1).reverse(), ...R.slice(1, tR + 1)];
   return (
-    <g fill={INK}>
-      <path d={strokeLine(dome, { w: 2 * k, start: 0.6, end: 0.85, peak: 0.8, seed: 2, wobble: 0.12 })} />
-      <path d={strokeLine(R.slice(tR), { w: 2.3 * k, start: 0.75, end: 0.6, peak: 0.7, seed: 3 })} />
-      <path d={strokeLine(L.slice(tL, cheekA + 1), { w: 1.4 * k, start: 0.85, end: 0.25, peak: 0.2, seed: 5 })} />
-      <path d={strokeLine(L.slice(cheekB), { w: 1.9 * k, start: 0.15, end: 0.7, peak: 0.7, seed: 7 })} />
-    </g>
+    <path
+      fill={INK}
+      d={[
+        strokeLine(dome, { w: 2 * k, start: 0.6, end: 0.85, peak: 0.8, seed: 2, wobble: 0.12 }),
+        strokeLine(R.slice(tR), { w: 2.3 * k, start: 0.75, end: 0.6, peak: 0.7, seed: 3 }),
+        strokeLine(L.slice(tL, cheekA + 1), { w: 1.4 * k, start: 0.85, end: 0.25, peak: 0.2, seed: 5 }),
+        strokeLine(L.slice(cheekB), { w: 1.9 * k, start: 0.15, end: 0.7, peak: 0.7, seed: 7 }),
+      ].join("")}
+    />
   );
 }
 
@@ -66,7 +69,7 @@ export function Planes({ f, head, t, d, uid }: { f: NextSpec; head: Head; t: Ski
     0.7,
     seed,
   );
-  const side = q(`M${edge.map((p) => `${p[0]} ${p[1]}`).join("L")}L${CX + 150} ${f.chinY + 20}L${CX + 150} ${f.top + 12}Z`);
+  const side = ring([...edge, P(CX + 150, f.chinY + 20), P(CX + 150, f.top + 12)]);
   // Under the cheekbone on both sides: the cheek plane turning away, softer on the lit side.
   const cheek = (s: 1 | -1, K: Pt, J: Pt) =>
     blob(
@@ -85,7 +88,7 @@ export function Planes({ f, head, t, d, uid }: { f: NextSpec; head: Head; t: Ski
   const jawBand = (pts: Pt[], s: 1 | -1) => {
     const j = pts.filter((p) => p[1] > f.jawY - 18);
     const inner = j.map((p, i) => [p[0] - s * (3 + 3 * Math.sin((i / Math.max(1, j.length - 1)) * Math.PI)), p[1] - 4] as Pt).reverse();
-    return q(`M${[...j, ...inner].map((p) => `${p[0]} ${p[1]}`).join("L")}Z`);
+    return ring([...j, ...inner]);
   };
   // Light: brow ridge on the lit side, top of the lit cheekbone, the chin pad. Small, shaped, never a pasted blob.
   // Light on the top of the lit cheekbone only: a small shape, out towards the side of the face.
@@ -103,7 +106,7 @@ export function Planes({ f, head, t, d, uid }: { f: NextSpec; head: Head; t: Ski
       <path d={side} fill={t.shade} />
       <path d={cheek(1, R.K, R.J)} fill={t.shade} />
       <path d={cheek(-1, Lf.K, Lf.J)} fill={t.shade} opacity={0.35} />
-      <path d={temple} fill={t.shade} opacity={0.4} />
+      {d > 0 && <path d={temple} fill={t.shade} opacity={0.4} />}
       <path d={jawBand(head.rightPts, 1)} fill={t.deep} opacity={0.35} />
       <path d={jawBand(head.leftPts, -1)} fill={t.shade} opacity={0.45} />
       {d === 2 && <path d={cheek(1, R.K, R.J)} fill={`url(#${uid}ht)`} opacity={0.25} />}
@@ -113,9 +116,9 @@ export function Planes({ f, head, t, d, uid }: { f: NextSpec; head: Head; t: Ski
           <ellipse cx={CX + e.gap + 6} cy={f.eyeY + 22} rx={9} ry={5} fill={t.blush} opacity={0.12} />
         </>
       )}
-      <path d={cheekLight} fill={t.light} opacity={0.3} />
-      <path d={chinLight} fill={t.light} opacity={0.28} />
-      {f.cleft > 0 && <path d={stroke([P(CX + 0.5, f.chinY - 15), P(CX, f.chinY - 10), P(CX + 0.4, f.chinY - 6)], { w: 1, seed: 9 })} fill={t.line} opacity={0.5 * f.cleft} />}
+      {d > 0 && <path d={cheekLight} fill={t.light} opacity={0.3} />}
+      {d > 0 && <path d={chinLight} fill={t.light} opacity={0.28} />}
+      {d > 0 && f.cleft > 0 && <path d={stroke([P(CX + 0.5, f.chinY - 15), P(CX, f.chinY - 10), P(CX + 0.4, f.chinY - 6)], { w: 1, seed: 9 })} fill={t.line} opacity={0.5 * f.cleft} />}
     </g>
   );
 }
@@ -183,17 +186,17 @@ export function EyesNext({ f, t, iris, uid, d, lines }: { f: NextSpec; t: SkinTo
         <path d={shape} fill={t.white} />
         <g clipPath={`url(#${id})`}>
           <circle cx={ix} cy={iy} r={ir} fill={iris} />
-          <circle cx={ix} cy={iy} r={ir} fill="none" stroke={INK} strokeWidth={0.7} opacity={0.55} />
+          {d > 0 && <circle cx={ix} cy={iy} r={ir} fill="none" stroke={INK} strokeWidth={0.7} opacity={0.55} />}
           <circle cx={ix} cy={iy} r={ir * 0.4} fill="#120b07" />
-          <path d={q(cover)} fill="#1c120c" opacity={0.3} />
+          {d > 0 && <path d={q(cover)} fill="#1c120c" opacity={0.3} />}
           {d > 0 && <circle cx={ix - ir * 0.38} cy={iy - ir * 0.3} r={Math.max(0.7, ir * 0.16)} fill="#fbf6ee" opacity={0.9} />}
         </g>
         {e.hood > 0 && <path d={blob([P(X(0.02), ey - h * 0.9), P(X(0.4), ey - h - e.crease * 0.7), P(X(0.85), ey - h - e.crease * 0.4), P(X(1.12), ey + e.tilt - h * 0.2), P(X(0.7), ey - h * 0.85)], 0.5)} fill={t.shade} />}
         <path d={lidD} fill={INK} />
-        {lowerKeep.map((pts, i) => (
+        {d > 0 && lowerKeep.map((pts, i) => (
           <path key={`lo${i}`} d={strokeLine(pts, { w: 0.75, start: 0.1, end: 0.5, peak: 0.7, seed: 17 })} fill={t.line} opacity={0.45} />
         ))}
-        {!e.hood && crease.map((pts, i) => <path key={`cr${i}`} d={strokeLine(pts, { w: 0.85, start: 0.2, end: 0.2, peak: 0.5, seed: 19 })} fill={t.line} opacity={0.5} />)}
+        {d > 0 && !e.hood && crease.map((pts, i) => <path key={`cr${i}`} d={strokeLine(pts, { w: 0.85, start: 0.2, end: 0.2, peak: 0.5, seed: 19 })} fill={t.line} opacity={0.5} />)}
         {d === 2 && <path d={stroke(under, { w: 0.8 + e.bag * 0.4 + lines * 0.3, start: 0.1, end: 0.1, seed: 23 })} fill={t.line} opacity={0.18 + e.bag * 0.15 + lines * 0.15} />}
         {d === 2 && lines > 0.35 && <path d={stroke([P(O[0] + s * 3, O[1] + 1.5), P(O[0] + s * 7, O[1] + 3.5)], { w: 0.7, seed: 29 })} fill={t.line} opacity={0.3 * lines} />}
       </g>
@@ -233,7 +236,7 @@ export function BrowsNext({ f, color, d }: { f: NextSpec; color: string; d: Deta
       top.push(P(x, y - th * 0.58 + noise1(seed, u * 7) * 0.5 * (1 + b.ragged)));
       bot.push(P(x, y + th * 0.42 + noise1(seed + 5, u * 6) * 0.25));
     }
-    const mass = q(`M${[...top, P(x1 + s * 1.5, y1 + 0.3), ...bot.reverse()].map((p) => `${p[0]} ${p[1]}`).join("L")}Z`);
+    const mass = ring([...top, P(x1 + s * 1.5, y1 + 0.3), ...bot.reverse()]);
     const strokes: string[] = [];
     if (d > 0) {
       const count = Math.round(b.len / (d === 2 ? 2.8 : 4.2));
@@ -252,7 +255,7 @@ export function BrowsNext({ f, color, d }: { f: NextSpec; color: string; d: Deta
     return (
       <g key={s}>
         <path d={mass} fill={color} opacity={0.82} />
-        <path d={stroke([P(x0 - s * 0.5, y0 + 1), P(x0 + s * 3, y0 - b.head * 0.2)], { w: b.head * 0.6, seed })} fill={color} opacity={0.35} />
+        {d > 0 && <path d={stroke([P(x0 - s * 0.5, y0 + 1), P(x0 + s * 3, y0 - b.head * 0.2)], { w: b.head * 0.6, seed })} fill={color} opacity={0.35} />}
         {strokes.length > 0 && <path d={strokes.join("")} fill={color} opacity={0.95} />}
       </g>
     );
@@ -310,7 +313,7 @@ export function NoseNext({ f, t, d }: { f: NextSpec; t: SkinTones; d: Detail }) 
       <path d={plane} fill={t.shade} opacity={0.85} />
       <path d={cast} fill={t.deep} opacity={0.5} />
       {d === 2 && <path d={stroke([P(CX - n.bridge * 0.25, f.eyeY + 6), P(CX - n.bridge * 0.2 + n.crook * 0.3, f.eyeY + len * 0.3), P(nx - 1, ny - 13)], { w: 1.6, start: 0.1, end: 0.3, seed: 47 })} fill={t.light} opacity={0.3} />}
-      <ellipse cx={nx - n.tip * 0.2} cy={ny - 6.5} rx={n.tip * 0.3} ry={1.6} fill={t.light} opacity={0.45} />
+      {d > 0 && <ellipse cx={nx - n.tip * 0.2} cy={ny - 6.5} rx={n.tip * 0.3} ry={1.6} fill={t.light} opacity={0.45} />}
       {bridge.map((pts, i) => (
         <path key={`b${i}`} d={strokeLine(pts, { w: 1.05, start: 0.5, end: 0.05, peak: 0.25, seed: 53 })} fill={t.line} opacity={0.85} />
       ))}
@@ -336,7 +339,7 @@ export function MouthNext({ f, t, d }: { f: NextSpec; t: SkinTones; d: Detail })
   const line = along(centre, 6);
   const upperEdge = along([L, P(CX - m.w * 0.62, my - m.up * 0.55), P(CX - m.bow, my - m.up), P(CX, my - m.up * 0.72), P(CX + m.bow, my - m.up), P(CX + m.w * 0.62, my - m.up * 0.55 + a * 0.3), R], 5);
   const lowerEdge = along([L, P(CX - m.w * 0.5, my + m.lo * 0.82), P(CX, my + m.lo + m.part), P(CX + m.w * 0.52, my + m.lo * 0.8 + a * 0.3), R], 6);
-  const join = (a1: Pt[], b1: Pt[]) => q(`M${[...a1, ...b1.slice().reverse()].map((p) => `${p[0]} ${p[1]}`).join("L")}Z`);
+  const join = (a1: Pt[], b1: Pt[]) => ring([...a1, ...b1.slice().reverse()]);
   const lb = my + m.lo + m.part;
   // The mouth line is darkest just off centre and fades before the corners.
   const keep = line.slice(Math.round(line.length * 0.07), Math.round(line.length * 0.95));
@@ -349,8 +352,8 @@ export function MouthNext({ f, t, d }: { f: NextSpec; t: SkinTones; d: Detail })
       {m.part > 0 && <path d={strokeLine(line, { w: m.part * 1.6 + 1.2, start: 0.3, end: 0.3 })} fill="#2a120c" />}
       {m.teeth > 0 && <path d={stroke([P(CX - m.w * 0.55, my + 0.9), P(CX, my + 1.7), P(CX + m.w * 0.55, my + 0.9)], { w: m.teeth, start: 0.5, end: 0.5 })} fill="#ece4d6" />}
       <path d={strokeLine(keep, { w: 1.5, start: 0.15, end: 0.12, peak: 0.42, seed: 73 })} fill={INK} opacity={0.88} />
-      <path d={stroke([P(L[0] + 0.5, L[1] - 0.3), P(L[0] - 1.2, L[1] + (m.corner < 0 ? 1.4 : -0.4))], { w: 1, start: 0.6, end: 0.1, seed: 79, steps: 2 })} fill={t.line} opacity={0.5} />
-      <path d={stroke([P(R[0] - 0.5, R[1] - 0.3), P(R[0] + 1.2, R[1] + (m.corner < 0 ? 1.4 : -0.4))], { w: 1, start: 0.6, end: 0.1, seed: 83, steps: 2 })} fill={t.line} opacity={0.5} />
+      {d > 0 && <path d={stroke([P(L[0] + 0.5, L[1] - 0.3), P(L[0] - 1.2, L[1] + (m.corner < 0 ? 1.4 : -0.4))], { w: 1, start: 0.6, end: 0.1, seed: 79, steps: 2 })} fill={t.line} opacity={0.5} />}
+      {d > 0 && <path d={stroke([P(R[0] - 0.5, R[1] - 0.3), P(R[0] + 1.2, R[1] + (m.corner < 0 ? 1.4 : -0.4))], { w: 1, start: 0.6, end: 0.1, seed: 83, steps: 2 })} fill={t.line} opacity={0.5} />}
       {d === 2 && <path d={stroke([P(CX - m.bow * 0.9, my - m.up - 1.5), P(CX - 3, f.noseY + 6)], { w: 0.8, seed: 89 })} fill={t.shade} opacity={0.8} />}
     </g>
   );
@@ -369,7 +372,7 @@ export function EarsNext({ f, head, t, d, stud }: { f: NextSpec; head: Head; t: 
     const ax = CX + s * (head.half(top + h * 0.4, s) - 5);
     const X = (dx: number) => ax + s * dx;
     const outer: Pt[] = [P(X(0), top + 3), P(X(w * 0.6), top - 5), P(X(w * 1.08), top + h * 0.2), P(X(w * 0.98), top + h * 0.52), P(X(w * 0.6), top + h * 0.78), P(X(w * 0.42), bot - 2), P(X(w * 0.12), bot + 1), P(X(-2), bot - 4)];
-    const fill = q(`M${along(outer, 5).map((p) => `${p[0]} ${p[1]}`).join("L")}Z`);
+    const fill = ring(along(outer, 5));
     const rim = [P(X(2.5), top + 3.5), P(X(w * 0.58), top - 1), P(X(w * 0.86), top + h * 0.3), P(X(w * 0.5), top + h * 0.6), P(X(w * 0.38), top + h * 0.74)];
     const concha = blob([P(X(w * 0.16), top + h * 0.3), P(X(w * 0.55), top + h * 0.24), P(X(w * 0.58), top + h * 0.5), P(X(w * 0.35), top + h * 0.66), P(X(w * 0.12), top + h * 0.55)], 0.5);
     return (
