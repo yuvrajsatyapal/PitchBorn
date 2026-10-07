@@ -1,41 +1,56 @@
 # Player portraits
 
-Portraits are built from data, not images: `<PlayerPortrait appearance age size kit />` draws SVG layers from a stored
-`Appearance` (about 24 small integers per player), so it is sharp at any size, offline and free.
+Portraits are built from data, not images: `<PlayerPortrait appearance age size kit />` draws SVG from a stored
+`Appearance` (about 24 small integers per player), so it is sharp at any size, offline, instant and free.
 
-- **Layers** (back to front): background, shirt, back hair, neck, collar, ears, face + two-tone shading, age lines and
-  details, nose, eyes, eyebrows, mouth, facial hair, front hair, accessory, then one grain overlay on large portraits.
-- **One coordinate system.** Every part is placed from `portrait/geometry.ts`. The face outline is a contour function
-  (`contour.half(y)`), and beards, ears and hair read from it, so a part cannot drift off a different face shape.
-- **Fine tuning.** Six small numeric sliders (head width/height, eye spacing, brow angle, nose size, ear size) sit under
-  the discrete options so the same face/nose/eyes combination is not identical on two players. Ranges are deliberately small.
-- **Deterministic.** `generateAppearance(playerId)` uses its own seeded RNG, never the world stream, so a player always
-  looks the same. Regional skin lean is optional, mild and never deterministic.
-- **Ageing.** `ageLook(appearance, age)` returns grey, lines, hairline retreat and youth. It changes only colour, lines and
-  hairline; face shape, eyes, nose, mouth and geometry never change. The stored `aging` gene shifts when greying/receding start.
-- **Data lives in** `engine/appearance/options.ts` (39 hairstyles, 12 faces, 8 eye shapes, 12 noses, 10 mouths, 10 brows, 16 facial
-  hair styles, 10 skin tones, 10 hair colours, 6 eye colours, scars, marks, accessories).
-- **Saves.** Old five-value avatars are upgraded by schema migration v5 -> v6, keeping the player's choices.
-- **Performance.** The ink wobble filter only runs from 56px up and the grain from 96px up; the component is memoised on
-  the face data.
+## Art direction: illustrated football portrait
 
-## Art direction: retro editorial football portrait
+The target is a hand-drawn football editorial or trading-card portrait (flat cel-shaded planes, warm near-black ink
+with varied weight), not an avatar maker. The art was established on one reference face first
+(`REFERENCE_FACE` in `portrait/anatomy.ts`), then tested on six designed men with identical hair and a bald test, and only
+then made modular.
 
-The target is a 1970s-90s football magazine or trading-card illustration, not an avatar maker.
+- **Anatomy first.** The head is built from landmarks: crown, skull, temple, cheekbone, a jaw corner with a real (rounded)
+  angle, chin corners and chin base (`buildHead`). Features sit on fixed lines (brow, eye, nose, mouth). Every part reads
+  these landmarks and `head.half(y, side)`, so nothing is positioned by eye.
+- **Flat planes, three tones.** Base, shadow and highlight, lit from the upper left: the right side plane with a
+  cheekbone step, hollows under the cheekbones, eye sockets, the nose's side plane and cast shadow, the underside of
+  the chin, the jaw's shadow on the neck, and the hair's shadow on the forehead. No gradients.
+- **Features are constructions.** Eyes have a heavy tapered upper lid, crease, lower lid, iris under the lid, pupil and
+  a small highlight. Noses have bridge lines, a side plane, alar wings, nostrils and a lit tip. Mouths have upper and
+  lower lips, a tapered mouth line and a shadow under the lower lip. Brows are tapered shapes with a blunt, hairy head.
+- **Designed asymmetry.** One eye is a touch less open and lower, one brow sits higher, the mouth corners and ears differ,
+  one jaw corner is wider. Fixed per player (`asym`), never random per render.
+- **Hair** has a hairline (separate from the cut), a mass with an irregular silhouette and leaning clump tips, fringe
+  clumps over the forehead, directional highlight clumps and partings inside the mass, and fades drawn on the skin.
+- **Line weights.** Silhouettes `OUT`, structure `MID`, details `FINE`; lid, mouth and brow lines are tapered ribbons.
+- **Retro treatment last.** Grain and a small halftone screen in the deepest shadow are added from 96px up; the art must
+  hold up without them.
 
-- **Identity lives in the face.** Twelve face outlines are separate silhouettes (own temple, cheekbone, jaw angle, chin
-  width, curve tension, optional chin cleft). Eyes, brows, noses and mouths each carry their own construction, and the
-  second eye/brow is slightly smaller, lower and flatter. Hair is secondary: run the bald test below.
-- **Expression.** Mouths are weighted towards neutral/stern/thin; grins are rare, brow slant leans serious.
-- **Modelling.** Skin uses base/shadow/highlight with light from the upper left: brow-ridge, nose plane, cheekbone, jaw and
-  under-jaw shadows, a halftone screen in the deepest shade, and warmer highlights on dark skin.
-- **Hair** has silhouette + hairline + inner texture (clipped strand groups, curl clusters, form shadow, a shadow on the
-  forehead). **Stubble and beards** use tiled flecks/ticks, not flat polygons.
-- **Frame.** Head, neck and collar fill the card on a muted print-ink backdrop (navy, green, brown, burgundy, slate,
-  cream) chosen per face and kept clear of the shirt colour; halftone dots, grain and slightly irregular ink are shared.
-- **Unique ids.** Clip paths and patterns are prefixed with a per-instance id so many portraits can sit on one page.
+## Modules (`src/components/art/portrait/`)
 
-### QA sheets
+- `anatomy.ts`: `FaceSpec`, `REFERENCE_FACE`, `buildHead`.
+- `specs.ts`: each stored option as anatomy (12 heads, 8 eye constructions, 10 brows, 12 noses, 10 mouths, 3 ears),
+  `faceSpecFor(appearance, age)` and `modelFor`. Small per-player variation and asymmetry are seeded from the hidden
+  `aging` gene and the feature's own index, so editing one feature never moves another.
+- `face.tsx` (planes, eyes, brows, nose, mouth, ears, neck, shirt), `hair.tsx`, `facialHair.tsx`, `details.tsx`, and
+  `art.tsx`, which layers them.
+- `options.ts` (engine) keeps the option names and hairstyle data. No options were added for the art pass.
 
-`npx tsx scripts/portraits/sheet.tsx out/ && node scripts/portraits/shoot.mjs out/` writes `contact` (36 random
-players), `bald` (12 bald + clean-shaven), `silhouette`, `sizes` (48/64/96/256) and `zoom` (`ZOOM=3,9,14`) sheets.
+## Rules
+
+- **Deterministic.** `generateAppearance(playerId)` uses its own seeded RNG, never the world stream.
+- **Identity is permanent.** Changing club changes only the shirt and backdrop. Age changes grey, lines (the nose-to-mouth
+  fold deepens, forehead lines from the mid thirties), hairline retreat and a softer jaw in the teens, never the face.
+- **Saves.** Option indexes are append-only; old five-value avatars still upgrade through migration v5 -> v6.
+- **Performance.** Below 96px a lite level draws fewer hair clumps and beard strands. Head and hair paths are defined
+  once and reused with `<use>`, and path data is trimmed to one decimal. Ids are prefixed per instance (`useId`).
+
+## QA sheets
+
+- `npx tsx --tsconfig tsconfig.json scripts/portraits/reference.tsx out/` writes the art-direction sheets from explicit
+  face specs: `reference` (plain and retro), `six` (six men, same hair), `bald`, `small`, `zoom`, plus every hairstyle
+  and every facial-hair style.
+- `npx tsx --tsconfig tsconfig.json scripts/portraits/sheet.tsx out/` writes sheets from the generator: `contact`
+  (36 random players), `bald` (12), `silhouette`, `sizes` (48/64/96/256) and `zoom` (`ZOOM=3,9,14`).
+- `node scripts/portraits/shoot.mjs out/` screenshots every sheet; `scripts/portraits/perf.tsx` prints cost per size.

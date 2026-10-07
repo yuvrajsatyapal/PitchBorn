@@ -22,34 +22,14 @@ export const EYE_COLOR_NAMES = ["Dark brown", "Brown", "Hazel", "Green", "Blue",
 export const INK = "#1b1712";
 
 // ------------------------------------------------------------------ face shapes
-// Half-width of the face (px, before scaling) at fractions of its height from the crown to the chin.
-export const CONTOUR_T = [0, 0.08, 0.18, 0.32, 0.48, 0.62, 0.76, 0.88, 0.96, 1] as const;
+// Each name is a separately designed head (temple, cheekbone, jaw corner, chin); the anatomy lives with the renderer
+// in components/art/portrait/specs.ts, in this order.
 
-export interface FaceShape extends Option {
-  half: readonly number[];
-  /** Relative height. */
-  h: number;
-  /** Outline curve tension: lower is more angular (square jaws), higher is rounder. */
-  tension?: number;
-  /** Cleft in the chin. */
-  cleft?: boolean;
-}
+export type FaceShape = Option;
 
-// Each shape is its own silhouette (temple, cheekbone, jaw angle, chin width and projection), not a rescaled oval.
 export const FACE_SHAPES: readonly FaceShape[] = [
-  { name: "Oval", half: [0, 30, 43, 49, 50, 47, 40, 30, 18, 10], h: 1 },
-  { name: "Round", half: [0, 32, 46, 52, 54, 53, 48, 40, 28, 19], h: 0.94, tension: 0.6 },
-  { name: "Square", half: [0, 30, 44, 50, 52, 52, 51, 48, 42, 33], h: 0.97, tension: 0.26 },
-  { name: "Rectangular", half: [0, 29, 42, 48, 50, 50, 49, 47, 43, 36], h: 1.1, tension: 0.28 },
-  { name: "Diamond", half: [0, 22, 34, 47, 54, 46, 33, 22, 12, 6], h: 1.02, tension: 0.4 },
-  { name: "Narrow", half: [0, 25, 35, 40, 42, 40, 35, 27, 17, 9], h: 1.06 },
-  { name: "Broad", half: [0, 35, 48, 54, 57, 56, 52, 46, 34, 24], h: 0.95, tension: 0.35 },
-  { name: "Long", half: [0, 27, 38, 44, 45, 43, 37, 28, 17, 9], h: 1.13 },
-  { name: "Heart", half: [0, 35, 47, 51, 49, 41, 30, 19, 11, 6], h: 1.02, tension: 0.45 },
-  { name: "Strong jaw", half: [0, 29, 42, 48, 51, 52, 51, 48, 41, 30], h: 1.02, tension: 0.24, cleft: true },
-  { name: "High cheekbones", half: [0, 25, 37, 50, 55, 46, 34, 24, 15, 9], h: 1.04, tension: 0.42 },
-  { name: "Soft jaw", half: [0, 32, 45, 51, 52, 50, 45, 37, 27, 20], h: 0.98, tension: 0.62 },
-];
+  "Oval", "Round", "Square", "Rectangular", "Diamond", "Narrow", "Broad", "Long", "Heart", "Strong jaw", "High cheekbones", "Soft jaw",
+].map((name) => ({ name }));
 
 // ------------------------------------------------------------------ hair
 
