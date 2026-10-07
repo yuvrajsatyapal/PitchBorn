@@ -14,6 +14,34 @@ import { newCareer } from "./helpers";
 
 const render = (a: Appearance, age = 25, size: number | "small" = 120) => renderToStaticMarkup(createElement(PlayerPortrait, { appearance: a, age, size, kit: "#c8102e" }));
 
+describe("retro portrait style", () => {
+  it("favours neutral, focused expressions over grins", () => {
+    let smiling = 0;
+    const N = 1000;
+    for (let i = 0; i < N; i++) {
+      const m = generateAppearance(`mood-${i}`).mouth;
+      if (m === 3 || m === 6) smiling++;
+    }
+    expect(smiling / N).toBeLessThan(0.15);
+  });
+
+  it("gives bald, clean-shaven players different faces (identity is in the face, not the hair)", () => {
+    const sigs = new Set<string>();
+    for (let i = 0; i < 40; i++) {
+      const a = { ...generateAppearance(`bald-${i}`), hair: 0, facial: 0 };
+      sigs.add(render(a, 25, 120).replace(/pbp\w*/g, ""));
+    }
+    expect(sigs.size).toBe(40);
+  });
+
+  it("uses unique ids per portrait so clip paths and patterns never collide on a page", () => {
+    const one = (k: string) => createElement(PlayerPortrait, { appearance: generateAppearance(k), age: 25, size: 120, kit: "#c8102e" });
+    const html = renderToStaticMarkup(createElement("div", null, one("a"), one("b")));
+    const ids = [...html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]).filter((id) => !id.startsWith("pbp-"));
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
 describe("deterministic generation", () => {
   it("gives the same face for the same seed, every time", () => {
     for (let i = 0; i < 50; i++) expect(generateAppearance(`p-${i}`)).toEqual(generateAppearance(`p-${i}`));

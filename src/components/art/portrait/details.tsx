@@ -7,21 +7,47 @@ import type { Skin } from "./features";
 const f = (n: number) => Math.round(n * 10) / 10;
 const sw = (n: number) => ({ strokeWidth: n, strokeLinecap: "round" as const, strokeLinejoin: "round" as const });
 
-/** Two-tone face shading: a soft shadow on one side and a light patch on the forehead. */
-export function FaceShading({ contour: c, skin }: { contour: Contour; skin: Skin }) {
+/**
+ * Face modelling in three tones: base, shadow and highlight. Light comes from the upper left, so the right side of the
+ * face, under the cheekbones, the jaw and the brow ridge carry the shadow; a halftone screen sits in the deepest areas.
+ */
+export function FaceShading({ contour: c, skin, uid, halftone, age }: { contour: Contour; skin: Skin; uid: string; halftone: boolean; age: number }) {
   const ys = Array.from({ length: 9 }, (_, i) => 84 + ((c.chin - 84) * i) / 8);
   const outer: Pt[] = ys.map((y) => [CX + c.half(y) - 0.4, y]);
-  const inner: Pt[] = ys.map((y, i) => [CX + c.half(y) - (7 + 12 * Math.sin((i / 8) * Math.PI) + (i > 6 ? 5 : 0)), y]);
-  const d = `M${outer.map((p) => `${f(p[0])} ${f(p[1])}`).join("L")}L${inner
-    .slice()
-    .reverse()
-    .map((p) => `${f(p[0])} ${f(p[1])}`)
-    .join("L")}Z`;
+  const width = (i: number) => 7 + 12 * Math.sin((i / 8) * Math.PI) + (i > 6 ? 5 : 0);
+  const inner: Pt[] = ys.map((y, i) => [CX + c.half(y) - width(i), y]);
+  const band = (a: Pt[], b: Pt[]) => `M${a.map((p) => `${f(p[0])} ${f(p[1])}`).join("L")}L${b.slice().reverse().map((p) => `${f(p[0])} ${f(p[1])}`).join("L")}Z`;
+  const d = band(outer, inner);
+  // The inner half of the shadow band is the screened part.
+  const mid: Pt[] = inner.map((p, i) => [(p[0] + outer[i][0]) / 2, p[1]]);
+  const jawY = c.chin - 26;
+  // Slightly stronger jaw definition once past the teens.
+  const jaw = 0.55 + 0.25 * Math.min(1, Math.max(0, (age - 18) / 12));
   return (
     <g>
-      <path d={d} fill={skin.shade} opacity={0.62} />
-      <ellipse cx={CX - 16} cy={80} rx={17} ry={6.5} fill={skin.light} opacity={0.38} />
-      <path d={`M${CX - 30} 126Q${CX - 24} 134 ${CX - 15} 135`} fill="none" stroke={skin.light} opacity={0.35} {...sw(5)} />
+      <path d={d} fill={skin.shade} opacity={0.6} />
+      {halftone && (
+        <>
+          <defs>
+            <pattern id={`${uid}ht`} width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(32)">
+              <circle cx="1.7" cy="1.7" r="0.78" fill={skin.deep} />
+            </pattern>
+          </defs>
+          <path d={band(mid, inner)} fill={`url(#${uid}ht)`} opacity={0.55} />
+        </>
+      )}
+      {/* brow ridge and temple */}
+      <path d={`M${CX + 8} 92Q${CX + 30} 88 ${CX + c.half(96) - 2} 100L${CX + c.half(104) - 8} 106Q${CX + 26} 100 ${CX + 8} 99Z`} fill={skin.shade} opacity={0.3} />
+      {/* cheekbones: soft planes rather than lines. Shadow beneath on the shaded side, light on top */}
+      <ellipse cx={CX + 26} cy={134} rx={13} ry={7} transform={`rotate(-28 ${CX + 26} 134)`} fill={skin.shade} opacity={0.3} />
+      <ellipse cx={CX - 26} cy={134} rx={12} ry={6} transform={`rotate(28 ${CX - 26} 134)`} fill={skin.shade} opacity={0.12} />
+      <ellipse cx={CX - 27} cy={121} rx={11} ry={4.6} transform={`rotate(14 ${CX - 27} 121)`} fill={skin.light} opacity={0.4} />
+      <ellipse cx={CX + 26} cy={120} rx={9} ry={3.6} transform={`rotate(-14 ${CX + 26} 120)`} fill={skin.light} opacity={0.15} />
+      {/* jaw line and under-jaw shade */}
+      <path d={`M${CX - c.half(jawY) + 3} ${jawY}Q${CX - 12} ${c.chin - 3} ${CX} ${c.chin - 3}Q${CX + 12} ${c.chin - 3} ${CX + c.half(jawY) - 3} ${jawY}`} fill="none" stroke={skin.shade} opacity={0.5 * jaw} {...sw(4.5)} />
+      <ellipse cx={CX - 16} cy={80} rx={17} ry={6.5} fill={skin.light} opacity={0.4} />
+      <ellipse cx={CX - 3} cy={c.chin - 12} rx={9} ry={4.5} fill={skin.light} opacity={0.22} />
+      {c.cleft && <path d={`M${CX - 0.5} ${c.chin - 14}l1 8`} stroke={skin.deep} opacity={0.6} {...sw(1.5)} />}
     </g>
   );
 }
