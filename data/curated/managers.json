@@ -1,5 +1,139 @@
 {
   "_note": "Curated corrections to head coaches imported from Wikidata (P286). Keyed by club Wikidata QID or Pitchborn country code. An object replaces the imported coach; null removes it so the game generates a fictional one. Use only to fix factual errors or vandalism.",
-  "clubs": {},
-  "national": {}
+  "clubs": {
+    "Q248188": {
+      "name": "Paul Warne",
+      "nationality": "ENG"
+    },
+    "Q18750": {
+      "name": "Gary Caldwell",
+      "nationality": "SCO"
+    },
+    "Q646281": {
+      "name": "Adrián Colunga",
+      "nationality": "ESP"
+    },
+    "Q2128712": {
+      "name": "Kiko Ramírez",
+      "nationality": "ESP"
+    },
+    "Q720872": {
+      "name": "Yago Iglesias",
+      "nationality": "ESP"
+    },
+    "Q30587901": {
+      "name": "Raúl Llona",
+      "nationality": "ESP"
+    },
+    "Q908820": {
+      "name": "Natxo González",
+      "nationality": "ESP"
+    },
+    "Q856024": {
+      "name": "Josep Maria Gené",
+      "nationality": "ESP"
+    },
+    "Q2511257": {
+      "name": "Guille Fernández",
+      "nationality": "ESP"
+    },
+    "Q608988": {
+      "name": "Romain Philippoteaux",
+      "nationality": "FRA"
+    },
+    "Q1465560": {
+      "name": "Gabriel Santos"
+    },
+    "Q298279": {
+      "name": "Christophe Gosselin",
+      "nationality": "FRA"
+    },
+    "Q2868152": {
+      "name": "Alexandre Demougeot",
+      "nationality": "FRA"
+    },
+    "Q265105": {
+      "name": "Dorian Chacon Cordon"
+    },
+    "Q3555461": {
+      "name": "Damien Mayenga"
+    },
+    "Q3076548": {
+      "name": "Hakim Malek"
+    },
+    "Q32494": {
+      "name": "Miron Muslić",
+      "nationality": "AUT"
+    },
+    "Q14551982": {
+      "name": "Alois Schwartz",
+      "nationality": "GER"
+    },
+    "Q170117": {
+      "name": "Achim Beierlorzer",
+      "nationality": "GER"
+    },
+    "Q759482": {
+      "name": "Fabio Pecchia",
+      "nationality": "ITA"
+    },
+    "Q289707": {
+      "name": "Attilio Tesser",
+      "nationality": "ITA"
+    },
+    "Q430993": {
+      "name": "Davide Possanzini",
+      "nationality": "ITA"
+    },
+    "Q1136016": {
+      "name": "Federico Coppitelli",
+      "nationality": "ITA"
+    },
+    "Q2276413": {
+      "name": "Andrea Chiappella",
+      "nationality": "ITA"
+    },
+    "Q13381": {
+      "name": "Gaetano Fontana",
+      "nationality": "ITA"
+    },
+    "Q610621": {
+      "name": "Fabrizio Castori",
+      "nationality": "ITA"
+    },
+    "Q2018": {
+      "name": "Emilio Longo",
+      "nationality": "ITA"
+    },
+    "Q289029": {
+      "name": "Agenore Maurizi",
+      "nationality": "ITA"
+    },
+    "Q2095117": {
+      "name": "Fabio Brini",
+      "nationality": "ITA"
+    },
+    "Q7863279": {
+      "name": "Andrea Zanchetta",
+      "nationality": "ITA"
+    },
+    "Q944876": {
+      "name": "Federico Valente",
+      "nationality": "ITA"
+    },
+    "Q107222619": {
+      "name": "Ciro Ginestra",
+      "nationality": "ITA"
+    }
+  },
+  "national": {
+    "SWE": {
+      "name": "Graham Potter",
+      "nationality": "ENG"
+    },
+    "ALG": {
+      "name": "Ibrahim Hamdani"
+    },
+    "GHA": null
+  }
 }
