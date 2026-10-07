@@ -7,6 +7,7 @@ import { seasonLabel } from "@/engine/calendar";
 import { clubName } from "@/engine/data/world";
 import { addStat, avgRating, emptyStat } from "@/engine/players/generate";
 import type { StatLine } from "@/engine/types";
+import { keeperMetrics } from "@/engine/players/keeper";
 import { seasonTotal, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 
@@ -128,13 +129,22 @@ export default function Stats() {
       <InlineAdSlot placementId="history-break" />
       <Card title="Detailed this season">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Stat label="Shots" value={cur.shots} sub={`${cur.shotsOnTarget} on target`} />
-          <Stat label="Conversion" value={cur.shots ? `${Math.round((cur.goals / cur.shots) * 100)}%` : "–"} />
-          <Stat label="Key passes" value={cur.keyPasses} />
-          <Stat label="Tackles" value={cur.tackles} />
-          {p.position === "GK" && <Stat label="Saves" value={cur.saves} />}
-          {p.position === "GK" && <Stat label="Conceded" value={cur.conceded} />}
-          <Stat label="Mins / goal" value={cur.goals ? Math.round(cur.minutes / cur.goals) : "–"} />
+          {p.position === "GK" ? (
+            <>
+              <Stat label="Clean sheets" value={cur.cleanSheets} sub={cur.apps ? `${Math.round(keeperMetrics(cur).cleanSheetRate * 100)}% of games` : undefined} />
+              <Stat label="Save %" value={cur.saves + cur.conceded ? `${Math.round(keeperMetrics(cur).savePct * 100)}%` : "–"} sub={`${cur.saves} saves`} />
+              <Stat label="Conceded / 90" value={cur.minutes ? keeperMetrics(cur).concededPer90.toFixed(2) : "–"} sub={`${cur.conceded} conceded`} />
+              <Stat label="Saves / game" value={cur.apps ? keeperMetrics(cur).savesPerGame.toFixed(1) : "–"} />
+            </>
+          ) : (
+            <>
+              <Stat label="Shots" value={cur.shots} sub={`${cur.shotsOnTarget} on target`} />
+              <Stat label="Conversion" value={cur.shots ? `${Math.round((cur.goals / cur.shots) * 100)}%` : "–"} />
+              <Stat label="Key passes" value={cur.keyPasses} />
+              <Stat label="Tackles" value={cur.tackles} />
+              <Stat label="Mins / goal" value={cur.goals ? Math.round(cur.minutes / cur.goals) : "–"} />
+            </>
+          )}
           <Stat label="Earnings" value={`€${(g.user.earnings / 1e6).toFixed(2)}M`} />
         </div>
       </Card>

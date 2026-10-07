@@ -42,15 +42,18 @@ describe("match engine", () => {
   it("has believable aggregate scorelines", () => {
     let goals = 0;
     let maxG = 0;
+    let wild = 0;
     const N = 300;
     for (let i = 0; i < N; i++) {
       const r = new MatchEngine({ home: H, away: A, importance: 1, detail: false }, Rng.fromSeed(`agg${i}`)).runToEnd();
       goals += r.homeGoals + r.awayGoals;
       maxG = Math.max(maxG, r.homeGoals + r.awayGoals);
+      if (r.homeGoals + r.awayGoals >= 8) wild++;
     }
     expect(goals / N).toBeGreaterThan(1.8);
     expect(goals / N).toBeLessThan(3.6);
-    expect(maxG).toBeLessThan(12);
+    expect(maxG).toBeLessThan(14);
+    expect(wild / N).toBeLessThan(0.03);
   });
   it("resolves knockouts with a winner", () => {
     for (let i = 0; i < 30; i++) {

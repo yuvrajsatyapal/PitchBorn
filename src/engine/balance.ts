@@ -5,7 +5,7 @@
 export const BALANCE = {
   match: {
     /** Probability that a possession phase produces a chance, before strength ratios. */
-    chanceBase: 0.108,
+    chanceBase: 0.106,
     /** Exponent applied to attack/defence ratio when deciding chances. */
     chanceExponent: 2.1,
     possessionExponent: 2.0,
@@ -16,6 +16,26 @@ export const BALANCE = {
     redPerFoul: 0.0008,
     /** Non-contact injury chance per player per 90 minutes, scaled by proneness and fitness. */
     injuryPerPlayerMatch: 0.016,
+    /** Sd of each player's per-match form swing, as a fraction of ability (≈ ±3–4 overall points). */
+    dayFormSd: 0.04,
+    /** Who takes the shot / makes the pass: weight ∝ (attribute/60)^exp. Higher = stars dominate more. */
+    pickExponent: 1.4,
+    /** Shot quality: xG ∝ e^((finishing quality − 73) / slope). Lower = better finishers convert more. */
+    xgSlope: 62,
+    /** Match-rating model. */
+    rating: {
+      base: 6.0,
+      /** Rating points per overall point above/below the opposition's starters (capped). */
+      qualityPerPoint: 0.045,
+      qualityCap: [-0.7, 1.2] as [number, number],
+      /** Rating points per xG of team dominance, shared by outfield players. */
+      dominance: 0.28,
+      /** Goalkeepers: rating per xG saved (xG faced − goals conceded), and per clean sheet. */
+      keeperPrevented: 0.4,
+      keeperCleanSheet: 0.6,
+      /** Rating points per unit of day form (0.04 ≈ ±0.2). */
+      dayForm: 5,
+    },
     extraTimeMinutes: 30,
     subsMin: 3,
     subsMax: 5,

@@ -1,4 +1,5 @@
 import { clubName, country, leaguesInPlay, staticLeague } from "../data/world";
+import { keeperScore } from "../players/keeper";
 import { rememberAward, rememberTrophy } from "../memory/detect";
 import { overallFor, positionGroup } from "../players/attributes";
 import { ageOf, avgRating, emptyStat, addStat } from "../players/generate";
@@ -102,7 +103,9 @@ export function seasonAwards(state: GameState): AwardRecord[] {
         const s = compStat(p, compId);
         const apps = s.apps;
         const pos = posOf(p.clubId);
-        const score = apps < 12 ? 0 : avgRating(s) * 10 * Math.min(1, apps / 30) + s.goals * 0.55 + s.assists * 0.35 + s.cleanSheets * 0.25 + (table.length - pos) * 0.25;
+        const gk = p.position === "GK";
+        const role = gk ? keeperScore(s) * 0.6 : s.goals * 0.55 + s.assists * 0.35 + s.cleanSheets * 0.25;
+        const score = apps < 12 ? 0 : avgRating(s) * 10 * Math.min(1, apps / 30) + role + (table.length - pos) * 0.25;
         return { p, s, score };
       })
       .filter((x) => x.score > 0);
@@ -116,7 +119,7 @@ export function seasonAwards(state: GameState): AwardRecord[] {
     if (scorer && scorer.s.goals > 0) out.push(record(state, { id: "topscorer", name: "Golden Boot", scope: l.name, playerId: scorer.p.id, clubId: scorer.p.clubId, value: `${scorer.s.goals} goals` }, { news: major ? `${fullName(scorer.p)} wins the ${l.name} Golden Boot (${scorer.s.goals})` : undefined }));
     const assister = [...scored].sort((a, b) => b.s.assists - a.s.assists)[0];
     if (assister && assister.s.assists > 0) out.push(record(state, { id: "topassist", name: "Playmaker Award", scope: l.name, playerId: assister.p.id, clubId: assister.p.clubId, value: `${assister.s.assists} assists` }));
-    const glove = scored.filter((x) => x.p.position === "GK").sort((a, b) => b.s.cleanSheets - a.s.cleanSheets)[0];
+    const glove = scored.filter((x) => x.p.position === "GK").sort((a, b) => b.s.cleanSheets - a.s.cleanSheets || keeperScore(b.s) - keeperScore(a.s))[0];
     if (glove && l.tier === 1) out.push(record(state, { id: "goldenglove", name: "Golden Glove", scope: l.name, playerId: glove.p.id, clubId: glove.p.clubId, value: `${glove.s.cleanSheets} clean sheets` }));
     const xi = pickXI(scored);
     const user = xi.find((x) => x.p.isUser);
@@ -144,7 +147,7 @@ export function worldAwards(state: GameState): AwardRecord[] {
       const nationIn = Object.values(state.nationalTeams).some((n) => n.squad.includes(p.id)) ? nation : 0;
       const tier = p.clubId ? staticLeague(state.clubs[p.clubId]?.leagueId ?? "")?.tier ?? 3 : 3;
       const score =
-        avgRating(s) * 11 * Math.min(1, s.apps / 35) + s.goals * (att ? 0.42 : 0.6) + s.assists * 0.3 + s.cleanSheets * 0.35 + club + nationIn + p.reputation * 0.12 + p.intlReputation * 0.1 + overallFor(p.attrs, p.position) * 0.35 - (tier - 1) * 12;
+        avgRating(s) * 11 * Math.min(1, s.apps / 35) + s.goals * (att ? 0.42 : 0.6) + s.assists * 0.3 + s.cleanSheets * (p.position === "GK" ? 0.9 : 0.35) + (p.position === "GK" ? s.saves * 0.01 : 0) + club + nationIn + p.reputation * 0.12 + p.intlReputation * 0.1 + overallFor(p.attrs, p.position) * 0.35 - (tier - 1) * 12;
       return { p, s, score };
     })
     .filter((x) => x.score > 0)

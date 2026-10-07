@@ -10,6 +10,7 @@ import { BALANCE } from "@/engine/balance";
 import { windowName } from "@/engine/calendar";
 import { clubName } from "@/engine/data/world";
 import { TRAINING_FOCUS, INTENSITY } from "@/engine/players/development";
+import { keeperMetrics } from "@/engine/players/keeper";
 import { fmtRating, seasonTotal, user, userFixtures, userLeague } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 
@@ -77,8 +78,17 @@ export default function Dashboard() {
           <Card title="This season" action={<Link href="/play/stats" className="text-sm font-bold underline">All stats</Link>}>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
               <Stat label="Apps" value={tot.apps} />
-              <Stat label="Goals" value={tot.goals} tone="pitch" />
-              <Stat label="Assists" value={tot.assists} tone="sky" />
+              {p.position === "GK" ? (
+                <>
+                  <Stat label="Clean sheets" value={tot.cleanSheets} tone="pitch" sub={tot.apps ? `${Math.round(keeperMetrics(tot).cleanSheetRate * 100)}% of games` : undefined} />
+                  <Stat label="Save %" value={tot.saves + tot.conceded ? `${Math.round(keeperMetrics(tot).savePct * 100)}%` : "–"} tone="sky" sub={`${tot.conceded} conceded`} />
+                </>
+              ) : (
+                <>
+                  <Stat label="Goals" value={tot.goals} tone="pitch" />
+                  <Stat label="Assists" value={tot.assists} tone="sky" />
+                </>
+              )}
               <Stat label="Avg" value={fmtRating(tot)} tone="sun" />
               <Stat label="MotM" value={tot.motm} />
               <Stat label="Mins" value={tot.minutes} />

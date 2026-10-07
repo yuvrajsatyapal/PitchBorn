@@ -15,6 +15,9 @@ import { addNews, addTimeline, addToSquad, nextId, removeFromSquad, squadOf, use
 const ROLE_LABEL: Record<SquadRole, string> = { star: "Star player", first: "First-team regular", rotation: "Rotation", backup: "Squad player", prospect: "Prospect" };
 export { ROLE_LABEL };
 
+/** How many overall points below the player a club's usual XI may be and still make an offer. */
+const DROP_ALLOWED = 4;
+
 function uOvr(p: Player) {
   return overallFor(p.attrs, p.position);
 }
@@ -71,6 +74,10 @@ function interestIn(state: GameState, club: ClubState, p: Player): number {
   const starter = squad.filter((x) => x.position === p.position).map((x) => overallFor(x.attrs, p.position)).sort((a, b) => b - a)[0] ?? 0;
   const prospectBonus = age <= 21 && p.hidden.potential > level + 2 && p.reputation > 25 ? 0.6 : 0;
   if (o < level - 7 && !prospectBonus) return 0;
+  // Clubs a long way below your level don't come calling: a star isn't offered a deal by a side that
+  // fields players ten points worse. Free agents and veterans get a little more leeway.
+  const dropAllowed = DROP_ALLOWED + (!p.clubId ? 3 : 0) + (age >= 31 ? 2 : 0) + ((state.user.freeSeasons ?? 0) >= 1 ? 3 : 0);
+  if (o - level > dropAllowed) return 0;
   if (o > level + 10) return 0.004; // too good for them; they know they can't afford it
   const upgrade = clamp((o - starter + 4) / 10, 0, 1.2) + prospectBonus;
   const rep = clamp(p.reputation / 55, 0.25, 1.6);
@@ -81,7 +88,9 @@ function interestIn(state: GameState, club: ClubState, p: Player): number {
   const agent = 0.65 + agentSkill(state, "connections") / 150;
   const request = state.user.transferRequest ? 2 : 1;
   const expiring = p.contract && p.contract.expires <= state.season ? 1.6 : 1;
-  return 0.045 * upgrade * rep * form * agent * request * expiring * outgrown;
+  // The closer a club is to your level (or above it), the likelier its interest.
+  const fit = o - level <= 0 ? 1 : Math.exp(-(o - level) / 3);
+  return 0.045 * upgrade * rep * form * agent * request * expiring * outgrown * fit;
 }
 
 export function generateUserOffers(state: GameState, rng: Rng): void {
@@ -99,7 +108,8 @@ export function generateUserOffers(state: GameState, rng: Rng): void {
     if (made >= (free ? 2 : 1)) break;
     if (state.user.offers.some((o) => o.fromClubId === club.id && o.season === state.season && o.status !== "expired")) continue;
     let pr = interestIn(state, club, p);
-    if (free) pr = pr * 3 + (clubLevel(club.reputation) <= uOvr(p) + 2 ? 0.05 : 0);
+    // Unattached players get more calls, but still only from clubs near their level.
+    if (free) pr = pr * 3 + (Math.abs(clubLevel(club.reputation) - uOvr(p)) <= 4 ? 0.05 : 0);
     if (!rng.chance(pr)) continue;
     const kind: TransferOffer["kind"] = free || contractEnding ? "free" : "transfer";
     const value = marketValue(p, state.season);
@@ -260,10 +270,12 @@ function completeOffer(state: GameState, o: TransferOffer) {
   const season = state.season;
   const afterSeason = state.turn >= BALANCE.calendar.endOfSeasonTurn;
   if (o.kind === "renewal") {
+    // A renewal adds its years on top of the contract you already have; it never shortens it.
+    const current = p.contract?.expires ?? season - (afterSeason ? 0 : 1);
     p.contract = {
       clubId: club.id,
       wage: o.terms.wage,
-      expires: season + o.terms.years - (afterSeason ? 0 : 1),
+      expires: Math.min(Math.max(current, season - (afterSeason ? 0 : 1)) + o.terms.years, season + 6),
       signed: season,
       role: o.terms.role,
       releaseClause: o.terms.releaseClause,
@@ -371,7 +383,9 @@ export function rolloverUserContract(state: GameState): void {
       p.clubId = null;
     }
   }
-  if (p.contract && p.contract.expires < state.season + 1 && !p.loan) {
+  // `expires` is the last season covered. This runs after the season counter has advanced, so only a
+  // contract whose final season is already over ends here (it used to end a full year early).
+  if (p.contract && p.contract.expires < state.season && !p.loan) {
     const from = p.clubId;
     removeFromSquad(state, p.id);
     p.clubId = null;

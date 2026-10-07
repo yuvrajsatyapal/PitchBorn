@@ -243,7 +243,8 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     const won = line.side === "home" ? homeWon : awayWon;
     const lost = line.side === "home" ? awayWon : homeWon;
     p.morale = r1(clamp(p.morale + (won ? BALANCE.morale.winBoost : lost ? -BALANCE.morale.lossPenalty : 0.3) + (line.rating - 6.6) * 1.2, 5, 100));
-    const repDelta = (line.rating - 6.5) * 0.22 * repWeight + line.goals * 0.12 * repWeight;
+    const keeperBonus = line.slot === "GK" && line.conceded === 0 && stat.minutes >= 60 ? 0.12 : 0;
+    const repDelta = (line.rating - 6.5) * 0.22 * repWeight + (line.goals * 0.12 + keeperBonus) * repWeight;
     if (comp.kind === "continental" || nat) p.intlReputation = r1(clamp(p.intlReputation + repDelta * 1.2, 0, 100));
     const mediaBoost = p.isUser && repDelta > 0 ? 1 + (agentSkill(state, "media") - 30) / 300 : 1;
     p.reputation = r1(clamp(p.reputation + repDelta * mediaBoost, 0, 100));

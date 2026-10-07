@@ -66,9 +66,15 @@ export function computeLegacy(state: GameState): LegacyResult {
     if (points > 0.5) parts.push({ label, points: Math.round(points) });
   };
   add(`${c.apps} appearances`, c.apps * 0.08);
-  add(`${c.goals} goals`, c.goals * (def ? 0.45 : 0.22));
-  add(`${c.assists} assists`, c.assists * 0.13);
-  if (def) add(`${c.cleanSheets} clean sheets`, c.cleanSheets * 0.12);
+  const keeper = p.position === "GK";
+  if (!keeper) {
+    add(`${c.goals} goals`, c.goals * (def ? 0.45 : 0.22));
+    add(`${c.assists} assists`, c.assists * 0.13);
+  }
+  if (keeper) {
+    add(`${c.cleanSheets} clean sheets`, c.cleanSheets * 0.35);
+    add(`${c.saves} saves`, c.saves * 0.012);
+  } else if (def) add(`${c.cleanSheets} clean sheets`, c.cleanSheets * 0.12);
   let trophyPts = 0;
   for (const t of u.trophies) {
     if (t.kind === "league") trophyPts += t.compId.match(/-1-/) ? 12 : 4;

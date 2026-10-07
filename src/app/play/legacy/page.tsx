@@ -49,8 +49,17 @@ export default function Legacy() {
       </section>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label="Appearances" value={p.career.apps} />
-        <Stat label="Goals" value={p.career.goals} tone="pitch" />
-        <Stat label="Assists" value={p.career.assists} tone="sky" />
+        {p.position === "GK" ? (
+          <>
+            <Stat label="Clean sheets" value={p.career.cleanSheets} tone="pitch" />
+            <Stat label="Saves" value={p.career.saves} tone="sky" />
+          </>
+        ) : (
+          <>
+            <Stat label="Goals" value={p.career.goals} tone="pitch" />
+            <Stat label="Assists" value={p.career.assists} tone="sky" />
+          </>
+        )}
         <Stat label="Trophies" value={g.user.trophies.length} tone="sun" />
         <Stat label="Caps" value={p.intl.caps} />
         <Stat label="Peak OVR" value={g.user.peakOverall} tone="plum" />

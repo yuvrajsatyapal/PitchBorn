@@ -12,6 +12,7 @@
  * world.
  */
 import { BALANCE } from "../balance";
+import { overallFor } from "../players/attributes";
 import { clamp, type Rng } from "../rng";
 import type { Attributes, AttrKey, Position } from "../types";
 
@@ -92,6 +93,8 @@ export interface PlayerLine {
   red: number;
   injured: boolean;
   conceded: number;
+  /** Goalkeepers: expected goals from the shots on target they faced (for "goals prevented"). */
+  xgFaced?: number;
 }
 
 export interface DecisionOption {
@@ -138,6 +141,8 @@ interface LivePlayer {
   line: PlayerLine;
   energy: number;
   onPitch: boolean;
+  /** This match's random form swing (fraction of ability). */
+  dayForm: number;
   eff: Record<AttrKey, number>;
   condition: number;
 }
@@ -168,7 +173,7 @@ const XG_BASE: Record<ChanceType, number> = { open: 0.12, header: 0.095, long: 0
 const SHOOT_WEIGHT: Record<Position, number> = { GK: 0, CB: 0.28, RB: 0.32, LB: 0.32, DM: 0.4, CM: 0.85, AM: 1.5, RW: 1.6, LW: 1.6, ST: 2.7 };
 const HEADER_WEIGHT: Record<Position, number> = { GK: 0, CB: 1.1, RB: 0.2, LB: 0.2, DM: 0.5, CM: 0.5, AM: 0.4, RW: 0.6, LW: 0.6, ST: 2.8 };
 const LONG_WEIGHT: Record<Position, number> = { GK: 0, CB: 0.15, RB: 0.3, LB: 0.3, DM: 0.7, CM: 1.4, AM: 1.6, RW: 1.1, LW: 1.1, ST: 0.9 };
-const CREATE_WEIGHT: Record<Position, number> = { GK: 0.02, CB: 0.15, RB: 0.8, LB: 0.8, DM: 0.6, CM: 1.3, AM: 2.0, RW: 1.6, LW: 1.6, ST: 0.9 };
+const CREATE_WEIGHT: Record<Position, number> = { GK: 0.02, CB: 0.15, RB: 0.9, LB: 0.9, DM: 0.6, CM: 1.3, AM: 2.4, RW: 2.0, LW: 2.0, ST: 0.9 };
 const DEFEND_WEIGHT: Record<Position, number> = { GK: 0, CB: 2.2, RB: 1.3, LB: 1.3, DM: 1.8, CM: 0.9, AM: 0.35, RW: 0.4, LW: 0.4, ST: 0.2 };
 
 const MID_KEYS: AttrKey[] = ["passing", "vision", "firstTouch", "positioning", "stamina"];
@@ -198,8 +203,9 @@ function zonesOf(eff: Record<AttrKey, number>): [number, number, number] {
   return [z(MID_KEYS), z(ATT_KEYS), z(DEF_KEYS)];
 }
 
-function makeLive(input: MatchPlayerInput, side: Side, started: boolean): LivePlayer {
-  const condition = conditionFactor(input);
+function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm: number): LivePlayer {
+  // A good or bad day: it changes how the player actually performs, so it shows in goals and ratings alike.
+  const condition = conditionFactor(input) * (1 + dayForm);
   // Bench players get their effective attributes lazily when they come on.
   const eff = started ? effective(input, condition) : (input.attrs as Record<AttrKey, number>);
   return {
@@ -209,9 +215,10 @@ function makeLive(input: MatchPlayerInput, side: Side, started: boolean): LivePl
     eff,
     energy: clamp(input.fitness, 30, 100),
     onPitch: started,
+    dayForm,
     line: {
       id: input.id, side, slot: input.slot, started, minuteOn: started ? 0 : -1, minuteOff: null, rating: 6.0,
-      goals: 0, assists: 0, shots: 0, onTarget: 0, keyPasses: 0, tackles: 0, saves: 0, fouls: 0, yellow: 0, red: 0, injured: false, conceded: 0,
+      goals: 0, assists: 0, shots: 0, onTarget: 0, keyPasses: 0, tackles: 0, saves: 0, fouls: 0, yellow: 0, red: 0, injured: false, conceded: 0, xgFaced: 0,
     },
   };
 }
@@ -241,8 +248,8 @@ export class MatchEngine {
     const mk = (t: TeamInput, side: Side): LiveTeam => ({
       input: t,
       side,
-      players: t.starters.map((p) => makeLive(p, side, true)),
-      bench: t.bench.map((p) => makeLive(p, side, false)),
+      players: t.starters.map((p) => makeLive(p, side, true, rng.normal(0, M.dayFormSd))),
+      bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd))),
       subsUsed: 0,
       subWindows: 0,
       goals: 0, shots: 0, onTarget: 0, xg: 0, corners: 0, fouls: 0, yellows: 0, reds: 0, possessionTicks: 0,
@@ -314,7 +321,7 @@ export class MatchEngine {
     this.teams.away.cache = undefined;
   }
 
-  private pickWeighted(t: LiveTeam, weight: Record<Position, number>, attr: AttrKey, exclude?: LivePlayer): LivePlayer | undefined {
+  private pickWeighted(t: LiveTeam, weight: Record<Position, number>, attr: AttrKey, exclude?: LivePlayer, exp = 1): LivePlayer | undefined {
     // Hot path: avoid allocations.
     let total = 0;
     const players = t.players;
@@ -323,7 +330,7 @@ export class MatchEngine {
       if (!p.onPitch || p === exclude) continue;
       const w = weight[p.input.slot];
       if (w <= 0) continue;
-      const v = this.val(p, attr) / 60;
+      const v = exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp);
       total += w * v;
     }
     if (total <= 0) return undefined;
@@ -334,7 +341,7 @@ export class MatchEngine {
       if (!p.onPitch || p === exclude) continue;
       const w = weight[p.input.slot];
       if (w <= 0) continue;
-      const v = this.val(p, attr) / 60;
+      const v = exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp);
       r -= w * v;
       last = p;
       if (r <= 0) return p;
@@ -492,16 +499,16 @@ export class MatchEngine {
     const type = forced ?? this.chooseChanceType();
     let shooter: LivePlayer | undefined = forcedShooter;
     if (!shooter) {
-      if (type === "header") shooter = this.pickWeighted(att, HEADER_WEIGHT, "heading");
-      else if (type === "long" || type === "freekick") shooter = this.pickWeighted(att, LONG_WEIGHT, "longShots");
+      if (type === "header") shooter = this.pickWeighted(att, HEADER_WEIGHT, "heading", undefined, M.pickExponent);
+      else if (type === "long" || type === "freekick") shooter = this.pickWeighted(att, LONG_WEIGHT, "longShots", undefined, M.pickExponent);
       else if (type === "penalty") shooter = this.onPitch(att).sort((x, y) => this.val(y, "finishing") + this.val(y, "composure") - this.val(x, "finishing") - this.val(x, "composure"))[0];
-      else shooter = this.pickWeighted(att, SHOOT_WEIGHT, "finishing");
+      else shooter = this.pickWeighted(att, SHOOT_WEIGHT, "finishing", undefined, M.pickExponent);
     }
     if (!shooter) return;
     let creator: LivePlayer | undefined | null = forcedCreator;
     if (creator === undefined) {
       const assistProb = type === "header" ? 0.92 : type === "oneonone" ? 0.85 : type === "open" ? 0.72 : 0;
-      creator = this.rng.chance(assistProb) ? this.pickWeighted(att, CREATE_WEIGHT, type === "header" ? "crossing" : "vision", shooter) ?? null : null;
+      creator = this.rng.chance(assistProb) ? this.pickWeighted(att, CREATE_WEIGHT, type === "header" ? "crossing" : "vision", shooter, M.pickExponent) ?? null : null;
     }
 
     // Key moments for the user's player.
@@ -530,7 +537,7 @@ export class MatchEngine {
     const q = this.shooterQuality(shooter, type);
     const pressure = type === "penalty" ? 1 : Math.exp(-(sDef.def - 70) / 120);
     const bigMatch = 1 + ((shooter.input.bigMatch - 50) / 50) * 0.06 * (this.input.importance - 1);
-    let xg = XG_BASE[type] * Math.exp((q - 73) / 58) * pressure * bigMatch * xgMul;
+    let xg = XG_BASE[type] * Math.exp((q - 73) / M.xgSlope) * pressure * bigMatch * xgMul;
     xg *= Math.exp(-(sDef.gk - 73) / 70) * keeperMul;
     xg = clamp(xg, 0.01, type === "penalty" ? 0.92 : 0.8);
     att.shots++;
@@ -548,6 +555,7 @@ export class MatchEngine {
     if (r < xg) {
       shooter.line.onTarget++;
       att.onTarget++;
+      if (keeper) keeper.line.xgFaced = (keeper.line.xgFaced ?? 0) + xg;
       this.scoreGoal(att, def, shooter, creator, type, desc);
       return;
     }
@@ -557,7 +565,8 @@ export class MatchEngine {
       att.onTarget++;
       if (keeper) {
         keeper.line.saves++;
-        this.bump(keeper, 0.28);
+        keeper.line.xgFaced = (keeper.line.xgFaced ?? 0) + Math.max(xg, 0.05);
+        this.bump(keeper, 0.2);
       }
       this.bump(shooter, 0.04);
       if (this.rng.chance(0.3)) att.corners++;
@@ -778,15 +787,29 @@ export class MatchEngine {
       const opp = t === h ? a : h;
       const won = t.goals > opp.goals || (t.goals === opp.goals && this.penalties && (t === h ? this.penalties[0] > this.penalties[1] : this.penalties[1] > this.penalties[0]));
       const lost = t.goals < opp.goals || (t.goals === opp.goals && this.penalties && !won);
+      const oppStarters = opp.input.starters;
+      const oppAvg = oppStarters.reduce((sum, x) => sum + overallFor(x.attrs, x.slot), 0) / Math.max(1, oppStarters.length);
+      const R = M.rating;
       for (const p of [...t.players, ...t.bench]) {
         if (p.line.minuteOn < 0) continue;
         if (p.line.minuteOff === null) p.line.minuteOff = end;
         const mins = (p.line.minuteOff ?? end) - p.line.minuteOn;
+        const gk = p.line.slot === "GK";
         p.line.rating += won ? 0.3 : lost ? -0.25 : 0;
-        if (opp.goals === 0 && mins >= 60 && ["GK", "CB", "RB", "LB"].includes(p.line.slot)) p.line.rating += p.line.slot === "GK" ? 0.6 : 0.35;
-        // Consistency adds variance; quality nudges baseline.
-        const ovrNudge = (p.condition - 1) * 2;
-        p.line.rating += this.rng.normal(0, 0.28 + (100 - p.input.consistency) / 400) + ovrNudge;
+        // Good players rate higher against the same opposition, not just when events happen to find them.
+        const quality = (overallFor(p.input.attrs, p.line.slot) * p.condition - oppAvg) * R.qualityPerPoint;
+        p.line.rating += clamp(quality, R.qualityCap[0], R.qualityCap[1]);
+        if (gk) {
+          // Keepers are judged on clean sheets and goals prevented (expected goals faced minus goals conceded).
+          if (opp.goals === 0 && mins >= 60) p.line.rating += R.keeperCleanSheet;
+          p.line.rating += clamp(((p.line.xgFaced ?? 0) - p.line.conceded) * R.keeperPrevented, -1, 1.3);
+        } else {
+          // Outfield players share in how well the team controlled the game.
+          if (["CB", "RB", "LB"].includes(p.line.slot) && opp.goals === 0 && mins >= 60) p.line.rating += 0.35;
+          p.line.rating += clamp((t.xg - opp.xg) * R.dominance, -0.45, 0.6) * Math.min(1, mins / 60);
+        }
+        // Form on the day, plus consistency-scaled noise.
+        p.line.rating += p.dayForm * R.dayForm + this.rng.normal(0, 0.28 + (100 - p.input.consistency) / 400);
         // Short cameos regress toward 6.2
         if (mins < 25) p.line.rating = 6.2 + (p.line.rating - 6.2) * (mins / 25);
         p.line.rating = Math.round(clamp(p.line.rating, 3, 10) * 10) / 10;

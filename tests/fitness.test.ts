@@ -36,7 +36,7 @@ describe("fitness balance", () => {
   });
 
   it("asking to be rested skips club matches and aids recovery", () => {
-    const s = starter("fit-rest", "normal");
+    const s = starter("fit-rest-b", "normal");
     while (!canRequestRest(s) && s.turn < 15) advanceTurn(s);
     expect(canRequestRest(s)).toBe(true);
     const u = userPlayer(s);

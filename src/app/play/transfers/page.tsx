@@ -39,7 +39,7 @@ function Negotiation({ o }: { o: TransferOffer }) {
           </select>
         </label>
         <label className="grid gap-1 text-xs font-bold">
-          Length
+          {o.kind === "renewal" ? "Extra years" : "Length"}
           <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="rounded-lg border-2 border-line bg-card px-2 py-1.5 text-sm" disabled={o.kind === "loan"}>
             {[1, 2, 3, 4, 5].map((y) => (
               <option key={y} value={y}>
