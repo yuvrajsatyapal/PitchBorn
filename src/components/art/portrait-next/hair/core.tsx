@@ -53,7 +53,10 @@ export interface HairArt {
   ears?: "visible" | "partial" | "covered";
 }
 
-/** Half-width of an outer silhouette (left -> over the top -> right) at height y, per side. */
+/**
+ * Half-width of an outer silhouette (left -> over the top -> right) at height y, per side. Below the end of a side
+ * it keeps that end's width (the hair continues down there, it doesn't vanish); above the top it is 0.
+ */
 export function extentOf(outer: readonly Pt[]): (y: number, s: 1 | -1) => number {
   const top = outer.reduce((k, p, i) => (p[1] < outer[k][1] ? i : k), 0);
   const sides = { [-1]: outer.slice(0, top + 1).reverse(), [1]: outer.slice(top) } as Record<number, Pt[]>;
@@ -65,7 +68,8 @@ export function extentOf(outer: readonly Pt[]): (y: number, s: 1 | -1) => number
       const b = pts[i];
       if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1]) best = Math.max(best, Math.abs(lerp(a[0], b[0], (y - a[1]) / (b[1] - a[1])) - CX));
     }
-    return best;
+    const end = pts[pts.length - 1];
+    return best || (y > end[1] ? Math.abs(end[0] - CX) : 0);
   };
 }
 
@@ -269,14 +273,17 @@ export interface LockOpts {
   swell?: number;
   /** A flattened, wider section: where (0-1) and how much wider. */
   flat?: { u: number; k: number };
+  /** Knotted sections (thick locs): the lock pinches in every `period` units of its length, starting at `phase`. */
+  knots?: { period: number; depth: number; phase: number };
   seed: number;
   steps?: number;
 }
 
 /** Outline of a tapered lock or clump following a curve (root -> tip). */
 export function lockOutline(path: readonly Pt[], o: LockOpts): Pt[] {
-  const line = along(path, o.steps ?? 6);
+  const line = o.knots ? resample(along(path, o.steps ?? 6), 2) : along(path, o.steps ?? 6);
   const n = line.length;
+  let run = 0;
   const root = o.root ?? 0.9;
   const tip = o.tip ?? 0.3;
   const peak = o.peak ?? 0.25;
@@ -290,7 +297,9 @@ export function lockOutline(path: readonly Pt[], o: LockOpts): Pt[] {
     const nr: Pt = [-t[1], t[0]];
     const k = u < peak ? lerp(root, 1, smooth(u / peak)) : lerp(1, tip, smooth((u - peak) / (1 - peak)));
     const flat = o.flat ? 1 + o.flat.k * lobe((u - o.flat.u) / 0.2) : 1;
-    const hw = (o.w / 2) * k * flat * (1 + wob * noise1(o.seed, u * 7) + (o.swell ?? 0) * noise1(o.seed + 3, u * 2.6));
+    if (i > 0) run += dist(line[i], line[i - 1]);
+    const knot = o.knots ? 1 - o.knots.depth * Math.pow(Math.max(0, Math.cos(Math.PI * 2 * (run / o.knots.period - o.knots.phase))), 8) : 1;
+    const hw = (o.w / 2) * k * flat * knot * (1 + wob * noise1(o.seed, u * 7) + (o.swell ?? 0) * noise1(o.seed + 3, u * 2.6));
     L.push(add(line[i], scale(nr, hw)));
     R.push(add(line[i], scale(nr, -hw)));
     hwEnd = hw;
@@ -318,46 +327,6 @@ export function bend(pts: readonly Pt[], seed: number, amp: number): Pt[] {
     const k = (hash01(seed, i + 61) - 0.5) * 2 * amp;
     return P(p[0] - t[1] * k, p[1] + t[0] * k);
   });
-}
-
-/**
- * A ringlet (a curly lock seen from the front): its centre line swings from side to side, more towards the end, and
- * its width swells where a coil faces out and pinches between coils. Returns the outline and, for shading, where each
- * coil turns under (a point on the lock and the direction across it).
- */
-export function ringlet(path: readonly Pt[], o: { w: number; turns: number; amp: number; seed: number; tip?: number }): { outline: Pt[]; turns: { p: Pt; n: Pt; hw: number }[] } {
-  const line = resampleN(along(path, 6), 44);
-  const n = line.length;
-  const ph = hash01(o.seed, 7) * 6.28;
-  const tip = o.tip ?? 0.45;
-  const L: Pt[] = [];
-  const R: Pt[] = [];
-  const turns: { p: Pt; n: Pt; hw: number }[] = [];
-  let prev = 0;
-  for (let i = 0; i < n; i++) {
-    const u = i / (n - 1);
-    const t = unit(sub(line[Math.min(n - 1, i + 1)], line[Math.max(0, i - 1)]));
-    const nr: Pt = [-t[1], t[0]];
-    const a = u * o.turns * Math.PI * 2 + ph;
-    const c = add(line[i], scale(nr, o.amp * Math.sin(a) * (0.35 + 0.65 * u)));
-    const hw = (o.w / 2) * lerp(1, tip, u) * (0.82 + 0.22 * Math.cos(a)) * (u < 0.08 ? 0.75 + 3 * u : 1);
-    L.push(add(c, scale(nr, hw)));
-    R.push(add(c, scale(nr, -hw)));
-    const k = Math.floor((a - Math.PI) / (Math.PI * 2));
-    if (i > 2 && k !== prev && u < 0.95) turns.push({ p: c, n: nr, hw });
-    prev = k;
-  }
-  // A rounded end.
-  const t = unit(sub(line[n - 1], line[n - 2]));
-  const nr: Pt = [-t[1], t[0]];
-  const end = scale(add(L[n - 1], R[n - 1]), 0.5);
-  const hwEnd = dist(L[n - 1], R[n - 1]) / 2;
-  const cap: Pt[] = [];
-  for (let k = 1; k < 5; k++) {
-    const th = (Math.PI * k) / 5;
-    cap.push(add(end, add(scale(nr, hwEnd * Math.cos(th)), scale(t, hwEnd * Math.sin(th)))));
-  }
-  return { outline: [...L, ...cap, ...R.reverse()], turns };
 }
 
 /** The same outline moved: a contact shadow under an overlapping lock, or a cast shadow on the skin. */

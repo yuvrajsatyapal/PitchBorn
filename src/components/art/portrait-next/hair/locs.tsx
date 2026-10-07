@@ -6,8 +6,8 @@
  * another), never by outlines.
  */
 import type { ReactNode } from "react";
-import { CX, along, hash01, lerp, type Pt } from "../../portrait/geometry";
-import { ring, strokeLine } from "../ink";
+import { CX, along, hash01, lerp, sub, unit, type Pt } from "../../portrait/geometry";
+import { resample, ring, roughen, strokeLine } from "../ink";
 import { INK, hairTones, mixHex } from "../palette";
 import {
   ClipDefs,
@@ -56,11 +56,15 @@ interface Lock {
   round: boolean;
   flat?: { u: number; k: number };
   lit: boolean;
+  /** Thick locks only: how the end finishes (blunt, tapered, or splitting into two short ends), and the length of
+   * the knotted sections it is made of. */
+  end?: "blunt" | "taper" | "split";
+  knot?: { period: number; phase: number };
 }
 
 export function locsHair(i: HairInput, o: LocsDesign): HairArt {
   const { f, head, color, skin, uid, d, recede, seed, tip } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const TT = tip ? hairTones(tip) : null;
   const hl = hairline(f, head, o.kind, recede, seed);
   let k = 0;
@@ -84,7 +88,7 @@ export function locsHair(i: HairInput, o: LocsDesign): HairArt {
 
   const make = (pts: Pt[], lit: boolean): Lock => {
     const lock: Lock = {
-      pts: bend(pts, seed + k * 7, 3),
+      pts: bend(pts, seed + k * 7, big ? 1.6 : 3),
       w: r(o.w[0], o.w[1]),
       k,
       tone: hash01(seed, k + 50),
@@ -93,6 +97,15 @@ export function locsHair(i: HairInput, o: LocsDesign): HairArt {
       flat: hash01(seed, k + 70) < 0.6 ? { u: r(0.3, 0.75), k: r(0.12, 0.3) } : undefined,
       lit,
     };
+    if (big) {
+      // Thick locks: each its own end shape and a wider range of widths.
+      const e = hash01(seed, k + 90);
+      lock.end = e < 0.55 ? "blunt" : e < 0.85 ? "taper" : "split";
+      lock.tip = lock.end === "taper" ? r(0.3, 0.42) : r(0.7, 0.85);
+      lock.round = true;
+      lock.w *= r(0.85, 1.12);
+      lock.knot = { period: lock.w * r(0.75, 1), phase: r(0, 1) };
+    }
     k++;
     return lock;
   };
@@ -118,15 +131,17 @@ export function locsHair(i: HairInput, o: LocsDesign): HairArt {
       const tipY = o.end - r(0, 34);
       const tip = P(p2[0] + s * r(-4, 10) + s * spread * 0.3, tipY);
       if (rise > 0 && j < n - 1) {
-        // Big volume: rooted high on the crown, arching out over the cap before falling.
-        const yR = lerp(f.top + 4, hl.y - 4, (j + r(0, 0.5)) / n);
-        const root = P(CX + s * capHalf(yR, s) * r(0.25, 0.55), yR);
-        // Out over the cap like a fountain: rising a little, rounding the shoulder of the cap, then falling wide.
-        const yA = lerp(yR, capY, 0.5);
-        const over = P(CX + s * (capHalf(yR + 4, s) * 0.92 + 3), yR - 1);
-        const arch = P(CX + s * (capHalf(yA, s) + 5 + rise * r(3, 7)), yA);
-        const fall = P(lerp(arch[0], p2[0], 0.5) + s * 4, lerp(arch[1], p2[1], 0.5));
-        side.push(make([root, over, arch, fall, p2, P(lerp(p2[0], tip[0], 0.5) + s * r(-4, 4), lerp(p2[1], tipY, 0.5)), tip], s < 0));
+        // Big volume: rooted high on the crown, the lock lies over the dome of the cap (just outside it) and then
+        // falls wide. Following the dome keeps it a smooth arc, never a bent pipe.
+        const yR = lerp(f.top + 14, hl.y, (j + r(0, 0.5)) / n);
+        const root = P(CX + s * capHalf(yR, s) * r(0.55, 0.72), yR);
+        const lift = 3 + rise * r(2, 5);
+        const dome = [0.55, 1].map((t) => {
+          const y = lerp(yR, capY - 4, t);
+          return P(CX + s * (capHalf(y, s) + lift * t), y);
+        });
+        const fall = P(lerp(last(dome)[0], p2[0], 0.5) + s * 3, lerp(last(dome)[1], p2[1], 0.5));
+        side.push(make([root, ...dome, fall, p2, P(lerp(p2[0], tip[0], 0.5) + s * r(-4, 4), lerp(p2[1], tipY, 0.5)), tip], s < 0));
         continue;
       }
       const yR = lerp(hl.y - 6, Math.max(cornerL[1], cornerR[1]) + 6, Math.min(1, Math.max(0, (j + r(-0.3, 0.3)) / Math.max(1, n - 1))));
@@ -153,26 +168,77 @@ export function locsHair(i: HairInput, o: LocsDesign): HairArt {
     const dir = j === 0 ? sweep : -sweep;
     const root = P(p[0], p[1] - 12);
     // Thick locks over the forehead sweep well to the side instead of hanging straight down.
-    const side2 = big ? 1.6 : 1;
-    const tip = j === 0 ? P(root[0] + dir * r(16, 22) * side2, (big ? f.browY - 16 : f.browY) - r(0, 6)) : P(root[0] + dir * r(10, 15) * side2, hl.y + r(24, 32) - (big ? 10 : 0));
-    const lock = make([root, P(root[0] + dir * 3, root[1] + 10), P(lerp(root[0], tip[0], 0.7), lerp(root[1], tip[1], 0.6)), tip], root[0] < CX + 8);
+    const side2 = big ? 1.15 : 1;
+    const tip = j === 0 ? P(root[0] + dir * r(16, 22) * side2, (big ? f.browY - 18 : f.browY) - r(0, 6)) : P(root[0] + dir * r(10, 15) * side2, hl.y + r(24, 32) - (big ? 10 : 0));
+    // Thick ones fall forward and a little to the side, curving gently (never across the forehead).
+    const mid = big ? P(lerp(root[0], tip[0], 0.45) + dir * 3, lerp(root[1], tip[1], 0.55)) : P(lerp(root[0], tip[0], 0.7), lerp(root[1], tip[1], 0.6));
+    const lock = make([root, P(root[0] + dir * 3, root[1] + 10), mid, tip], root[0] < CX + 8);
     if (big) lock.w *= 0.72;
     fringe.push(lock);
   }
 
   const tones = [T.base, mixHex(T.base, T.shade, 0.4), mixHex(T.base, T.light, 0.2)];
-  const outline = (l: Lock, dx = 0) =>
-    lockOutline(offset(l.pts, dx, 0), { w: dx ? l.w * 0.5 : l.w, root: 0.8, peak: 0.2, tip: l.tip, round: l.round, wobble: 0.06, swell: 0.22, flat: l.flat, seed: seed + l.k });
+  const outline = (l: Lock, dx = 0) => {
+    const shape = lockOutline(offset(l.pts, dx, 0), { w: dx ? l.w * 0.5 : l.w, root: 0.8, peak: 0.2, tip: l.tip, round: l.round, wobble: 0.06, swell: big ? 0.26 : 0.22, flat: l.flat, knots: l.knot && { ...l.knot, depth: d === 0 ? 0 : 0.12 }, seed: seed + l.k });
+    // Thick locks are matte and a little fuzzy at the edge, never a clean tube.
+    return big && !dx ? roughen(shape, 0.7, seed + l.k + 300, 0.55) : shape;
+  };
+  // A split end: two short nubs leaving the end of the lock at slightly different angles.
+  const splitEnds = (l: Lock): string => {
+    const a = along(l.pts, 6);
+    const e = a[a.length - 1];
+    const t = unit(sub(e, a[a.length - 3]));
+    const nub = (side: number) => {
+      const dir = unit(P(t[0] + -t[1] * side * 0.45, t[1] + t[0] * side * 0.45));
+      const from = P(e[0] - t[0] * 4 + -t[1] * side * l.w * 0.18, e[1] - t[1] * 4 + t[0] * side * l.w * 0.18);
+      return ring(lockOutline([from, P(from[0] + dir[0] * 6, from[1] + dir[1] * 6), P(from[0] + dir[0] * (9 + side * 2), from[1] + dir[1] * (9 + side * 2))], { w: l.w * 0.42, root: 1, peak: 0.2, tip: 0.6, round: true, seed: seed + l.k + 7 }));
+    };
+    return nub(-1) + nub(1);
+  };
+  // Thick locks are made of knotted sections: where one section turns into the next the lock pinches in and a soft
+  // band of shadow runs across it, with a little light on the section above on the lit side.
+  const sections = (l: Lock, behind: boolean) => {
+    const dark: string[] = [];
+    const light: string[] = [];
+    if (!l.knot || d === 0) return { dark, light };
+    const a = resample(along(l.pts, 6), 2);
+    let run = 0;
+    let next = (1 + l.knot.phase) * l.knot.period;
+    const total = a.reduce((m, p, i) => (i ? m + Math.hypot(p[0] - a[i - 1][0], p[1] - a[i - 1][1]) : 0), 0);
+    for (let i = 1, j = 0; i < a.length - 1; i++) {
+      run += Math.hypot(a[i][0] - a[i - 1][0], a[i][1] - a[i - 1][1]);
+      if (run < next) continue;
+      next += l.knot.period;
+      j++;
+      if (run > total - l.w * 0.7 || (d === 1 && j % 2)) continue;
+      const p = a[i];
+      const t = unit(sub(a[i + 1], a[i - 1]));
+      const [nx, ny] = [-t[1], t[0]];
+      const hw = l.w * 0.44 * (1 - (run / total) * 0.3);
+      const bow = 1.4 + hash01(seed, l.k * 31 + j) * 1.6;
+      dark.push(strokeLine(along([P(p[0] + nx * hw, p[1] + ny * hw), P(p[0] + t[0] * bow, p[1] + t[1] * bow), P(p[0] - nx * hw, p[1] - ny * hw)], 3), { w: d === 2 ? 1.6 : 2.2, start: 0.3, end: 0.3, seed: seed + l.k + j }));
+      if (d === 2 && !behind && l.lit) light.push(strokeLine(along([P(p[0] + nx * hw * 0.75 - t[0] * 3, p[1] + ny * hw * 0.75 - t[1] * 3), P(p[0] + nx * hw * 0.15 - t[0] * 4.5, p[1] + ny * hw * 0.15 - t[1] * 4.5)], 2), { w: 1.3, start: 0.3, end: 0.3, seed: seed + l.k + j + 50 }));
+    }
+    return { dark, light };
+  };
   // Dyed ends: the last part of each lock's outline (its two sides from that point, round the end).
   const ends = (l: Lock, from = 0.74) => {
     const shape = outline(l);
-    const n = along(l.pts, 6).length;
-    const k = Math.round(from * (n - 1));
-    return ring([...shape.slice(k, shape.length - k)]);
+    const n = shape.length;
+    const k = Math.round(from * ((n - (l.round ? 5 : 0)) / 2 - 1));
+    return ring([...shape.slice(k, n - k)]);
   };
-  const lockArt = (l: Lock, behind: boolean): ReactNode => {
-    const tone = behind ? mixHex(tones[Math.floor(l.tone * 3)], T.shade, 0.45) : tones[Math.floor(l.tone * 3)];
+  const lockArt = (l: Lock, behind: boolean, front = false): ReactNode => {
+    // Thick locks are toned by depth: behind the head darkest, beside the face a little shaded, in front lightest.
+    const tone = behind
+      ? mixHex(tones[Math.floor(l.tone * 3)], T.shade, 0.45)
+      : big
+        ? front
+          ? mixHex(T.base, T.light, l.tone * 0.14)
+          : mixHex(T.base, T.shade, 0.12 + l.tone * 0.16)
+        : tones[Math.floor(l.tone * 3)];
     const shape = outline(l);
+    const sec = sections(l, behind);
     const knots: string[] = [];
     if (d === 2 && !behind) {
       const a = along(l.pts, 6);
@@ -183,13 +249,17 @@ export function locsHair(i: HairInput, o: LocsDesign): HairArt {
     }
     return (
       <g key={`${behind ? "b" : "f"}${l.k}`}>
-        {/* Contact shadow on whatever lies behind: separation by value, not by an outline (close-ups only). */}
-        {d === 2 && <path d={ring(offset(shape, 1.4, 1.5))} fill={T.deep} opacity={0.45} />}
+        {/* Contact shadow on whatever lies behind: separation by value, not by an outline (close-ups only; locks in
+            front of others at medium size too). */}
+        {(d === 2 || (front && d === 1)) && <path d={ring(offset(shape, 1.4, 1.5))} fill={T.deep} opacity={0.45} />}
+        {l.end === "split" && <path d={splitEnds(l)} fill={tone} />}
         <path d={ring(shape)} fill={tone} />
         <path d={ring(outline(l, l.w * 0.22))} fill={T.shade} opacity={behind ? 0.35 : 0.6} />
         {l.lit && !behind && <path d={hairStroke(offset(l.pts, -l.w * 0.18, 0), { from: 0.08, to: 0.42 + hash01(seed, l.k + 80) * 0.25, w: l.w * 0.24, seed: seed + l.k })} fill={T.light} opacity={0.6} />}
         {l.lit && !behind && d === 2 && <path d={hairStroke(offset(l.pts, -l.w * 0.12, 0), { from: 0.6, to: 0.74, w: l.w * 0.16, seed: seed + l.k + 1 })} fill={T.light} opacity={0.45} />}
-        {knots.length > 0 && <path d={knots.join("")} fill={T.deep} opacity={0.3} />}
+        {knots.length > 0 && !big && <path d={knots.join("")} fill={T.deep} opacity={0.3} />}
+        {sec.dark.length > 0 && <path d={sec.dark.join("")} fill={T.deep} opacity={behind ? 0.3 : 0.42} />}
+        {sec.light.length > 0 && <path d={sec.light.join("")} fill={T.light} opacity={0.45} />}
         {TT && <path d={ends(l)} fill={behind ? mixHex(TT.base, TT.shade, 0.6) : TT.base} />}
       </g>
     );
@@ -241,8 +311,8 @@ export function locsHair(i: HairInput, o: LocsDesign): HairArt {
         ) : (
           <>
             {side.map((l) => lockArt(l, false))}
-            {forward.map((l) => lockArt(l, false))}
-            {fringe.map((l) => lockArt(l, false))}
+            {forward.map((l) => lockArt(l, false, true))}
+            {fringe.map((l) => lockArt(l, false, true))}
           </>
         )}
       </g>

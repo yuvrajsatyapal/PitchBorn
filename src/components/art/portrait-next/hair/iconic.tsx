@@ -4,7 +4,7 @@
  * headband (rear volume behind the ears, a crown above the band, ringlets in front of it). Lion Afro and Dutch Dreads
  * are designs of the coily and locs techniques.
  */
-import { CX, along, clamp, hash01, lerp, type Pt } from "../../portrait/geometry";
+import { CX, along, clamp, hash01, lerp, sub, unit, type Pt } from "../../portrait/geometry";
 import { HeadbandNext } from "../accessories";
 import { anchorsFor } from "../anchors";
 import { noise1, resample, ring, strokeLine } from "../ink";
@@ -23,10 +23,11 @@ import {
   hairline,
   hanging,
   last,
+  lobe,
   lobedEdge,
   lockOutline,
   offset,
-  ringlet,
+  resampleN,
   rnd,
   scalpRegion,
   shell,
@@ -46,7 +47,7 @@ import {
  */
 export function fauxHawkHair(i: HairInput): HairArt {
   const { f, head, color, skin, uid, d, recede, seed, tip } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const hl = hairline(f, head, "straight", recede, seed);
   let slot = 0;
   const r = (lo: number, hi: number) => rnd(seed + 71, slot++, lo, hi);
@@ -122,16 +123,28 @@ export function fauxHawkHair(i: HairInput): HairArt {
   // The right side of the crest turns away from the light.
   const split = along([P(lerp(hung[0][0], last(hung)[0], 0.4), hung[0][1] + 2), P(peakX + 4, lerp(peak[1], hl.y, 0.5)), P(peak[0] + 3, peak[1] - 4)], 4).map((p, k) => P(p[0] + noise1(seed + 9, k * 0.5) * 2, p[1]));
   const shade = ring([...split, P(CX + 140, peak[1] - 20), P(CX + 140, hl.y + 20)]);
-  // Frosted ends: the top of each spike in the second colour, deeper where the spikes are tallest.
+  // Frosting: only some spikes (the taller ones, chosen by the seed) carry the second colour, from their tip part of
+  // the way down; between them the crest keeps its own colour, so the frosting never runs round the top as a band.
+  // A couple of the lit strands on the crest catch it too.
   const frost = tip
     ? (() => {
-        // Each spike is frosted down most of its length; between spikes only the very ends.
-        const lower = crestTop.map((p, k) => {
-          const b = base[Math.max(0, iL - 1) + k];
-          const dy = 4 + lift(b[0]).sp * 1.1 + 4 * smooth((b[1] - p[1] - 8) / 20) + noise1(seed + 4, k * 0.35) * 1.5;
-          return P(p[0] + Math.sign(p[0] - peakX) * 0.6, p[1] + dy);
-        });
-        return { band: ring([...crestTop, ...lower.reverse()]), tones: hairTones(tip) };
+        const chosen = spikes.filter((sp, k) => sp.a > 6 && hash01(seed, k + 140) < 0.75);
+        const caps: string[] = [];
+        for (const sp of chosen) {
+          const pts: Pt[] = [];
+          const low: Pt[] = [];
+          crestTop.forEach((p, k) => {
+            const b = base[Math.max(0, iL - 1) + k];
+            const u = (b[0] - peakX) / cw;
+            const v = sp.a * tuft((u - sp.u) / sp.w);
+            if (v < 1.2) return;
+            pts.push(p);
+            low.push(P(p[0], p[1] + v * 0.85 + 1.5 + noise1(seed + 4, k * 0.35)));
+          });
+          if (pts.length > 2) caps.push(ring([...pts, ...low.reverse()]));
+        }
+        const streaks = d > 0 ? [0.3, 0.62].map((u, k) => hairStroke(flow(u + (hash01(seed, k + 160) - 0.5) * 0.08, 0.92), { from: 0.62, to: 0.95, w: d === 2 ? 2 : 2.6, seed: seed + k + 150 })) : [];
+        return { band: caps.join(""), streaks, tones: hairTones(tip) };
       })()
     : null;
   const sideTone = mixHex(color, skin.deep, 0.2);
@@ -164,6 +177,7 @@ export function fauxHawkHair(i: HairInput): HairArt {
               <path d={frost.band} fill={frost.tones.base} />
               {/* The frosted ends turn into shadow with the rest of the crest. */}
               <path d={shade} fill={frost.tones.shade} opacity={0.75} clipPath={`url(#${clip}f)`} />
+              {frost.streaks.length > 0 && <path d={frost.streaks.join("")} fill={frost.tones.light} opacity={0.75} />}
             </g>
           )}
         </g>
@@ -185,7 +199,7 @@ export function fauxHawkHair(i: HairInput): HairArt {
  */
 export function ponytailHair(i: HairInput): HairArt {
   const { f, head, color, skin, uid, d, recede, seed, band } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const hl = hairline(f, head, "mature", recede, seed);
   let slot = 0;
   const r = (lo: number, hi: number) => rnd(seed + 83, slot++, lo, hi);
@@ -234,14 +248,21 @@ export function ponytailHair(i: HairInput): HairArt {
   }
   const shadeR = ring([P(CX + 10, f.top - 30), P(CX + 22 + r(-3, 3), hl.y - 2), P(CX + 30, yS + 10), P(CX + 140, yS + 10), P(CX + 140, f.top - 30)]);
 
-  // Loose strands: one or two thin locks escaping at the temple opposite the tail.
+  // Loose strands vary from player to player: none, one or two; escaping at the temple opposite the tail or from
+  // the front of the hairline; short or long, straight, curving in towards the face or flicking out.
   const ls: 1 | -1 = -ts as 1 | -1;
-  const corner = ls > 0 ? cornerR : cornerL;
-  const strands = Array.from({ length: hash01(seed, 14) < 0.55 ? 2 : 1 }, (_, k) => {
-    const root = P(corner[0] - ls * (3 + k * 5), corner[1] - 2);
-    const len = r(36, 52) - k * 14;
-    const path = bend([root, P(root[0] + ls * 4, root[1] + len * 0.35), P(root[0] + ls * r(1, 6), root[1] + len * 0.7), P(root[0] + ls * r(4, 9), root[1] + len)], seed + k, 2.5);
-    return lockOutline(path, { w: 3.6 - k * 0.8, root: 0.7, peak: 0.25, tip: 0.1, wobble: 0.1, seed: seed + 40 + k });
+  const roll = hash01(seed, 14);
+  const count = roll < 0.2 ? 0 : roll < 0.65 ? 1 : 2;
+  const strands = Array.from({ length: count }, (_, k) => {
+    // Along the hairline from the temple corner (0) towards the centre (0.45).
+    const u = k === 0 ? (hash01(seed, 15) < 0.7 ? rnd(seed, 16, 0, 0.12) : rnd(seed, 16, 0.25, 0.42)) : rnd(seed, 17, 0.05, 0.2);
+    const front = ls > 0 ? hl.front.slice().reverse() : hl.front;
+    const root0 = front[Math.round(u * (front.length - 1))];
+    const root = P(root0[0], root0[1] - 2);
+    const len = rnd(seed, 18 + k, 24, 56) - k * 10;
+    const curve = (hash01(seed, 20 + k) < 0.5 ? 1 : -1) * rnd(seed, 22 + k, 2, 6);
+    const path = bend([root, P(root[0] + ls * 3, root[1] + len * 0.35), P(root[0] + ls * 2 + curve, root[1] + len * 0.7), P(root[0] + ls * 4 + curve * 1.6, root[1] + len)], seed + k, 2);
+    return lockOutline(path, { w: rnd(seed, 24 + k, 2.8, 4) - k * 0.6, root: 0.7, peak: 0.25, tip: 0.1, wobble: 0.1, seed: seed + 40 + k });
   });
 
   // The tie and the tail, behind the skull: tied high at the back, so the tie and the gathered hair show just over
@@ -250,7 +271,8 @@ export function ponytailHair(i: HairInput): HairArt {
   const topY = Math.min(...outer.map((p) => p[1]));
   const yTie = topY + 7 + r(-1.5, 1.5);
   const xTie = CX + ts * extent(yTie + 6, ts) * r(0.42, 0.52);
-  const out = Math.max(extent(f.top + 24, ts), head.half(f.eyeY, ts)) + 16 + r(0, 6);
+  // Clear of the side of the head: the tail hangs behind it, it is never stuck to it.
+  const out = Math.max(extent(f.top + 24, ts), head.half(f.eyeY, ts)) + 22 + r(0, 6);
   const tailPath = bend([P(xTie - ts * 6, yTie + 10), P(xTie + ts * 6, yTie - 7), P(xTie + ts * 20, yTie - 9), P(CX + ts * (out + 4), f.top + 14), P(CX + ts * (out + 10), f.eyeY + 8), P(CX + ts * (head.half(f.jawY, ts) + 30 + r(0, 6)), f.jawY + 6), P(CX + ts * (f.neckW + 38 + r(0, 8)), 316)], seed + 3, 3);
   const tail = lockOutline(tailPath, { w: 30, root: 0.55, peak: 0.3, tip: 0.14, wobble: 0.06, swell: 0.18, seed: seed + 5 });
   const split = lockOutline(offset(tailPath.slice(3), ts * 6, -2), { w: 11, root: 1, peak: 0.2, tip: 0.1, seed: seed + 6 });
@@ -285,7 +307,7 @@ export function ponytailHair(i: HairInput): HairArt {
       <g fill={skin.shade}>
         {/* Swept back, the hair barely shades the forehead: only a thin line under the hairline, and the strands. */}
         <path d={castBelow(hl.front.slice().reverse(), 0.8, 1.8, f.top)} opacity={0.45} />
-        <path d={strands.map((s) => ring(offset(s, 1.5, 2))).join("")} opacity={0.5} />
+        {strands.length > 0 && <path d={strands.map((s) => ring(offset(s, 1.5, 2))).join("")} opacity={0.5} />}
       </g>
     ),
     mid: (
@@ -300,8 +322,8 @@ export function ponytailHair(i: HairInput): HairArt {
           <path d={strokeLine(hl.front.map((p) => P(p[0], p[1] - 2)), { w: 3, start: 0.2, end: 0.2, seed: seed + 2 })} fill={T.shade} opacity={0.6} />
         </g>
         <path d={silhouetteInk(outer, d, seed + 5, [[0, 0.3], [0.37, 1]], 1.8)} fill={INK} />
-        <path d={strands.map(ring).join("")} fill={T.base} />
-        {d > 0 && <path d={strands.map((s) => ring(offset(s.slice(0, Math.floor(s.length / 2)), 0.6, 0))).join("")} fill={T.shade} opacity={0.5} />}
+        {strands.length > 0 && <path d={strands.map(ring).join("")} fill={T.base} />}
+        {d > 0 && strands.length > 0 && <path d={strands.map((s) => ring(offset(s.slice(0, Math.floor(s.length / 2)), 0.6, 0))).join("")} fill={T.shade} opacity={0.5} />}
       </g>
     ),
     extent,
@@ -311,6 +333,40 @@ export function ponytailHair(i: HairInput): HairArt {
 
 // ------------------------------------------------------------------ long curls with a headband
 
+interface Corkscrew {
+  /** A thin core lock holding the coils together, then the coils (seen from the front: overlapping lobes). */
+  core: Pt[];
+  coils: { c: Pt; rx: number; ry: number; rot: number }[];
+  k: number;
+}
+
+/**
+ * A corkscrew curl seen from the front: a chain of overlapping coils that swing a little from side to side and get
+ * smaller towards the end, on a thin core so no gaps show between them.
+ */
+function corkscrew(path: readonly Pt[], o: { w: number; coils: number; swing: number; seed: number; k: number }): Corkscrew {
+  const line = resampleN(along(path, 6), 40);
+  const n = line.length;
+  const coils: Corkscrew["coils"] = [];
+  for (let j = 0; j < o.coils; j++) {
+    const u = (j + 0.6) / o.coils;
+    const i = Math.min(n - 2, Math.round(u * (n - 1)));
+    const t = unit(sub(line[i + 1], line[Math.max(0, i - 1)]));
+    const side = (j % 2 ? 1 : -1) * (hash01(o.seed, j) < 0.2 ? -0.4 : 1);
+    const rx = (o.w / 2) * lerp(1, 0.62, u) * (0.9 + 0.2 * hash01(o.seed, j + 9));
+    coils.push({ c: P(line[i][0] - t[1] * o.swing * side, line[i][1] + t[0] * o.swing * side), rx, ry: rx * 0.72, rot: Math.atan2(t[1], t[0]) + Math.PI / 2 });
+  }
+  return { core: lockOutline(path, { w: o.w * 0.55, root: 0.8, peak: 0.2, tip: 0.4, round: true, seed: o.seed }), coils, k: o.k };
+}
+
+const ellipse = (c: Pt, rx: number, ry: number, rot: number, from = 0, to = Math.PI * 2, steps = 14): Pt[] =>
+  Array.from({ length: steps + 1 }, (_, i) => {
+    const a = lerp(from, to, i / steps);
+    const x = Math.cos(a) * rx;
+    const y = Math.sin(a) * ry;
+    return P(c[0] + x * Math.cos(rot) - y * Math.sin(rot), c[1] + x * Math.sin(rot) + y * Math.cos(rot));
+  });
+
 /**
  * Medium-long curls held back by a headband. Layers: the rear volume behind the head and ears (lobed, darker, falling
  * to the shoulders); the crown above the band and the hair over the temples tucked behind the ears; the band (its own
@@ -318,15 +374,20 @@ export function ponytailHair(i: HairInput): HairArt {
  */
 export function headbandCurlsHair(i: HairInput): HairArt {
   const { f, head, color, skin, uid, d, recede, seed, band } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const a = anchorsFor(f, head);
   const hl = hairline(f, head, "rounded", recede, seed);
   let slot = 0;
   const r = (lo: number, hi: number) => rnd(seed + 97, slot++, lo, hi);
   const yBand = Math.max(a.foreheadTop[1] - 2, hl.y - 3);
   const yS = f.ear.top + 2;
-  // Crown: a curly mass over the skull.
-  const crown = lobedEdge(shell(f, head, yS, 10 + r(0, 2), 21 + r(0, 3), 10 + r(0, 2)), { seed: seed + 1, spacing: [8, 14], amp: [1.8, 4], big: 0.3 });
+  // Crown: a curly mass over the skull. The band squeezes it in a little where it passes; below the band the curls
+  // spring out again.
+  const crown = lobedEdge(shell(f, head, yS, 10 + r(0, 2), 21 + r(0, 3), 10 + r(0, 2)), { seed: seed + 1, spacing: [8, 14], amp: [1.8, 4], big: 0.3 }).map((p) => {
+    const s = p[0] >= CX ? 1 : -1;
+    const k = -5.5 * lobe((p[1] - yBand - 3) / 13) + 3 * smooth((p[1] - yBand - 10) / 22);
+    return P(CX + s * Math.max(head.half(p[1], s) + 2, Math.abs(p[0] - CX) + k), p[1]);
+  });
   const extent = extentOf(crown);
   // Over the temples the hair hugs the face and tucks behind the top of each ear.
   const sideIn = (s: 1 | -1, end: Pt) => {
@@ -343,13 +404,14 @@ export function headbandCurlsHair(i: HairInput): HairArt {
   // Rear volume: behind the head from the temples to the shoulders, wider as it falls, its bottom in hanging curls.
   const rear = (s: 1 | -1): Pt[] => {
     const w = (y: number, k: number) => CX + s * (Math.max(extent(Math.min(y, yS), s), head.half(y, s)) + k);
-    return [P(w(yBand, 2), yBand), P(w(yS, 14), yS), P(w(f.eyeY + 30, 30 + r(0, 6)), f.eyeY + 30), P(w(f.jawY, 36 + r(0, 6)), f.jawY), P(CX + s * (f.neckW + 52 + r(0, 8)), 300 + r(-6, 6))];
+    return [P(w(yBand, 2), yBand), P(w(yS, 14), yS), P(w(f.eyeY + 30, 30 + r(0, 6)), f.eyeY + 30), P(w(f.jawY, 36 + r(0, 6)), f.jawY), P(CX + s * (f.neckW + 52 + r(0, 8)), 300 + r(-14, 10))];
   };
   const rL = rear(-1);
   const rR = rear(1);
   const bottom = hanging(
     resample(along([last(rR), P(CX + 30, 318), P(CX - 30, 318), last(rL)], 4), 2),
-    Array.from({ length: 7 }, (_, k) => ({ u: (k + 0.5) / 7 + r(-0.03, 0.03), w: 0.07, a: r(5, 11), lean: r(-2, 2) })),
+    // Curl ends of uneven length: some short, a few hanging well below the rest.
+    Array.from({ length: 8 }, (_, k) => ({ u: (k + 0.5) / 8 + r(-0.03, 0.03), w: r(0.05, 0.09), a: r(4, 16), lean: r(-2.5, 2.5) })),
   );
   const rearPts = lobedEdge(along([...rL.slice().reverse(), ...rR], 5), { seed: seed + 2, spacing: [10, 18], amp: [2.5, 6], big: 0.35, sign: -1 });
   const rearD = ring([...rearPts, ...bottom.slice(1, -1)]);
@@ -384,13 +446,13 @@ export function headbandCurlsHair(i: HairInput): HairArt {
 
   // Ringlets in front: two over the band, then two or three beside the face (more on one side).
   const more: 1 | -1 = hash01(seed, 15) < 0.5 ? -1 : 1;
-  const curlsFront: { outline: Pt[]; turns: { p: Pt; n: Pt; hw: number }[]; k: number }[] = [];
+  const curlsFront: Corkscrew[] = [];
   [r(0.3, 0.4), r(0.58, 0.68)].forEach((u, k) => {
     const x = lerp(CX - f.templeW * 0.6, CX + f.templeW * 0.6, u);
     const root = P(x, yBand - 9);
     const len = k === 0 ? r(38, 46) : r(26, 32);
     const dir = k === 0 ? -1 : 1;
-    curlsFront.push({ ...ringlet([root, P(x + dir * 2, yBand + 8), P(x + dir * 5, root[1] + len)], { w: 13.5, turns: 2.2, amp: 3, seed: seed + k, tip: 0.55 }), k });
+    curlsFront.push(corkscrew([root, P(x + dir * 2, yBand + 8), P(x + dir * 5, root[1] + len)], { w: 15, coils: Math.max(4, Math.round(len / 6)), swing: 2, seed: seed + k, k }));
   });
   for (const s of [-1, 1] as const) {
     const n = s === more ? 2 : 1;
@@ -400,29 +462,52 @@ export function headbandCurlsHair(i: HairInput): HairArt {
       const end = lerp(f.mouthY, f.jawY + 6, r(0, 1)) - j * 16;
       // The first falls just in front of the ear's front edge (the ear shows beside it); a second one lies further out.
       const x2 = CX + s * (head.half(f.eyeY + 20, s) - 1 + j * 9);
-      curlsFront.push({ ...ringlet([root, P(x2, lerp(yR, end, 0.4)), P(x2 + s * r(0, 5), end)], { w: 13 + r(0, 2.5), turns: 2.6 + j * 0.4, amp: 3.6, seed: seed + 20 + j + (s > 0 ? 5 : 0), tip: 0.55 }), k: 10 + j + (s > 0 ? 5 : 0) });
+      const len = end - yR;
+      curlsFront.push(corkscrew([root, P(x2, lerp(yR, end, 0.4)), P(x2 + s * r(0, 5), end)], { w: 15.5 + r(0, 2.5), coils: Math.max(5, Math.round(len / 6.5)), swing: 2.6 + r(0, 1.2), seed: seed + 20 + j + (s > 0 ? 5 : 0), k: 10 + j + (s > 0 ? 5 : 0) }));
     }
   }
-  const curlArt = (c: (typeof curlsFront)[number]) => (
-    <g key={c.k}>
-      {d === 2 && <path d={ring(offset(c.outline, 1.3, 1.6))} fill={T.deep} opacity={0.4} />}
-      <path d={ring(c.outline)} fill={T.base} />
-      {d > 0 && (
-        <path
-          // Each coil turns under on its far side: a short dark crescent across the lock.
-          d={c.turns.map((t) => strokeLine([P(t.p[0] + t.n[0] * t.hw * 0.9, t.p[1] + t.n[1] * t.hw * 0.9 + 1.2), P(t.p[0], t.p[1] + 2), P(t.p[0] - t.n[0] * t.hw * 0.9, t.p[1] - t.n[1] * t.hw * 0.9 + 1.2)], { w: d === 2 ? 1.8 : 2.2, start: 0.3, end: 0.3, seed: seed + c.k })).join("")}
-          fill={T.deep}
-          opacity={0.6}
-        />
-      )}
-      {d === 2 && <path d={hairStroke(c.outline.slice(2, Math.floor(c.outline.length / 2) - 4), { from: 0.1, to: 0.5, w: 1.6, seed: seed + c.k })} fill={T.light} opacity={0.55} />}
-    </g>
-  );
+  // Behind: a few corkscrews in the rear volume, so it reads as curls (not a mass), their ends hanging out of its
+  // lower edge at different lengths. Close-up sizes only.
+  const rearCoils: Corkscrew[] = [];
+  if (d > 0)
+    for (const s of [-1, 1] as const)
+      for (let j = 0; j < (s === more ? 3 : 2); j++) {
+        const y0 = lerp(yS, f.jawY, j / 3) + r(-4, 6);
+        const x0 = CX + s * (head.half(Math.min(y0, f.jawY), s) + 12 + j * 9 + r(0, 5));
+        const y1 = 296 + r(-16, 18) - j * 6;
+        rearCoils.push(corkscrew([P(x0, y0), P(x0 + s * r(2, 8), lerp(y0, y1, 0.5)), P(x0 + s * r(4, 14), y1)], { w: 14 + r(0, 3), coils: Math.max(5, Math.round((y1 - y0) / 7)), swing: 2.4, seed: seed + 60 + j + (s > 0 ? 7 : 0), k: 40 + j + (s > 0 ? 7 : 0) }));
+      }
+
+  // Where the band runs into the side hair, curls spring out over its ends, so it disappears into the hair.
+  const tufts: { c: Pt; r: number; k: number }[] = [];
+  for (const s of [-1, 1] as const) {
+    const x = CX + s * (head.half(yBand + 5, s) + 3);
+    tufts.push({ c: P(x + s * r(0, 3), yBand + 4 + r(-2, 2)), r: r(5.5, 7.5), k: s > 0 ? 1 : 0 });
+    if (hash01(seed, s > 0 ? 17 : 18) < 0.6) tufts.push({ c: P(x + s * r(5, 8), yBand + r(8, 13)), r: r(4, 5.5), k: s > 0 ? 3 : 2 });
+  }
+  const tuftD = tufts.map((t) => coilyCluster(t.c, t.r, { seed: seed + 200 + t.k, lobes: 4, squash: 0.85 }));
+  const tuftShade = tufts.map((t) => coilyCluster(P(t.c[0] + t.r * 0.35, t.c[1] + t.r * 0.35), t.r * 0.7, { seed: seed + 210 + t.k, lobes: 3, squash: 0.8 }));
+  // Each coil: its body, a dark crescent where it turns under (lower edge), a light where it faces up to the light.
+  const curlArt = (c: Corkscrew, behind = false) => {
+    const bodies = c.coils.map((q) => ring(ellipse(q.c, q.rx, q.ry, q.rot)));
+    const under = c.coils.map((q) => ring([...ellipse(q.c, q.rx, q.ry, q.rot, 0.15, Math.PI - 0.15, 8), ...ellipse(P(q.c[0] - Math.sin(q.rot) * -q.ry * 0.35, q.c[1] + Math.cos(q.rot) * -q.ry * 0.35), q.rx * 0.85, q.ry * 0.6, q.rot, Math.PI - 0.3, 0.3, 8)]));
+    const lit = c.coils.map((q) => ring(ellipse(P(q.c[0] - q.rx * 0.25 + Math.sin(q.rot) * q.ry * 0.3, q.c[1] - Math.cos(q.rot) * q.ry * 0.3), q.rx * 0.42, q.ry * 0.3, q.rot - 0.3, 0, Math.PI * 2, 8)));
+    return (
+      <g key={c.k}>
+        {d === 2 && !behind && <path d={[ring(offset(c.core, 1.3, 1.6)), ...c.coils.map((q) => ring(ellipse(P(q.c[0] + 1.3, q.c[1] + 1.6), q.rx, q.ry, q.rot)))].join("")} fill={T.deep} opacity={0.35} />}
+        <path d={ring(c.core)} fill={behind ? T.deep : T.shade} />
+        <path d={bodies.join("")} fill={behind ? mixHex(T.base, T.shade, 0.45) : T.base} />
+        {d > 0 && <path d={under.join("")} fill={T.deep} opacity={0.55} />}
+        {d > 0 && <path d={lit.join("")} fill={T.light} opacity={behind ? 0.25 : d === 2 ? 0.55 : 0.4} />}
+      </g>
+    );
+  };
   return {
     back: (
       <g>
         <path d={rearD} fill={mixHex(T.shade, T.deep, 0.2)} />
         {rearLights.length > 0 && <path d={rearLights.join("")} fill={T.base} opacity={0.9} />}
+        {rearCoils.map((c) => curlArt(c, true))}
         {rearCurls.length > 0 && <path d={rearCurls.join("")} fill={T.light} opacity={0.5} />}
         <path d={silhouetteInk([...rearPts.slice(0, Math.floor(rearPts.length * 0.42))], d, seed + 3, [[0.05, 1]], 1.6)} fill={INK} opacity={0.85} />
         <path d={silhouetteInk([...rearPts.slice(Math.ceil(rearPts.length * 0.58))], d, seed + 4, [[0, 0.95]], 1.6)} fill={INK} opacity={0.85} />
@@ -431,7 +516,7 @@ export function headbandCurlsHair(i: HairInput): HairArt {
     onSkin: (
       <g fill={skin.shade}>
         <path d={castBelow(along([P(CX - 90, yBand + 9), P(CX, yBand + 12), P(CX + 90, yBand + 9)], 3), 0.5, 2.5, f.top)} opacity={0.55} />
-        <path d={curlsFront.map((c) => ring(offset(c.outline, 1.8, 2.6))).join("")} opacity={0.55} />
+        <path d={curlsFront.map((c) => [ring(offset(c.core, 1.8, 2.6)), ...c.coils.map((q) => ring(ellipse(P(q.c[0] + 1.8, q.c[1] + 2.6), q.rx, q.ry, q.rot, 0, Math.PI * 2, 8)))].join("")).join("")} opacity={0.5} />
       </g>
     ),
     mid: (
@@ -447,7 +532,13 @@ export function headbandCurlsHair(i: HairInput): HairArt {
       </g>
     ),
     band: HeadbandNext({ head, a, color: band, d, extent, y: yBand, h: 11 }),
-    front: <g>{curlsFront.map(curlArt)}</g>,
+    front: (
+      <g>
+        <path d={tuftD.join("")} fill={T.base} />
+        {d > 0 && <path d={tuftShade.join("")} fill={T.shade} opacity={0.7} />}
+        {curlsFront.map((c) => curlArt(c))}
+      </g>
+    ),
     extent,
     ears: "partial",
   };

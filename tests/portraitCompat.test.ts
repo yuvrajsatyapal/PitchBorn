@@ -14,7 +14,7 @@ import { buildHeadNext } from "../src/components/art/portrait-next/head";
 import { nextModelFor } from "../src/components/art/portrait-next/model";
 import { CX } from "../src/components/art/portrait/geometry";
 import { generateAppearance, sanitizeAppearance, supportsHairTips } from "../src/engine/appearance/generate";
-import { APPEARANCE_KEYS, BAND_COLORS, COUNTS, FACIAL_HAIR, HAIR_STYLES, HAIR_TIP_COLORS } from "../src/engine/appearance/options";
+import { APPEARANCE_KEYS, BAND_COLORS, COUNTS, FACIAL_HAIR, HAIR_COLORS, HAIR_STYLES, HAIR_TIP_COLORS } from "../src/engine/appearance/options";
 import type { Appearance } from "../src/engine/types";
 import { decodeState, encodeState } from "../src/persistence/codec";
 import { newCareer } from "./helpers";
@@ -129,6 +129,25 @@ describe("portrait compatibility: every combination draws", () => {
       expect(count(small)).toBeLessThan(count(large));
       expect(count(small)).toBeLessThan(110);
       expect(small.length).toBeLessThan(20_000);
+    }
+  });
+});
+
+describe("portrait compatibility: random stress", () => {
+  it("300 generated players draw valid artwork with anchors at every size", () => {
+    for (let i = 0; i < 300; i++) {
+      const a = generateAppearance(`rand-${i}`);
+      const age = 17 + (i % 22);
+      const m = nextModelFor({ ...a, accessory: i % COUNTS.accessory }, age, KIT, TRIM);
+      const anchors = anchorsFor(m.f, buildHeadNext(m.f));
+      for (const p of [anchors.headTop, anchors.eyeL, anchors.eyeR, anchors.mouth, anchors.chin, anchors.earL.top, anchors.earR.bottom, anchors.neckBase]) {
+        expect(Number.isFinite(p[0]) && Number.isFinite(p[1])).toBe(true);
+      }
+      for (const d of [0, 1, 2] as const) {
+        const svg = renderToStaticMarkup(createElement("svg", null, createElement(PortraitNext, { m, uid: `r${i}`, d })));
+        expectValid(svg);
+        expect(svg).not.toContain('d=""');
+      }
     }
   });
 });
@@ -259,14 +278,35 @@ describe("portrait compatibility: generation", () => {
       expect(a.band).toBeGreaterThanOrEqual(0);
       expect(a.band).toBeLessThan(BAND_COLORS.length);
       if (a.hairTip > 0) expect(supportsHairTips(a.hair)).toBe(true);
-      // A Lion Afro's ends, when coloured, are golden by default.
-      if (HAIR_STYLES[a.hair].name === "Lion Afro" && a.hairTip > 0) expect(a.hairTip).toBe(HAIR_TIP_COLORS.indexOf("#d9b35a"));
+      expect(HAIR_STYLES[a.hair].name === "Lion Afro" ? a.hairTip : 0).toBe(0);
+    }
+  });
+
+  it("Golden hair is only handed out with the Lion Afro, and the Lion Afro is golden all through, not at its ends", () => {
+    const golden = HAIR_COLORS.indexOf("#d6a645");
+    let lions = 0;
+    let goldenLions = 0;
+    for (let i = 0; i < 60_000 && lions < 40; i++) {
+      const a = generateAppearance(`lion-${i}`);
+      if (a.hairColor === golden) expect(HAIR_STYLES[a.hair].name).toBe("Lion Afro");
+      if (HAIR_STYLES[a.hair].name === "Lion Afro") {
+        lions++;
+        if (a.hairColor === golden) goldenLions++;
+      }
+    }
+    expect(goldenLions).toBeGreaterThan(0);
+    // The golden hair colour is the hair itself: rendering a golden Lion Afro paints it, and any hair colour works.
+    const lion = iconicIndex("Lion Afro");
+    for (const hairColor of [0, 2, golden]) {
+      const svg = render({ hair: lion, hairColor }, 2);
+      expectValid(svg);
+      expect(svg).toContain(HAIR_COLORS[hairColor]);
     }
   });
 
   it("styles that take a second colour draw it", () => {
     const tip = HAIR_TIP_COLORS[2];
-    for (const name of ["Frosted Faux Hawk", "Lion Afro", "Textured crop", "Dreadlocks", "Dutch Dreads"]) {
+    for (const name of ["Frosted Faux Hawk", "Textured crop", "Dreadlocks", "Dutch Dreads"]) {
       expect(render({ hair: HAIR_STYLES.findIndex((h) => h.name === name), hairTip: 2 }, 2)).toContain(tip);
     }
   });

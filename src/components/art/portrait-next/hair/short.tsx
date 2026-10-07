@@ -60,7 +60,7 @@ export interface CropDesign {
  */
 export function cropHair(i: HairInput, o: CropDesign): HairArt {
   const { f, head, color, skin, uid, d, recede, seed, tip } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const hl = hairline(f, head, o.kind, recede, seed);
   const v = (k: number, span: number) => (hash01(seed + 29, k) - 0.5) * 2 * span;
   const cornerL = hl.front[0];
@@ -231,15 +231,17 @@ export function cropHair(i: HairInput, o: CropDesign): HairArt {
  */
 export function crescentHair(i: HairInput): HairArt {
   const { f, head, color, uid, d, recede, seed } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const hl = hairline(f, head, "straight", recede, seed);
   const shaved = shavedHair(i, "straight", 0.36);
-  const w = f.templeW * (0.6 + (hash01(seed, 31) - 0.5) * 0.06);
+  // Width follows the temples, but within limits: still a patch on a wide head, still a crescent on a narrow one.
+  const w = clamp(f.templeW * 0.6, 37.5, 44.5) * (1 + (hash01(seed, 31) - 0.5) * 0.06);
   // Flat along the hairline (a touch below it), arched high over the front of the head: a half-moon.
   const lower = hl.front.filter((p) => Math.abs(p[0] - CX) <= w).map((p) => P(p[0], p[1] + 1.5));
   const L = lower[0];
   const R = last(lower);
-  const peak = hl.y - 30 - rnd(seed, 32, 0, 3);
+  // Arched high over the front of the head, but never past the top of the skull.
+  const peak = Math.max(hl.y - 30 - rnd(seed, 32, 0, 3), f.top + 3);
   const upper = along([R, P(CX + w * 0.78, hl.y - 18), P(CX + w * 0.32, peak + 2), P(CX - w * 0.28, peak + 2.5), P(CX - w * 0.74, hl.y - 19), L], 6);
   const outline = [...lower, ...upper.slice(1)];
   // A fuzzy edge where density thins, and a soft halo of sparser hair around it.

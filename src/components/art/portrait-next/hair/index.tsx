@@ -136,7 +136,7 @@ const MEDIUM_DREADS: LocsDesign = { kind: "irregular", end: 324, fringe: 2, side
 const DUTCH_DREADS: LocsDesign = { kind: "irregular", end: 318, fringe: 2, side: 2, back: 2, w: [19, 26], cap: { top: 24, side: 14 }, spread: 30, forward: 1, rise: 1 };
 
 // A cloud far bigger than Medium Afro: it surrounds the whole head, covers the ears and continues behind the jaw.
-// Large lobes, a few big light groups, very few curls. Ends in the second colour (golden by default) when chosen.
+// Large lobes, a few big light groups, very few curls. Any hair colour; generated players are often golden.
 const LION_AFRO: CoilyDesign = {
   kind: "rounded",
   shape: "round",
@@ -150,7 +150,6 @@ const LION_AFRO: CoilyDesign = {
   curls: 4,
   curlR: [2.2, 3.4],
   mane: { low: (f) => f.ear.bot - 4, bottom: (f) => f.jawY + 24 },
-  rim: true,
 };
 
 const LONG_FLOW: FlowDesign = {
@@ -205,7 +204,7 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   // Iconic: rare across the squad, each with a silhouette of its own.
   { ...meta({ id: "frosted-faux-hawk", name: "Frosted Faux Hawk", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 0.6, modern: 1 }, supportsSecondaryColor: true, supportsHeadband: true }), draw: (i) => fauxHawkHair(i) },
   { ...meta({ id: "long-headband-curls", name: "Long Headband Curls", category: "iconic", hairType: "curly", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.6 }, ears: "partial", ownHeadband: true }), draw: (i) => headbandCurlsHair(i) },
-  { ...meta({ id: "lion-afro", name: "Lion Afro", category: "iconic", hairType: "coily", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.7 }, supportsSecondaryColor: true, ears: "covered" }), draw: (i) => coilyHair(i, LION_AFRO) },
+  { ...meta({ id: "lion-afro", name: "Lion Afro", category: "iconic", hairType: "coily", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.7 }, ears: "covered" }), draw: (i) => coilyHair(i, LION_AFRO) },
   { ...meta({ id: "divine-ponytail", name: "Divine Ponytail", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.8, modern: 0.8 }, supportsRecedingHairline: true }), draw: (i) => ponytailHair(i) },
   { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => locsHair(i, DUTCH_DREADS) },
 ];

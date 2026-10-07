@@ -3,8 +3,8 @@ import { CX, add, along, clamp, hash01, lerp, q, scale, sub, unit, type Pt } fro
 import type { Anchors } from "./anchors";
 import type { Detail } from "./face";
 import type { NextSpec } from "./head";
-import { pieces, ring, roughen, stroke, strokeLine } from "./ink";
-import { INK, hairTones, mixHex, type SkinTones } from "./palette";
+import { noise1, pieces, ring, roughen, stroke, strokeLine } from "./ink";
+import { INK, darkPair, hairTones, mixHex, type SkinTones } from "./palette";
 
 const P = (x: number, y: number): Pt => [x, y];
 
@@ -118,6 +118,9 @@ interface Growth {
   edge?: Pt[];
   /** "down": along the jaw and chin; "out": a moustache, from the centre to the corners. */
   flow: "down" | "out";
+  /** Thin growth (straps, sideburns): how far the lit body sits above the shadow, so a band of shadow never turns
+   * into a dark outline. */
+  lift?: number;
 }
 
 const smooth01 = (t: number) => {
@@ -210,19 +213,50 @@ function chinPatch(f: NextSpec, w: number, drop: number, fromLip = true): Growth
   return { pts, edge: pts.filter((p) => p[1] > f.chinY - 12), flow: "down" };
 }
 
-/** Sideburns and chops: a band down each side of the face from the hair's sideburn. */
-function sideBand(f: NextSpec, head: Head, s: 1 | -1, y1: number, width: (t: number) => number): Growth {
-  const out = outline(head, s, burnY(f), y1).map((p) => P(p[0] + s * 1.2, p[1]));
-  const inn = out.map((p, i) => P(p[0] - s * width(i / Math.max(1, out.length - 1)), p[1]));
-  return { pts: [...out, ...inn.reverse()], edge: out, flow: "down" };
+/**
+ * A chin beard: from under the lower lip, down over the chin and round the front of the jaw, following the face
+ * outline there (pushed out a little by its thickness), never a separate patch hanging below the chin.
+ */
+function chinBeard(f: NextSpec, head: Head, drop: number): Growth {
+  const m = f.mouth;
+  const reach = f.chinW + 13;
+  const yTop = f.mouthY + m.lo + 2.5;
+  const jaw = (s: 1 | -1) => thick(f, outline(head, s, yTop + 6, f.chinY + 1).filter((p) => Math.abs(p[0] - CX) <= reach), drop, false);
+  const right = jaw(1);
+  const left = jaw(-1).reverse();
+  const edge = [...right, ...left];
+  // Top: under the lip, slightly arched, out to where the jaw beard begins on each side.
+  const top = along([left[left.length - 1], P(CX - m.w * 0.55, yTop + 1), P(CX, yTop - 0.5), P(CX + m.w * 0.55, yTop + 1), right[0]], 4);
+  return { pts: [...edge, ...top.slice(1, -1)], edge, flow: "down" };
 }
 
-function strap(f: NextSpec, head: Head, w: number): Growth {
+/** Sideburns and chops: a band down each side of the face from the hair's sideburn, its inner edge a little uneven. */
+function sideBand(f: NextSpec, head: Head, s: 1 | -1, y1: number, width: (t: number) => number): Growth {
+  const out = outline(head, s, burnY(f), y1).map((p) => P(p[0] + s * 1.2, p[1]));
+  const inn = out.map((p, i) => {
+    const t = i / Math.max(1, out.length - 1);
+    return P(p[0] - s * width(t) * (1 + 0.12 * noise1(31 + s, t * 6)) * (0.55 + 0.45 * smooth01(t / 0.15)), p[1]);
+  });
+  return { pts: [...out, ...roughen(inn, 0.5, 40 + s, 0.6).reverse()], edge: out, flow: "down", lift: 1.6 };
+}
+
+/**
+ * A chinstrap: hair growing along the jaw from sideburn to sideburn, not a line. Its width changes as it goes (thin
+ * where it leaves the sideburn, fuller round the chin, a little uneven all along), both edges are soft and only
+ * slightly irregular, and its shadow is a narrow band underneath.
+ */
+function strap(f: NextSpec, head: Head, w: number, seed: number): Growth {
   const y0 = burnY(f) + 6;
-  const outer = [...outline(head, 1, y0, f.chinY + 1).map((p) => P(p[0] + 1.2, p[1])), ...outline(head, -1, y0, f.chinY + 1).reverse().map((p) => P(p[0] - 1.2, p[1]))];
+  const outer = [...outline(head, 1, y0, f.chinY + 1).map((p) => P(p[0] + 1.4, p[1])), ...outline(head, -1, y0, f.chinY + 1).reverse().map((p) => P(p[0] - 1.4, p[1]))];
   const c = P(CX, f.eyeY + 10);
-  const inner = outer.map((p) => sub(p, scale(unit(sub(p, c)), w)));
-  return { pts: [...outer, ...inner.reverse()], edge: outer, flow: "down" };
+  const n = outer.length - 1;
+  const inner = outer.map((p, i) => {
+    const u = i / n;
+    const ends = 0.4 + 0.6 * smooth01(u / 0.2) * smooth01((1 - u) / 0.2);
+    const chin = 1 + 0.3 * Math.max(0, 1 - Math.abs(u - 0.5) / 0.16);
+    return sub(p, scale(unit(sub(p, c)), w * ends * chin * (1 + 0.16 * noise1(seed, u * 11))));
+  });
+  return { pts: [...roughen(outer, 0.35, seed + 1, 0.7), ...roughen(inner, 0.7, seed + 2, 0.6).reverse()], edge: undefined, flow: "down", lift: 1.4 };
 }
 
 /** Facial hair styles (FACIAL_HAIR order) as growth regions fitted to this face. 1-2 are stubble, drawn as tone. */
@@ -252,13 +286,13 @@ export function growthFor(f: NextSpec, head: Head, a: Anchors, style: number): G
     case 11:
       return [jawBeard(f, head, a, { drop: 12, low: 0, long: 32 })];
     case 12:
-      return [chinPatch(f, f.chinW + 9, 10, false)];
+      return [chinBeard(f, head, 4)];
     case 13:
       return [sideBand(f, head, 1, f.noseY, () => 8), sideBand(f, head, -1, f.noseY, () => 8)];
     case 14:
       return [sideBand(f, head, 1, f.mouthY + 6, (t) => 8 + t * 14), sideBand(f, head, -1, f.mouthY + 6, (t) => 8 + t * 14)];
     case 15:
-      return [strap(f, head, 7)];
+      return [strap(f, head, 6.5, Math.round(f.jawW * 7))];
     default:
       return [];
   }
@@ -272,7 +306,10 @@ export function growthFor(f: NextSpec, head: Head, a: Anchors, style: number): G
 export function BeardNext({ f, head, a, t, style, color, youth, d, uid }: { f: NextSpec; head: Head; a: Anchors; t: SkinTones; style: number; color: string; youth: number; d: Detail; uid: string }) {
   const list = growthFor(f, head, a, style);
   if (!list.length) return null;
-  const T = hairTones(color);
+  const T = hairTones(color, t.base);
+  // Dark beard on dark skin: separated by a cooler, slightly lifted light on the beard mass and its growth, not by
+  // a heavier outline (the outline gets lighter instead).
+  const sep = darkPair(color, t.base);
   const seed = style * 31 + Math.round(f.chinY);
   // Young faces grow thinner beards.
   const thin = 1 - 0.45 * youth;
@@ -313,15 +350,16 @@ export function BeardNext({ f, head, a, t, style, color, youth, d, uid }: { f: N
             <path d={region} fill={T.shade} fillRule="evenodd" />
             <g clipPath={`url(#${id})`}>
               {/* The lit body: the region moved up and left, so a band of shadow stays underneath and on the right. */}
-              <path d={ring(b.pts.map((p) => P(p[0] - 1.6, p[1] - (b.flow === "out" ? 1.4 : Math.min(4.5, (y1 - y0) * 0.16)))))} fill={T.base} />
+              <path d={ring(b.pts.map((p) => P(p[0] - (b.lift ? 0.8 : 1.6), p[1] - (b.lift ?? (b.flow === "out" ? 1.4 : Math.min(4.5, (y1 - y0) * 0.16))))))} fill={T.base} />
               {/* The far side of the jaw turns away from the light. */}
               {b.flow === "down" && x1 - x0 > 40 && <path d={ring([P(CX + (x1 - CX) * 0.42, y0 - 4), P(x1 + 6, y0 - 4), P(x1 + 6, y1 + 6), P(CX + 4, y1 + 6), P(CX + (x1 - CX) * 0.3, lerp(y0, y1, 0.75))])} fill={T.shade} opacity={0.55} />}
-              {d > 0 && <path d={ring([P(x0 - 4, y0 - 4), P(CX - 2, y0 - 4), P(CX - 10, lerp(y0, y1, 0.55)), P(x0 - 4, lerp(y0, y1, 0.75))])} fill={mixHex(T.base, T.light, 0.3)} opacity={0.55} />}
+              {/* Light on the near cheek of the beard: a soft, uneven mass (cooler and a touch stronger on dark skin). */}
+              {d > 0 && <path d={ring(roughen(along([P(x0 - 6, lerp(y0, y1, 0.08)), P(lerp(x0, CX, 0.55), y0 + 2), P(CX - 8, lerp(y0, y1, 0.35)), P(lerp(x0, CX, 0.45), lerp(y0, y1, 0.62)), P(x0 - 4, lerp(y0, y1, 0.7)), P(x0 - 6, lerp(y0, y1, 0.08))], 5), 1.6, seed + bi + 9, 0.5))} fill={mixHex(T.base, T.light, 0.3 + 0.12 * sep)} opacity={0.45 + 0.1 * sep} />}
               {dark.length > 0 && <path d={dark.join("")} fill={T.deep} opacity={0.55} />}
-              {lit.length > 0 && <path d={lit.join("")} fill={T.light} opacity={0.5} />}
+              {lit.length > 0 && <path d={lit.join("")} fill={T.light} opacity={0.5 + 0.25 * sep} />}
               {mouthLine && <path d={mouthLine} fill={T.deep} opacity={0.6} />}
             </g>
-            {ink && <path d={ink} fill={INK} opacity={0.85} />}
+            {ink && <path d={ink} fill={INK} opacity={0.85 * (1 - 0.45 * sep)} />}
           </g>
         );
       })}
