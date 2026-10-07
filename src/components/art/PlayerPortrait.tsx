@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useId, useMemo } from "react";
 import { ageLook } from "@/engine/appearance/age";
 import { BROW_STYLES, GEO_RANGES, HAIR_COLORS, HAIR_STYLES, INK, SKIN_TONES, geoValue } from "@/engine/appearance/options";
 import { appearanceKey } from "@/engine/appearance/generate";
@@ -24,16 +24,40 @@ export interface PlayerPortraitProps {
   background?: string;
 }
 
-// Keeping these out of the component means they are created once.
-const VIEW = "4 16 192 218";
+// Keeping these out of the component means they are created once. The head fills roughly 70% of the frame.
+const VIEW = "12 24 176 204";
+const FX = 12;
+const FY = 24;
+const FW = 176;
+const FH = 204;
 
-function PortraitSvg({ appearance: a, age = 24, kit = "#2e8b57", size = "medium", className = "", background = "var(--sun-2)" }: PlayerPortraitProps) {
+/** Muted print-ink backgrounds: navy, green, brown, burgundy, slate, cream. */
+const BACKDROPS = ["#2c3a52", "#2f4a3c", "#5b3d2a", "#56242f", "#4a6073", "#d8ccaa", "#3b3a52", "#6a5a3a"];
+const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const dist = (a: string, b: string) => Math.hypot(...rgb(a).map((v, i) => v - rgb(b)[i]));
+const norm = (c: string) => (/^#[0-9a-f]{6}$/i.test(c) ? c : null);
+
+/** Pick a backdrop from the face (stable per player) that stays clear of the shirt colour. */
+function backdropFor(key: string, kit: string): string {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  const k = norm(kit);
+  for (let i = 0; i < BACKDROPS.length; i++) {
+    const c = BACKDROPS[(h + i) % BACKDROPS.length];
+    if (!k || dist(c, k) > 90) return c;
+  }
+  return BACKDROPS[0];
+}
+
+function PortraitSvg({ appearance: a, age = 24, kit = "#2e8b57", size = "medium", className = "", background }: PlayerPortraitProps) {
   const px = typeof size === "number" ? size : PX[size];
   const detailed = px >= 56;
   const textured = px >= 96;
   const kitMain = typeof kit === "string" ? kit : kit.primary;
   const trim = typeof kit === "string" ? "#f3efe4" : kit.secondary ?? "#f3efe4";
 
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const backdrop = background ?? backdropFor(appearanceKey(a), kitMain);
   const art = useMemo(() => {
     const skin = skinPalette(SKIN_TONES[a.skin] ?? SKIN_TONES[0]);
     const contour = contourFor(a);
@@ -53,43 +77,53 @@ function PortraitSvg({ appearance: a, age = 24, kit = "#2e8b57", size = "medium"
   void BROW_STYLES;
 
   return (
-    <svg width={px} height={Math.round(px * 1.135)} viewBox={VIEW} className={className} role="img" aria-label="Player portrait">
+    <svg width={px} height={Math.round(px * (FH / FW))} viewBox={VIEW} className={className} role="img" aria-label="Player portrait">
       <defs>
-        <radialGradient id="pbp-vig" cx="50%" cy="42%" r="70%">
+        <radialGradient id={`${uid}vig`} cx="50%" cy="40%" r="75%">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0.16" />
           <stop offset="55%" stopColor="#000" stopOpacity="0" />
-          <stop offset="100%" stopColor="#000" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0.32" />
         </radialGradient>
         <filter id="pbp-ink" x="-5%" y="-5%" width="110%" height="110%">
           <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G" />
         </filter>
         <filter id="pbp-grain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="7" />
-          <feColorMatrix values="0 0 0 0 0.1  0 0 0 0 0.07  0 0 0 0 0.04  0 0 0 0.9 -0.35" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="7" />
+          <feColorMatrix values="0 0 0 0 0.1  0 0 0 0 0.07  0 0 0 0 0.04  0 0 0 0.8 -0.34" />
         </filter>
+        <pattern id={`${uid}bg`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+          <circle cx="2" cy="2" r="0.8" fill="#000" />
+        </pattern>
+        <clipPath id={`${uid}card`}>
+          <rect x={FX} y={FY} width={FW} height={FH} rx="14" />
+        </clipPath>
       </defs>
-      <rect x="4" y="16" width="192" height="218" rx="26" fill={background} />
-      <rect x="4" y="16" width="192" height="218" rx="26" fill="url(#pbp-vig)" />
-      <g filter={detailed ? "url(#pbp-ink)" : undefined}>
-        <Shirt kit={kitMain} />
-        <HairBack {...hairCtx} />
-        <Neck contour={contour} skin={skin} width={1} />
-        <Collar trim={trim} />
-        <Ears style={a.ear} scale={geoValue("earScale", a.earSc)} contour={contour} skin={skin} />
-        <path d={facePath(contour)} fill={skin.base} stroke={INK} strokeWidth={2.8} strokeLinejoin="round" />
-        <FaceShading contour={contour} skin={skin} />
-        {detailed && <AgeLines age={look} skin={skin} contour={contour} />}
-        {detailed && <Details a={a} skin={skin} />}
-        <Nose style={a.nose} scale={geoValue("noseScale", a.noseSc)} skin={skin} />
-        <Eyes shape={a.eyes} color={a.eyeColor} spacing={spacing} skin={skin} age={look} />
-        <Brows style={a.brow} color={mix(browColor, "#000000", 0.15)} spacing={spacing} angle={angle} skin={skin} />
-        <Mouth style={a.mouth} skin={skin} />
-        <FacialHair style={a.facial} color={facialColor} contour={contour} grey={look.facialGrey} youth={look.youth} />
-        <HairFront {...hairCtx} />
-        <Accessory style={a.accessory} contour={contour} hair={hairCtx.color} />
+      <g clipPath={`url(#${uid}card)`}>
+        <rect x={FX} y={FY} width={FW} height={FH} fill={backdrop} />
+        <rect x={FX} y={FY} width={FW} height={FH} fill={`url(#${uid}vig)`} />
+        {detailed && <rect x={FX} y={FY + FH * 0.45} width={FW} height={FH * 0.55} fill={`url(#${uid}bg)`} opacity="0.14" />}
+        <g filter={detailed ? "url(#pbp-ink)" : undefined}>
+          <Shirt kit={kitMain} />
+          <HairBack {...hairCtx} />
+          <Neck contour={contour} skin={skin} width={1} />
+          <Collar trim={trim} />
+          <Ears style={a.ear} scale={geoValue("earScale", a.earSc)} contour={contour} skin={skin} />
+          <path d={facePath(contour)} fill={skin.base} stroke={INK} strokeWidth={2.8} strokeLinejoin="round" />
+          <FaceShading contour={contour} skin={skin} uid={uid} halftone={detailed} age={age} />
+          {detailed && <AgeLines age={look} skin={skin} contour={contour} />}
+          {detailed && <Details a={a} skin={skin} />}
+          <Nose style={a.nose} scale={geoValue("noseScale", a.noseSc)} skin={skin} />
+          <Eyes shape={a.eyes} color={a.eyeColor} spacing={spacing} skin={skin} age={look} uid={uid} />
+          <Brows style={a.brow} color={mix(browColor, "#000000", 0.15)} spacing={spacing} angle={angle} skin={skin} />
+          <Mouth style={a.mouth} skin={skin} />
+          <FacialHair style={a.facial} color={facialColor} contour={contour} grey={look.facialGrey} youth={look.youth} uid={uid} />
+          <HairFront {...hairCtx} uid={uid} />
+          <Accessory style={a.accessory} contour={contour} hair={hairCtx.color} />
+        </g>
+        {textured && <rect x={FX} y={FY} width={FW} height={FH} filter="url(#pbp-grain)" opacity="0.5" style={{ mixBlendMode: "multiply" }} />}
       </g>
-      {textured && <rect x="4" y="16" width="192" height="218" rx="26" filter="url(#pbp-grain)" opacity="0.5" style={{ mixBlendMode: "multiply" }} />}
-      <rect x="5.5" y="17.5" width="189" height="215" rx="25" fill="none" stroke={INK} strokeWidth="3" />
+      <rect x={FX + 1.5} y={FY + 1.5} width={FW - 3} height={FH - 3} rx="13" fill="none" stroke={INK} strokeWidth="3" />
       <circle cx={CX} cy={-100} r="0" />
     </svg>
   );

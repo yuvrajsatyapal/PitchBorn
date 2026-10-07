@@ -54,8 +54,9 @@ function jawRegion(c: Contour, s: BeardSpec): string {
     const iRight: Pt[] = ys.map((y) => [CX + c.half(y) - th(y), y]);
     d += `L${poly(iLeft)}L${f(CX - 13)} 163L${f(CX + 13)} 163L${poly(iRight.slice().reverse())}Z`;
   } else {
+    // The upper edge of a full beard follows the cheek in a curve, rather than a ruled line.
     const yy = s.y0;
-    d += `L${f(CX - c.half(yy + 12) + 8)} ${yy + 14}L${f(CX - 17)} 147L${f(CX + 17)} 147L${f(CX + c.half(yy + 12) - 8)} ${yy + 14}Z`;
+    d += `Q${f(CX - 31)} ${yy + 10} ${f(CX - 17)} 146Q${f(CX)} 142 ${f(CX + 17)} 146Q${f(CX + 31)} ${yy + 10} ${f(CX + c.half(yy) + 0.8)} ${yy}Z`;
     d += `M${f(CX - 14)} ${MOUTH_Y}a14 8.5 0 1 0 28 0a14 8.5 0 1 0 -28 0Z`;
   }
   return d;
@@ -67,40 +68,53 @@ function moustache(thick: number, w: number): string {
   return `M${CX} ${y}C${CX + o * 0.35} ${y - 2.4} ${CX + o * 0.8} ${y - 1} ${CX + o} ${y + 8 + thick * 0.4}C${CX + o * 0.7} ${y + 5 + thick} ${CX + o * 0.3} ${y + 4.6 + thick} ${CX} ${y + 5.6 + thick * 0.6}C${CX - o * 0.3} ${y + 4.6 + thick} ${CX - o * 0.7} ${y + 5 + thick} ${CX - o} ${y + 8 + thick * 0.4}C${CX - o * 0.8} ${y - 1} ${CX - o * 0.35} ${y - 2.4} ${CX} ${y}Z`;
 }
 
-export function FacialHair({ style, color, contour: c, grey, youth, mouthOpen }: { style: number; color: string; contour: Contour; grey: number; youth: number; mouthOpen?: boolean }) {
-  void mouthOpen;
+export function FacialHair({ style, color, contour: c, grey, youth, uid }: { style: number; color: string; contour: Contour; grey: number; youth: number; uid: string }) {
   if (style === 0) return null;
   const tint = grey > 0 ? darken(color, 0) : color;
   const ink = darken(tint, 0.35);
   const thin = 1 - 0.45 * youth;
-  const parts: React.ReactNode[] = [];
+  const parts: React.ReactNode[] = [
+    <defs key="defs">
+      {/* short flecks for stubble, longer directional ticks for beards */}
+      <pattern id={`${uid}st`} width="4.2" height="4.2" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
+        <path d="M0.6 1.2l0.5 1.2M2.6 0.2l0.4 1.1M2.3 3.2l0.5 1.1M0.4 3.6l0.3 0.7" stroke={ink} strokeWidth="0.75" strokeLinecap="round" />
+      </pattern>
+      <pattern id={`${uid}bd`} width="5" height="6" patternUnits="userSpaceOnUse">
+        <path d="M0.8 0.6q0.8 2 0.4 4.2M3.4 1.2q0.8 2 0.2 4.4" stroke={ink} strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.8" />
+      </pattern>
+    </defs>,
+  ];
   const spec = BEARDS[style];
   const stroke = (w = 2) => ({ stroke: INK, ...sw(w) });
 
   if (spec) {
     const d = jawRegion(c, spec);
     if (spec.stubble) {
-      parts.push(<path key="st" d={d.replace(/M[^M]*$/, (m) => (m.includes("a14") ? "" : m))} fill={tint} fillRule="evenodd" opacity={spec.stubble * thin} />);
-      parts.push(<path key="st2" d={moustache(5, 17)} fill={tint} opacity={spec.stubble * thin} />);
+      const region = d.replace(/M[^M]*$/, (m) => (m.includes("a14") ? "" : m));
+      parts.push(<path key="st" d={region} fill={tint} fillRule="evenodd" opacity={spec.stubble * 0.7 * thin} />);
+      parts.push(<path key="st1" d={region} fill={`url(#${uid}st)`} fillRule="evenodd" opacity={Math.min(1, spec.stubble * 2.2) * thin} />);
+      parts.push(<path key="st2" d={moustache(3.6, 16)} fill={tint} opacity={spec.stubble * 0.7 * thin} />);
+      parts.push(<path key="st3" d={moustache(3.6, 16)} fill={`url(#${uid}st)`} opacity={Math.min(1, spec.stubble * 2.2) * thin} />);
     } else {
       parts.push(<path key="b" d={d} fill={tint} fillRule="evenodd" {...stroke(2.2)} />);
+      parts.push(<path key="bt" d={d} fill={`url(#${uid}bd)`} fillRule="evenodd" />);
       parts.push(<path key="bs" d={`M${CX - 14} ${c.chin - 6}Q${CX} ${c.chin + 3} ${CX + 14} ${c.chin - 6}`} fill="none" stroke={ink} opacity={0.5} {...sw(1.2)} />);
-      if (spec.moustache) parts.push(<path key="m" d={moustache(5.2, 19)} fill={tint} {...stroke(1.8)} />);
+      if (spec.moustache) parts.push(<path key="m" d={moustache(3.8, 18)} fill={tint} {...stroke(1.8)} />);
     }
   }
   switch (style) {
     case 3:
-      parts.push(<path key="m3" d={moustache(5.6, 20)} fill={tint} {...stroke(1.9)} />);
+      parts.push(<path key="m3" d={moustache(3.6, 18)} fill={tint} {...stroke(1.9)} />);
       break;
     case 4:
       parts.push(<path key="m4" d={moustache(2.2, 18)} fill={tint} {...stroke(1.4)} />);
       break;
     case 5:
     case 6: {
-      const ring = `M${CX - 22} ${MOUTH_Y - 4}C${CX - 24} ${MOUTH_Y + 14} ${CX + 24} ${MOUTH_Y + 14} ${CX + 22} ${MOUTH_Y - 4}L${CX + 15} ${MOUTH_Y - 4}C${CX + 14} ${MOUTH_Y + 7} ${CX - 14} ${MOUTH_Y + 7} ${CX - 15} ${MOUTH_Y - 4}Z`;
-      parts.push(<path key="g" d={`M${CX - 13} 165C${CX - 15} ${c.chin - 2} ${CX - 8} ${c.chin + 8} ${CX} ${c.chin + 9}C${CX + 8} ${c.chin + 8} ${CX + 15} ${c.chin - 2} ${CX + 13} 165Z`} fill={tint} {...stroke(2)} />);
+      const ring = `M${CX - 20} ${MOUTH_Y - 4}C${CX - 21} ${MOUTH_Y + 12} ${CX + 21} ${MOUTH_Y + 12} ${CX + 20} ${MOUTH_Y - 4}L${CX + 16} ${MOUTH_Y - 4}C${CX + 15} ${MOUTH_Y + 6} ${CX - 15} ${MOUTH_Y + 6} ${CX - 16} ${MOUTH_Y - 4}Z`;
+      parts.push(<path key="g" d={`M${CX - 10} 164C${CX - 12} ${c.chin - 6} ${CX - 7} ${c.chin + 1} ${CX} ${c.chin + 2}C${CX + 7} ${c.chin + 1} ${CX + 12} ${c.chin - 6} ${CX + 10} 164Z`} fill={tint} {...stroke(2)} />);
       parts.push(<path key="gr" d={ring} fill={tint} {...stroke(1.6)} />);
-      if (style === 6) parts.push(<path key="m6" d={moustache(5, 19)} fill={tint} {...stroke(1.8)} />);
+      if (style === 6) parts.push(<path key="m6" d={moustache(3.6, 17)} fill={tint} {...stroke(1.8)} />);
       break;
     }
     case 7:
