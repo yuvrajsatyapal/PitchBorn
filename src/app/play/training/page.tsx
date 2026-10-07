@@ -65,6 +65,15 @@ export default function Training() {
           Fitness now: <b>{Math.round(p.fitness)}</b>. A full match costs ~12–15 and a normal week recovers ~20, so regulars stay around 85–95.
           Intense training and two-match weeks drain more; injury risk rises below 70. Use a Recovery week or ask to be rested when you&apos;re running low.
         </p>
+        <p className="mt-2 text-sm text-ink-2">
+          Training sharpens you, but <b>playing</b> grows you most: minutes on the pitch and good match ratings drive development more than any drill.
+          Intense weeks give a small edge; three or more in a row overload the body and sharply raise training-injury risk.
+        </p>
+        {(g.user.intenseStreak ?? 0) >= 2 && (
+          <p className="mt-2 rounded-xl border-2 border-line bg-sun-2 px-3 py-2 text-sm" data-testid="overload-warning">
+            ⚠️ {g.user.intenseStreak} intense weeks in a row{(g.user.intenseStreak ?? 0) >= BALANCE.training.overloadFrom ? " — you're overloaded. Injury risk is up." : ". One more and you'll be overloaded."} A normal or light week eases it.
+          </p>
+        )}
         {g.user.lastTraining && <p className="mt-1 text-sm">Last week: {g.user.lastTraining.note}</p>}
       </Card>
       <Card title="Optional boosts">

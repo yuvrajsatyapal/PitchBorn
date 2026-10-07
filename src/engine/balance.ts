@@ -14,7 +14,8 @@ export const BALANCE = {
     foulPerMinute: 0.24,
     yellowPerFoul: 0.13,
     redPerFoul: 0.0008,
-    injuryPerPlayerMatch: 0.0042,
+    /** Non-contact injury chance per player per 90 minutes, scaled by proneness and fitness. */
+    injuryPerPlayerMatch: 0.016,
     extraTimeMinutes: 30,
     subsMin: 3,
     subsMax: 5,
@@ -34,8 +35,8 @@ export const BALANCE = {
     restBonus: 12,
   },
   injuries: {
-    trainingBase: 0.0035,
-    intenseMultiplier: 2.1,
+    trainingBase: 0.004,
+    intenseMultiplier: 2.2,
     lowFitnessMultiplier: 1.8,
     pronenessScale: 1.6,
     /** Cap on serious+ injuries per user season to avoid frustration. */
@@ -43,14 +44,28 @@ export const BALANCE = {
   },
   development: {
     /** Points of overall gained per season at max gap for an average-rate youngster. */
-    youthGrowth: 8.4,
+    youthGrowth: 9.0,
     primeAge: 27,
     declineStart: 30,
     declinePerYear: 1.0,
-    minutesWeight: 0.35,
-    trainingWeight: 0.25,
+    /** Monthly growth ranges from (1 - w) for an unused sub to (1 + w) for an ever-present. */
+    minutesWeight: 0.45,
+    /** Monthly growth swing from recent form (match ratings). */
+    formWeight: 0.15,
+    /** How much the last few training weeks move monthly growth (normal training = ×1). */
+    trainingWeight: 0.3,
     seasonNoise: 1.4,
   },
+  training: {
+    /** Direct attribute gain per focused drill week (before intensity, age and potential gap). */
+    drillGain: 0.03,
+    /** Consecutive intense weeks before overload raises injury risk. */
+    overloadFrom: 3,
+    overloadStep: 0.3,
+    overloadMax: 2.0,
+  },
+  /** Experience from playing: overall points per 90 minutes at a 7.3 rating (age ≤21). */
+  matchGrowth: 0.035,
   economy: {
     /** Weekly wage for an overall-70 player at a mid-prestige club (reference point). */
     wageRef: 70,

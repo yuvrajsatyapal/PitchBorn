@@ -419,6 +419,8 @@ export interface UserCareer {
   /** Development-squad (U21) games when not picked for the first team. */
   reserves?: { season: number; apps: number; goals: number; assists: number; ratingSum: number };
   lastTraining?: { note: string; injured?: string };
+  /** Consecutive intense training weeks (overload raises injury risk). */
+  intenseStreak?: number;
   /** Turn index on which the player asked the manager to be rested. */
   restTurnIndex?: number;
   /** Consecutive season rollovers spent without a club. */

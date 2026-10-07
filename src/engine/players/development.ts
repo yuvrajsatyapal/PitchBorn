@@ -21,9 +21,9 @@ export const TRAINING_FOCUS: Record<TrainingFocus, { label: string; attrs: AttrK
 };
 
 export const INTENSITY = {
-  light: { growth: 0.65, fatigue: 0, injury: 0.5, label: "Light" },
+  light: { growth: 0.8, fatigue: 0, injury: 0.5, label: "Light" },
   normal: { growth: 1, fatigue: 3, injury: 1, label: "Normal" },
-  intense: { growth: 1.4, fatigue: 7, injury: BALANCE.injuries.intenseMultiplier, label: "Intense" },
+  intense: { growth: 1.25, fatigue: 10, injury: BALANCE.injuries.intenseMultiplier, label: "Intense" },
 } as const;
 
 function ageFactor(age: number): number {
@@ -71,7 +71,7 @@ export function developPlayer(state: GameState, rng: Rng, p: Player, ctx: DevCon
     const prof = 0.8 + (p.hidden.professionalism / 100) * 0.35;
     const mins = 1 - D.minutesWeight + D.minutesWeight * 2 * minutesShare(state, p);
     const morale = 0.9 + (p.morale / 100) * 0.2;
-    const formBoost = 1 + clamp(p.form - 6.6, -1, 1.2) * 0.08;
+    const formBoost = 1 + clamp(p.form - 6.6, -1, 1.2) * D.formWeight;
     growth =
       (D.youthGrowth * ageFactor(age) * Math.min(1, gap / 10) * p.hidden.developmentRate * env * prof * mins * morale * formBoost * seasonSwing(p, state.season) * ctx.trainingMultiplier) /
       ticksPerSeason;
@@ -88,6 +88,42 @@ export function developPlayer(state: GameState, rng: Rng, p: Player, ctx: DevCon
   }
   applyGrowth(rng, p.attrs, p.position, growth, ctx.focus, physical);
   return growth;
+}
+
+const T = BALANCE.training;
+
+function trainingAgeMul(age: number): number {
+  return age <= 21 ? 1 : age <= 25 ? 0.7 : age <= 29 ? 0.4 : 0.2;
+}
+
+/** Growth slows as a player closes in on their potential, and nearly stops at it. */
+function gapMul(p: Player): number {
+  const gap = p.hidden.potential - overallFor(p.attrs, p.position);
+  return gap > 0 ? Math.min(1, 0.3 + gap / 8) : 0.1;
+}
+
+/** Injury-risk multiplier from a run of intense weeks (1 = no overload). */
+export function overloadMultiplier(streak: number): number {
+  return Math.min(T.overloadMax, 1 + Math.max(0, streak - T.overloadFrom + 1) * T.overloadStep);
+}
+
+/** Monthly growth multiplier from the last few weeks of training (normal training = 1). */
+export function trainingGrowthMultiplier(history: number[]): number {
+  if (!history.length) return 1;
+  const avg = history.reduce((s, x) => s + x, 0) / history.length;
+  return 1 - D.trainingWeight + avg * D.trainingWeight;
+}
+
+/**
+ * Experience from a match: a small, direct gain for minutes played, scaled by
+ * how well the player performed. A quiet 90 minutes teaches less than a great one.
+ */
+export function matchExperience(state: GameState, rng: Rng, p: Player, minutes: number, rating: number): number {
+  if (minutes <= 0) return 0;
+  const perf = clamp((rating - 5.8) / 1.5, 0, 1.5);
+  const gain = BALANCE.matchGrowth * (minutes / 90) * perf * trainingAgeMul(ageOf(p, state.season)) * gapMul(p);
+  if (gain > 0) applyGrowth(rng, p.attrs, p.position, gain);
+  return gain;
 }
 
 export interface TrainingOutcome {
@@ -108,10 +144,14 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
     p.fitness = clamp(p.fitness + 14, 0, 100);
     p.morale = clamp(p.morale + 1.5, 0, 100);
     p.attrs.composure = r2(clamp(p.attrs.composure + 0.03, 1, 99));
+    state.user.intenseStreak = 0;
     return { fitnessDelta: p.fitness - before, growthMultiplier: 0.25, note: "Recovery week: legs feel fresh." };
   }
   p.fitness = clamp(p.fitness - int.fatigue + 2, 30, 100);
-  const risk = BALANCE.injuries.trainingBase * int.injury * injuryRiskFactor(p);
+  const streak = plan.intensity === "intense" ? (state.user.intenseStreak ?? 0) + 1 : plan.intensity === "normal" ? Math.max(0, (state.user.intenseStreak ?? 0) - 1) : 0;
+  state.user.intenseStreak = streak;
+  const overload = overloadMultiplier(streak);
+  const risk = BALANCE.injuries.trainingBase * int.injury * overload * injuryRiskFactor(p);
   if (rng.chance(risk)) {
     const injury = rollInjury(rng, p, { context: "training", seriousAllowed: false });
     applyInjury(rng, p, injury);
@@ -121,19 +161,18 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
   // Focused drills add small direct gains on top of monthly development.
   const focus = TRAINING_FOCUS[plan.focus].attrs;
   const age = ageOf(p, state.season);
-  const ageMul = age <= 21 ? 1 : age <= 25 ? 0.7 : age <= 29 ? 0.4 : 0.2;
+  const ageMul = trainingAgeMul(age);
   const keys = focus.length ? focus : (Object.keys(p.attrs) as AttrKey[]).filter((k) => !["reflexes", "handling", "diving", "kicking", "command"].includes(k) || p.position === "GK");
-  const gap = Math.max(0, p.hidden.potential - overallFor(p.attrs, p.position));
-  const capMul = gap > 0 ? 1 : 0.15;
+  const capMul = gapMul(p);
   for (const k of keys) {
     const speedPenalty = (k === "pace" || k === "acceleration") && age > 24 ? 0.4 : 1;
-    p.attrs[k] = r2(clamp(p.attrs[k] + 0.045 * int.growth * ageMul * capMul * speedPenalty * (1 + boost) * (focus.length ? 1 : 0.45), 1, 99));
+    p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * int.growth * ageMul * capMul * speedPenalty * (1 + boost) * (focus.length ? 1 : 0.45), 1, 99));
   }
   p.sharpness = clamp(p.sharpness + (plan.intensity === "intense" ? 3 : 1.5), 0, 100);
   return {
     fitnessDelta: -int.fatigue,
     growthMultiplier: int.growth * (1 + boost),
-    note: plan.intensity === "intense" ? "Pushed hard this week." : plan.intensity === "light" ? "Kept it light." : "A solid week of work.",
+    note: plan.intensity === "intense" ? (overload > 1 ? `Pushed hard again — ${streak} intense weeks in a row. Your body is feeling the load.` : "Pushed hard this week.") : plan.intensity === "light" ? "Kept it light." : "A solid week of work.",
   };
 }
 

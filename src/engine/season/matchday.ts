@@ -5,7 +5,8 @@ import { MatchEngine, type MatchInput, type MatchPlayerInput, type MatchResult, 
 import { selectTeam, type Selection } from "../match/lineup";
 import { overallFor } from "../players/attributes";
 import { addStat, emptyStat } from "../players/generate";
-import { applyInjury, rollInjury } from "../players/injuries";
+import { matchExperience } from "../players/development";
+import { applyInjury, injuryRiskFactor, rollInjury } from "../players/injuries";
 import { clamp, r1, type Rng } from "../rng";
 import type { Competition, Fixture, GameState, Player, StatLine } from "../types";
 import { addNews, addTimeline, fullName, squadOf, userPlayer } from "../world/helpers";
@@ -146,9 +147,13 @@ function statKey(comp: Competition): string {
   return comp.id;
 }
 
+function lineMinutes(line: MatchResult["lines"][number]): number {
+  return Math.max(0, (line.minuteOff ?? 90) - line.minuteOn);
+}
+
 function lineToStat(line: MatchResult["lines"][number]): StatLine {
   const s = emptyStat();
-  const mins = Math.max(0, (line.minuteOff ?? 90) - line.minuteOn);
+  const mins = lineMinutes(line);
   s.apps = 1;
   s.starts = line.started ? 1 : 0;
   s.minutes = mins;
@@ -257,11 +262,19 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
       if (p && !played.has(id) && p.suspension > 0) p.suspension--;
     }
   }
-  // Injuries
+  // Injuries: knocks from challenges in the engine, plus non-contact injuries
+  // that tired or injury-prone players are more likely to pick up.
   const userId = state.user.playerId;
-  for (const inj of res.injuries) {
-    const p = state.players[inj.id];
-    if (!p) continue;
+  const hurt = new Set(res.injuries.map((i) => i.id));
+  for (const line of res.lines) {
+    const p = state.players[line.id];
+    const mins = lineMinutes(line);
+    if (!p || hurt.has(p.id) || p.injury || mins <= 0) continue;
+    if (rng.chance(BALANCE.match.injuryPerPlayerMatch * (mins / 90) * injuryRiskFactor(p))) hurt.add(p.id);
+  }
+  for (const id of hurt) {
+    const p = state.players[id];
+    if (!p || p.injury) continue;
     const seriousAllowed = !p.isUser || seriousCount(state) < BALANCE.injuries.maxSeriousPerSeason;
     const injury = rollInjury(rng, p, { context: "match", seriousAllowed });
     applyInjury(rng, p, injury);
@@ -294,7 +307,12 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
       if (nt.form.length > 6) nt.form.shift();
     }
   }
-  if (involvesUser) recordUserMatch(state, fixture, comp, res);
+  if (involvesUser) {
+    const line = res.lines.find((l) => l.id === userId);
+    const u = state.players[userId];
+    if (line && u) matchExperience(state, rng, u, lineMinutes(line), line.rating);
+    recordUserMatch(state, fixture, comp, res);
+  }
 }
 
 function seriousCount(state: GameState): number {

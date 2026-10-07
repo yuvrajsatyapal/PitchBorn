@@ -19,7 +19,7 @@ import type { MatchResult } from "../match/engine";
 import { bestFormation } from "../match/lineup";
 import { internationalRetirements, progressTournament, scheduleInternationalWindow, selectNationalSquads, setupTournament } from "../national/national";
 import { overallFor } from "../players/attributes";
-import { developPlayer, runTraining, weeklyCondition } from "../players/development";
+import { developPlayer, runTraining, trainingGrowthMultiplier, weeklyCondition } from "../players/development";
 import { clubRevenue, marketValue } from "../players/economy";
 import { ageOf, emptyStat } from "../players/generate";
 import { clubLevel } from "../world/create";
@@ -226,8 +226,7 @@ function monthlyDevelopment(state: GameState, rng: Rng): void {
     const club = p.clubId ? state.clubs[p.clubId] ?? null : null;
     let trainingMultiplier = 1;
     if (p.isUser) {
-      const h = u.trainingHistory;
-      trainingMultiplier = h.length ? 0.75 + (h.reduce((s, x) => s + x, 0) / h.length) * 0.35 : 1;
+      trainingMultiplier = trainingGrowthMultiplier(u.trainingHistory);
     }
     developPlayer(state, rng, p, { club, trainingMultiplier }, 12.5);
     if (!p.virtual) p.value = marketValue(p, state.season);
