@@ -10,6 +10,7 @@ import {
   fadeRegion,
   hairStroke,
   hairline,
+  offset,
   last,
   lobe,
   organicMass,
@@ -43,6 +44,8 @@ export interface CropDesign {
   drop: number;
   /** Fringe locks: position across the forehead (0 left .. 1 right), width, length, sideways lean, bend. */
   locks: readonly { u: number; w: number; len: number; lean: number; bend?: number }[];
+  /** One lock lying across its neighbours: from and to (0 left .. 1 right), width, length. */
+  cross?: { from: number; to: number; w: number; len: number };
   /** Places where the fringe edge lifts and shows a little forehead. */
   lifts?: readonly { u: number; w: number; a: number }[];
   /** Broad volume changes on top, then a few tufts breaking the silhouette. */
@@ -82,17 +85,30 @@ export function cropHair(i: HairInput, o: CropDesign): HairArt {
   const base = resample(along(lifted.filter((_, k) => k % 3 === 0 || k === n), 6, 0.5), 1.5).reverse();
   const at = (u: number) => base[clamp(Math.round((1 - u) * (base.length - 1)), 0, base.length - 1)];
 
-  // Locks hang from the edge; their roots sit inside the mass so the two read as one.
+  // Locks hang from the edge; their roots sit inside the mass so the two read as one. Their ends curve on or hook
+  // back up instead of stopping in a point.
+  const lockFrom = (p: Pt, len: number, lean: number, bendX: number, k: number, rootDy = -8) => {
+    const root = P(p[0] - lean * 0.3, p[1] + rootDy);
+    const tip = P(p[0] + lean, p[1] + len);
+    const mid = P(lerp(root[0], tip[0], 0.5) + bendX, lerp(root[1], tip[1], 0.55));
+    // Most tips carry on curving the way the lock leans; some turn back a little. Never a loop.
+    const hook = (hash01(seed, k + 90) < 0.65 ? 1 : -0.5) * rnd(seed, k + 91, 0.8, 2.2) * Math.sign(lean || -1);
+    return [root, mid, tip, P(tip[0] + hook, tip[1] - Math.abs(hook) * 0.25)] as Pt[];
+  };
   const locks = o.locks.map((l, k) => {
     const p = at(clamp(l.u + v(k + 20, 0.02), 0.03, 0.97));
-    const len = l.len * (1 + v(k + 30, 0.15));
-    const lean = l.lean + v(k + 40, 1.2);
-    const root = P(p[0] - lean * 0.3, p[1] - 8);
-    const tip = P(p[0] + lean, p[1] + len);
-    const mid = P(lerp(root[0], tip[0], 0.5) + (l.bend ?? 0), lerp(root[1], tip[1], 0.55));
-    return { path: [root, mid, tip] as Pt[], w: l.w * (1 + v(k + 50, 0.12)), k, u: l.u };
+    return { path: lockFrom(p, l.len * (1 + v(k + 30, 0.15)), l.lean + v(k + 40, 1.2), l.bend ?? 0, k), w: l.w * (1 + v(k + 50, 0.12)), k, u: l.u, round: hash01(seed, k + 92) < 0.5 };
   });
-  const lockD = locks.map((l) => taperedLock(l.path, { w: l.w, root: 1, peak: 0.3, tip: 0.24, seed: seed + l.k, wobble: 0.06 }));
+  const lockD = locks.map((l) => taperedLock(l.path, { w: l.w, root: 1, peak: 0.3, tip: 0.32, round: l.round, seed: seed + l.k, wobble: 0.06 }));
+  // One lock lies across its neighbours.
+  const cross = o.cross
+    ? (() => {
+        const a = at(o.cross.from + v(95, 0.03));
+        const b = at(o.cross.to + v(96, 0.03));
+        const path = lockFrom(P(b[0], b[1]), o.cross.len, 0, 0, 97, 0).map((p, k2) => (k2 === 0 ? P(a[0], a[1] - 4) : p));
+        return { path, w: o.cross.w };
+      })()
+    : null;
 
   const sideFront = (s: 1 | -1, end: Pt, corner: Pt) => along([end, P(lerp(end[0], corner[0], 0.45) - s, lerp(end[1], corner[1], 0.6)), corner], 4, 0.5);
   const sR = sideFront(1, last(outer), cornerR);
@@ -153,45 +169,49 @@ export function cropHair(i: HairInput, o: CropDesign): HairArt {
       o0: o.sides === "fade" ? 0.5 : 0.55,
       o1: o.sides === "fade" ? 0.04 : 0.28,
     });
-  const k = d === 0 ? 1.4 : 1;
   return {
     onSkin: (
       <g>
         {sideFill(1)}
         {sideFill(-1)}
         {/* The fringe and its locks drop a shadow on the forehead, offset down and right. */}
-        <g fill={skin.shade} opacity={0.85}>
-          <path d={castBelow(base, 1.5, 3.6, f.top)} />
-          {locks.map((l) => (
-            <path key={l.k} d={taperedLock(l.path.map((p) => P(p[0] + 1.5, p[1] + 3.6)), { w: l.w, root: 1, peak: 0.3, tip: 0.24, seed: seed + l.k })} />
-          ))}
+        <g fill={skin.shade}>
+          <path d={castBelow(base, 1.5, 3.6, f.top)} opacity={0.85} />
+          {/* The locks' own shadows are softer and closer: they must not read as a second set of locks. */}
+          <path d={[...locks.map((l) => taperedLock(offset(l.path, 1, 2.4), { w: l.w, root: 1, peak: 0.3, tip: 0.32, round: l.round, seed: seed + l.k })), cross ? taperedLock(offset(cross.path, 1, 2.4), { w: cross.w, root: 0.6, peak: 0.35, tip: 0.3, round: true, seed }) : ""].join("")} opacity={0.4} />
         </g>
       </g>
     ),
     front: (
       <g>
         <ClipDefs id={clip} shapes={[regionD, ...lockD]} />
-        {/* Thin edge under the fringe and around the locks; the mass covers it where the locks join. */}
-        {d > 0 && <path d={strokeLine(base, { w: 1, start: 0.4, end: 0.4, peak: 0.5, seed: seed + 8, wobble: 0.25 })} fill={T.line} />}
-        <g fill={T.base} stroke={d > 0 ? T.line : undefined} strokeWidth={0.8} strokeLinejoin="round">
-          {lockD.map((dd, n2) => (
-            <path key={n2} d={dd} />
-          ))}
-        </g>
+        <ClipDefs id={`${clip}m`} shapes={[regionD]} />
+        {/* No outlines inside the hair: the mass and its locks are one fill, told apart by value. */}
+        {/* Separate fills: merged into one path, opposite windings would cut holes where they overlap. */}
         <path d={regionD} fill={T.base} />
+        <path d={lockD.join("")} fill={T.base} />
         <g clipPath={`url(#${clip})`}>
           {d > 0 && <path d={litMass} fill={mixHex(T.base, T.light, 0.25)} />}
           <path d={shadeR} fill={T.shade} />
           <path d={under} fill={T.shade} opacity={0.75} />
           {d > 0 && <path d={lockShade.join("")} fill={T.shade} opacity={0.6} />}
           {seps.length > 0 && <path d={seps.join("")} fill={T.deep} />}
+        </g>
+        {/* Light sits on the top mass where the hair turns down, not on the hanging locks. */}
+        <g clipPath={`url(#${clip}m)`}>
           {lights.length > 0 && <path d={lights.join("")} fill={T.light} opacity={0.8} />}
           {dim.length > 0 && <path d={dim.join("")} fill={mixHex(T.base, T.light, 0.45)} opacity={0.55} />}
         </g>
         {/* The outer silhouette is the only heavy line; it breaks once where the light is strongest. */}
         <path d={silhouetteInk(outer, d, seed + 5, [[0, 0.3], [0.36, 1]])} fill={INK} />
-        {d > 0 && <path d={strokeLine(sR, { w: 1.1 * k, start: 0.9, end: 0.2, seed: seed + 6 })} fill={T.line} />}
-        {d > 0 && <path d={strokeLine(sL, { w: 0.9 * k, start: 0.9, end: 0.2, seed: seed + 7 })} fill={T.line} />}
+        {cross && (
+          <g>
+            {d > 0 && <path d={taperedLock(offset(cross.path, 1.2, 1.4), { w: cross.w, root: 0.6, peak: 0.35, tip: 0.3, round: true, seed })} fill={T.deep} opacity={0.45} />}
+            <path d={taperedLock(cross.path, { w: cross.w, root: 0.6, peak: 0.35, tip: 0.3, round: true, seed })} fill={T.base} />
+            {d > 0 && <path d={taperedLock(offset(cross.path, cross.w * 0.2, 0), { w: cross.w * 0.5, root: 0.6, peak: 0.35, tip: 0.3, round: true, seed })} fill={T.shade} opacity={0.6} />}
+            {d > 0 && <path d={hairStroke(offset(cross.path, -cross.w * 0.15, -0.5), { from: 0.1, to: 0.45, w: 1.8, seed })} fill={T.light} opacity={0.7} />}
+          </g>
+        )}
       </g>
     ),
   };
@@ -213,21 +233,42 @@ export function crescentHair(i: HairInput): HairArt {
   const R = last(lower);
   const peak = hl.y - 30 - rnd(seed, 32, 0, 3);
   const upper = along([R, P(CX + w * 0.78, hl.y - 18), P(CX + w * 0.32, peak + 2), P(CX - w * 0.28, peak + 2.5), P(CX - w * 0.74, hl.y - 19), L], 6);
-  const patch = roughen([...lower, ...upper.slice(1)], 0.5, seed, 0.6);
+  const outline = [...lower, ...upper.slice(1)];
+  // A fuzzy edge where density thins, and a soft halo of sparser hair around it.
+  const patch = roughen(outline, 0.8, seed, 1.1);
+  const halo = roughen(outline.map((p) => P(CX + (p[0] - CX) * 1.06, p[1] + (p[1] < hl.y - 2 ? -1.8 : 0.6))), 1, seed + 1, 1.3);
   const patchD = ring(patch);
   const clip = `${uid}cr`;
+  // Growth direction: short marks running forward from the crown, a few dark, a few light.
+  const marks: string[] = [];
+  const lights: string[] = [];
+  if (d > 0) {
+    const n = d === 2 ? 12 : 6;
+    for (let k = 0; k < n; k++) {
+      const u = (k + rnd(seed, k + 40, 0.1, 0.9)) / n;
+      const x = lerp(L[0] + 4, R[0] - 4, u);
+      const top = lerp(peak + 6, hl.y - 8, Math.abs(u - 0.5) * 1.6);
+      const y = lerp(top, hl.y - 2, rnd(seed, k + 50, 0.2, 0.8));
+      const len = rnd(seed, k + 60, 2.5, 4.5);
+      const lean = (x - CX) * 0.05;
+      (k % 3 === 0 && x < CX + 6 ? lights : marks).push(hairStroke([P(x - lean, y - len), P(x, y), P(x + lean * 0.6, y + len * 0.6)], { from: 0, to: 1, w: 0.9, seed: seed + k, start: 0.3, end: 0.1 }));
+    }
+  }
   return {
     onSkin: shaved.onSkin,
     front: (
       <g>
         <ClipDefs id={clip} shapes={[patchD]} />
-        <path d={patchD} fill={T.base} opacity={0.94} />
+        {d > 0 && <path d={ring(halo)} fill={T.base} opacity={0.35} />}
+        <path d={patchD} fill={T.base} opacity={0.9} />
         <g clipPath={`url(#${clip})`}>
-          <path d={ring([P(CX + 4, peak - 4), P(CX + w + 4, hl.y - 16), P(CX + w + 4, hl.y + 8), P(CX + 10, hl.y + 8)])} fill={T.shade} opacity={0.8} />
-          {d > 0 && <path d={organicMass([P(CX - w * 0.7, hl.y - 4), P(CX - w * 0.4, hl.y - 13), P(CX - 6, peak + 3), P(CX - w * 0.3, hl.y - 6)], { seed, rough: 0.8 })} fill={mixHex(T.base, T.light, 0.35)} />}
-          <path d={strokeLine(lower.map((p) => P(p[0], p[1] - 1.2)), { w: 2.4, start: 0.3, end: 0.3, seed: seed + 2 })} fill={T.deep} opacity={0.5} />
+          <path d={ring([P(CX + 4, peak - 4), P(CX + w + 4, hl.y - 16), P(CX + w + 4, hl.y + 8), P(CX + 10, hl.y + 8)])} fill={T.shade} opacity={0.7} />
+          {d > 0 && <path d={organicMass([P(CX - w * 0.7, hl.y - 4), P(CX - w * 0.4, hl.y - 13), P(CX - 6, peak + 3), P(CX - w * 0.3, hl.y - 6)], { seed, rough: 0.8 })} fill={mixHex(T.base, T.light, 0.3)} />}
+          {/* Denser just behind the hairline. */}
+          <path d={strokeLine(lower.map((p) => P(p[0], p[1] - 1.5)), { w: 2.6, start: 0.3, end: 0.3, seed: seed + 2 })} fill={T.deep} opacity={0.4} />
+          {marks.length > 0 && <path d={marks.join("")} fill={T.deep} opacity={0.45} />}
+          {lights.length > 0 && <path d={lights.join("")} fill={T.light} opacity={0.5} />}
         </g>
-        {d > 0 && <path d={strokeLine(upper, { w: 0.8, start: 0.2, end: 0.2, seed: seed + 3 })} fill={T.line} opacity={0.55} />}
       </g>
     ),
   };

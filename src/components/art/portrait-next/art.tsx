@@ -10,6 +10,7 @@ import { buildHeadNext } from "./head";
 import { KitBack, KitFront, necklineFor } from "./kit";
 import { NeckNext } from "./neck";
 import type { NextModel } from "./model";
+import { withDetail } from "./ink";
 import { INK, skinTones } from "./palette";
 
 /** Same aspect ratio as the current portrait. Thumbnails crop tight on the face; larger sizes show the shoulders. */
@@ -25,7 +26,12 @@ export const detailFor = (px: number): Detail => (px < 72 ? 0 : px < 140 ? 1 : 2
  * cel planes, tone-aware colour, suggested features). Styles without a new hair design still use the current hair.
  * `silhouette` is a review mode: the hair alone in solid black over a plain grey head.
  */
-export function PortraitNext({ m, uid, d, silhouette = false }: { m: NextModel; uid: string; d: Detail; silhouette?: boolean }) {
+export function PortraitNext(props: { m: NextModel; uid: string; d: Detail; silhouette?: boolean }) {
+  // Everything is drawn in one synchronous pass so all geometry is written at this size's precision.
+  return withDetail(props.d, () => drawPortrait(props));
+}
+
+function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: string; d: Detail; silhouette?: boolean }) {
   const f = m.f;
   const head = buildHeadNext(f);
   const t = skinTones(m.skin);
@@ -57,16 +63,16 @@ export function PortraitNext({ m, uid, d, silhouette = false }: { m: NextModel; 
         </defs>
         <rect x={x} y={y} width={w} height={h} rx="16" fill="#fff" />
         <g transform={tilt}>
-          <g filter={black}>{next ? next.back : legacy && <HairBack ctx={ctx} />}</g>
+          <g filter={black}>{next ? next.back : legacy && HairBack({ ctx })}</g>
         </g>
         <g filter={`url(#${uid}grey)`}>
-          <KitBack {...kitProps} />
-          <NeckNext f={f} head={head} t={t} d={d} uid={uid} line={line} />
-          <KitFront {...kitProps} />
+          {KitBack({ ...kitProps })}
+          {NeckNext({ f, head, t, d, uid, line })}
+          {KitFront({ ...kitProps })}
         </g>
         <g transform={tilt}>
           <path d={head.path} fill="#d6d6d6" />
-          <g filter={black}>{next ? next.front : legacy && <HairFront ctx={ctx} g={g} />}</g>
+          <g filter={black}>{next ? next.front : legacy && HairFront({ ctx, g })}</g>
         </g>
         <rect x={x + 1} y={y + 1} width={w - 2} height={h - 2} rx="15.5" fill="none" stroke="#999" strokeWidth={d === 0 ? 4 : 2} />
       </>
@@ -90,37 +96,37 @@ export function PortraitNext({ m, uid, d, silhouette = false }: { m: NextModel; 
         )}
       </defs>
       <g clipPath={`url(#${uid}card)`}>
-        <BackdropNext base={m.background} uid={uid} seed={m.seed} d={d} box={box} />
+        {BackdropNext({ base: m.background, uid, seed: m.seed, d, box })}
         <g transform={tilt}>
-          {legacy && <HairBack ctx={ctx} />}
+          {legacy && HairBack({ ctx })}
           {next?.back}
         </g>
         {/* Shirt behind the neck (torso, inside of the opening, back of the collar), then the neck clipped to the
             opening, then the front of the collar: the neck goes into the shirt. */}
-        <KitBack {...kitProps} />
-        <NeckNext f={f} head={head} t={t} d={d} uid={uid} line={line} />
-        <KitFront {...kitProps} />
+        {KitBack({ ...kitProps })}
+        {NeckNext({ f, head, t, d, uid, line })}
+        {KitFront({ ...kitProps })}
         <g transform={tilt}>
-          <EarsNext f={f} head={head} t={t} d={d} stud={m.accessory === 2} />
+          {EarsNext({ f, head, t, d, stud: m.accessory === 2 })}
           <use href={`#${uid}hp`} fill={t.base} />
           <g clipPath={`url(#${clip})`}>
-            <Planes f={f} head={head} t={t} d={d} uid={uid} />
-            <Sockets f={f} t={t} />
-            <AgeLinesNext f={f} t={t} lines={m.lines} d={d} />
-            {stubble && <StubbleNext f={f} head={head} t={t} color={m.facialColor} heavy={m.facial === 2} youth={m.youth} d={d} uid={uid} />}
-            {legacy && <HairOnSkin ctx={ctx} g={g} />}
+            {Planes({ f, head, t, d, uid })}
+            {Sockets({ f, t })}
+            {AgeLinesNext({ f, t, lines: m.lines, d })}
+            {stubble && StubbleNext({ f, head, t, color: m.facialColor, heavy: m.facial === 2, youth: m.youth, d, uid })}
+            {legacy && HairOnSkin({ ctx, g })}
             {next?.onSkin}
           </g>
-          <HeadInk head={head} d={d} />
-          <Details f={f} skin={t} freckles={m.freckles} scar={m.scar} mark={m.mark} />
-          <NoseNext f={f} t={t} d={d} />
-          <MouthNext f={f} t={t} d={d} />
-          <EyesNext f={f} t={t} iris={m.iris} uid={uid} d={d} lines={m.lines} />
-          <BrowsNext f={f} color={m.browColor} d={d} />
-          {!stubble && <FacialHair f={f} head={head} style={m.facial} color={m.facialColor} grey={m.facialGrey} youth={m.youth} skin={t} uid={uid} lite={d === 0} />}
-          {legacy && <HairFront ctx={ctx} g={g} />}
+          {HeadInk({ head, d })}
+          {Details({ f, skin: t, freckles: m.freckles, scar: m.scar, mark: m.mark })}
+          {NoseNext({ f, t, d })}
+          {MouthNext({ f, t, d })}
+          {EyesNext({ f, t, iris: m.iris, uid, d, lines: m.lines })}
+          {BrowsNext({ f, color: m.browColor, d })}
+          {!stubble && FacialHair({ f, head, style: m.facial, color: m.facialColor, grey: m.facialGrey, youth: m.youth, skin: t, uid, lite: d === 0 })}
+          {legacy && HairFront({ ctx, g })}
           {next?.front}
-          {m.accessory === 1 && <Headband f={f} head={head} />}
+          {m.accessory === 1 && Headband({ f, head })}
         </g>
         {d === 2 && <rect x={x} y={y} width={w} height={h} filter={`url(#${uid}grain)`} opacity="0.3" style={{ mixBlendMode: "multiply" }} />}
       </g>

@@ -52,7 +52,7 @@ export interface CoilyDesign {
 }
 
 /** A rounded mass from `yS` on the left, over the top, down to `yS` on the right (a squarish ellipse). */
-function roundMass(f: HairInput["f"], head: HairInput["head"], top: number, side: number, yS: number): Pt[] {
+function roundMass(f: HairInput["f"], head: HairInput["head"], top: number, side: number, yS: number, seed: number): Pt[] {
   const yTop = f.top - top;
   // Widest a little above the ears, so the mass meets the head just outside them instead of curling in.
   const cy = lerp(yTop, yS, 0.64);
@@ -61,10 +61,14 @@ function roundMass(f: HairInput["f"], head: HairInput["head"], top: number, side
   const te = Math.asin(clamp((yS - cy) / ry, -1, 1));
   const n = 2.5;
   const pw = (v: number) => Math.sign(v) * Math.abs(v) ** (2 / n);
+  // One side a little fuller than the other.
+  const kL = 1 + rnd(seed, 21, -0.04, 0.04);
+  const kR = 1 + rnd(seed, 22, -0.04, 0.04);
   const pts: Pt[] = [];
   for (let k = 0; k <= 60; k++) {
     const th = Math.PI - te + (k / 60) * (Math.PI + 2 * te);
-    pts.push(P(CX + rx * pw(Math.cos(th)), cy + ry * pw(Math.sin(th))));
+    const c = Math.cos(th);
+    pts.push(P(CX + rx * (c < 0 ? kL : kR) * pw(c), cy + ry * pw(Math.sin(th))));
   }
   return resample(pts, 2.2);
 }
@@ -78,13 +82,14 @@ export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
   const full = o.sides === "full";
   // A full afro ends at the top of the ears; a curly top just below the temple corners.
   const yS = full ? f.ear.top + 4 : Math.max(cornerR[1], cornerL[1]) + 10;
-  const raw = o.shape === "round" ? roundMass(f, head, o.top, o.side, yS) : shell(f, head, yS, o.side, o.top, o.side + 1);
+  const raw = o.shape === "round" ? roundMass(f, head, o.top, o.side, yS, seed) : shell(f, head, yS, o.side, o.top, o.side + rnd(seed, 23, -0.5, 1.5));
   const outer = lobedEdge(raw, { seed, ...o.edge });
 
   // Where the hair meets the face: full sides curve in under the mass to the sideburns and run up the temples;
   // a faded cut turns in above them.
   const sideFront = (s: 1 | -1, end: Pt, corner: Pt, temple: Pt[]): Pt[] => {
-    if (!full) return along([end, P(lerp(end[0], corner[0], 0.45) - s, lerp(end[1], corner[1], 0.6)), corner], 4, 0.5);
+    // A faded cut: curls hang a little over the weight line instead of stopping on a ruled edge.
+    if (!full) return lobedEdge(along([end, P(lerp(end[0], corner[0], 0.45) - s, lerp(end[1], corner[1], 0.6)), corner], 4, 0.5), { seed: seed + (s > 0 ? 31 : 37), spacing: [6, 10], amp: [0.8, 2.2], sign: s > 0 ? -1 : 1 });
     // The mass curves in under itself to the head just above the ear; only a thin sideburn continues below.
     const yE = f.ear.top + 2;
     const edge = P(CX + s * (head.half(yE, s) + 0.5), yE);
@@ -125,32 +130,30 @@ export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
   const fc = P(CX, f.eyeY);
   const underside = ring([...faceEdge, ...faceEdge.slice().reverse().map((p) => add(p, scale(unit(sub(p, fc)), 6)))]);
 
-  // Light: a few short arcs of clusters on the upper left, following the roundness; each cluster smaller than the
-  // last, so the light breaks up instead of forming a patch. Darker groups sit on the turn into shadow.
+  // Light: a few large groups, each the light on a cluster of coils (one lumpy mass, a smaller satellite, a bright
+  // core at close-up size), following the roundness on the upper left. Darker groups sit on the turn into shadow.
   const lightC: string[] = [];
   const bright: string[] = [];
   const shadeC: string[] = [];
   if (d > 0) {
-    const groups = d === 2 ? o.groups : Math.max(2, o.groups - 2);
+    const groups = d === 2 ? o.groups : Math.max(1, o.groups - 1);
     for (let g = 0; g < groups; g++) {
-      const th = lerp(3.55, 4.75, (g + 0.5) / groups) + rnd(seed, g + 300, -0.12, 0.12);
-      const rr = rnd(seed, g + 310, 0.5, 0.72);
-      let p = P(cx + Math.cos(th) * rx * rr, cy + Math.sin(th) * ry * rr);
+      const th = lerp(3.6, 4.7, (g + 0.5) / groups) + rnd(seed, g + 300, -0.15, 0.15);
+      const rr = rnd(seed, g + 310, 0.5, 0.7);
+      const p = P(cx + Math.cos(th) * rx * rr, cy + Math.sin(th) * ry * rr);
       const tan = P(-Math.sin(th), Math.cos(th));
-      const count = d === 2 ? 2 + Math.floor(hash01(seed, g + 320) * 3) : 2;
-      for (let k = 0; k < count; k++) {
-        const r = rnd(seed, g * 10 + k + 330, o.cluster.r[0], o.cluster.r[1]) * (1.2 - k * 0.15);
-        const shape = { seed: seed + g * 10 + k, lobes: o.cluster.lobes, squash: o.cluster.squash, rot: th + hash01(seed, g * 10 + k) };
-        lightC.push(coilyCluster(p, r, shape));
-        if (d === 2 && k < 2) bright.push(coilyCluster(P(p[0] - r * 0.2, p[1] - r * 0.3), r * 0.45, { ...shape, seed: shape.seed + 7 }));
-        p = add(p, add(scale(tan, r * 1.5 * (hash01(seed, g * 10 + k + 40) > 0.5 ? 1 : -1)), P(rnd(seed, g * 10 + k + 50, -1.5, 1.5), rnd(seed, g * 10 + k + 60, -1.5, 1.5))));
-      }
+      const R = rnd(seed, g + 330, o.cluster.r[0], o.cluster.r[1]) * 1.9;
+      const shape = { seed: seed + g * 10, lobes: 5, squash: 0.6, rot: th + Math.PI / 2 };
+      lightC.push(coilyCluster(p, R, shape));
+      const side = hash01(seed, g + 340) > 0.5 ? 1 : -1;
+      lightC.push(coilyCluster(add(p, scale(tan, side * R * 1.15)), R * 0.5, { ...shape, seed: shape.seed + 3, lobes: 4, squash: 0.8 }));
+      if (d === 2) bright.push(coilyCluster(P(p[0] - R * 0.15, p[1] - R * 0.25), R * 0.42, { ...shape, seed: shape.seed + 7 }));
     }
-    const darks = d === 2 ? 8 : 4;
+    const darks = d === 2 ? 4 : 2;
     for (let k = 0; k < darks; k++) {
       const th = rnd(seed, k + 400, -0.9, 1.2) + (k % 2 ? 0 : Math.PI * 1.75);
-      const rr = rnd(seed, k + 410, 0.35, 0.8);
-      shadeC.push(coilyCluster(P(cx + Math.cos(th) * rx * rr, cy + Math.sin(th) * ry * rr), rnd(seed, k + 420, o.cluster.r[0], o.cluster.r[1]) * 0.9, { seed: seed + k + 430, lobes: o.cluster.lobes, squash: o.cluster.squash, rot: th }));
+      const rr = rnd(seed, k + 410, 0.35, 0.75);
+      shadeC.push(coilyCluster(P(cx + Math.cos(th) * rx * rr, cy + Math.sin(th) * ry * rr), rnd(seed, k + 420, o.cluster.r[0], o.cluster.r[1]) * 1.3, { seed: seed + k + 430, lobes: 4, squash: 0.7, rot: th }));
     }
   }
   // Sparse curl indications at close-up size only.
@@ -179,11 +182,12 @@ export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
     ? null
     : ([1, -1] as const).map((s) => (
         <g key={s}>
-          {fadeRegion(`${uid}cf${s > 0 ? "r" : "l"}`, ring(sideRegion(s > 0 ? hl.templeR : hl.templeL, s, yS - 8)), mixHex(color, skin.deep, 0.2), d, {
-            y0: yS - 8,
+          {fadeRegion(`${uid}cf${s > 0 ? "r" : "l"}`, ring(sideRegion(s > 0 ? hl.templeR : hl.templeL, s, yS - 10)), mixHex(color, skin.deep, 0.2), d, {
+            y0: yS - 10,
             y1: last(hl.templeR)[1],
-            o0: 0.55,
-            o1: 0.03,
+            o0: 0.85,
+            mid: [0.35, 0.42],
+            o1: 0.02,
           })}
         </g>
       ));
@@ -211,7 +215,7 @@ export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
           {curlsLit.length > 0 && <path d={curlsLit.join("")} fill={T.light} opacity={0.6} />}
         </g>
         <path d={silhouetteInk(outer, d, seed + 5, [[0, 0.22], [0.28, 1]], 1.9)} fill={INK} />
-        {d > 0 && <path d={strokeLine(faceEdge, { w: 0.9, start: 0.5, end: 0.5, seed: seed + 6, wobble: 0.3 })} fill={T.line} opacity={0.8} />}
+        {d === 2 && full && <path d={strokeLine(front, { w: 0.8, start: 0.5, end: 0.5, seed: seed + 6, wobble: 0.3 })} fill={T.line} opacity={0.6} />}
       </g>
     ),
   };
