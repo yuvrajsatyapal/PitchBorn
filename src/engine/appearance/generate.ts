@@ -38,6 +38,8 @@ const HAIR_ODDS: Record<string, number> = {
 
 const FACIAL_ODDS = [4.2, 3, 1.8, 0.9, 0.7, 1.1, 0.9, 0.5, 1.9, 1.2, 0.9, 0.2, 0.5, 0.6, 0.15, 0.5];
 
+const MOUTH_ODDS = [3, 0.9, 0.8, 0.45, 2, 2, 0.3, 1.6, 2.2, 0.3];
+
 function pickWeighted(rng: Rng, weights: readonly number[]): number {
   const total = weights.reduce((a, b) => a + b, 0);
   let r = rng.next() * total;
@@ -67,13 +69,14 @@ function roll(rng: Rng, into: Appearance, scope: RandomScope, bias?: LookBias): 
     const lightEyes = into.skin <= 4;
     into.eyeColor = pickWeighted(rng, lightEyes ? [3, 3, 1.6, 1, 1.4, 0.8] : [6, 4, 0.5, 0.05, 0.02, 0.05]);
     into.nose = rng.int(0, COUNTS.nose - 1);
-    into.mouth = rng.int(0, COUNTS.mouth - 1);
+    // Footballers mostly wear neutral, focused expressions; smiles are the exception.
+    into.mouth = pickWeighted(rng, MOUTH_ODDS);
     into.brow = rng.int(0, COUNTS.brow - 1);
     into.ear = rng.int(0, COUNTS.ear - 1);
     into.headW = geoValue(rng);
     into.headH = geoValue(rng);
     into.eyeSp = geoValue(rng);
-    into.browAng = geoValue(rng);
+    into.browAng = Math.round(clamp(rng.normal(42, 18), 0, 100));
     into.noseSc = geoValue(rng);
     into.earSc = geoValue(rng);
     into.aging = rng.int(0, 100);

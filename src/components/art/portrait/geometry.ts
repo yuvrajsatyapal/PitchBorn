@@ -33,6 +33,8 @@ export interface Contour {
   half: (y: number) => number;
   /** Right-hand outline points from the crown to the chin. */
   right: Pt[];
+  tension: number;
+  cleft: boolean;
 }
 
 const cache = new Map<string, Contour>();
@@ -57,7 +59,7 @@ export function contourFor(a: Pick<Appearance, "face" | "headW" | "headH">): Con
     const t = (y - ys[i - 1]) / (ys[i] - ys[i - 1]);
     return xs[i - 1] + (xs[i] - xs[i - 1]) * t;
   };
-  const c = { top, chin, half, right };
+  const c = { top, chin, half, right, tension: shape.tension ?? 0.5, cleft: !!shape.cleft };
   if (cache.size > 400) cache.clear();
   cache.set(key, c);
   return c;
@@ -102,7 +104,7 @@ export function facePath(c: Contour): string {
   const pts: Pt[] = [...r, ...l.reverse().slice(0)];
   // Crown (first of r) and its mirror collapse to the same point: drop the duplicate.
   const dedup = pts.filter((p, i) => !(i === pts.length - 1 && Math.abs(p[0] - pts[0][0]) < 0.01 && Math.abs(p[1] - pts[0][1]) < 0.01));
-  return smooth(dedup, true, 0.5);
+  return smooth(dedup, true, c.tension);
 }
 
 /** Sample a cubic Bézier into points (used to scallop and spike hair edges). */

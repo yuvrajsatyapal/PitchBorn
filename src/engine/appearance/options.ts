@@ -29,17 +29,26 @@ export interface FaceShape extends Option {
   half: readonly number[];
   /** Relative height. */
   h: number;
+  /** Outline curve tension: lower is more angular (square jaws), higher is rounder. */
+  tension?: number;
+  /** Cleft in the chin. */
+  cleft?: boolean;
 }
 
+// Each shape is its own silhouette (temple, cheekbone, jaw angle, chin width and projection), not a rescaled oval.
 export const FACE_SHAPES: readonly FaceShape[] = [
   { name: "Oval", half: [0, 30, 43, 49, 50, 47, 40, 30, 18, 10], h: 1 },
-  { name: "Round", half: [0, 32, 45, 51, 53, 52, 47, 39, 26, 17], h: 0.95 },
-  { name: "Square", half: [0, 30, 44, 50, 51, 50, 48, 45, 38, 30], h: 0.98 },
-  { name: "Rectangular", half: [0, 29, 43, 48, 49, 48, 46, 43, 36, 28], h: 1.07 },
-  { name: "Diamond", half: [0, 24, 36, 46, 52, 46, 35, 24, 13, 7], h: 1 },
-  { name: "Narrow", half: [0, 26, 36, 41, 43, 41, 36, 27, 16, 8], h: 1.04 },
-  { name: "Broad", half: [0, 34, 46, 52, 55, 54, 50, 43, 30, 20], h: 0.97 },
-  { name: "Long", half: [0, 28, 39, 45, 46, 44, 38, 29, 17, 9], h: 1.1 },
+  { name: "Round", half: [0, 32, 46, 52, 54, 53, 48, 40, 28, 19], h: 0.94, tension: 0.6 },
+  { name: "Square", half: [0, 30, 44, 50, 52, 52, 51, 48, 42, 33], h: 0.97, tension: 0.26 },
+  { name: "Rectangular", half: [0, 29, 42, 48, 50, 50, 49, 47, 43, 36], h: 1.1, tension: 0.28 },
+  { name: "Diamond", half: [0, 22, 34, 47, 54, 46, 33, 22, 12, 6], h: 1.02, tension: 0.4 },
+  { name: "Narrow", half: [0, 25, 35, 40, 42, 40, 35, 27, 17, 9], h: 1.06 },
+  { name: "Broad", half: [0, 35, 48, 54, 57, 56, 52, 46, 34, 24], h: 0.95, tension: 0.35 },
+  { name: "Long", half: [0, 27, 38, 44, 45, 43, 37, 28, 17, 9], h: 1.13 },
+  { name: "Heart", half: [0, 35, 47, 51, 49, 41, 30, 19, 11, 6], h: 1.02, tension: 0.45 },
+  { name: "Strong jaw", half: [0, 29, 42, 48, 51, 52, 51, 48, 41, 30], h: 1.02, tension: 0.24, cleft: true },
+  { name: "High cheekbones", half: [0, 25, 37, 50, 55, 46, 34, 24, 15, 9], h: 1.04, tension: 0.42 },
+  { name: "Soft jaw", half: [0, 32, 45, 51, 52, 50, 45, 37, 27, 20], h: 0.98, tension: 0.62 },
 ];
 
 // ------------------------------------------------------------------ hair
@@ -125,10 +134,10 @@ export const HAIR_STYLES: readonly HairStyle[] = [
 
 // ------------------------------------------------------------------ facial features
 
-export const BROW_STYLES = ["Straight", "Arched", "Thin arched", "Soft angle", "Bushy", "Flat thin", "Rounded", "Fierce"] as const;
+export const BROW_STYLES = ["Straight", "Arched", "Thin arched", "Soft angle", "Bushy", "Flat thin", "Rounded", "Fierce", "Low heavy", "Long soft"] as const;
 export const EYE_SHAPES = ["Almond", "Round", "Wide", "Narrow", "Hooded", "Upturned", "Downturned", "Deep-set"] as const;
-export const NOSE_STYLES = ["Straight", "Button", "Broad", "Narrow", "Roman", "Wide base", "Upturned", "Long", "Soft", "Flat bridge"] as const;
-export const MOUTH_STYLES = ["Neutral", "Slight smile", "Smirk", "Grin", "Thin", "Full", "Wide smile", "Small", "Serious", "Open"] as const;
+export const NOSE_STYLES = ["Straight", "Button", "Broad", "Narrow", "Roman", "Wide base", "Upturned", "Long", "Soft", "Flat bridge", "Crooked", "Broad tip"] as const;
+export const MOUTH_STYLES = ["Neutral", "Slight smile", "Smirk", "Smile", "Thin", "Full", "Wide", "Small", "Stern", "Parted"] as const;
 export const EAR_STYLES = ["Small", "Medium", "Large"] as const;
 export const FACIAL_HAIR = [
   "Clean shaven", "Light stubble", "Heavy stubble", "Moustache", "Thin moustache", "Goatee", "Moustache + goatee", "Soul patch",
