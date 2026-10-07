@@ -6,7 +6,7 @@
  */
 import type { FaceSpec } from "../../portrait/anatomy";
 import { CX, add, along, clamp, hash01, lerp, scale, sub, unit, type Pt } from "../../portrait/geometry";
-import { noise1, resample, ring, roughen, strokeLine } from "../ink";
+import { resample, ring, roughen, strokeLine } from "../ink";
 import { INK, hairTones, mixHex } from "../palette";
 import {
   P,
@@ -56,8 +56,6 @@ export interface CoilyDesign {
    * framing the face); the rest of the cloud, down to `bottom`, is behind the head and neck.
    */
   mane?: { low: (f: FaceSpec) => number; bottom: (f: FaceSpec) => number };
-  /** Ends in the second hair colour (when one is chosen): a band just inside the silhouette. */
-  rim?: boolean;
 }
 
 /** A rounded mass from `yS` on the left, over the top, down to `yS` on the right (a squarish ellipse). */
@@ -105,8 +103,8 @@ function cloudLoop(f: FaceSpec, head: HairInput["head"], top: number, side: numb
 }
 
 export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
-  const { f, head, color, skin, uid, d, recede, seed, tip } = i;
-  const T = hairTones(color);
+  const { f, head, color, skin, uid, d, recede, seed } = i;
+  const T = hairTones(color, i.skin.base);
   const hl = hairline(f, head, o.kind, recede, seed);
   const cornerL = hl.front[0];
   const cornerR = last(hl.front);
@@ -246,14 +244,6 @@ export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
           })}
         </g>
       ));
-  // Ends in the second colour: a band just inside the silhouette, lumpy on its inner edge like the clusters.
-  // Its width changes along the edge (wide on some lobes, almost nothing between), so it reads as tips, not a halo.
-  const rimOf = (pts: Pt[], c: Pt, w: number, sd: number) =>
-    ring([...pts, ...roughen(pts.map((p, k) => add(p, scale(unit(sub(c, p)), w * (0.55 + 0.75 * Math.max(0, noise1(sd, k * 0.16)))))), 3.6, sd + 1, 0.45).reverse()]);
-  const rimT = tip && o.rim ? hairTones(tip) : null;
-  const rimD = rimT ? rimOf(outer, P(cx, cy + ry * 0.3), 15, seed + 61) : "";
-  const shadeHalf = ring([P(cx + rx * 0.15, cy - ry * 2), P(cx + rx * 2, cy - ry * 2), P(cx + rx * 2, cy + ry * 3), P(cx - rx * 0.05, cy + ry * 3)]);
-
   // The rest of a mane: behind the head and neck, darker, its own light low on the lit side.
   const back = cloud
     ? (() => {
@@ -270,10 +260,10 @@ export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
         return (
           <g>
             <ShapeDefs id={cId} d={loopD} />
-            <use href={`#${cId}s`} fill={mixHex(T.shade, T.deep, 0.45)} />
+            {/* Close in value to the front mass, so the cloud reads as one mass of the same hair colour. */}
+            <use href={`#${cId}s`} fill={mixHex(T.shade, T.deep, 0.2)} />
             <g clipPath={`url(#${cId})`}>
-              {rimT && d > 0 && <path d={rimOf(cloud, P(CX, (Math.min(...ys) + yB) / 2), 12, seed + 62)} fill={mixHex(rimT.shade, T.deep, 0.25)} />}
-              {lows.length > 0 && <path d={lows.join("")} fill={mixHex(T.base, T.shade, 0.35)} opacity={0.9} />}
+              {lows.length > 0 && <path d={lows.join("")} fill={mixHex(T.base, T.shade, 0.25)} opacity={0.9} />}
             </g>
             <path d={silhouetteInk(cloud.slice(0, cut[0] + 2), d, seed + 7, [[0.12, 1]], 1.9)} fill={INK} />
             <path d={silhouetteInk(cloud.slice(cut[1] - 1), d, seed + 8, [[0, 0.88]], 1.9)} fill={INK} />
@@ -300,13 +290,6 @@ export function coilyHair(i: HairInput, o: CoilyDesign): HairArt {
         <g clipPath={`url(#${clip})`}>
           <path d={litBody} fill={T.base} />
           {d > 0 && <path d={litMass} fill={mixHex(T.base, T.light, 0.22)} />}
-          {rimT && (
-            <g>
-              <ShapeDefs id={`${clip}r`} d={rimD} />
-              <use href={`#${clip}rs`} fill={rimT.base} opacity={0.92} />
-              <path d={shadeHalf} fill={rimT.shade} opacity={0.75} clipPath={`url(#${clip}r)`} />
-            </g>
-          )}
           <path d={underside} fill={T.deep} opacity={0.55} />
           {shadeC.length > 0 && <path d={shadeC.join("")} fill={T.shade} opacity={0.9} />}
           {lightC.length > 0 && <path d={lightC.join("")} fill={mixHex(T.base, T.light, 0.55)} opacity={0.9} />}

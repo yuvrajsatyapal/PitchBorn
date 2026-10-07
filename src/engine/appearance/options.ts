@@ -13,8 +13,9 @@ export interface Option {
 export const SKIN_TONES = ["#f8dfce", "#f1cdb0", "#e8b998", "#d9a07a", "#c68a60", "#b0724a", "#94593a", "#794530", "#5f3525", "#482819"] as const;
 export const SKIN_NAMES = ["Porcelain", "Fair", "Light", "Warm beige", "Tan", "Caramel", "Bronze", "Brown", "Deep brown", "Ebony"] as const;
 
-export const HAIR_COLORS = ["#16110d", "#2a1c14", "#3e281a", "#5b3a22", "#7d5632", "#a37a45", "#c9a45f", "#a9461f", "#7a2f1a", "#aeaeb0"] as const;
-export const HAIR_COLOR_NAMES = ["Jet black", "Black brown", "Dark brown", "Chestnut", "Light brown", "Dark blond", "Blond", "Ginger", "Auburn", "Silver"] as const;
+// Golden was appended later (the generator only hands it out with the Lion Afro), so older indices never move.
+export const HAIR_COLORS = ["#16110d", "#2a1c14", "#3e281a", "#5b3a22", "#7d5632", "#a37a45", "#c9a45f", "#a9461f", "#7a2f1a", "#aeaeb0", "#d6a645"] as const;
+export const HAIR_COLOR_NAMES = ["Jet black", "Black brown", "Dark brown", "Chestnut", "Light brown", "Dark blond", "Blond", "Ginger", "Auburn", "Silver", "Golden"] as const;
 
 export const EYE_COLORS = ["#2a1a10", "#5a3a1e", "#7d6a2a", "#3d7a52", "#3f78b5", "#7d8a96"] as const;
 export const EYE_COLOR_NAMES = ["Dark brown", "Brown", "Hazel", "Green", "Blue", "Grey"] as const;

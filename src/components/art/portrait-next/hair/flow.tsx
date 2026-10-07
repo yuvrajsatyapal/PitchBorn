@@ -71,7 +71,7 @@ const N = 40;
  */
 export function backHair(i: HairInput, b: BackDesign, side: number): ReactNode {
   const { f, head, color, d, seed } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const y0 = b.from(f);
   const y1 = b.end(f);
   let slot = 0;
@@ -117,7 +117,7 @@ interface Lock {
 
 export function flowHair(i: HairInput, o: FlowDesign): HairArt {
   const { f, head, color, skin, d, recede, seed } = i;
-  const T = hairTones(color);
+  const T = hairTones(color, i.skin.base);
   const hl = hairline(f, head, o.kind, recede, seed);
   let slot = 0;
   const r = (lo: number, hi: number) => rnd(seed + 17, slot++, lo, hi);

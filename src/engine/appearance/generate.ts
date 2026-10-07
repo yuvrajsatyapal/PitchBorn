@@ -1,6 +1,6 @@
 import { Rng } from "../rng";
 import type { Appearance, LegacyAppearance } from "../types";
-import { ACCESSORIES, APPEARANCE_KEYS, COUNTS, HAIR_STYLES } from "./options";
+import { ACCESSORIES, APPEARANCE_KEYS, COUNTS, HAIR_COLORS, HAIR_STYLES } from "./options";
 
 export type RandomScope = "all" | "face" | "hair";
 
@@ -42,9 +42,10 @@ const ICONIC_HAIR = HAIR_STYLES.map((h, i) => [h, i] as const).filter(([h]) => h
 /** Iconic styles together: about one player in seventy. */
 export const ICONIC_CHANCE = 0.014;
 /** Styles whose tips can take a second colour, and how often generated players have frosted tips with them. */
-const TIP_ODDS: Record<string, number> = { "Frosted Faux Hawk": 0.75, "Lion Afro": 0.5, "Textured crop": 0.04, "Spiky": 0.08, "Quiff": 0.03, "Short dreads": 0.05, "Dreadlocks": 0.04, "Twists": 0.06 };
-/** A style's usual second colour (index into HAIR_TIP_COLORS); others pick any. */
-const TIP_PREFERRED: Record<string, number> = { "Lion Afro": 2 };
+const TIP_ODDS: Record<string, number> = { "Frosted Faux Hawk": 0.75, "Textured crop": 0.04, "Spiky": 0.08, "Quiff": 0.03, "Short dreads": 0.05, "Dreadlocks": 0.04, "Twists": 0.06 };
+/** Generated Lion Afros are often golden all through (the hair colour itself, never just the ends). */
+const GOLDEN = HAIR_COLORS.indexOf("#d6a645");
+const LION_GOLDEN_ODDS = 0.6;
 export const supportsHairTips = (hair: number) => (HAIR_STYLES[hair]?.name ?? "") in TIP_ODDS;
 /** Accessories the generator hands out (later ones are chosen in the editor). */
 const GENERATED_ACCESSORIES = ACCESSORIES.indexOf("Ear stud");
@@ -117,9 +118,10 @@ function roll(rng: Rng, into: Appearance, scope: RandomScope, bias?: LookBias): 
     if (rng.chance(ICONIC_CHANCE)) {
       const texture = (t: string) => (t === "coily" ? 0.45 + 1.3 * dark : t === "curly" ? 0.8 + 0.5 * dark : t === "straight" ? 1.35 - 0.8 * dark : 1);
       into.hair = ICONIC_HAIR[pickWeighted(rng, ICONIC_HAIR.map(([h]) => texture(h.texture)))][1];
+      if (HAIR_STYLES[into.hair].name === "Lion Afro" && rng.chance(LION_GOLDEN_ODDS)) into.hairColor = GOLDEN;
     }
     const name = HAIR_STYLES[into.hair]?.name ?? "";
-    into.hairTip = rng.chance(TIP_ODDS[name] ?? 0) ? (TIP_PREFERRED[name] ?? rng.int(1, COUNTS.hairTip - 1)) : 0;
+    into.hairTip = rng.chance(TIP_ODDS[name] ?? 0) ? rng.int(1, COUNTS.hairTip - 1) : 0;
   }
   if (scope === "all" || scope === "face") into.band = rng.int(0, COUNTS.band - 1);
 }
