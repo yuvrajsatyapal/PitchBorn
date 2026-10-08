@@ -12,6 +12,7 @@ import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
 import { initialTraits } from "../engine/traits/assign";
 import { SCHEMA_VERSION } from "../engine/world/helpers";
+import { sanitizeCareerData } from "../engine/world/sanitize";
 
 type RawState = Record<string, unknown> & { schemaVersion?: number };
 type Migration = (s: RawState) => RawState;
@@ -130,6 +131,21 @@ MIGRATIONS[8] = (s) => {
   return s;
 };
 
+MIGRATIONS[9] = (s) => {
+  // v9 → v10: match log, income ledger, contract clauses, international allegiance, objectives. The sanitiser that runs
+  // on every load builds all of them from what the older save really recorded; nothing is invented.
+  const user = (s.user ?? {}) as Record<string, unknown>;
+  user.relLog ??= [];
+  s.user = user;
+  return s;
+};
+
+MIGRATIONS[10] = (s) => {
+  // v10 → v11: manager history and squad numbers. The sanitiser that runs on every load gives every manager an id and
+  // a tenure, every player a valid unique number, and opens the user's first stint and number history from today.
+  return s;
+};
+
 export class MigrationError extends Error {}
 
 export function migrateState(raw: RawState): GameState {
@@ -150,6 +166,11 @@ export function migrateState(raw: RawState): GameState {
     sanitizeSagas(state);
   } catch {
     if (state.user) state.user.sagas = [];
+  }
+  try {
+    sanitizeCareerData(state);
+  } catch {
+    // The additions are optional: a save must always load. Engine code treats every one of them as possibly absent.
   }
   try {
     sanitizeCeremony(state);

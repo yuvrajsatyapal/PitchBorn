@@ -4,10 +4,12 @@ import { MobileAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { Kit } from "@/components/art/Kit";
+import { AmbitionsCard, HistoryCard, IdentityCard, MovesAndFinances, RelationshipsCard, RoleCard, SeasonContext, StrengthCard } from "@/components/game/ClubPanels";
+import { CurrentManager } from "@/components/game/ManagerPanels";
 import { PlayerModal } from "@/components/game/PlayerModal";
 import { RivalryCard } from "@/components/game/RivalryCard";
 import { TeamForm } from "@/components/game/widgets";
-import { Badge, Bar, Card, Empty, PageTitle, Stat, Table, Tabs } from "@/components/ui";
+import { Badge, Card, Empty, PageTitle, Stat, Table, Tabs } from "@/components/ui";
 import { clubName, staticClub, staticLeague, stadium } from "@/engine/data/world";
 import { formatMoney } from "@/engine/players/economy";
 import type { Player } from "@/engine/types";
@@ -38,7 +40,6 @@ export default function ClubPage() {
   const st = staticClub(club.id)!;
   const stad = stadium(st.stadiumId);
   const league = staticLeague(club.leagueId);
-  const rel = g.user.relationships;
   const sorted = [...squad].sort((a, b) =>
     sort === "ovr" ? ovr(b) - ovr(a) : sort === "age" ? age(g, a) - age(g, b) : sort === "value" ? b.value - a.value : ORDER.indexOf(a.position) - ORDER.indexOf(b.position) || ovr(b) - ovr(a),
   );
@@ -57,7 +58,7 @@ export default function ClubPage() {
               <div><dt className="text-xs text-muted">Capacity</dt><dd className="font-semibold">{stad?.capacity.toLocaleString()}</dd></div>
               <div><dt className="text-xs text-muted">City</dt><dd className="font-semibold">{st.city}</dd></div>
               <div><dt className="text-xs text-muted">Founded</dt><dd className="font-semibold">{st.founded ?? "—"}</dd></div>
-              <div><dt className="text-xs text-muted">Manager</dt><dd className="flex items-center gap-1 font-semibold">{club.manager.nationality && <Flag code={club.manager.nationality} />} {club.manager.name}{club.manager.born ? <span className="font-normal text-muted">({g.season - club.manager.born})</span> : null}</dd></div>
+              <CurrentManager g={g} clubId={club.id} />
               <div><dt className="text-xs text-muted">Formation</dt><dd className="font-semibold">{club.formation}</dd></div>
             </dl>
           </div>
@@ -71,23 +72,25 @@ export default function ClubPage() {
             <span className="text-muted">Form</span>
             <TeamForm form={club.form} />
           </div>
+          <SeasonContext g={g} clubId={club.id} />
         </Card>
-        <Card title="Relationships">
-          <div className="grid gap-3">
-            <Bar label="Manager" value={rel.manager} tone="sky" />
-            <Bar label="Teammates" value={rel.teammates} tone="pitch" />
-            <Bar label="Supporters" value={rel.supporters} tone="sun" />
-            <Bar label="Board" value={rel.board} tone="plum" />
-          </div>
-          <p className="mt-3 text-xs text-muted">Good performances earn the manager&apos;s trust (more starts). Supporters love goals; the board hates transfer requests.</p>
-        </Card>
+        <RelationshipsCard g={g} />
       </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <IdentityCard g={g} clubId={club.id} />
+        <RoleCard g={g} />
+        <AmbitionsCard g={g} clubId={club.id} />
+        <StrengthCard g={g} clubId={club.id} />
+      </div>
+      <MovesAndFinances g={g} clubId={club.id} />
+      <HistoryCard g={g} clubId={club.id} />
       <RivalryCard g={g} clubId={club.id} />
       <MobileAdSlot placementId="mobile-inline" />
       <Card title={`Squad (${squad.length})`} action={<Tabs value={sort} onChange={setSort} items={[{ id: "pos", label: "Position" }, { id: "ovr", label: "OVR" }, { id: "age", label: "Age" }, { id: "value", label: "Value" }]} />}>
         <Table>
           <thead>
             <tr>
+              <th className="w-10">#</th>
               <th>Pos</th>
               <th>Player</th>
               <th className="text-right">Age</th>
@@ -103,6 +106,7 @@ export default function ClubPage() {
               const s = Object.values(x.season).reduce((a, b) => ({ apps: a.apps + b.apps, goals: a.goals + b.goals }), { apps: 0, goals: 0 });
               return (
                 <tr key={x.id} className={`cursor-pointer ${x.isUser ? "bg-sun-2 font-bold" : ""}`} onClick={() => setSel(x)}>
+                  <td className="font-black tabular-nums text-muted">{x.squadNo ?? "–"}</td>
                   <td><span className={`rounded-md border-2 border-line px-1 text-xs font-black ${POS_TONE[x.position]}`}>{x.position}</span></td>
                   <td>
                     <span className="flex items-center gap-1.5">

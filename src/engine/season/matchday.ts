@@ -8,14 +8,21 @@ import { detectInjuryComeback, detectMatchMemory, noteLastMatch, rememberMajorIn
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
 import { country, stadium, staticClub, clubName } from "../data/world";
 import { MatchEngine, type MatchInput, type MatchPlayerInput, type MatchResult, type TeamInput } from "../match/engine";
-import { selectTeam, type Selection } from "../match/lineup";
+import { selectTeam, type Selection, type SelectionOpts } from "../match/lineup";
 import { overallFor } from "../players/attributes";
 import { addStat, emptyStat } from "../players/generate";
 import { matchExperience } from "../players/development";
 import { applyInjury, injuryRiskFactor, rollInjury } from "../players/injuries";
-import { clamp, r1, type Rng } from "../rng";
-import type { Competition, Fixture, GameState, Player, StatLine } from "../types";
+import { clamp, r1, Rng } from "../rng";
+import type { Competition, Fixture, FormationId, GameState, Player, StatLine } from "../types";
 import { addNews, addTimeline, fullName, squadOf, userPlayer } from "../world/helpers";
+import { payMatchBonuses } from "../career/bonuses";
+import { adjustRel } from "../career/relationships";
+import { intlTeam } from "../national/identity";
+import { recordMatchLog } from "../stats/matchlog";
+import { settleCommitment } from "./commitments";
+import { currentStint, noteStintMatch } from "../managers/history";
+import { onMatchAgainstFormerManager, rememberBreakthrough } from "../managers/story";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
   const out: Fixture[] = [];
@@ -70,7 +77,21 @@ function managerBias(state: GameState): number {
   return (r - 50) / 12 + (diff === "relaxed" ? 2 : diff === "hardcore" ? -1.5 : 0);
 }
 
-export function teamSelection(state: GameState, teamId: string, fixture: Fixture, rng: Rng | null): Selection {
+/** The random stream the user's club selection draws from for one fixture. */
+export function selectionRng(state: GameState, fixture: Fixture, teamId: string): Rng {
+  return Rng.fromSeed(`sel:${state.seed}:${fixture.id}:${teamId}`);
+}
+
+/** Everything that decides who a side picks for a fixture, shared by the real selection and the explanation of it. */
+export interface SelectionSetup {
+  squad: Player[];
+  formation: FormationId;
+  opts: SelectionOpts;
+  /** The user asked to be rested for this fixture. */
+  resting: boolean;
+}
+
+export function selectionSetup(state: GameState, teamId: string, fixture: Fixture): SelectionSetup {
   const comp = state.competitions[fixture.compId];
   const club = state.clubs[teamId];
   if (club && !isNationalComp(comp)) {
@@ -78,11 +99,25 @@ export function teamSelection(state: GameState, teamId: string, fixture: Fixture
     const squad = squadOf(state, teamId).filter((p) => !(resting && p.isUser));
     const opp = state.clubs[fixture.home === teamId ? fixture.away : fixture.home];
     const rotate = comp?.kind === "cup" && !!opp && opp.reputation < club.reputation - 12 && (fixture.stage ?? "").startsWith("Round");
-    return selectTeam(squad, club.formation, rng, { rotate, managerBias: managerBias(state) });
+    // A request to start this match nudges the manager's view of the user for this fixture only.
+    const asked = state.user.preMatch?.requestedStart?.fixtureId === fixture.id ? ASKED_START_BIAS : 0;
+    return { squad, formation: club.formation, opts: { rotate, managerBias: managerBias(state) + asked, style: club.style }, resting };
   }
   const nt = state.nationalTeams[teamId];
   const squad = (nt?.squad ?? []).map((id) => state.players[id]).filter((p): p is Player => Boolean(p));
-  return selectTeam(squad, "4-3-3", rng, { managerBias: managerBias(state) / 2 });
+  return { squad, formation: "4-3-3", opts: { managerBias: managerBias(state) / 2 }, resting: false };
+}
+
+/** Selection-score points a granted request for a start adds for that one fixture. */
+export const ASKED_START_BIAS = 2;
+
+export function teamSelection(state: GameState, teamId: string, fixture: Fixture, rng: Rng | null): Selection {
+  const { squad, formation, opts } = selectionSetup(state, teamId, fixture);
+  // The user's team is picked from a stream seeded by the fixture, so the line-up the Match Day screen explains is
+  // exactly the one that plays (quick-sim, live play and the preview can never disagree).
+  const user = state.players[state.user.playerId];
+  const withUser = state.clubs[teamId] ? user?.clubId === teamId : !!state.nationalTeams[teamId]?.squad.includes(user?.id ?? "");
+  return selectTeam(squad, formation, withUser ? selectionRng(state, fixture, teamId) : rng, opts);
 }
 
 function teamName(state: GameState, id: string, short = false): string {
@@ -135,6 +170,7 @@ export function buildTeamInput(state: GameState, teamId: string, sel: Selection)
     bench: sel.bench.map((p) => toInput(p, p.position)),
     mentality: 0,
     color: teamColor(state, teamId),
+    style: state.clubs[teamId]?.style,
   };
 }
 
@@ -257,7 +293,14 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     if (nat) {
       p.intl.caps++;
       p.intl.goals += line.goals;
-      if (comp.kind === "international" && !p.intl.tiedTo) p.intl.tiedTo = fixture.home === p.nationality || fixture.away === p.nationality ? p.nationality : p.altNationality;
+      // Only a competitive senior match (a qualifier or tournament game) makes the choice of nation binding.
+      if (comp.kind === "international" && fixture.stage !== "Friendly") {
+        p.intl.compCaps = (p.intl.compCaps ?? 0) + 1;
+        if (!p.intl.tiedTo) {
+          const side = [intlTeam(p), p.nationality, p.altNationality].find((c) => c && (c === fixture.home || c === fixture.away));
+          if (side) p.intl.tiedTo = side;
+        }
+      }
       if (p.intl.debutSeason === undefined) p.intl.debutSeason = state.season;
     }
     // Condition updates
@@ -357,7 +400,7 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
   const u = userPlayer(state);
   const line = res.lines.find((l) => l.id === u.id);
   const nat = isNationalComp(comp);
-  const myTeam = nat ? (fixture.home === u.nationality || fixture.home === u.altNationality ? fixture.home : fixture.away) : u.clubId ?? fixture.home;
+  const myTeam = nat ? (fixture.home === intlTeam(u) ? fixture.home : fixture.away) : u.clubId ?? fixture.home;
   const opp = fixture.home === myTeam ? fixture.away : fixture.home;
   const hg = res.homeGoals;
   const ag = res.awayGoals;
@@ -365,16 +408,27 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
   const theirs = fixture.home === myTeam ? ag : hg;
   const resultText = `${mine}-${theirs}`;
   if (!line) {
+    settleCommitment(state, fixture.id, null);
     addNews(state, { kind: "match", title: `${teamName(state, fixture.home, true)} ${hg}-${ag} ${teamName(state, fixture.away, true)}`, body: `${comp.name} · You were not involved.` });
     return;
   }
+  settleCommitment(state, fixture.id, line.rating);
   state.user.recentRatings.push({ season: state.season, turn: state.turn, rating: line.rating, compId: comp.id, opponent: opp, goals: line.goals, assists: line.assists });
   if (state.user.recentRatings.length > 60) state.user.recentRatings.shift();
+  recordMatchLog(state, fixture, comp, res, line, myTeam);
+  payMatchBonuses(state, fixture, comp, line);
+  if (!nat && u.clubId) {
+    const wasBreakthrough = currentStint(state)?.events.some((e) => e.k === "breakthrough");
+    noteStintMatch(state, u.clubId, line.started, line.goals);
+    if (!wasBreakthrough && currentStint(state)?.events.some((e) => e.k === "breakthrough")) rememberBreakthrough(state);
+    onMatchAgainstFormerManager(state, fixture, comp, line.goals, mine > theirs);
+  }
   state.user.lastMatchTurn = state.turn;
-  const r = state.user.relationships;
-  r.manager = clamp(r.manager + (line.rating - 6.7) * 1.4, 0, 100);
-  r.supporters = clamp(r.supporters + (line.rating - 6.7) * 0.9 + line.goals * 1.2, 0, 100);
-  r.teammates = clamp(r.teammates + (line.assists * 0.8) + (line.rating - 6.6) * 0.4, 0, 100);
+  const oppName = teamName(state, opp, true);
+  const rated = `Rated ${line.rating.toFixed(1)} against ${oppName}`;
+  adjustRel(state, "manager", (line.rating - 6.7) * 1.4, line.rating >= 6.7 ? `${rated}: you earned the manager's trust` : `${rated}: the manager was not impressed`);
+  adjustRel(state, "supporters", (line.rating - 6.7) * 0.9 + line.goals * 1.2, line.goals ? `${line.goals} goal${line.goals > 1 ? "s" : ""} against ${oppName}` : rated);
+  adjustRel(state, "teammates", line.assists * 0.8 + (line.rating - 6.6) * 0.4, line.assists ? `${line.assists} assist${line.assists > 1 ? "s" : ""} for a teammate against ${oppName}` : rated);
   // Milestones
   const ms = state.user.milestones;
   const total = u.career;

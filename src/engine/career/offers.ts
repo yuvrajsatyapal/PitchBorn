@@ -11,7 +11,11 @@ import { agentSkill, chargeCommission } from "./agents";
 import { rememberContractDispute, rememberRejection, rememberTransfer } from "../memory/detect";
 import { loyaltyStand, settlingEffect } from "../traits/career";
 import { noteUserTransfer } from "./rivalry/engine";
-import { receiveIncome } from "./money";
+import { payOnce } from "./money";
+import { onUserJoinedClub } from "../managers/story";
+import { addStintEvent, affinityAt } from "../managers/history";
+import { adjustRel } from "./relationships";
+import { contractClauses, extrasWeekly, normaliseClauses, openingClauses, sanitizeClauses, signingBonusCeiling, CLAUSE_KEYS, type ClauseKey } from "./contracts";
 import { addNews, addTimeline, addToSquad, nextId, removeFromSquad, squadOf, userPlayer } from "../world/helpers";
 
 const ROLE_LABEL: Record<SquadRole, string> = { star: "Star player", first: "First-team regular", rotation: "Rotation", backup: "Squad player", prospect: "Prospect" };
@@ -53,13 +57,16 @@ export function makeTerms(state: GameState, rng: Rng, club: ClubState, p: Player
   const wage = Math.round((base * rng.range(0.9, 1.08) * generosity) / 100) * 100;
   const age = ageOf(p, state.season);
   const years = kind === "loan" ? 1 : age <= 23 ? rng.int(3, 5) : age <= 29 ? rng.int(2, 4) : rng.int(1, 2);
+  const wantedBonus = Math.round((kind === "free" ? wage * rng.int(8, 20) : kind === "renewal" ? wage * rng.int(2, 6) : 0) * (0.9 + agentSkill(state, "negotiation") / 250));
   return {
     terms: {
       wage,
       years,
       role,
-      signingBonus: Math.round((kind === "free" ? wage * rng.int(8, 20) : kind === "renewal" ? wage * rng.int(2, 6) : 0) * (0.9 + agentSkill(state, "negotiation") / 250)),
-      goalBonus: ["ST", "RW", "LW", "AM"].includes(p.position) ? Math.round(wage * 0.04) : 0,
+      // A signing bonus is paid in cash, so a club that cannot afford one does not offer it.
+      signingBonus: Math.min(wantedBonus, signingBonusCeiling(club, p, wage)),
+      goalBonus: 0,
+      ...openingClauses(p, wage, role),
       releaseClause: staticClub(club.id)?.countryCode === "ESP" ? Math.round((marketValue(p, state.season) * rng.range(3, 5)) / 1e6) * 1e6 : undefined,
     },
     maxWage: Math.round(wage * rng.range(1.12, 1.38)),
@@ -96,9 +103,15 @@ function interestIn(state: GameState, club: ClubState, p: Player): number {
   const agent = 0.65 + agentSkill(state, "connections") / 150;
   const request = state.user.transferRequest ? 2 : 1;
   const expiring = p.contract && p.contract.expires <= state.season ? 1.6 : 1;
+  // A release clause a club can pay is an open door: the lower it sits, the more clubs that can afford it try the handle.
+  const clause = p.contract?.releaseClause;
+  const clauseDoor = clause && club.balance >= clause * 0.6 ? 1.35 : 1;
   // The closer a club is to your level (or above it), the likelier its interest.
   const fit = o - level <= 0 ? 1 : Math.exp(-(o - level) / 3);
-  return 0.045 * upgrade * rep * form * agent * request * expiring * outgrown * fit;
+  // A manager the player once worked under nudges interest up or down: bounded, and only ever a multiplier on a
+  // chance that already reflects need, quality and money, so a former manager alone never produces an offer.
+  const bond = affinityAt(state, club.id)?.factor ?? 1;
+  return 0.045 * upgrade * rep * form * agent * request * expiring * outgrown * fit * clauseDoor * bond;
 }
 
 /** What a club would offer, before it becomes a TransferOffer. A diverter may turn it into a transfer saga instead. */
@@ -157,12 +170,14 @@ export function generateUserOffers(state: GameState, rng: Rng, divert?: OfferDiv
       season: state.season,
       history: [kind === "free" ? `${clubName(club.id)} offer you a contract.` : `${clubName(club.id)} bid ${formatMoney(fee)} for you.`],
     };
+    const bond = affinityAt(state, club.id);
+    if (bond && bond.kind === "strong") offer.history.push(`${club.manager.name}, your former manager, wants to work with you again.`);
     state.user.offers.unshift(offer);
     made++;
     addNews(state, {
       kind: "transfer",
       title: kind === "free" ? `${clubName(club.id)} want to sign you` : `${clubName(club.id)} make a bid`,
-      body: kind === "free" ? `Contract offer: ${formatMoney(terms.wage)}/wk, ${terms.years} yrs.` : `${formatMoney(fee)} offered to ${clubName(current?.id ?? null)}.`,
+      body: `${kind === "free" ? `Contract offer: ${formatMoney(terms.wage)}/wk, ${terms.years} yrs.` : `${formatMoney(fee)} offered to ${clubName(current?.id ?? null)}.`}${bond && bond.kind === "strong" ? ` Reunion? ${club.manager.name} knows what you can do.` : ""}`,
       important: true,
     });
   }
@@ -244,10 +259,13 @@ export function expireOffers(state: GameState): void {
   if (state.user.offers.length > 30) state.user.offers = state.user.offers.slice(0, 30);
 }
 
+/** Clauses a counter-offer may ask for. `releaseClause: null` asks for none; leaving a field out keeps the club's figure. */
+export type CounterClauses = Partial<Record<ClauseKey, number>> & { signingBonus?: number; releaseClause?: number | null };
+
 export type NegotiationAction =
   | { type: "accept" }
   | { type: "reject" }
-  | { type: "counter"; wage: number; role?: SquadRole; years?: number; releaseClause?: boolean };
+  | ({ type: "counter"; wage: number; role?: SquadRole; years?: number } & CounterClauses);
 
 export interface NegotiationResult {
   ok: boolean;
@@ -270,7 +288,7 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
     o.status = "rejected";
     o.history.push("You turned the offer down.");
     if (o.kind !== "renewal" && o.kind !== "loan" && !loyaltyStand(state, o)) rememberRejection(state, o);
-    if (o.kind === "renewal") state.user.relationships.board = clamp(state.user.relationships.board - 6, 0, 100);
+    if (o.kind === "renewal") adjustRel(state, "board", -6, "You turned down a new contract");
     return { ok: true, message: "Offer rejected." };
   }
   if (action.type === "accept") {
@@ -281,10 +299,33 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   const club = state.clubs[o.fromClubId];
   const roleOk = !action.role || action.role === o.terms.role || roleRank(action.role) >= roleRank(o.terms.role) || expectedRole(state, club, p) === action.role || rng.chance(0.25);
   const ask = Math.round(action.wage / 100) * 100;
-  o.history.push(`You ask for ${formatMoney(ask)}/wk${action.role ? ` as ${ROLE_LABEL[action.role].toLowerCase()}` : ""}${action.years ? ` over ${action.years} years` : ""}.`);
+  const years = action.years ?? o.terms.years;
+  const askTerms = normaliseClauses(
+    {
+      ...o.terms,
+      wage: ask,
+      role: action.role && roleOk ? action.role : o.terms.role,
+      years,
+      signingBonus: action.signingBonus ?? o.terms.signingBonus,
+      releaseClause: action.releaseClause === null ? undefined : action.releaseClause ?? o.terms.releaseClause,
+      ...Object.fromEntries(CLAUSE_KEYS.filter((k) => action[k] !== undefined).map((k) => [k, action[k]])),
+    },
+    p.position,
+  );
+  // The bank decides what can be paid up front: this is a plain "no", and costs the club no patience.
+  const cap = signingBonusCeiling(club, p, askTerms.wage);
+  if (askTerms.signingBonus > Math.max(cap, o.terms.signingBonus)) {
+    return { ok: false, message: `${clubName(o.fromClubId)} can't afford a signing bonus that large (up to ${formatMoney(Math.max(cap, o.terms.signingBonus))}).` };
+  }
+  const changed = describeAsk(o.terms, askTerms);
+  o.history.push(`You ask for ${formatMoney(ask)}/wk${action.role ? ` as ${ROLE_LABEL[askTerms.role].toLowerCase()}` : ""}${action.years ? ` over ${years} years` : ""}${changed ? `, ${changed}` : ""}.`);
   const agentEdge = 1 + (agentSkill(state, "negotiation") - 40) / 350;
-  if (ask <= o.maxWage * agentEdge && roleOk) {
-    o.terms = { ...o.terms, wage: ask, role: action.role && roleOk ? action.role : o.terms.role, years: action.years ?? o.terms.years };
+  // The club prices the whole package against one ceiling: its own extras are already part of that ceiling, so the
+  // wage it can add is what is left after the extras you ask for.
+  const ceiling = o.maxWage * agentEdge + extrasWeekly(o.terms, p, club, state);
+  const cost = askTerms.wage + extrasWeekly(askTerms, p, club, state);
+  if (cost <= ceiling && roleOk) {
+    o.terms = askTerms;
     o.history.push("They agree to your terms.");
     completeOffer(state, o);
     return { ok: true, message: "Terms agreed!", completed: true };
@@ -294,16 +335,49 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
     o.status = "withdrawn";
     o.history.push(`${clubName(o.fromClubId)} walk away from talks.`);
     if (o.kind === "renewal") rememberContractDispute(state, p.clubId, "renewal");
+    else if (o.sagaId) rememberContractDispute(state, o.fromClubId, `terms-${o.id}`);
+    addNews(state, { kind: "contract", title: `Talks collapse with ${clubName(o.fromClubId)}`, body: o.kind === "renewal" ? "No agreement on a new contract." : "The two sides couldn't agree personal terms.", important: o.kind === "renewal" || !!o.sagaId });
     return { ok: false, message: `${clubName(o.fromClubId)} have withdrawn the offer.` };
   }
-  const newWage = Math.round(Math.min(o.maxWage, (o.terms.wage + Math.min(ask, o.maxWage * 1.1)) / 2) / 100) * 100;
+  const room = Math.max(o.terms.wage, ceiling - extrasWeekly(o.terms, p, club, state));
+  const newWage = Math.round(Math.min(o.maxWage, room, (o.terms.wage + Math.min(ask, o.maxWage * 1.1)) / 2) / 100) * 100;
   o.terms = { ...o.terms, wage: Math.max(o.terms.wage, newWage) };
-  o.history.push(`Counter-offer: ${formatMoney(o.terms.wage)}/wk${!roleOk ? `, role stays ${ROLE_LABEL[o.terms.role].toLowerCase()}` : ""}.`);
+  const over = Math.round((cost / ceiling - 1) * 100);
+  o.history.push(`Counter-offer: ${formatMoney(o.terms.wage)}/wk${!roleOk ? `, role stays ${ROLE_LABEL[o.terms.role].toLowerCase()}` : ""}${over > 0 ? `. Your package is about ${over}% over what they will pay` : ""}.`);
   return { ok: true, message: `They counter with ${formatMoney(o.terms.wage)}/wk.` };
 }
 
+/** A short list of what a counter changes besides the wage, for the negotiation log. */
+function describeAsk(from: ContractTerms, to: ContractTerms): string {
+  const parts: string[] = [];
+  if (to.signingBonus !== from.signingBonus) parts.push(`${formatMoney(to.signingBonus)} signing bonus`);
+  if (to.releaseClause !== from.releaseClause) parts.push(to.releaseClause ? `a ${formatMoney(to.releaseClause)} release clause` : "no release clause");
+  for (const k of CLAUSE_KEYS) if ((to[k] ?? 0) !== (from[k] ?? 0)) parts.push(k === "wageRise" ? `a ${Math.round((to[k] ?? 0) * 100)}% annual rise` : `${CLAUSE_NAME[k]} ${formatMoney(to[k] ?? 0)}`);
+  return parts.join(", ");
+}
+
+const CLAUSE_NAME: Record<ClauseKey, string> = {
+  appearanceBonus: "appearance bonus",
+  goalBonus: "goal bonus",
+  assistBonus: "assist bonus",
+  cleanSheetBonus: "clean-sheet bonus",
+  trophyBonus: "trophy bonus",
+  promotionBonus: "promotion bonus",
+  wageRise: "annual rise",
+};
+export { CLAUSE_NAME };
+
 function roleRank(r: SquadRole): number {
   return { prospect: 0, backup: 1, rotation: 2, first: 3, star: 4 }[r];
+}
+
+/** The signing bonus is paid when the contract is signed, once, by the club that signs the player. */
+function paySigningBonus(state: GameState, o: TransferOffer): void {
+  if (!o.terms.signingBonus) return;
+  if (payOnce(state, `sign:${o.id}`, o.terms.signingBonus, "signing")) {
+    const club = state.clubs[o.fromClubId];
+    if (club) club.balance -= o.terms.signingBonus;
+  }
 }
 
 function completeOffer(state: GameState, o: TransferOffer) {
@@ -321,13 +395,12 @@ function completeOffer(state: GameState, o: TransferOffer) {
       expires: Math.min(Math.max(current, season - (afterSeason ? 0 : 1)) + o.terms.years, season + 6),
       signed: season,
       role: o.terms.role,
-      releaseClause: o.terms.releaseClause,
-      goalBonus: o.terms.goalBonus,
+      ...contractClauses(o.terms),
     };
-    receiveIncome(state, o.terms.signingBonus);
+    paySigningBonus(state, o);
     chargeCommission(state, o.terms.wage, o.terms.signingBonus);
     p.morale = clamp(p.morale + 6, 0, 100);
-    state.user.relationships.board = clamp(state.user.relationships.board + 8, 0, 100);
+    adjustRel(state, "board", 8, "You signed a new contract");
     addTimeline(state, { kind: "contract", title: `New contract with ${clubName(club.id)}`, detail: `${formatMoney(o.terms.wage)}/wk until ${p.contract.expires + 1}` });
     addNews(state, { kind: "contract", title: "Contract extension signed", body: `${formatMoney(o.terms.wage)}/wk · ${o.terms.years} years`, important: true });
     return;
@@ -343,6 +416,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
     addNews(state, { kind: "transfer", title: `Loan to ${clubName(club.id)} completed`, important: true });
     state.user.relationships.manager = 50;
     state.user.wantsLoan = false;
+    onUserJoinedClub(state, club.id);
     return;
   }
   const seller = from ? state.clubs[from] : null;
@@ -357,10 +431,9 @@ function completeOffer(state: GameState, o: TransferOffer) {
     expires: season + o.terms.years - (afterSeason ? 0 : 1),
     signed: season,
     role: o.terms.role,
-    releaseClause: o.terms.releaseClause,
-    goalBonus: o.terms.goalBonus,
+    ...contractClauses(o.terms),
   };
-  receiveIncome(state, o.terms.signingBonus);
+  paySigningBonus(state, o);
   chargeCommission(state, o.terms.wage, o.terms.signingBonus);
   state.user.transfers.push({ season, turn: state.turn, from, to: club.id, fee: o.fee, kind: o.kind });
   rememberTransfer(state, from, club.id, o.fee);
@@ -369,6 +442,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
   const settle = settlingEffect(p, from ? staticClub(from)?.countryCode : undefined, staticClub(club.id)?.countryCode);
   state.user.relationships = { ...state.user.relationships, manager: clamp(52 + settle.manager, 30, 80), teammates: 48, supporters: 50, board: 55 };
   p.morale = clamp(p.morale + 10 + settle.morale, 0, 100);
+  onUserJoinedClub(state, club.id);
   state.transferLog.push({ season, turn: state.turn, playerId: p.id, name: `${p.firstName} ${p.lastName}`, from, to: club.id, fee: o.fee });
   addTimeline(state, {
     kind: "transfer",
@@ -424,6 +498,7 @@ export function rolloverUserContract(state: GameState): void {
     if (p.contract && p.contract.expires > state.season) {
       addToSquad(state, p.id, parent);
       addNews(state, { kind: "transfer", title: `Loan over — back at ${clubName(parent)}`, important: true });
+      onUserJoinedClub(state, parent);
     } else {
       p.clubId = null;
     }
@@ -440,13 +515,15 @@ export function rolloverUserContract(state: GameState): void {
   }
 }
 
+export { sanitizeClauses };
+
 export function setTransferRequest(state: GameState, on: boolean): string {
   state.user.transferRequest = on;
-  const r = state.user.relationships;
   if (on) {
-    r.board = clamp(r.board - 12, 0, 100);
-    r.supporters = clamp(r.supporters - 10, 0, 100);
-    r.manager = clamp(r.manager - 6, 0, 100);
+    adjustRel(state, "board", -12, "You handed in a transfer request");
+    addStintEvent(state, "transfer-dispute");
+    adjustRel(state, "supporters", -10, "You handed in a transfer request");
+    adjustRel(state, "manager", -6, "You handed in a transfer request");
     addNews(state, { kind: "career", title: "Transfer request submitted", body: "Clubs will be alerted that you are available.", important: true });
     return "Your agent has made it known you want to leave.";
   }

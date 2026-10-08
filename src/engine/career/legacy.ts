@@ -1,4 +1,5 @@
 import { clubName, staticLeague } from "../data/world";
+import { intlTeam } from "../national/identity";
 import { positionGroup } from "../players/attributes";
 import { ageOf } from "../players/generate";
 import type { GameState, LegacyResult } from "../types";
@@ -6,6 +7,8 @@ import { identityOf } from "../traits/identity";
 import { userPlayer } from "../world/helpers";
 import { honourStories } from "../awards/honours";
 import { rivalryStory } from "./rivalry/engine";
+import { influentialManagerLegacy } from "../managers/legacy";
+import { iconicNumber, retireNumberHonour } from "../jersey/legacy";
 
 export const LEGACY_TIERS: [number, string][] = [
   [650, "All-Time Great"],
@@ -55,7 +58,7 @@ export function careerStories(state: GameState): string[] {
   if (serious.length && hist.some((h) => h.season > serious[0].season && h.stats.apps >= 25 && h.stats.ratingSum / Math.max(1, h.stats.apps) >= 7)) stories.push("Injury Comeback — fought back from a career-threatening injury.");
   if (golden >= 1 || p.reputation >= 92) stories.push(golden >= 3 ? `Superstar — ${golden} Golden Pitch awards; one of the faces of the sport.` : "Superstar — the world knew the name.");
   if (p.hidden.potential >= 90 && peak < 77) stories.push("Failed Prospect — the potential was there, the career never quite followed.");
-  if (majorTournament || p.intl.caps >= 100 || p.intl.goals >= 40) stories.push(majorTournament ? "International Hero — lifted a major international trophy." : `International Hero — ${p.intl.caps} caps for ${p.intl.tiedTo ?? p.nationality}.`);
+  if (majorTournament || p.intl.caps >= 100 || p.intl.goals >= 40) stories.push(majorTournament ? "International Hero — lifted a major international trophy." : `International Hero — ${p.intl.caps} caps for ${intlTeam(p)}.`);
   if (tierAtStart >= 3 && reachedTop) stories.push("Lower-League Rise — from the third tier to the top flight.");
   const lastSeasons = hist.slice(-3);
   if (lastSeasons.length === 3 && lastSeasons.every((h) => h.age >= 34 && h.stats.apps >= 25 && h.stats.ratingSum / Math.max(1, h.stats.apps) >= 6.8)) stories.push("Veteran Leader — still starting week in, week out deep into their thirties.");
@@ -113,5 +116,9 @@ export function computeLegacy(state: GameState): LegacyResult {
   const stories = careerStories(state);
   const headline = `${p.firstName} ${p.lastName}: ${tier}`;
   const identity = identityOf(state, p);
-  return { score, tier, breakdown: parts.sort((a, b) => b.points - a.points), stories, headline, identity };
+  const influentialManager = influentialManagerLegacy(state);
+  const iconic = iconicNumber(state);
+  const retired = retireNumberHonour(state);
+  if (iconic && retired && retired.no === iconic.no) iconic.lines.push(`${clubName(retired.clubId)} retired the number.`);
+  return { score, tier, breakdown: parts.sort((a, b) => b.points - a.points), stories, headline, identity, influentialManager, iconicNumber: iconic };
 }

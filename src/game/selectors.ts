@@ -1,4 +1,5 @@
 import { clubName, countryName, staticLeague } from "@/engine/data/world";
+import { intlTeam } from "@/engine/national/identity";
 import { leagueCompId } from "@/engine/competitions/setup";
 import { overallFor } from "@/engine/players/attributes";
 import { ageOf, avgRating, emptyStat, addStat } from "@/engine/players/generate";
@@ -33,7 +34,7 @@ export function userFixtures(g: GameState): { comp: Competition; f: Fixture }[] 
   const p = user(g);
   const list: { comp: Competition; f: Fixture }[] = [];
   if (p.clubId) list.push(...teamFixtures(g, p.clubId));
-  const nat = p.intl.tiedTo ?? p.nationality;
+  const nat = intlTeam(p);
   for (const x of teamFixtures(g, nat)) if (x.comp.kind === "international") list.push(x);
   return list.sort((a, b) => a.f.turn - b.f.turn || a.f.round - b.f.round);
 }

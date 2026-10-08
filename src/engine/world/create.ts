@@ -8,6 +8,10 @@ import { bestFormation } from "../match/lineup";
 import { overallFor } from "../players/attributes";
 import { clubRevenue, marketValue, wageFor } from "../players/economy";
 import { emptyStat, generatePlayer, randomHidden, randomName } from "../players/generate";
+import { jerseyOf, recordNumber, repairAllSquads } from "../jersey/numbers";
+import { managerPool } from "./managers";
+import { ensureManagerIds } from "../managers/registry";
+import { openStint } from "../managers/history";
 import { clamp, Rng } from "../rng";
 import type {
   Appearance, ClubState, CountryCode, FormationId, GameState, NationalTeamState, Player, Position, SquadRole,
@@ -345,6 +349,11 @@ export function createWorld(input: NewCareerInput): GameState {
       milestones: [],
       retired: false,
       recentRatings: [],
+      matchLog: [],
+      reserveLog: [],
+      relLog: [],
+      pay: { career: {}, season: { season, amounts: {} }, paid: [] },
+      intl: { history: [], cooldownUntil: 0 },
       injuryHistory: [],
       rewardCooldowns: {},
       trainingHistory: [],
@@ -390,6 +399,12 @@ export function createWorld(input: NewCareerInput): GameState {
   state.user.peakOverall = overallFor(user.attrs, user.position);
 
   setupSeason(state, rng);
+  managerPool(state);
+  ensureManagerIds(state);
+  openStint(state, input.clubId);
+  repairAllSquads(state);
+  recordNumber(state, input.clubId, user.squadNo as number);
+  jerseyOf(state).choice = true;
   state.rng = rng.state();
   addTimeline(state, {
     kind: "start",

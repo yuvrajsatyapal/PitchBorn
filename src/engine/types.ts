@@ -5,6 +5,7 @@ export type PlayerId = string;
 export type ClubId = string;
 export type CountryCode = string;
 export type CompetitionId = string;
+export type ManagerId = string;
 
 export const POSITIONS = ["GK", "RB", "CB", "LB", "DM", "CM", "AM", "RW", "LW", "ST"] as const;
 export type Position = (typeof POSITIONS)[number];
@@ -70,6 +71,13 @@ export interface Contract {
   releaseClause?: number;
   goalBonus?: number;
   appearanceBonus?: number;
+  /** Paid per assist, per clean sheet (keepers and defenders), when the club wins a trophy, and on promotion. */
+  assistBonus?: number;
+  cleanSheetBonus?: number;
+  trophyBonus?: number;
+  promotionBonus?: number;
+  /** Fraction added to the weekly wage at each season rollover while the contract runs (0.05 = +5% a year). */
+  wageRise?: number;
   youth?: boolean;
 }
 
@@ -165,8 +173,23 @@ export interface Player {
   season: Record<CompetitionId, StatLine>;
   career: StatLine;
   history: SeasonRecord[];
-  intl: { caps: number; goals: number; tiedTo?: CountryCode; retired: boolean; debutSeason?: number };
+  intl: {
+    caps: number;
+    goals: number;
+    /** Cap-tied: a competitive senior international has been played for this nation, so the choice is binding. */
+    tiedTo?: CountryCode;
+    retired: boolean;
+    debutSeason?: number;
+    /** The nation the player has chosen to represent. Absent means their nationality. Never changes without a decision. */
+    allegiance?: CountryCode;
+    /** How many times the allegiance has been switched (at most one). */
+    switches?: number;
+    /** Competitive (non-friendly) senior caps: the first one makes the allegiance binding. */
+    compCaps?: number;
+  };
   look: Appearance;
+  /** Shirt number at the current club (1–99), unique within the squad. Kept after leaving as the last number worn. */
+  squadNo?: number;
   /** Players outside the simulated club pyramid (national-team depth pool). */
   virtual?: boolean;
   isUser?: boolean;
@@ -191,11 +214,14 @@ export interface ClubState {
   balance: number; // euros
   formation: FormationId;
   style: { pressing: number; tempo: number; directness: number }; // 0-1
-  manager: { name: string; quality: number; since: number; nationality: CountryCode; born?: number };
+  /** `id` is the stable key into `GameState.managers`; absent only in saves older than manager history (added on load). */
+  manager: { id?: ManagerId; name: string; quality: number; since: number; nationality: CountryCode; born?: number };
   youth: number; // academy quality 1-100
   facilities: number; // training facilities 1-100
   squad: PlayerId[];
   captain?: PlayerId;
+  /** Numbers the club has retired for a player (very rare). */
+  retiredNumbers?: { no: number; playerId: PlayerId; season: number }[];
   form: ("W" | "D" | "L")[];
   /** Season objective rank (expected finish). */
   expectation?: number;
@@ -290,6 +316,8 @@ export interface NationalTeamState {
   code: CountryCode;
   strength: number;
   squad: PlayerId[];
+  /** Squad numbers for the picked squad, separate from club numbers. */
+  numbers?: Record<PlayerId, number>;
   manager: string;
   /** Last results */
   form: ("W" | "D" | "L")[];
@@ -431,6 +459,12 @@ export interface ContractTerms {
   releaseClause?: number;
   signingBonus: number;
   goalBonus: number;
+  appearanceBonus?: number;
+  assistBonus?: number;
+  cleanSheetBonus?: number;
+  trophyBonus?: number;
+  promotionBonus?: number;
+  wageRise?: number;
 }
 
 export interface TransferOffer {
@@ -602,6 +636,10 @@ export interface CareerDecision {
   fallback: string;
   /** Set for decisions that belong to a transfer saga. */
   sagaId?: string;
+  /** Set for an invitation to represent another national team (see engine/national/allegiance.ts). */
+  intlCode?: string;
+  /** Set for an offer to take a vacated squad number (see engine/jersey/numbers.ts). */
+  jerseyNo?: number;
 }
 
 export interface Relationships {
@@ -641,7 +679,7 @@ export type MemoryKind =
   | "major-injury" | "injury-comeback"
   | "big-transfer" | "controversial-transfer" | "transfer-rejected" | "return-to-club" | "captaincy"
   | "promotion" | "relegation" | "contract-dispute" | "financial-exit" | "manager-conflict" | "career-decision"
-  | "retirement" | "final-match" | "identity" | "transfer-saga" | "rivalry";
+  | "retirement" | "final-match" | "identity" | "transfer-saga" | "rivalry" | "manager-bond" | "shirt-number";
 
 export type RecallReason = "anniversary" | "origin" | "former-club" | "opponent-history" | "venue" | "grudge";
 
@@ -693,6 +731,229 @@ export interface Memory {
   /** Times resurfaced and when last (turn index), for anti-spam. */
   recall?: { shown: number; lastTurnIndex?: number };
   backfilled?: boolean;
+}
+
+
+/** One senior match the user played, kept for charts and breakdowns. Only facts the match produced. */
+export interface MatchLogEntry {
+  season: number;
+  turn: number;
+  fixtureId: string;
+  compId: string;
+  compKind: CompetitionKind;
+  /** The user's team (club or country) and the opposition. */
+  team: string;
+  opponent: string;
+  home: boolean;
+  /** Score from the user's side: [for, against]. Penalty shoot-outs are not part of it. */
+  score: [number, number];
+  pens?: [number, number];
+  result: "W" | "D" | "L";
+  slot: Position;
+  started: boolean;
+  /** Absent for entries rebuilt from saves that never recorded minutes. */
+  minutes?: number;
+  rating: number;
+  goals: number;
+  assists: number;
+  shots?: number;
+  keyPasses?: number;
+  tackles?: number;
+  saves?: number;
+  cleanSheet?: boolean;
+  stage?: string;
+}
+
+/** A development-squad (U21) game. Kept apart from senior matches: the two are never averaged together. */
+export interface ReserveLogEntry {
+  season: number;
+  turn: number;
+  rating: number;
+  goals: number;
+  assists: number;
+}
+
+export type PayKind = "wage" | "signing" | "appearance" | "goal" | "assist" | "cleanSheet" | "trophy" | "promotion" | "other" | "earlier";
+
+/**
+ * Where the user's income came from. `paid` holds the keys of one-off payments already made, so a bonus can never be
+ * paid twice (after a reload, a re-simulated week, a season rollover or a repeated click).
+ */
+export interface PayLedger {
+  career: Partial<Record<PayKind, number>>;
+  season: { season: number; amounts: Partial<Record<PayKind, number>> };
+  paid: string[];
+}
+
+export type IntlInviteOutcome = "accepted" | "declined" | "expired";
+
+export interface IntlInvitation {
+  code: CountryCode;
+  createdIndex: number;
+  /** Absolute turn index after which an unanswered invitation lapses. */
+  expiresIndex: number;
+  /** Turn index at which a deferred invitation comes back, if any. */
+  returnIndex?: number;
+  deferrals: number;
+  /** The football reasons it was made, from the squads as they were. */
+  reasons: string[];
+  /** Overall of the user when it was made: a later approach needs a material change. */
+  ovr: number;
+}
+
+export interface IntlRecord {
+  code: CountryCode;
+  outcome: IntlInviteOutcome;
+  index: number;
+  ovr: number;
+}
+
+export interface IntlState {
+  invitation?: IntlInvitation;
+  history: IntlRecord[];
+  /** Turn index before which no new invitation is considered. */
+  cooldownUntil: number;
+}
+
+export type ObjectiveKind = "title" | "promotion" | "continental" | "top-half" | "survive" | "cup-run" | "develop";
+
+export interface SeasonObjective {
+  id: string;
+  kind: ObjectiveKind;
+  /** League position the objective needs (or the best the club must stay at or above), where relevant. */
+  target?: number;
+  /** Cup round to reach, where relevant. */
+  round?: number;
+  /** Decided at the end of the season: met, missed, or still open. */
+  status: "open" | "met" | "missed";
+}
+
+export interface ClubObjectives {
+  season: number;
+  clubId: ClubId;
+  items: SeasonObjective[];
+  /** The board has been told how it went (applied once). */
+  settled?: boolean;
+}
+
+export interface RelChange {
+  index: number;
+  season: number;
+  turn: number;
+  rel: keyof Relationships;
+  delta: number;
+  cause: string;
+}
+
+export interface PreMatchState {
+  /** Turn index each pre-match request was last made: the cooldowns. */
+  last: Record<string, number>;
+  /** A promise made to the manager for a coming match. */
+  commitment?: { fixtureId: string; kind: "performance"; goals?: number; rating?: number; index: number };
+  /** Turn index of a playing-time request still awaiting its match. */
+  requestedStart?: { fixtureId: string; index: number };
+  /** Turn index of an accepted substitute role. */
+  acceptedBench?: { fixtureId: string };
+}
+
+// ---------------------------------------------------------------------------------------------------- managers
+
+export type DepartureReason = "sacked" | "resigned" | "moved" | "retired" | "contract";
+
+export interface TenureHonours {
+  league: number;
+  cup: number;
+  continental: number;
+  promotions: number;
+  relegations: number;
+}
+
+/** One spell in charge of a club. Open while `to` is absent. */
+export interface Tenure {
+  clubId: ClubId;
+  from: { season: number; turn: number };
+  to?: { season: number; turn: number };
+  /** Only set when the simulation knows why it ended. */
+  reason?: DepartureReason;
+  /** The club he left for, for a move. */
+  movedTo?: ClubId;
+  /** League position (and size) when it ended or at the last season's end, where known. */
+  pos?: number;
+  honours: TenureHonours;
+  /** True for the spell already under way when the career started: its true start is not known. */
+  inherited?: boolean;
+}
+
+/** A manager's career in the simulated world. Compact: one record per manager, tenures only. */
+export interface ManagerRecord {
+  id: ManagerId;
+  name: string;
+  nationality: CountryCode;
+  born?: number;
+  tenures: Tenure[];
+  retired?: number;
+}
+
+export type StintEventKind = "breakthrough" | "captain" | "playing-dispute" | "transfer-dispute" | "fallout" | "reunion" | "honour" | "talk";
+
+/** The user's time under one manager at one club. Structured and small: ids and counts, not prose. */
+export interface PlayerManagerStint {
+  managerId: ManagerId;
+  clubId: ClubId;
+  from: { season: number; turn: number };
+  to?: { season: number; turn: number };
+  /** Manager relationship (0–100) when it began and ended. */
+  relStart: number;
+  relEnd?: number;
+  /** Senior club appearances and starts under him. */
+  apps: number;
+  starts: number;
+  goals: number;
+  honours: TenureHonours;
+  /** Notable moments, capped; each is a kind and when. */
+  events: { k: StintEventKind; s: number; t: number }[];
+  /** The two had worked together before. */
+  reunion?: boolean;
+  /** Why it ended, where the simulation knows. */
+  ended?: DepartureReason | "player-left";
+  /** The shared past already shaped the opening relationship (applied once). */
+  relNudged?: boolean;
+}
+
+export interface UserManagerState {
+  stints: PlayerManagerStint[];
+  /** Matches played against a former manager's side, by manager. */
+  meetings: Record<ManagerId, number>;
+  /** News or events already shown, so none repeats. */
+  seen: string[];
+}
+
+// ------------------------------------------------------------------------------------------------------ jersey
+
+export interface NumberTenure {
+  clubId: ClubId;
+  no: number;
+  from: { season: number; turn: number };
+  to?: { season: number; turn: number };
+}
+
+export interface IntlNumber {
+  code: CountryCode;
+  no: number;
+  season: number;
+}
+
+export interface JerseyState {
+  /** Club number tenures, merged: a new record only when the club or the number changes. */
+  history: NumberTenure[];
+  /** National-team numbers worn, one per nation per season at most. */
+  intl: IntlNumber[];
+  /** A free choice of number is waiting (new club, first number). */
+  choice?: boolean;
+  /** Season of the last voluntary change. */
+  changedSeason?: number;
+  /** Numbers the player turned down when offered, so they are not offered again this season. */
+  declined?: { season: number; nos: number[] };
 }
 
 export type AgentTier = "none" | "rookie" | "established" | "top" | "super";
@@ -783,6 +1044,23 @@ export interface UserCareer {
   retired: boolean;
   retiredSeason?: number;
   legacy?: LegacyResult;
+  /** Every senior match played, newest last, capped. Charts and breakdowns read this. */
+  matchLog?: MatchLogEntry[];
+  /** Development-squad games, newest last, capped. */
+  reserveLog?: ReserveLogEntry[];
+  /** Itemised income and the one-off payments already made. */
+  pay?: PayLedger;
+  /** International allegiance: invitations from other eligible nations and what was decided. */
+  intl?: IntlState;
+  /** This season's club objectives. */
+  objectives?: ClubObjectives;
+  /** Managers the user has played under, and what they shared. */
+  mgr?: UserManagerState;
+  /** Shirt-number history and choices. */
+  jersey?: JerseyState;
+  /** What recently moved the four relationships, so the Club page can say why. */
+  relLog?: RelChange[];
+  preMatch?: PreMatchState;
   /** Recent match ratings for UI sparkline */
   recentRatings: { season: number; turn: number; rating: number; compId: string; opponent: string; goals: number; assists: number }[];
   injuryHistory: { season: number; type: string; weeks: number }[];
@@ -807,6 +1085,9 @@ export interface LegacyResult {
   breakdown: { label: string; points: number }[];
   stories: string[];
   headline: string;
+  /** The manager who shaped the career most, and the number most tied to it, when the evidence supports either. */
+  influentialManager?: { managerId: ManagerId; name: string; lines: string[] };
+  iconicNumber?: { no: number; seasons: number; clubs: ClubId[]; lines: string[] };
   /** What kind of footballer this was, from traits, stats and career (see engine/traits/identity.ts). */
   identity?: { label: string; lines: string[]; traits: TraitId[] };
 }
@@ -836,6 +1117,7 @@ export interface PendingMatch {
 }
 
 export interface PoolManager {
+  id?: ManagerId;
   name: string;
   nationality: CountryCode;
   quality: number;
@@ -868,6 +1150,8 @@ export interface GameState {
   /** The latest end-of-season awards ceremony. Optional so old saves load. */
   ceremony?: SeasonCeremony;
   records: WorldRecord[];
+  /** Every manager's career, by stable id. */
+  managers?: Record<ManagerId, ManagerRecord>;
   /** Hall of fame of retired notable NPCs (name + totals) to keep records after removal. */
   legends: { id: PlayerId; name: string; nationality: CountryCode; goals: number; apps: number; caps: number; peak: number; retiredSeason: number }[];
   transferLog: { season: number; turn: number; playerId: PlayerId; name: string; from: ClubId | null; to: ClubId; fee: number }[];

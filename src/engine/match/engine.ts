@@ -45,6 +45,8 @@ export interface TeamInput {
   /** -1 defensive .. +1 attacking */
   mentality: number;
   color: string;
+  /** How the club plays (0–1 each). Shifts the three zones by a few percent either way; absent for national sides. */
+  style?: { pressing: number; tempo: number; directness: number };
 }
 
 export interface MatchInput {
@@ -354,10 +356,16 @@ export class MatchEngine {
       agg.againstXgLong *= fx.againstXgLong ?? 1;
       agg.againstXg1v1 *= fx.againstXg1v1 ?? 1;
     }
+    // Style is bounded and symmetrical about neutral: pressing wins the midfield, tempo and directness open the game up
+    // at both ends, and a direct side gives up some control of the ball.
+    const st = t.input.style;
+    const styleMid = st ? 1 + (st.pressing - 0.5) * 0.04 - (st.directness - 0.5) * 0.03 : 1;
+    const styleAtt = st ? 1 + (st.tempo - 0.5) * 0.03 + (st.directness - 0.5) * 0.02 : 1;
+    const styleDef = st ? 1 - (st.tempo - 0.5) * 0.02 + (st.pressing - 0.5) * 0.015 : 1;
     t.cache = {
-      mid: mid * penalty * homeBoost * (1 + clamp(teamMid, -0.05, 0.06)),
-      att: att * penalty * homeBoost * (1 + mentality * 0.03) * (1 + clamp(teamAtt, -0.05, 0.06)),
-      def: def * penalty * homeBoost * (1 - mentality * 0.03) * (1 + clamp(teamDef, -0.05, 0.06)),
+      mid: mid * penalty * homeBoost * styleMid * (1 + clamp(teamMid, -0.05, 0.06)),
+      att: att * penalty * homeBoost * styleAtt * (1 + mentality * 0.03) * (1 + clamp(teamAtt, -0.05, 0.06)),
+      def: def * penalty * homeBoost * styleDef * (1 - mentality * 0.03) * (1 + clamp(teamDef, -0.05, 0.06)),
       gk,
       agg: agg ?? NEUTRAL_AGG,
     };

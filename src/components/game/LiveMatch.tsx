@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSuppressAds } from "@/ads/AdContext";
 import { Crest } from "@/components/art/Crest";
+import { ShirtNo } from "@/components/game/NumberPicker";
 import { Badge, Button, Card, Rating } from "@/components/ui";
 import type { MatchEvent } from "@/engine/match/engine";
 import type { PreparedMatch } from "@/engine/season/matchday";
@@ -27,6 +28,10 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
   const [flash, setFlash] = useState(false);
   const feedRef = useRef<HTMLOListElement>(null);
   const uid = useGame((s) => s.game?.user.playerId);
+  const myNo = useGame((s) => (s.game && uid ? s.game.players[uid]?.squadNo : undefined));
+  const players = useGame((s) => s.game?.players);
+  const compKind = useGame((s) => s.game?.competitions[prepared.fixture.compId]?.kind);
+  const clubGame = compKind !== "international" && compKind !== "friendly";
   const tick = useCallback(() => {
     if (eng.finished || eng.pending) return;
     const evs = eng.step();
@@ -121,7 +126,10 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
               <li key={events.length - i} className={`anim-slide flex gap-2 rounded-lg px-2 py-1.5 text-sm ${e.type === "goal" ? "border-2 border-line bg-pitch-2 font-bold" : e.user ? "bg-sun-2" : ""}`}>
                 <span className="scoreboard w-8 shrink-0 text-xs text-muted">{e.minute}&apos;</span>
                 <span aria-hidden>{ICON[e.type] ?? "•"}</span>
-                <span>{e.text}</span>
+                <span>
+                  {e.type === "goal" && e.playerId && players?.[e.playerId]?.squadNo !== undefined && players[e.playerId].clubId && clubGame ? <b className="mr-1 tabular-nums">#{players[e.playerId].squadNo}</b> : null}
+                  {e.text}
+                </span>
               </li>
             ))}
           </ol>
@@ -131,7 +139,7 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
             {prepared.userSide ? (
               <div className="grid gap-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span>{prepared.userStarting ? "Starting XI" : onPitch ? "On from the bench" : userLine ? "Substituted" : "On the bench"}</span>
+                  <span className="flex items-center gap-2">{myNo !== undefined && <ShirtNo no={myNo} size="sm" />}{prepared.userStarting ? "Starting XI" : onPitch ? "On from the bench" : userLine ? "Substituted" : "On the bench"}</span>
                   <Rating v={userLine?.rating} />
                 </div>
                 {userLine && (

@@ -9,6 +9,7 @@
  *
  * It is deterministic and draws no random numbers, so adding it does not change any existing seed.
  */
+import { intlTeam } from "../../national/identity";
 import { clubName, country } from "../../data/world";
 import { rivalryLevel } from "../../memory/rivalry";
 import { Factors } from "../../memory/score";
@@ -615,12 +616,12 @@ export interface RivalPreview {
 export function matchPreview(state: GameState, fixture: Fixture, comp: Competition | undefined): RivalPreview | null {
   const me = userPlayer(state);
   const nat = comp?.kind === "international";
-  const mine = nat ? (fixture.home === (me.intl.tiedTo ?? me.nationality) || fixture.home === me.nationality ? fixture.home : fixture.away) : me.clubId;
+  const mine = nat ? (fixture.home === intlTeam(me) ? fixture.home : fixture.away) : me.clubId;
   const opp = fixture.home === mine ? fixture.away : fixture.home;
   for (const rv of [...rivalryOf(state).rivals].filter((r) => r.status !== "ended").sort((a, b) => b.intensity - a.intensity)) {
     const p = state.players[rv.playerId];
     if (!p || p.retired) continue;
-    const onOpp = nat ? (p.intl.tiedTo ?? p.nationality) === opp || p.nationality === opp : p.clubId === opp;
+    const onOpp = nat ? intlTeam(p) === opp || p.nationality === opp : p.clubId === opp;
     if (!onOpp) continue;
     const place = nat ? country(opp)?.name ?? opp : clubName(opp, true);
     const race = raceStanding(state, rv);

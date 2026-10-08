@@ -39,8 +39,19 @@ import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
 import { careerProfile } from "../traits/effects";
 import { rememberManagerConflict, rememberPromotionOrRelegation, rememberRecord, rememberRetirement } from "../memory/detect";
 import { receiveIncome } from "../career/money";
+import { applyWageRise, payPromotionBonus } from "../career/bonuses";
+import { adjustRel } from "../career/relationships";
+import { canRestFor } from "./selection";
+import { rolePromiseBroken } from "../club/role";
+import { stepInvitations } from "../national/allegiance";
+import { ensureObjectives, settleObjectives } from "../club/objectives";
+import { endNumberTenure, offerVacatedNumber, repairAllSquads } from "../jersey/numbers";
+import { replaceManager, seasonBoundaryManagers } from "../managers/movement";
+import { creditHonour } from "../managers/registry";
+import { announceFormerManagers } from "../managers/story";
+import { addStintEvent, closeStint, creditStintHonour } from "../managers/history";
+import { recordReserveLog } from "../stats/matchlog";
 import { assignRoles } from "../world/create";
-import { hireManager, releaseManager } from "../world/managers";
 import { addNews, addTimeline, fullName, squadOf, userPlayer, withRng } from "../world/helpers";
 import { applyMatchResult, fixturesForTurn, involvesUserTeam, prepareMatch, type TurnRatings } from "./matchday";
 
@@ -57,9 +68,11 @@ export function beginTurn(state: GameState): void {
       scheduleInternationalWindow(state, rng);
     }
   });
+  ensureObjectives(state);
   state.pending = fixturesForTurn(state)
     .filter((f) => involvesUserTeam(state, f))
     .map((f) => ({ fixtureId: f.id, compId: f.compId }));
+  announceFormerManagers(state);
 }
 
 export function findFixture(state: GameState, fixtureId: string) {
@@ -90,11 +103,16 @@ export function simUserMatch(state: GameState, fixtureId: string): MatchResult |
   return res;
 }
 
-/** Can the player ask to be rested this week? (club match pending, not injured, not already resting) */
+/** Can the player ask to be rested this week? Only if a club match is pending and they would actually be playing in it. */
 export function canRequestRest(state: GameState): boolean {
   const p = userPlayer(state);
-  if (!p.clubId || p.injury || state.user.retired || state.user.restTurnIndex === state.turnIndex) return false;
-  return state.pending.some((pm) => state.competitions[pm.compId]?.kind !== "international" && state.competitions[pm.compId]?.kind !== "friendly");
+  if (!p.clubId || p.injury || p.suspension > 0 || state.user.retired || state.user.restTurnIndex === state.turnIndex) return false;
+  return state.pending.some((pm) => {
+    const comp = state.competitions[pm.compId];
+    if (!comp || comp.kind === "international" || comp.kind === "friendly") return false;
+    const f = comp.fixtures.find((x) => x.id === pm.fixtureId);
+    return !!f && canRestFor(state, f);
+  });
 }
 
 /**
@@ -106,7 +124,7 @@ export function requestRest(state: GameState): string {
   const p = userPlayer(state);
   state.user.restTurnIndex = state.turnIndex;
   const fresh = p.fitness >= 85;
-  state.user.relationships.manager = clamp(state.user.relationships.manager - (fresh ? 5 : 1.5), 0, 100);
+  adjustRel(state, "manager", -(fresh ? 5 : 1.5), fresh ? "Asked to be rested while looking fresh" : "Asked to be rested when tired");
   addNews(state, {
     kind: "club",
     title: "Rested this week",
@@ -134,6 +152,7 @@ function awardCompletedTrophies(state: GameState): void {
   for (const comp of Object.values(state.competitions)) {
     if (comp.complete && comp.winner && !comp.trophyAwarded && comp.season === state.season) {
       comp.trophyAwarded = true;
+      if (comp.winner && state.clubs[comp.winner] && (comp.kind === "cup" || comp.kind === "continental")) creditHonour(state, comp.winner, comp.kind === "cup" ? "cup" : "continental");
       awardTrophy(state, comp);
     }
   }
@@ -191,7 +210,8 @@ function reserveMatch(state: GameState, rng: Rng, trainingMul: number): void {
   u.reserves.ratingSum = Math.round((u.reserves.ratingSum + rating) * 10) / 10;
   p.sharpness = clamp(p.sharpness + 12, 0, 100);
   p.morale = clamp(p.morale + (rating - 6.6), 0, 100);
-  u.relationships.manager = clamp(u.relationships.manager + (rating - 6.8) * 0.8, 0, 100);
+  adjustRel(state, "manager", (rating - 6.8) * 0.8, `Rated ${rating.toFixed(1)} for the development squad`);
+  recordReserveLog(state, { rating, goals, assists });
   // Counts as meaningful minutes for development (feeds monthly growth).
   u.trainingHistory[u.trainingHistory.length - 1] = trainingMul + 0.25;
   if (goals || rating >= 7.8) addNews(state, { kind: "match", title: `Development squad: ${goals ? `${goals} goal${goals > 1 ? "s" : ""} for you` : "standout display"}`, body: `Rating ${rating.toFixed(1)} · the manager was watching.` });
@@ -218,7 +238,7 @@ function userWeekly(state: GameState, rng: Rng): void {
   if (p.contract) {
     const goals = Object.values(p.season).reduce((s, x) => s + x.goals, 0);
     void goals;
-    receiveIncome(state, p.contract.wage);
+    receiveIncome(state, p.contract.wage, "wage");
   }
   payAgent(state);
   weeklyPersonality(state);
@@ -230,6 +250,11 @@ function userWeekly(state: GameState, rng: Rng): void {
     const playedRecently = u.lastMatchTurn !== undefined && state.turn - u.lastMatchTurn <= 2;
     const expectsToPlay = p.contract?.role === "star" || p.contract?.role === "first";
     if (!playedRecently && expectsToPlay && !p.injury) p.morale = clamp(p.morale - BALANCE.morale.benchPenalty, 0, 100);
+    // A starting role was written into the contract and the manager is not honouring it: that costs trust.
+    if (state.turn % 4 === 0 && rolePromiseBroken(state)) {
+      adjustRel(state, "manager", -2, `Not starting despite a ${p.contract?.role === "star" ? "star" : "first-team"} contract`);
+      addStintEvent(state, "playing-dispute");
+    }
   }
   const ovr = overallFor(p.attrs, p.position);
   if (ovr > u.peakOverall) {
@@ -265,17 +290,7 @@ function sackManagers(state: GameState, rng: Rng): void {
     const played = comp.table[pos - 1]?.played ?? 0;
     if (played < 10) continue;
     const under = pos - club.expectation;
-    if (under >= 7 && rng.chance(0.08 + under * 0.01)) {
-      const old = club.manager.name;
-      const nat = rng.chance(0.6) ? staticClub(club.id)?.countryCode ?? "ENG" : rng.pick(["ESP", "POR", "ITA", "GER", "FRA", "NED", "ARG"]);
-      releaseManager(state, club.manager);
-      club.manager = hireManager(state, rng, club, nat);
-      const u = userPlayer(state);
-      if (u.clubId === club.id) {
-        state.user.relationships.manager = 50;
-        addNews(state, { kind: "club", title: `${old} sacked`, body: `${club.manager.name} takes charge at ${clubName(club.id)}. A fresh start for everyone.`, important: true });
-      } else if (club.reputation > 80) addNews(state, { kind: "world", title: `${clubName(club.id)} part ways with ${old}`, body: `${club.manager.name} is the new manager.` });
-    }
+    if (under >= 7 && rng.chance(0.08 + under * 0.01)) replaceManager(state, rng, club, "sacked");
   }
 }
 
@@ -329,6 +344,7 @@ export function advanceTurn(state: GameState): AdvanceReport {
     // Transfers
     if (isTransferWindow(state.turn)) {
       runAiTransfers(state, rng, windowName(state.turn) === "summer" ? 0.3 : 0.15);
+      repairAllSquads(state);
     }
     processBids(state, rng);
     generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r));
@@ -338,6 +354,7 @@ export function advanceTurn(state: GameState): AdvanceReport {
     }
     checkUserContract(state, rng);
     stepSagas(state, rng);
+    stepInvitations(state, rng);
     weeklyRivalry(state);
     expireOffers(state);
     maybeCareerEvent(state, rng);
@@ -446,6 +463,7 @@ function seasonEnd(state: GameState, rng: Rng): void {
       if (best) archive.topScorers[comp.id] = best;
     }
   }
+  settleObjectives(state);
   awardCompletedTrophies(state);
   archive.awards = prepareSeasonAwards(state);
   for (const comp of Object.values(state.competitions)) {
@@ -478,7 +496,11 @@ function seasonEnd(state: GameState, rng: Rng): void {
     addTimeline(state, { kind: up ? "promotion" : "relegation", title: `${up ? "Promoted" : "Relegated"} with ${clubName(myClub)}`, detail: `To the ${staticLeague(myMove.to)?.name}` });
     addNews(state, { kind: "club", title: up ? `Promotion! ${clubName(myClub)} go up` : `Heartbreak: ${clubName(myClub)} relegated`, important: true });
     rememberPromotionOrRelegation(state, up, myClub, totalSeason(u).apps);
-    state.user.relationships.supporters = clamp(state.user.relationships.supporters + (up ? 8 : -4), 0, 100);
+    if (up) {
+      payPromotionBonus(state, totalSeason(u).apps);
+      creditStintHonour(state, "promotions");
+    }
+    adjustRel(state, "supporters", up ? 8 : -4, up ? `${clubName(myClub)} won promotion` : `${clubName(myClub)} were relegated`);
   }
 
   // Club reputation + prize money
@@ -567,6 +589,8 @@ export function retireUser(state: GameState, reason = "You announce your retirem
   }
   u.retired = true;
   u.retiredSeason = state.season;
+  closeStint(state, "player-left");
+  endNumberTenure(state);
   settleCeremony(state);
   addTimeline(state, { kind: "retirement", title: "Retired from professional football", detail: reason });
   addNews(state, { kind: "career", title: "End of an era", body: reason, important: true });
@@ -577,6 +601,10 @@ export function retireUser(state: GameState, reason = "You announce your retirem
 }
 
 function rollover(state: GameState, rng: Rng): void {
+  const goingUp = new Set<string>();
+  const goingDown = new Set<string>();
+  for (const m of state.pendingMoves ?? []) ((staticLeague(m.to)?.tier ?? 9) < (staticLeague(state.clubs[m.clubId]?.leagueId ?? "")?.tier ?? 9) ? goingUp : goingDown).add(m.clubId);
+  seasonBoundaryManagers(state, rng, goingUp, goingDown);
   processExpiringContracts(state, rng);
   processRetirements(state, rng);
   internationalRetirements(state, rng);
@@ -588,6 +616,7 @@ function rollover(state: GameState, rng: Rng): void {
   const u = userPlayer(state);
   const wasFree = !u.clubId;
   rolloverUserContract(state);
+  applyWageRise(state);
   state.user.freeSeasons = wasFree && !u.clubId ? (state.user.freeSeasons ?? 0) + 1 : 0;
   for (const p of Object.values(state.players)) {
     p.season = {};
@@ -598,6 +627,7 @@ function rollover(state: GameState, rng: Rng): void {
   youthIntake(state, rng);
   refreshVirtualPools(state, rng);
   ensureMinimumSquads(state, rng);
+  repairAllSquads(state);
   for (const club of Object.values(state.clubs)) {
     const squad = squadOf(state, club.id);
     assignRoles(squad.filter((p) => !p.isUser));
@@ -609,6 +639,7 @@ function rollover(state: GameState, rng: Rng): void {
   for (const id of Object.keys(state.competitions)) if (state.competitions[id].season < state.season - 0) delete state.competitions[id];
   setupSeason(state, rng);
   setExpectations(state);
+  if (!state.user.retired) offerVacatedNumber(state);
   state.transferLog = state.transferLog.filter((t) => t.season >= prevSeason);
   state.news = state.news.slice(0, 120);
   addNews(state, { kind: "world", title: `Season ${seasonLabel(state.season)} begins`, body: "Pre-season training is underway." });

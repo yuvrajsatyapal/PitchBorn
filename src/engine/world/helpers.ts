@@ -1,7 +1,9 @@
 import { Rng } from "../rng";
+import { onSquadJoin, onSquadLeave } from "../jersey/numbers";
+import { closeStint } from "../managers/history";
 import type { ClubState, GameState, NewsItem, Player, TimelineEvent } from "../types";
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 11;
 
 export function nextId(state: GameState, prefix: string): string {
   state.idCounter++;
@@ -54,12 +56,17 @@ export function removeFromSquad(state: GameState, playerId: string): void {
   if (!p?.clubId) return;
   const club = state.clubs[p.clubId];
   if (club) club.squad = club.squad.filter((id) => id !== playerId);
+  if (p.isUser) {
+    onSquadLeave(state, p);
+    closeStint(state, "player-left");
+  }
 }
 
 export function addToSquad(state: GameState, playerId: string, clubId: string): void {
   const club = state.clubs[clubId];
   if (club && !club.squad.includes(playerId)) club.squad.push(playerId);
   state.players[playerId].clubId = clubId;
+  onSquadJoin(state, state.players[playerId], clubId);
 }
 
 /** Absolute turn index helper for cooldowns that span seasons. */

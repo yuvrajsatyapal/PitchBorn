@@ -8,6 +8,8 @@ import { careerProfile } from "../../traits/effects";
 import type { ClubId, ClubState, GameState, TransferSaga } from "../../types";
 import { userPlayer } from "../../world/helpers";
 import { agentSkill } from "../agents";
+import { rolePromiseBroken } from "../../club/role";
+import { affinityAt } from "../../managers/history";
 
 /** A saga needs at least this much importance before it can happen at all. Ordinary players never reach it. */
 export const SAGA_MIN_SCORE = 42;
@@ -106,6 +108,14 @@ export function assessSaga(state: GameState, club: ClubState, kind: "transfer" |
   const yearsLeft = p.contract ? p.contract.expires - state.season : -1;
   add("Contract running down", p.contract && yearsLeft <= 0 ? 6 : 0);
   add("Asked to leave", state.user.transferRequest ? 8 : 0);
+  const bond = affinityAt(state, club.id);
+  if (bond?.kind === "strong") add("Former manager pushes for a reunion", 4 * Math.min(1, bond.w.importance / 40));
+  else if (bond?.kind === "warm") add("A manager who knows your game", 2);
+  else if (bond?.kind === "poor" || bond?.kind === "cool") {
+    score -= 3;
+    reasons.push("Previous relationship complicates negotiations");
+  }
+  add("Not getting the role you were promised", !free && rolePromiseBroken(state) ? 6 : 0);
   add("Unrest at the club", free ? 0 : p.morale < 45 || rel.manager < 35 ? 7 : 0);
   add("Pulled between loyalty and ambition", !free && ((tenure(p) >= 5 && rel.supporters >= 70) || cp.loyalty >= 0.35 || (cp.ambition >= 0.4 && club.reputation > current + 12)) ? 7 : 0);
   add("Crisis at the club", from && movePressure(state, p).crisis ? 4 : 0);

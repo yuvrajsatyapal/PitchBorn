@@ -12,8 +12,9 @@ import { Badge, Button, Card, Empty, PageTitle, Rating, Table } from "@/componen
 import { seasonLabel } from "@/engine/calendar";
 import type { Fixture, GameState } from "@/engine/types";
 import { name, scoreText, teamLabel, user, userFixtures } from "@/game/selectors";
-import { teamSelection } from "@/engine/season/matchday";
 import { canRequestRest } from "@/engine/season/advance";
+import { matchStatus } from "@/engine/season/selection";
+import { FormerManagerBlock, MatchContextStrip, MatchPreviewPanel, SelectionBlock } from "@/components/game/MatchBriefing";
 import { useGame, useGameState } from "@/game/store";
 
 function derbyLevel(g: GameState, f: Fixture): number {
@@ -45,7 +46,7 @@ function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
         <ul className="mt-3 grid gap-0.5 text-xs">
           {goals.map((gl, i) => (
             <li key={i} className={gl.side === "home" ? "text-left" : "text-right"}>
-              ⚽ {g.players[gl.scorer] ? name(g.players[gl.scorer]) : "—"} {gl.minute}&apos;{gl.penalty ? " (pen)" : ""}
+              ⚽ {g.players[gl.scorer]?.squadNo !== undefined && comp?.kind !== "international" && comp?.kind !== "friendly" ? `#${g.players[gl.scorer].squadNo} ` : ""}{g.players[gl.scorer] ? name(g.players[gl.scorer]) : "—"} {gl.minute}&apos;{gl.penalty ? " (pen)" : ""}
               {gl.assist && g.players[gl.assist] ? <span className="opacity-70"> · assist {g.players[gl.assist].lastName}</span> : null}
             </li>
           ))}
@@ -151,39 +152,38 @@ export default function MatchDay() {
               </Link>
             ) : null;
           })()}
+          <MatchContextStrip g={g} fixture={fixture} />
+          <FormerManagerBlock g={g} fixture={fixture} />
           <MemoryLane g={g} fixtureId={fixture.id} />
-          <p className="mb-4 text-center text-sm">
-            {(() => {
-              const me = user(g);
-              if (me.injury) return "You're injured — watch from the stands or sim it.";
-              if (me.suspension > 0) return "You're suspended for this one.";
-              if (g.user.restTurnIndex === g.turnIndex) return "You asked to be rested — you'll sit this one out and recover.";
-              const team = fixture.home === me.clubId || fixture.away === me.clubId ? me.clubId! : fixture.home === (me.intl.tiedTo ?? me.nationality) ? fixture.home : fixture.away;
-              const sel = teamSelection(g, team, fixture, null);
-              const starting = sel.starters.some((s) => s.player.id === me.id);
-              const bench = sel.bench.some((p) => p.id === me.id);
-              return starting
-                ? "The manager has named you in the starting XI. Play live to make the big decisions when the ball comes to you."
-                : bench
-                  ? "You're on the bench — be ready to come on."
-                  : "You're not in the matchday squad this time. Train hard and impress in the development side.";
-            })()}
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button size="lg" onClick={() => startLive(fixture.id)} data-testid="start-live">▶ Play live</Button>
-            <Button tone="paper" size="lg" disabled={!!busy} onClick={async () => { await sim(fixture.id); setLastId(fixture.id); }} data-testid="sim-match">Quick sim</Button>
-          </div>
-          {canRequestRest(g) && (
-            <div className="mt-4 flex flex-col items-center gap-1 text-center">
-              <Button tone="paper" size="sm" onClick={askRest} data-testid="ask-rest">
-                😮‍💨 Ask to be rested
-              </Button>
-              <span className="text-[11px] text-muted">
-                Fitness {Math.round(user(g).fitness)} · Miss this week&apos;s club games, recover extra.{" "}
-                {user(g).fitness >= 85 ? "The manager won't love it — you look fresh." : "The manager will understand."}
-              </span>
-            </div>
-          )}
+          {(() => {
+            const status = matchStatus(g, fixture);
+            return (
+              <>
+                <SelectionBlock g={g} fixture={fixture} status={status} />
+                <div className="flex flex-wrap justify-center gap-2">
+                  {status.actions.playLive && (
+                    <Button size="lg" onClick={() => startLive(fixture.id)} data-testid="start-live">▶ {status.actions.liveLabel}</Button>
+                  )}
+                  {!status.actions.playLive && (
+                    <Button size="lg" onClick={() => startLive(fixture.id)} data-testid="start-live">👀 {status.actions.liveLabel}</Button>
+                  )}
+                  <Button tone="paper" size="lg" disabled={!!busy} onClick={async () => { await sim(fixture.id); setLastId(fixture.id); }} data-testid="sim-match">Quick sim</Button>
+                </div>
+                {status.actions.rest && canRequestRest(g) && (
+                  <div className="mt-4 flex flex-col items-center gap-1 text-center">
+                    <Button tone="paper" size="sm" onClick={askRest} data-testid="ask-rest">
+                      😮‍💨 Ask to be rested
+                    </Button>
+                    <span className="text-[11px] text-muted">
+                      Fitness {Math.round(user(g).fitness)} · Miss this week&apos;s club games, recover extra.{" "}
+                      {user(g).fitness >= 85 ? "The manager won't love it — you look fresh." : "The manager will understand."}
+                    </span>
+                  </div>
+                )}
+                <MatchPreviewPanel g={g} fixture={fixture} />
+              </>
+            );
+          })()}
           {g.pending.length > 1 && <p className="mt-3 text-center text-xs">{g.pending.length - 1} more match{g.pending.length > 2 ? "es" : ""} this week.</p>}
         </Card>
       ) : (

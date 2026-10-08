@@ -7,6 +7,11 @@ import { addNews, addTimeline, nextId, userPlayer } from "../world/helpers";
 import { rememberCaptaincy, rememberDecision } from "../memory/detect";
 import { careerProfile } from "../traits/effects";
 import { resolveSagaDecision } from "./saga/engine";
+import { resolveInvitation } from "../national/allegiance";
+import { resolveJerseyDecision } from "../jersey/numbers";
+import { receiveIncome } from "./money";
+import { addStintEvent } from "../managers/history";
+import { adjustRel } from "./relationships";
 import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
 
 const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
@@ -216,19 +221,23 @@ const EVENTS: CareerEventDef[] = [
         rememberCaptaincy(s, p.clubId);
       }
       addTimeline(s, { kind: "milestone", title: `Named captain of ${clubName(p.clubId)}` });
+      addStintEvent(s, "captain");
       return { morale: 8, reputation: 2, rel: { board: 5 } };
     },
   },
 ];
 
-function apply(state: GameState, p: Player, e: Effect) {
+function apply(state: GameState, p: Player, e: Effect, cause = "A career event") {
   if (e.morale) p.morale = clamp(p.morale + e.morale, 0, 100);
   if (e.fitness) p.fitness = clamp(p.fitness + e.fitness, 10, 100);
   if (e.sharpness) p.sharpness = clamp(p.sharpness + e.sharpness, 0, 100);
   if (e.reputation) p.reputation = clamp(p.reputation + e.reputation, 0, 100);
   if (e.earnings) {
-    state.user.earnings += e.earnings;
-    state.user.bank = Math.max(0, state.user.bank + e.earnings);
+    if (e.earnings > 0) receiveIncome(state, e.earnings, "other");
+    else {
+      state.user.earnings += e.earnings;
+      state.user.bank = Math.max(0, state.user.bank + e.earnings);
+    }
   }
   if (e.hireAgentId) hireAgent(state, e.hireAgentId, { force: true });
   if (e.agentBoost && state.user.agent.id !== "none") {
@@ -238,7 +247,7 @@ function apply(state: GameState, p: Player, e: Effect) {
   }
   if (e.rel) for (const k in e.rel) {
     const key = k as keyof Relationships;
-    state.user.relationships[key] = clamp(state.user.relationships[key] + (e.rel[key] ?? 0), 0, 100);
+    adjustRel(state, key, e.rel[key] ?? 0, cause);
   }
   if (e.transferRequest) state.user.transferRequest = true;
 }
@@ -254,7 +263,7 @@ export function maybeCareerEvent(state: GameState, rng: Rng): void {
   const ev = rng.weighted(eligible, (e) => e.weight);
   state.user.eventCooldowns[ev.id] = idx;
   if (!ev.options) {
-    apply(state, p, ev.effect?.(state, p) ?? {});
+    apply(state, p, ev.effect?.(state, p) ?? {}, ev.title(state, p));
     addNews(state, { kind: "event", title: ev.title(state, p), body: ev.body(state, p) });
     return;
   }
@@ -280,13 +289,24 @@ export function resolveDecision(state: GameState, decisionId: string, optionId: 
     addNews(state, { kind: "event", title: d.title, body: msg });
     return msg;
   }
+  if (d.jerseyNo !== undefined) {
+    state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
+    return resolveJerseyDecision(state, d.jerseyNo, optionId);
+  }
+  if (d.intlCode) {
+    state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
+    const msg = resolveInvitation(state, optionId);
+    return msg;
+  }
   const ev = EVENTS.find((e) => e.id === d.eventId);
   const opt = ev?.options?.find((o) => o.id === optionId) ?? ev?.options?.find((o) => o.id === d.fallback);
   state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
   if (!ev || !opt) return "Nothing happens.";
-  apply(state, userPlayer(state), opt.effect(state, userPlayer(state)));
+  apply(state, userPlayer(state), opt.effect(state, userPlayer(state)), `${d.title}: ${opt.label}`);
   addNews(state, { kind: "event", title: d.title, body: `You chose: ${opt.label}.` });
   rememberDecision(state, ev.id, opt.id, d.title);
+  if (ev.id === "playing-time" && (opt.id === "demand" || opt.id === "leave")) addStintEvent(state, "playing-dispute");
+  if (ev.id === "touchline-row" && opt.id === "stand") addStintEvent(state, "fallout");
   return `You chose: ${opt.label}.`;
 }
 

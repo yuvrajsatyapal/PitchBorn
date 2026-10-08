@@ -1,11 +1,14 @@
 "use client";
+import { intlTeam } from "@/engine/national/identity";
 import Link from "next/link";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
+import { JerseyChoiceCard } from "@/components/game/NumberPicker";
+import { RecentRatings } from "@/components/game/RecentRatings";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { VaultCard } from "@/components/game/VaultCard";
 import { AwardsNightCard, DecisionCards, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, TeamForm } from "@/components/game/widgets";
-import { Badge, Card, Empty, LinkButton, Sparkline, Stat } from "@/components/ui";
+import { Badge, Card, Empty, LinkButton, Stat } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
 import { windowName } from "@/engine/calendar";
 import { clubName } from "@/engine/data/world";
@@ -50,6 +53,7 @@ export default function Dashboard() {
           <PendingMatchCard g={g} />
           <VaultCard g={g} />
           <AwardsNightCard g={g} />
+          <JerseyChoiceCard g={g} />
           <DecisionCards g={g} />
           {openOffers.length > 0 && (
             <Card tone="sky" title={`📨 ${openOffers.length} open offer${openOffers.length > 1 ? "s" : ""}`} action={<LinkButton href="/play/transfers" size="sm">Review</LinkButton>}>
@@ -100,8 +104,7 @@ export default function Dashboard() {
               </p>
             )}
             <div className="mt-3">
-              <div className="mb-1 text-xs font-bold uppercase text-muted">Recent ratings</div>
-              <Sparkline values={g.user.recentRatings.slice(-12).map((r) => r.rating)} />
+              <RecentRatings g={g} />
             </div>
           </Card>
           <Card title="Training" action={<LinkButton href="/play/training" size="sm" tone="paper">Change</LinkButton>}>
@@ -136,7 +139,7 @@ export default function Dashboard() {
               <>
                 <ul className="divide-y divide-line/10">
                   {upcoming.map(({ comp, f }) => (
-                    <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : (p.intl.tiedTo ?? p.nationality)} />
+                    <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
                   ))}
                 </ul>
                 {recent.length > 0 && (
@@ -144,7 +147,7 @@ export default function Dashboard() {
                     <div className="mt-3 text-xs font-bold uppercase text-muted">Recent</div>
                     <ul className="divide-y divide-line/10">
                       {recent.map(({ comp, f }) => (
-                        <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : (p.intl.tiedTo ?? p.nationality)} />
+                        <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
                       ))}
                     </ul>
                   </>

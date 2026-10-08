@@ -1,10 +1,14 @@
 import { clubName, country, leaguesInPlay, staticLeague } from "../data/world";
+import { intlTeam } from "../national/identity";
 import { rememberAward, rememberTrophy } from "../memory/detect";
 import { overallFor, positionGroup } from "../players/attributes";
 import { ageOf, avgRating, emptyStat, addStat } from "../players/generate";
 import type { AwardRecord, Competition, GameState, Player, StatLine } from "../types";
 import { addNews, addTimeline, fullName, squadOf, userPlayer } from "../world/helpers";
 import type { TurnRatings } from "./matchday";
+import { payTrophyBonus } from "../career/bonuses";
+import { creditStintHonour } from "../managers/history";
+import { adjustRel } from "../career/relationships";
 import { leagueCompId } from "../competitions/setup";
 
 function record(state: GameState, a: Omit<AwardRecord, "season">, opts: { timeline?: boolean; news?: string } = {}) {
@@ -98,7 +102,7 @@ export function worldAwards(state: GameState): AwardRecord[] {
       if (s.apps < 15) return { p, s, score: 0 };
       const att = positionGroup(p.position) === "ATT" || p.position === "AM";
       const club = p.clubId ? trophyPoints.get(p.clubId) ?? 0 : 0;
-      const nation = trophyPoints.get(p.intl.tiedTo ?? p.nationality) ?? 0;
+      const nation = trophyPoints.get(intlTeam(p)) ?? 0;
       const nationIn = Object.values(state.nationalTeams).some((n) => n.squad.includes(p.id)) ? nation : 0;
       const tier = p.clubId ? staticLeague(state.clubs[p.clubId]?.leagueId ?? "")?.tier ?? 3 : 3;
       const score =
@@ -148,7 +152,11 @@ export function awardTrophy(state: GameState, comp: Competition): void {
       addTimeline(state, { kind: "trophy", title: `${comp.name} winner`, detail: nat ? country(comp.winner)?.name : clubName(comp.winner) });
       addNews(state, { kind: "award", title: `Champions! You win the ${comp.name}`, important: true });
       rememberTrophy(state, comp, appeared ? p.season[comp.id]?.apps ?? 0 : 0);
-      state.user.relationships.supporters = Math.min(100, state.user.relationships.supporters + 6);
+      adjustRel(state, "supporters", 6, `Won the ${comp.name}`);
+      if (!nat) {
+        payTrophyBonus(state, comp, appeared);
+        creditStintHonour(state, comp.kind === "league" ? "league" : comp.kind === "cup" ? "cup" : "continental");
+      }
     }
   }
   const major = comp.kind !== "league" || comp.tier === 1;

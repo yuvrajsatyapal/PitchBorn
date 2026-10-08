@@ -1,8 +1,10 @@
 /**
  * Managerial merry-go-round: clubs that sack their manager usually hire an
  * unemployed coach of similar standing; the sacked manager joins the pool.
+ * Managers carry a stable id (see managers/registry.ts) so their careers can be remembered.
  */
 import { WORLD } from "../data/world";
+import { registerManager, recordOf } from "../managers/registry";
 import { clamp, type Rng } from "../rng";
 import type { ClubState, CountryCode, GameState, PoolManager } from "../types";
 import { managerName } from "./create";
@@ -21,27 +23,43 @@ export function managerPool(state: GameState): PoolManager[] {
   return state.managerPool;
 }
 
+/** A pool manager's id, registering the manager the first time (pool entries from older saves have none). */
+function poolId(state: GameState, m: PoolManager): string {
+  if (m.id && recordOf(state, m.id)) return m.id;
+  m.id = registerManager(state, m);
+  return m.id;
+}
+
 /** Pick a successor: the best available coach a club of this standing could attract, else a generated one. */
-export function hireManager(state: GameState, rng: Rng, club: ClubState, fallbackNat: CountryCode): ClubState["manager"] {
+export function hireManager(state: GameState, rng: Rng, club: ClubState, fallbackNat: CountryCode, avoid?: Set<string>): ClubState["manager"] {
   const pool = managerPool(state);
   const ceiling = club.reputation + 8;
   const floor = club.reputation - 25;
-  const candidates = pool.filter((m) => m.quality <= ceiling && m.quality >= floor && (!m.born || state.season - m.born < RETIRE_AGE));
+  const candidates = pool.filter((m) => m.quality <= ceiling && m.quality >= floor && (!m.born || state.season - m.born < RETIRE_AGE) && !(m.id && avoid?.has(m.id)));
   if (candidates.length && rng.chance(0.75)) {
     const pick = rng.weighted(candidates, (m) => Math.pow(Math.max(1, m.quality - floor), 2));
     pool.splice(pool.indexOf(pick), 1);
-    return { name: pick.name, quality: pick.quality, since: state.season, nationality: pick.nationality, born: pick.born };
+    return { id: poolId(state, pick), name: pick.name, quality: pick.quality, since: state.season, nationality: pick.nationality, born: pick.born };
   }
-  return { name: managerName(rng, fallbackNat), quality: Math.round(clamp(club.reputation * 0.7 + rng.normal(20, 8), 20, 99)), since: state.season, nationality: fallbackNat };
+  const name = managerName(rng, fallbackNat);
+  const born = state.season - rng.int(40, 62);
+  const id = registerManager(state, { name, nationality: fallbackNat, born });
+  return { id, name, quality: Math.round(clamp(club.reputation * 0.7 + rng.normal(20, 8), 20, 99)), since: state.season, nationality: fallbackNat, born };
 }
 
-/** A sacked manager becomes available to other clubs. */
+/** A sacked or resigned manager becomes available to other clubs. */
 export function releaseManager(state: GameState, manager: ClubState["manager"]): void {
   const pool = managerPool(state);
-  if (pool.some((m) => m.name === manager.name)) return;
-  pool.push({ name: manager.name, nationality: manager.nationality, quality: Math.max(20, manager.quality - 2), born: manager.born });
+  if (pool.some((m) => (manager.id && m.id === manager.id) || (!manager.id && m.name === manager.name))) return;
+  pool.push({ id: manager.id, name: manager.name, nationality: manager.nationality, quality: Math.max(20, manager.quality - 2), born: manager.born });
   if (pool.length > MAX_POOL) {
     pool.sort((a, b) => b.quality - a.quality);
     pool.length = MAX_POOL;
   }
+}
+
+export function removeFromPool(state: GameState, id: string): void {
+  const pool = managerPool(state);
+  const i = pool.findIndex((m) => m.id === id);
+  if (i >= 0) pool.splice(i, 1);
 }

@@ -1,4 +1,5 @@
 "use client";
+import { intlTeam } from "@/engine/national/identity";
 import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { Card, Empty, PageTitle, Rating, Tabs } from "@/components/ui";
@@ -24,7 +25,7 @@ export default function Schedule() {
         {shown.length ? (
           <ul className="divide-y divide-line/10">
             {shown.map(({ comp, f }) => {
-              const team = f.home === p.clubId || f.away === p.clubId ? p.clubId! : p.intl.tiedTo ?? p.nationality;
+              const team = f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p);
               const home = f.home === team;
               const opp = home ? f.away : f.home;
               const res = resultFor(f, team);

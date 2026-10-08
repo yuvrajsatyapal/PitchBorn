@@ -1,5 +1,7 @@
 "use client";
+import { intlTeam } from "@/engine/national/identity";
 import { Crest } from "@/components/art/Crest";
+import { JerseyCard } from "@/components/game/NumberPicker";
 import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { HonoursCard, RivalriesCard } from "@/components/game/RivalCards";
@@ -23,6 +25,7 @@ export default function Profile() {
     <div className="grid gap-4">
       <PageTitle kicker="My player" title="Player profile" />
       <PlayerHero g={g} p={p} />
+      <JerseyCard g={g} />
       <HonoursCard g={g} />
       <RivalriesCard g={g} />
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
@@ -69,6 +72,8 @@ export default function Profile() {
               <dd>{age(g, p)}</dd>
               <dt className="text-muted">Nationality</dt>
               <dd>{countryName(p.nationality)}{p.altNationality ? ` / ${countryName(p.altNationality)}` : ""}</dd>
+              <dt className="text-muted">Plays for</dt>
+              <dd>{countryName(intlTeam(p))}{p.intl.tiedTo ? " (cap-tied)" : ""}</dd>
               <dt className="text-muted">Height</dt>
               <dd>{p.height} cm</dd>
               <dt className="text-muted">Foot</dt>

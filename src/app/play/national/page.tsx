@@ -10,18 +10,20 @@ import { country } from "@/engine/data/world";
 import type { Player } from "@/engine/types";
 import { age, name, ovr, POS_TONE, scoreText, teamLabel, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
+import { IntlNumberCard } from "@/components/game/NumberPicker";
+import { AllegianceCard } from "@/components/game/AllegianceCard";
+import { intlTeam } from "@/engine/national/identity";
 
 export default function National() {
   const g = useGameState();
   const [sel, setSel] = useState<Player | null>(null);
   if (!g) return null;
   const p = user(g);
-  const code = p.intl.tiedTo ?? p.nationality;
+  const code = intlTeam(p);
   const nt = g.nationalTeams[code];
   const ntCoach = country(code)?.manager?.name === nt?.manager ? country(code)?.manager : undefined;
   const squad = (nt?.squad ?? []).map((id) => g.players[id]).filter(Boolean).sort((a, b) => ovr(b) - ovr(a));
   const inSquad = nt?.squad.includes(p.id);
-  const alt = !p.intl.tiedTo && p.altNationality ? g.nationalTeams[p.altNationality] : undefined;
   const fixtures = Object.values(g.competitions)
     .filter((c) => c.kind === "international")
     .flatMap((c) => c.fixtures.filter((f) => f.home === code || f.away === code).map((f) => ({ c, f })))
@@ -36,11 +38,8 @@ export default function National() {
         <Stat label="Status" value={<span className="text-lg">{p.intl.retired ? "Retired" : inSquad ? "In squad" : "Not selected"}</span>} tone={inSquad ? "sun" : undefined} />
         <Stat label="Pitchborn ranking" value={`#${rank}`} sub={`strength ${nt?.strength ?? "—"}`} />
       </div>
-      {alt && (
-        <Card tone="plum">
-          You&apos;re also eligible for <b>{country(alt.code)?.name}</b> through your birth country until you play a competitive international.
-        </Card>
-      )}
+      <AllegianceCard g={g} />
+      <IntlNumberCard g={g} />
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <Card title="Current squad" action={nt ? <TeamForm form={nt.form} /> : undefined}>
           {squad.length ? (

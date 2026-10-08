@@ -9,6 +9,8 @@ import { clubName, staticClub } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { formatMoney } from "@/engine/players/economy";
 import { Rng } from "@/engine/rng";
+import { ShirtNo } from "@/components/game/NumberPicker";
+import { intlTeam } from "@/engine/national/identity";
 import type { Competition, Fixture, GameState, Player, TableRow } from "@/engine/types";
 import { age, name, ovr, resultFor, scoreText, teamLabel } from "@/game/selectors";
 import { useGame } from "@/game/store";
@@ -52,6 +54,8 @@ export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
           <div className="flex flex-wrap items-center gap-x-2">
             <h1 className="font-display text-2xl leading-tight sm:text-4xl">{name(p)}</h1>
             <Flag code={p.nationality} className="text-lg" />
+            {p.clubId && p.squadNo !== undefined && <ShirtNo no={p.squadNo} size="sm" />}
+            {intlTeam(p) !== p.nationality && <span title={`Represents ${intlTeam(p)}`}><Flag code={intlTeam(p)} className="text-lg" /></span>}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2">
             <span>{POSITION_LABEL[p.position]}</span>
@@ -191,7 +195,7 @@ export function DecisionCards({ g }: { g: GameState }) {
     <>
       {g.user.decisions.map((d) => (
         <Card key={d.id} tone="plum" title={d.title}>
-          <p className="mb-3 text-sm">{d.body}</p>
+          <p className="mb-3 whitespace-pre-line text-sm">{d.body}</p>
           <div className="flex flex-wrap gap-2">
             {d.options.map((o) => (
               <button key={o.id} onClick={() => decide(d.id, o.id)} className="pb-btn bg-card px-3 text-left text-sm">

@@ -9,6 +9,8 @@ import { ageOf } from "../players/generate";
 import { clamp, type Rng } from "../rng";
 import type { Competition, Fixture, GameState, Player } from "../types";
 import { addNews, addTimeline, nextId, userPlayer } from "../world/helpers";
+import { intlTeam } from "./identity";
+import { assignNationalNumbers } from "../jersey/numbers";
 
 const C = BALANCE.calendar;
 
@@ -19,13 +21,18 @@ export const TOURNAMENTS = {
 
 export const intlCompId = (season: number) => `intl-${season}`;
 
-function eligibleFor(p: Player, code: string): boolean {
+/**
+ * Whether a nation may pick this player. The user's player is only ever picked by the nation they have chosen: a
+ * second eligibility (a birth country) is an option for them to take up, never something that happens to them.
+ */
+export function eligibleFor(p: Player, code: string): boolean {
   if (p.retired || p.intl.retired) return false;
+  if (p.isUser) return intlTeam(p) === code;
   if (p.intl.tiedTo) return p.intl.tiedTo === code;
   return p.nationality === code || p.altNationality === code;
 }
 
-function selectionScore(state: GameState, p: Player): number {
+export function selectionScore(state: GameState, p: Player): number {
   const ovr = overallFor(p.attrs, p.position);
   const age = ageOf(p, state.season);
   return ovr + (p.form - 6.6) * 3 + p.reputation * 0.04 + (age <= 20 ? -2 : 0) + (p.virtual ? -1.5 : 0);
@@ -36,7 +43,7 @@ export function selectNationalSquads(state: GameState): void {
   const buckets = new Map<string, Player[]>();
   for (const p of Object.values(state.players)) {
     if (p.retired || p.intl.retired || p.injury) continue;
-    for (const code of [p.intl.tiedTo ?? p.nationality, p.intl.tiedTo ? null : p.altNationality]) {
+    for (const code of p.isUser ? [intlTeam(p)] : [p.intl.tiedTo ?? p.nationality, p.intl.tiedTo ? null : p.altNationality]) {
       if (!code) continue;
       const list = buckets.get(code) ?? [];
       list.push(p);
@@ -47,7 +54,7 @@ export function selectNationalSquads(state: GameState): void {
   const wasIn = Object.values(state.nationalTeams).find((nt) => nt.squad.includes(user.id))?.code;
   const takenUser = new Set<string>();
   // Primary nationality chooses first so dual-eligible players are not double-booked.
-  const order = [...Object.values(state.nationalTeams)].sort((a, b) => (a.code === user.nationality ? -1 : b.code === user.nationality ? 1 : 0));
+  const order = [...Object.values(state.nationalTeams)].sort((a, b) => (a.code === intlTeam(user) ? -1 : b.code === intlTeam(user) ? 1 : 0));
   for (const nt of order) {
     const pool = (buckets.get(nt.code) ?? []).filter((p) => eligibleFor(p, nt.code) && !(p.isUser && takenUser.has(p.id)));
     pool.sort((a, b) => selectionScore(state, b) - selectionScore(state, a));
@@ -61,6 +68,7 @@ export function selectNationalSquads(state: GameState): void {
     }
     const outfield = [...picked].sort((a, b) => selectionScore(state, b) - selectionScore(state, a));
     nt.squad = [...gks, ...outfield].map((p) => p.id);
+    assignNationalNumbers(state, nt);
     if (nt.squad.includes(user.id)) takenUser.add(user.id);
     const top = [...gks.slice(0, 1), ...outfield.slice(0, 10)];
     const avg = top.length ? top.reduce((s, p) => s + overallFor(p.attrs, p.position), 0) / top.length : 50;

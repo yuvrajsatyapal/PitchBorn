@@ -3,67 +3,27 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { AgentPanel } from "@/components/game/AgentPanel";
+import { Negotiation } from "@/components/game/Negotiation";
 import { SagaCard } from "@/components/game/SagaCard";
 import { Badge, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
 import { isTransferWindow, windowName } from "@/engine/calendar";
 import { ROLE_LABEL } from "@/engine/career/offers";
 import { clubName, staticLeague } from "@/engine/data/world";
 import { formatMoney } from "@/engine/players/economy";
-import type { SquadRole, TransferOffer } from "@/engine/types";
+import type { TransferOffer } from "@/engine/types";
 import { age, user } from "@/game/selectors";
 import { useGame, useGameState } from "@/game/store";
 
-const ROLES: SquadRole[] = ["star", "first", "rotation", "backup", "prospect"];
-
-function Negotiation({ o }: { o: TransferOffer }) {
-  const negotiate = useGame((s) => s.negotiate);
-  const [wage, setWage] = useState(Math.round(o.terms.wage * 1.15));
-  const [role, setRole] = useState<SquadRole>(o.terms.role);
-  const [years, setYears] = useState(o.terms.years);
-  const min = o.terms.wage;
-  const max = Math.round(o.terms.wage * 1.8);
-  return (
-    <div className="mt-3 rounded-xl border-2 border-line bg-card p-3">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="grid gap-1 text-xs font-bold">
-          Weekly wage: {formatMoney(wage)}
-          <input type="range" min={min} max={max} step={Math.max(100, Math.round(min / 50))} value={wage} onChange={(e) => setWage(Number(e.target.value))} className="accent-[var(--pitch)]" />
-        </label>
-        <label className="grid gap-1 text-xs font-bold">
-          Squad role
-          <select value={role} onChange={(e) => setRole(e.target.value as SquadRole)} className="rounded-lg border-2 border-line bg-card px-2 py-1.5 text-sm">
-            {ROLES.map((r) => (
-              <option key={r} value={r}>
-                {ROLE_LABEL[r]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-xs font-bold">
-          {o.kind === "renewal" ? "Extra years" : "Length"}
-          <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="rounded-lg border-2 border-line bg-card px-2 py-1.5 text-sm" disabled={o.kind === "loan"}>
-            {[1, 2, 3, 4, 5].map((y) => (
-              <option key={y} value={y}>
-                {y} year{y > 1 ? "s" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button tone="pitch" size="sm" onClick={() => negotiate(o.id, { type: "accept" })} data-testid="accept-offer">
-          Accept current terms
-        </Button>
-        <Button size="sm" onClick={() => negotiate(o.id, { type: "counter", wage, role, years })} disabled={o.kind === "loan"}>
-          Counter-offer
-        </Button>
-        <Button tone="coral" size="sm" onClick={() => negotiate(o.id, { type: "reject" })}>
-          Reject
-        </Button>
-      </div>
-      <p className="mt-2 text-[11px] text-muted">They&apos;ll only stretch so far — every counter tests their patience ({o.patience} left). A better agent squeezes a little more.</p>
-    </div>
-  );
+function bonusSummary(t: TransferOffer["terms"]): string {
+  const parts: string[] = [];
+  if (t.appearanceBonus) parts.push(`${formatMoney(t.appearanceBonus)} per appearance`);
+  if (t.goalBonus) parts.push(`${formatMoney(t.goalBonus)} per goal`);
+  if (t.assistBonus) parts.push(`${formatMoney(t.assistBonus)} per assist`);
+  if (t.cleanSheetBonus) parts.push(`${formatMoney(t.cleanSheetBonus)} per clean sheet`);
+  if (t.trophyBonus) parts.push(`${formatMoney(t.trophyBonus)} trophy bonus`);
+  if (t.promotionBonus) parts.push(`${formatMoney(t.promotionBonus)} promotion bonus`);
+  if (t.wageRise) parts.push(`${Math.round(t.wageRise * 100)}% annual rise`);
+  return parts.length ? ` · ${parts.join(" · ")}` : "";
 }
 
 function OfferCard({ o }: { o: TransferOffer }) {
@@ -97,9 +57,14 @@ function OfferCard({ o }: { o: TransferOffer }) {
         {o.history.slice(-4).map((h, i) => (
           <li key={i}>• {h}</li>
         ))}
-        {o.terms.signingBonus > 0 && <li>• Signing bonus {formatMoney(o.terms.signingBonus)} · {o.terms.years} years{o.terms.releaseClause ? ` · release clause ${formatMoney(o.terms.releaseClause)}` : ""}</li>}
+        <li data-testid="offer-terms">
+          • {o.terms.years} year{o.terms.years > 1 ? "s" : ""}
+          {o.terms.signingBonus > 0 ? ` · signing bonus ${formatMoney(o.terms.signingBonus)}` : ""}
+          {o.terms.releaseClause ? ` · release clause ${formatMoney(o.terms.releaseClause)}` : ""}
+          {bonusSummary(o.terms)}
+        </li>
       </ul>
-      {o.status === "terms" && <Negotiation o={o} />}
+      {o.status === "terms" && <Negotiation o={o} g={g} />}
     </li>
   );
 }
@@ -134,6 +99,9 @@ export default function CareerPage() {
               <Stat label="Release clause" value={p.contract.releaseClause ? formatMoney(p.contract.releaseClause) : "None"} />
               <Stat label="Bank" value={formatMoney(g.user.bank)} sub={`Earned ${formatMoney(g.user.earnings)} in total`} />
               <Stat label="Status" value={<span className="text-lg">{p.loan ? `On loan from ${clubName(p.loan.fromClubId, true)}` : g.user.transferRequest ? "Transfer-listed" : "Settled"}</span>} />
+              {bonusSummary(p.contract as unknown as TransferOffer["terms"]) && (
+                <div className="col-span-2 text-xs text-ink-2 sm:col-span-4" data-testid="contract-bonuses">Bonuses in your contract{bonusSummary(p.contract as unknown as TransferOffer["terms"]).replace(/^ ·/, ":")}. Each is paid once, when it is earned.</div>
+              )}
             </div>
           ) : (
             <Empty title="Free agent" icon="🧳">

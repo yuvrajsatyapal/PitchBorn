@@ -32,6 +32,9 @@ Read this first after any context reset. Keep it short and current.
 - Calendar: 50 turns/season; season turns 4–43; season end 44; summer 45–50 (tournaments in even years)
 - Perf: ~115ms/turn full world (node). Lite world via settings.countries for stress tests.
 
+## Career systems pass (schema 10)
+Club overview/relationships, Match Day briefing + selection reasons, knockout brackets, contract clauses and bonuses, national-team allegiance and invitations, match log + analytics, dashboard rating chart. Design and limits: `docs/CAREER_SYSTEMS.md`.
+
 ## Known issues / TODO
 - Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
 - Academy prospects at elite clubs rarely play — UI should surface loan advice

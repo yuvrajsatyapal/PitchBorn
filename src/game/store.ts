@@ -15,6 +15,8 @@ import type { MatchResult } from "@/engine/match/engine";
 import { retireFromInternational } from "@/engine/national/national";
 import { advanceTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
 import { prepareMatch, type PreparedMatch } from "@/engine/season/matchday";
+import { chooseIntlNumber as chooseIntlNumberAction, chooseSquadNumber } from "@/engine/jersey/numbers";
+import { performPreMatch, type PreMatchKind } from "@/engine/season/preview";
 import type { GameState, TrainingPlan } from "@/engine/types";
 import { createWorld, type NewCareerInput } from "@/engine/world/create";
 import { withRng } from "@/engine/world/helpers";
@@ -60,6 +62,9 @@ interface GameStore {
   transferRequest: (on: boolean) => void;
   setWantsLoan: (on: boolean) => void;
   askRest: () => void;
+  preMatch: (fixtureId: string, kind: PreMatchKind) => void;
+  chooseNumber: (no: number) => void;
+  chooseIntlNumber: (no: number) => void;
   hireAgent: (agentId: string) => void;
   releaseAgent: () => void;
   retire: () => Promise<void>;
@@ -297,6 +302,31 @@ export const useGame = create<GameStore>((set, get) => ({
     const g = get().game;
     if (!g) return;
     get().notify(requestRest(g));
+    get().bump();
+  },
+
+  preMatch: (fixtureId, kind) => {
+    const g = get().game;
+    if (!g) return;
+    const res = performPreMatch(g, fixtureId, kind);
+    get().notify(res.message, res.ok ? "good" : "bad");
+    get().bump();
+  },
+
+  chooseNumber: (no) => {
+    const g = get().game;
+    if (!g) return;
+    const r = chooseSquadNumber(g, no);
+    get().notify(r.message, r.ok ? "good" : "bad");
+    get().bump();
+    if (r.ok) void get().save();
+  },
+
+  chooseIntlNumber: (no) => {
+    const g = get().game;
+    if (!g) return;
+    const r = chooseIntlNumberAction(g, no);
+    get().notify(r.message, r.ok ? "good" : "bad");
     get().bump();
   },
 

@@ -11,6 +11,7 @@ import { traitDef } from "../traits/registry";
 import { ageOf } from "../players/generate";
 import type { Competition, Fixture, GameState, Memory, MemoryKind, TransferOffer, TransferSaga } from "../types";
 import { userPlayer } from "../world/helpers";
+import { addStintEvent } from "../managers/history";
 import { rivalMatchBonus } from "../career/rivalry/engine";
 import { bumpRivalHeat, rivalryLevel } from "./rivalry";
 import { agePoints, Factors, stagePoints } from "./score";
@@ -429,6 +430,7 @@ export function rememberManagerConflict(state: GameState): Memory | null {
   if (!club) return null;
   // Once per manager: a rift is a single story, not a weekly one.
   if (state.user.memories.some((m) => m.kind === "manager-conflict" && m.manager?.name === club.manager.name && m.clubId === club.id)) return null;
+  addStintEvent(state, "fallout");
   const f = new Factors().add("Falling out with the manager", 16 + Math.min(10, (18 - state.user.relationships.manager) * 0.8));
   return recordMemory(state, {
     kind: "manager-conflict",

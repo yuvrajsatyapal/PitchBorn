@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
+import { IconicNumberCard, InfluentialManagerCard } from "@/components/game/ManagerPanels";
 import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { Card, LinkButton, PageTitle, Stat, Table } from "@/components/ui";
@@ -67,6 +68,10 @@ export default function Legacy() {
         <Stat label="Peak OVR" value={g.user.peakOverall} tone="plum" />
       </div>
       <PlayIdentityCard g={g} p={p} title="How you played" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <InfluentialManagerCard g={g} />
+        <IconicNumberCard g={g} />
+      </div>
       <IconicShowcase g={g} limit={6} final title="Iconic Moments" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="The story">

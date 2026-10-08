@@ -24,22 +24,79 @@ export function availability(p: Player): boolean {
   return !p.injury && p.suspension <= 0 && !p.retired;
 }
 
-/** Selection score blends ability with condition, form and small manager noise. */
-export function selectionScore(p: Player, slot: Position, rng: Rng | null, opts: { rotate?: boolean; managerBias?: number } = {}): number {
+export interface PlayStyle {
+  pressing: number;
+  tempo: number;
+  directness: number;
+}
+
+/**
+ * How well a player's attributes suit a style of play, 20–95 (60 is neutral). A pressing side wants engines and
+ * tacklers, a quick side wants pace and passing, a direct side wants height and finishing; the opposite style asks for
+ * composure, vision and short passing. Goalkeepers are neutral.
+ */
+export function tacticalFit(p: Player, style: PlayStyle): number {
+  if (p.position === "GK") return 60;
+  const a = p.attrs;
+  const hi = {
+    pressing: a.stamina * 0.4 + a.tackling * 0.3 + a.acceleration * 0.15 + a.strength * 0.15,
+    tempo: a.pace * 0.3 + a.passing * 0.3 + a.firstTouch * 0.2 + a.vision * 0.2,
+    directness: a.heading * 0.25 + a.strength * 0.2 + a.longShots * 0.15 + a.finishing * 0.2 + a.pace * 0.2,
+  };
+  const lo = {
+    pressing: a.positioning * 0.5 + a.composure * 0.3 + a.tackling * 0.2,
+    tempo: a.vision * 0.4 + a.composure * 0.3 + a.passing * 0.3,
+    directness: a.passing * 0.4 + a.firstTouch * 0.3 + a.vision * 0.3,
+  };
+  let sum = 0;
+  for (const d of ["pressing", "tempo", "directness"] as const) {
+    const v = style[d];
+    sum += v > 0.5 ? (v - 0.5) * 2 * (hi[d] - 60) : (0.5 - v) * 2 * (lo[d] - 60);
+  }
+  return Math.max(20, Math.min(95, 60 + sum * 0.5));
+}
+
+export interface SelectionOpts {
+  rotate?: boolean;
+  managerBias?: number;
+  style?: PlayStyle;
+}
+
+/** The pieces a selection score is made of, so the manager's choice can be explained from the same numbers. */
+export interface ScoreParts {
+  /** Ability in the slot (position overall, minus unfamiliarity). */
+  ability: number;
+  /** What tiredness takes off. */
+  fitness: number;
+  form: number;
+  sharpness: number;
+  rotation: number;
+  /** The manager's trust, which only matters for the user. */
+  trust: number;
+  tactical: number;
+}
+
+export function scoreParts(p: Player, fit: number, opts: SelectionOpts): ScoreParts {
+  return {
+    ability: fit,
+    fitness: fit * (0.8 + 0.2 * (p.fitness / 100)) - fit,
+    form: (p.form - 6.6) * 2.2,
+    sharpness: (p.sharpness - 70) / 40,
+    rotation: opts.rotate ? (p.fitness < 92 ? -4 : 0) + (p.contract?.role === "prospect" || p.contract?.role === "backup" ? 8 : 0) : 0,
+    trust: p.isUser && opts.managerBias ? opts.managerBias : 0,
+    tactical: opts.style ? (tacticalFit(p, opts.style) - 60) / 25 : 0,
+  };
+}
+
+export const partsTotal = (x: ScoreParts) => x.ability + x.fitness + x.form + x.sharpness + x.rotation + x.trust + x.tactical;
+
+/** Selection score blends ability with condition, form, style fit and small manager noise. */
+export function selectionScore(p: Player, slot: Position, rng: Rng | null, opts: SelectionOpts = {}): number {
   return scoreWith(p, fitFor(p, slot), opts) + (rng ? rng.normal(0, 1.2) : 0);
 }
 
-function scoreWith(p: Player, fit: number, opts: { rotate?: boolean; managerBias?: number }): number {
-  let s = fit;
-  s *= 0.8 + 0.2 * (p.fitness / 100);
-  s += (p.form - 6.6) * 2.2;
-  s += (p.sharpness - 70) / 40;
-  if (opts.rotate) {
-    s -= p.fitness < 92 ? 4 : 0;
-    if (p.contract?.role === "prospect" || p.contract?.role === "backup") s += 8;
-  }
-  if (p.isUser && opts.managerBias) s += opts.managerBias;
-  return s;
+function scoreWith(p: Player, fit: number, opts: SelectionOpts): number {
+  return partsTotal(scoreParts(p, fit, opts));
 }
 
 export interface Selection {
@@ -52,7 +109,7 @@ export function selectTeam(
   squad: Player[],
   formation: FormationId,
   rng: Rng | null,
-  opts: { rotate?: boolean; managerBias?: number; benchSize?: number } = {},
+  opts: SelectionOpts & { benchSize?: number } = {},
 ): Selection {
   const slots = FORMATIONS[formation];
   const order = slots

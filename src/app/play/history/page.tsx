@@ -1,6 +1,8 @@
 "use client";
 import { InlineAdSlot } from "@/ads/AdSlot";
 import { Flag } from "@/components/art/Flag";
+import { ManagerHistoryCard } from "@/components/game/ManagerPanels";
+import { JerseyHistoryCard } from "@/components/game/NumberPicker";
 import { RivalryHistoryCard } from "@/components/game/RivalCards";
 import { Card, Empty, PageTitle, Table } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
@@ -28,6 +30,8 @@ export default function History() {
   return (
     <div className="grid gap-4">
       <PageTitle kicker="Your story so far" title="Career History" />
+      <ManagerHistoryCard g={g} />
+      <JerseyHistoryCard g={g} />
       <RivalryHistoryCard g={g} />
       <Card title="Timeline">
         {seasons.length ? (

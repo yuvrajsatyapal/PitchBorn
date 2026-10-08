@@ -7,3 +7,9 @@
 - **Validation on load**: zod shape check + `checkInvariants` (squads, contracts, leagues, fixtures, goal/score reconciliation).
 - **Recovery**: if the primary record fails to decode/validate, the newest valid backup loads automatically and the user is told.
 - **Export/import**: `.pbsave` (gzip via `CompressionStream` when available, else JSON) with a format header; imports are validated and migrated, and saved as a copy if the id exists.
+
+## Schema 10 (career-systems pass)
+Added, all optional so older saves load: `user.matchLog`, `user.reserveLog`, `user.relLog`, `user.pay` (income ledger + paid keys), `user.intl` (international invitations), `user.objectives`, `user.preMatch`, contract clauses on `Contract`/`ContractTerms`, `Player.intl.{allegiance,switches,compCaps}`. `engine/world/sanitize.ts` runs on every load: it rebuilds the ledger (earlier income kept as "earlier"), backfills the match log from the old recent-ratings list, drops malformed clauses, makes international fields consistent without inferring a switch from birthplace, and clamps club styles. See `docs/CAREER_SYSTEMS.md`.
+
+## Schema 11 (manager history and squad numbers)
+Added, all optional: `GameState.managers` (tenure registry), `ClubState.manager.id` / `PoolManager.id`, `ClubState.retiredNumbers`, `Player.squadNo`, `NationalTeamState.numbers`, `user.mgr` (stints, meetings, seen-keys), `user.jersey` (number tenures, national numbers). On every load `ensureManagerIds` / `sanitizeManagerState` / `sanitizeJersey` run: every manager gets an id and an open tenure at his club (a manager listed twice keeps one), the user's stints are validated with at most one open, squads are repaired deterministically (duplicates and malformed numbers get new ones, valid numbers are kept), and the user's history opens from the current state. Nothing is back-filled.

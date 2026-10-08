@@ -15,7 +15,7 @@ export const MEMORY_ICON: Record<MemoryKind, string> = {
   "major-injury": "🩹", "injury-comeback": "💪",
   "big-transfer": "✍️", "controversial-transfer": "🌶️", "transfer-rejected": "✋", "return-to-club": "❤️", captaincy: "©️",
   promotion: "⬆️", relegation: "⬇️", "contract-dispute": "📝", "financial-exit": "💸", "manager-conflict": "😤", "career-decision": "🧭",
-  retirement: "👋", "final-match": "🔔", identity: "🧬", "transfer-saga": "📰", rivalry: "⚔️",
+  retirement: "👋", "final-match": "🔔", identity: "🧬", "transfer-saga": "📰", rivalry: "⚔️", "manager-bond": "🤝", "shirt-number": "👕",
 };
 
 export const MEMORY_GROUP: Record<MemoryKind, "Matches" | "Honours" | "Moves" | "Career"> = {
@@ -23,7 +23,7 @@ export const MEMORY_GROUP: Record<MemoryKind, "Matches" | "Honours" | "Moves" | 
   "hat-trick": "Matches", haul: "Matches", comeback: "Matches", "final-goal": "Matches", "final-winner": "Matches", "famous-upset": "Matches", "injury-comeback": "Matches", "final-match": "Matches",
   trophy: "Honours", "first-title": "Honours", "continental-trophy": "Honours", "intl-trophy": "Honours", record: "Honours", award: "Honours", promotion: "Honours",
   "big-transfer": "Moves", "controversial-transfer": "Moves", "transfer-rejected": "Moves", "return-to-club": "Moves", "financial-exit": "Moves", "contract-dispute": "Moves", "transfer-saga": "Moves", rivalry: "Career",
-  "major-injury": "Career", identity: "Career", captaincy: "Career", relegation: "Career", "manager-conflict": "Career", "career-decision": "Career", retirement: "Career",
+  "major-injury": "Career", "manager-bond": "Career", "shirt-number": "Career", identity: "Career", captaincy: "Career", relegation: "Career", "manager-conflict": "Career", "career-decision": "Career", retirement: "Career",
 };
 
 const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -125,6 +125,23 @@ export function describeMemory(state: GameState, m: Memory): MemoryView {
       t = m.data?.event === "evolved"
         ? dflt("Reinvented", `Your game evolved${from ? `: ${from.name} gave way to ${def?.name ?? "a new style"}` : ` into ${def?.name ?? "a new style"}`}.`)
         : dflt(`Signature ${def?.name ?? "style"}`, `${pick(m.id, ["Your game became defined by", "Defenders learned to fear", "You made your own"])} ${def?.name ?? "a style"}.`);
+      break;
+    }
+    case "manager-bond": {
+      const who = String(m.data?.name ?? "the manager");
+      const ev = String(m.data?.event ?? "");
+      if (ev === "breakthrough") t = dflt(`Breakthrough under ${who}`, `${who} gave you your first-team chance${club ? ` at ${club}` : ""}.`);
+      else if (ev === "captain") t = dflt(`The armband from ${who}`, `${who} made you captain${club ? ` of ${club}` : ""}.`);
+      else if (ev === "departure") t = dflt(`${who} leaves`, `${who} left${club ? ` ${club}` : ""} after ${Number(m.data?.seasons ?? 0)} season${Number(m.data?.seasons ?? 0) === 1 ? "" : "s"} together.`);
+      else if (ev === "reunion-match") t = dflt(`Facing ${who}`, `${vs ? `${vs}: ` : ""}your first meeting with the manager you played under${m.data?.where ? ` at ${String(m.data.where)}` : ""}.`);
+      else if (ev === "reunited") t = dflt(`Reunited with ${who}`, `You joined ${club || "a new club"} to work with ${who} again.`);
+      else t = dflt(`With ${who}`, "A bond that shaped your career.");
+      break;
+    }
+    case "shirt-number": {
+      const no = Number(m.data?.no ?? 0);
+      const ev = String(m.data?.event ?? "");
+      t = ev === "return" ? dflt(`Back in the #${no} shirt`, `You pulled on #${no} again${club ? ` at ${club}` : ""}.`) : dflt(`The #${no} shirt`, `You took the #${no} shirt${club ? ` at ${club}` : ""}${ev === "iconic" ? ", the number that goes with a star" : ""}.`);
       break;
     }
     case "retirement": t = dflt("Retirement", `You hung up your boots after ${Number(m.data?.apps ?? 0)} appearances and ${Number(m.data?.goals ?? 0)} goals.`); break;

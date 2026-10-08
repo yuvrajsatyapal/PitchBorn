@@ -10,7 +10,8 @@ import { addStat, avgRating, emptyStat } from "@/engine/players/generate";
 import type { StatLine } from "@/engine/types";
 import { keeperMetrics } from "@/engine/players/keeper";
 import { seasonTotal, user } from "@/game/selectors";
-import { useGameState } from "@/game/store";
+import { useGame, useGameState } from "@/game/store";
+import { ClarityNote, EarningsPanel, FormPanel, Per90Panel, ProgressionPanel, RankingPanel, RecordsPanel, SplitsPanel, TimelinePanel } from "@/components/game/StatsPanels";
 
 function Row({ label, s, extra }: { label: React.ReactNode; s: StatLine; extra?: React.ReactNode }) {
   return (
@@ -51,6 +52,7 @@ function Head({ first }: { first: string }) {
 
 export default function Stats() {
   const g = useGameState();
+  const version = useGame((st) => st.version);
   const [view, setView] = useState<"season" | "career" | "clubs" | "competitions">("season");
   if (!g) return null;
   const p = user(g);
@@ -127,7 +129,16 @@ export default function Stats() {
         </Table>
         <p className="mt-2 text-xs text-muted">Pre-career totals are not included in breakdowns; career totals count every senior match.</p>
       </Card>
+      <ClarityNote g={g} />
+      <FormPanel g={g} version={version} />
+      <Per90Panel g={g} />
       <InlineAdSlot placementId="history-break" />
+      <TimelinePanel g={g} version={version} />
+      <ProgressionPanel g={g} />
+      <RankingPanel g={g} version={version} />
+      <RecordsPanel g={g} />
+      <SplitsPanel g={g} version={version} />
+      <EarningsPanel g={g} />
       <RivalStatsCard g={g} />
       <Card title="Detailed this season">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

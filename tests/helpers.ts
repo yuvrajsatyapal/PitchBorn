@@ -20,3 +20,11 @@ export function newCareer(overrides: Partial<NewCareerInput> = {}): GameState {
     ...overrides,
   });
 }
+
+/** Makes the user good enough to start, so a short simulation produces real matches to measure. */
+export function strongUser(s: GameState): void {
+  const p = s.players[s.user.playerId];
+  for (const k of Object.keys(p.attrs)) (p.attrs as Record<string, number>)[k] = 86;
+  p.form = 7.5;
+  if (p.contract) p.contract.role = "star";
+}

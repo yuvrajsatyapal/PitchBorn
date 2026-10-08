@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 type Tone = "sun" | "pitch" | "plum" | "coral" | "sky" | "paper" | "ink";
@@ -221,5 +221,22 @@ export function Table({ children, className = "" }: { children: ReactNode; class
         {children}
       </table>
     </div>
+  );
+}
+
+/** A card section that can be folded away, so a busy page stays calm. Content is only rendered while it is open. */
+export function Disclosure({ title, summary, children, defaultOpen = false, className = "" }: { title: ReactNode; summary?: ReactNode; children: ReactNode; defaultOpen?: boolean; className?: string }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className={`pb-card p-4 sm:p-5 ${className}`}>
+      <button type="button" className="flex w-full items-center justify-between gap-3 text-left" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <span>
+          <span className="font-display text-xl leading-none">{title}</span>
+          {summary && <span className="mt-1 block text-xs text-muted">{summary}</span>}
+        </span>
+        <span aria-hidden className="text-lg">{open ? "▾" : "▸"}</span>
+      </button>
+      {open && <div className="mt-3">{children}</div>}
+    </section>
   );
 }
