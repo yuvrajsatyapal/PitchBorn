@@ -5,6 +5,7 @@
 import { coilyHair, type CoilyDesign } from "./coily";
 import type { HairArt, HairInput } from "./core";
 import { flowHair, type FlowDesign } from "./flow";
+import { dutchHair } from "./dutch";
 import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
 import { locsHair, type LocsDesign } from "./locs";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
@@ -131,10 +132,6 @@ const CURLY_FADE: CoilyDesign = {
 // Thirteen major locks: 2 + 2 behind, 3 + 4 framing the face (the extra one on a seeded side), 2 over the forehead.
 const MEDIUM_DREADS: LocsDesign = { kind: "irregular", end: 324, fringe: 2, side: 3, back: 2, w: [12, 16.5] };
 
-// Fewer, much thicker locks than Medium Dreads, from a big crown: some arch out over it, some push out wide beside
-// the face, one hangs in front of a shoulder, the rest fall behind.
-const DUTCH_DREADS: LocsDesign = { kind: "irregular", end: 318, fringe: 2, side: 2, back: 2, w: [19, 26], cap: { top: 24, side: 14 }, spread: 30, forward: 1, rise: 1 };
-
 // A cloud far bigger than Medium Afro: it surrounds the whole head, covers the ears and continues behind the jaw.
 // Large lobes, a few big light groups, very few curls. Any hair colour; generated players are often golden.
 const LION_AFRO: CoilyDesign = {
@@ -206,7 +203,7 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "long-headband-curls", name: "Long Headband Curls", category: "iconic", hairType: "curly", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.6 }, ears: "partial", ownHeadband: true }), draw: (i) => headbandCurlsHair(i) },
   { ...meta({ id: "lion-afro", name: "Lion Afro", category: "iconic", hairType: "coily", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.7 }, ears: "covered" }), draw: (i) => coilyHair(i, LION_AFRO) },
   { ...meta({ id: "divine-ponytail", name: "Divine Ponytail", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.8, modern: 0.8 }, supportsRecedingHairline: true }), draw: (i) => ponytailHair(i) },
-  { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => locsHair(i, DUTCH_DREADS) },
+  { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => dutchHair(i) },
 ];
 
 const BY_ID = new Map(HAIR_LIBRARY.map((h) => [h.id, h]));

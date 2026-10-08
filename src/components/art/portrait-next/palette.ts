@@ -124,3 +124,64 @@ export function hairTones(base: string, against?: string): HairTones {
     line: hslToHex([h, Math.min(1, s + 0.1), Math.max(0.02, l * 0.3)]),
   };
 }
+
+// ------------------------------------------------------------------ facial hair
+
+/** Relative luminance (WCAG) of a #rrggbb colour. */
+export function luma(hex: string): number {
+  const c = (i: number) => {
+    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * c(1) + 0.7152 * c(3) + 0.0722 * c(5);
+}
+
+/** Contrast ratio between two colours (1 identical .. 21 black on white). */
+export function contrast(a: string, b: string): number {
+  const la = luma(a);
+  const lb = luma(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+export interface BeardTones extends HairTones {
+  /** The tone of the edge where the beard stands off the face: a darker (or, on dark skin, cooler and lighter) tone
+   * of the beard's own hue, never black. */
+  edge: string;
+  /** How hard this hair-and-skin pair is to tell apart (0 easy .. 1 hair nearly the colour of the skin). */
+  need: number;
+}
+
+/** Contrast the beard body is moved to when the hair is close to the skin's value. */
+export const BEARD_TARGET = 1.55;
+
+/**
+ * Tones for facial hair of one colour on one skin. The beard's hue and saturation always come from the selected
+ * facial-hair colour. Skin only decides the strategy: when hair and skin are close in value, the body of the beard
+ * moves a little further from the skin along the hair's own colour (darker when the hair is darker, lighter when it
+ * is lighter), its shadow deepens, and the edge gets its own tone; the skin is never touched.
+ */
+export function beardTones(color: string, skin: string): BeardTones {
+  const hair = hairTones(color, skin);
+  const r0 = contrast(color, skin);
+  const need = clamp01((BEARD_TARGET - r0) / (BEARD_TARGET - 1));
+  const [h, s, l] = hexToHsl(color);
+  const lSkin = luma(skin);
+  // Away from the skin; very light hair on light skin can only go darker.
+  const up = luma(color) > lSkin && l < 0.78;
+  let base = color;
+  if (need > 0) {
+    // Step the body away from the skin until the pair separates or the step runs out.
+    let dl = 0;
+    for (let k = 0; k < 8 && contrast(base, skin) < BEARD_TARGET; k++) {
+      dl += 0.025;
+      base = hslToHex([h, clamp01(s + (up ? 0 : 0.03)), clamp01(l + (up ? dl : -dl))]);
+    }
+  }
+  const [bh, bs, bl] = hexToHsl(base);
+  const shade = hslToHex([bh, Math.min(1, bs + 0.05), Math.max(0.03, bl * (0.68 - 0.1 * need))]);
+  const deep = hslToHex([bh, Math.min(1, bs + 0.08), Math.max(0.02, bl * (0.42 - 0.06 * need))]);
+  const dark = contrast(color, skin) < 1.55 && luma(color) < lSkin;
+  // On dark skin the edge of dark hair is a cool lift, on light skin a deeper tone of the hair itself.
+  const edge = dark && luma(skin) < 0.12 ? mixHex(hair.light, base, 0.45) : mixHex(hslToHex([bh, Math.min(1, bs + 0.1), Math.max(0.03, bl * 0.4)]), base, 0.25);
+  return { ...hair, base, shade, deep, edge, need };
+}
