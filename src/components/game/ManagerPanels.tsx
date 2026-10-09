@@ -17,9 +17,10 @@ export function CurrentManager({ g, clubId }: { g: GameState; clubId: string }) 
   return (
     <div data-testid="current-manager" className={v?.past ? "col-span-2 sm:col-span-3" : ""}>
       <dt className="text-xs text-muted">Manager</dt>
-      <dd className="flex items-center gap-1 font-semibold">
-        {club.manager.nationality && <Flag code={club.manager.nationality} />} <span className="min-w-0 break-words">{club.manager.name}</span>
-        {club.manager.born ? <span className="font-normal text-muted">({g.season - club.manager.born})</span> : null}
+      <dd className="break-words font-semibold leading-snug">
+        {club.manager.nationality && <Flag code={club.manager.nationality} className="mr-1.5" />}
+        {club.manager.name}
+        {club.manager.born ? <span className="whitespace-nowrap font-normal text-muted"> ({g.season - club.manager.born})</span> : null}
       </dd>
       {v?.past && (
         <dd className="mt-1 rounded-lg border-2 border-line/20 bg-paper-2/60 px-2 py-1 text-xs" data-testid="manager-past">

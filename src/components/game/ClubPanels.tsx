@@ -3,21 +3,15 @@ import { useMemo, useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { Badge, Bar, Card, Disclosure, FormDots, Stat } from "@/components/ui";
 import { describeMemory } from "@/engine/memory/describe";
-import { memoriesByImportance } from "@/engine/memory/store";
 import { ROLE_LABEL } from "@/engine/career/offers";
 import { currentObjectives, progressOf } from "@/engine/club/objectives";
-import { clubHistory, clubIdentity, competitionRuns, departments, finances, recentMoves, relationshipInsights, userTacticalFit } from "@/engine/club/overview";
+import { clubHistory, clubIdentity, clubMoments, ord, competitionRuns, departments, finances, recentMoves, relationshipInsights, userTacticalFit } from "@/engine/club/overview";
 import { roleView } from "@/engine/club/role";
 import { standingOf } from "@/engine/club/standing";
+import { seasonLabel } from "@/engine/calendar";
 import { formatMoney } from "@/engine/players/economy";
 import type { GameState } from "@/engine/types";
 import { teamLabel } from "@/game/selectors";
-
-const ord = (n: number) => {
-  const v = n % 100;
-  if (v >= 11 && v <= 13) return `${n}th`;
-  return `${n}${({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
-};
 
 const ZONE_TONE = { title: "sun", continental: "sky", promotion: "pitch", safe: "paper", relegation: "coral", preseason: "paper" } as const;
 
@@ -127,7 +121,7 @@ export function RoleCard({ g }: { g: GameState }) {
       <div className="mt-2 flex items-center gap-1.5 text-xs">
         <span className="text-muted">Recent selection:</span>
         {r.trend.length ? r.trend.map((d, i) => (
-          <span key={i} title={`${teamLabel(d.opponent, true)}: ${d.status === "started" ? "started" : d.status === "sub" ? "came on" : "did not play"}`} className={`grid h-6 w-6 place-items-center rounded-md border-2 border-line text-[10px] font-black ${d.status === "started" ? "bg-pitch text-white" : d.status === "sub" ? "bg-sun" : "bg-paper-2 text-muted"}`}>
+          <span key={i} title={`${teamLabel(d.opponent, true)}: ${d.status === "started" ? "started" : d.status === "sub" ? "came on" : "did not play"}`} className={`grid h-6 w-6 place-items-center rounded-md border-2 border-line text-[11px] font-black ${d.status === "started" ? "bg-pitch text-white" : d.status === "sub" ? "bg-sun" : "bg-paper-2 text-muted"}`}>
             {d.status === "started" ? "S" : d.status === "sub" ? "B" : "–"}
           </span>
         )) : <span className="text-muted">no games yet</span>}
@@ -174,7 +168,7 @@ export function RelationshipsCard({ g }: { g: GameState }) {
         {insights.map((r) => (
           <div key={r.key}>
             <Bar label={REL_LABEL[r.key]} value={r.value} tone={REL_TONE[r.key]} />
-            <button type="button" className="mt-0.5 text-left text-xs font-semibold underline decoration-dotted" onClick={() => setOpen(open === r.key ? null : r.key)} aria-expanded={open === r.key}>
+            <button type="button" className="pb-hit mt-0.5 text-left text-xs font-semibold underline decoration-dotted" onClick={() => setOpen(open === r.key ? null : r.key)} aria-expanded={open === r.key}>
               {r.headline} {open === r.key ? "▾" : "▸"}
             </button>
             {open === r.key && (
@@ -230,55 +224,123 @@ export function MovesAndFinances({ g, clubId }: { g: GameState; clubId: string }
   );
 }
 
-export function HistoryCard({ g, clubId }: { g: GameState; clubId: string }) {
-  const h = useMemo(() => clubHistory(g, clubId), [g, clubId, g.season]); // eslint-disable-line react-hooks/exhaustive-deps
-  const memories = useMemo(
-    () => memoriesByImportance(g).filter((m) => m.clubId === clubId).slice(0, 3).map((m) => ({ id: m.id, ...describeMemory(g, m) })),
-    [g, clubId, g.user.memories.length], // eslint-disable-line react-hooks/exhaustive-deps
-  );
+function HistoryRow({ label, children, detail }: { label: string; children: React.ReactNode; detail?: string }) {
   return (
-    <Disclosure title="History & rivalries" summary={`${h.real.titles} real top-flight title${h.real.titles === 1 ? "" : "s"} in the data · ${h.simulated.leagueTitles + h.simulated.cups + h.simulated.continental} won in this career`}>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <div className="mb-1 flex items-center gap-2 text-xs font-black uppercase text-muted">Real league history <Badge>from real tables</Badge></div>
-          {h.real.seasons ? (
+    <li className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+      <span className="text-ink-2">{label}</span>
+      <span className="min-w-0 text-right">
+        <b>{children}</b>
+        {detail && <span className="block break-words text-[11px] text-muted">{detail}</span>}
+      </span>
+    </li>
+  );
+}
+
+const HEAD = "mb-1.5 flex flex-wrap items-center gap-2 text-xs font-black uppercase text-muted";
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const MAX_HONOURS_LISTED = 6;
+
+export function HistoryCard({ g, clubId }: { g: GameState; clubId: string }) {
+  const h = useMemo(() => clubHistory(g, clubId), [g, clubId]);
+  const moments = useMemo(() => clubMoments(g, clubId).map((m) => ({ id: m.id, ...describeMemory(g, m) })), [g, clubId]);
+  const { real, simulated: sim, user: you } = h;
+  const played = you.apps > 0;
+  return (
+    <Disclosure title="History & Honours" summary={`${real.titles} real top-flight title${real.titles === 1 ? "" : "s"} in the data · ${h.honours.length} won in this career`}>
+      <div className="grid gap-5 md:grid-cols-2">
+        <section>
+          <div className={HEAD}>Real club history <Badge>from real tables</Badge></div>
+          <ul className="grid gap-1 text-sm">
+            {real.founded !== null && <HistoryRow label="Founded">{real.founded}</HistoryRow>}
+            {real.seasons > 0 && (
+              <>
+                <HistoryRow label="Seasons on record" detail={real.span}>{real.seasons}</HistoryRow>
+                <HistoryRow label="Top-flight titles" detail="in those seasons">{real.titles}</HistoryRow>
+                {real.bestPos !== null && <HistoryRow label="Best recorded finish" detail={real.bestLeague ?? undefined}>{ord(real.bestPos)}</HistoryRow>}
+                {real.lastPos !== null && <HistoryRow label="Latest recorded finish" detail={[real.lastSeason, real.lastLeague].filter(Boolean).join(" · ")}>{ord(real.lastPos)}</HistoryRow>}
+              </>
+            )}
+          </ul>
+          {real.seasons === 0 && <p className="text-sm text-muted">No real league tables in the dataset for this club.</p>}
+          <p className="mt-1.5 text-[11px] text-muted">Only the seasons in the game&apos;s open dataset are counted: older honours aren&apos;t invented.</p>
+        </section>
+
+        <section>
+          <div className={HEAD}>In your career <Badge tone="sun">simulated</Badge></div>
+          {sim.seasons > 0 ? (
             <ul className="grid gap-1 text-sm">
-              <li>Seasons on record: <b>{h.real.seasons}</b> ({h.real.span})</li>
-              <li>Top-flight titles: <b>{h.real.titles}</b></li>
-              <li>Best finish: <b>{h.real.bestPos ?? "–"}</b>{h.real.lastPos ? ` · last recorded: ${ord(h.real.lastPos)} (${h.real.lastSeason})` : ""}</li>
-            </ul>
-          ) : <p className="text-sm text-muted">No real league tables in the dataset for this club.</p>}
-          <p className="mt-1 text-[11px] text-muted">Only the seasons in the game&apos;s open dataset are counted: older honours aren&apos;t invented.</p>
-        </div>
-        <div>
-          <div className="mb-1 flex items-center gap-2 text-xs font-black uppercase text-muted">In your career <Badge tone="sun">simulated</Badge></div>
-          {h.simulated.seasons ? (
-            <ul className="grid gap-1 text-sm">
-              <li>League titles: <b>{h.simulated.leagueTitles}</b> · Domestic cups: <b>{h.simulated.cups}</b> · Continental: <b>{h.simulated.continental}</b></li>
-              <li>Best finish: <b>{h.simulated.bestPos ?? "–"}</b> · Promotions {h.simulated.promotions} · Relegations {h.simulated.relegations}</li>
-              {h.records.map((r) => <li key={r.label}>{r.label}: <b>{r.value}</b></li>)}
+              <HistoryRow label="Seasons simulated">{sim.seasons}</HistoryRow>
+              {sim.latest && <HistoryRow label="Latest finish" detail={[seasonLabel(sim.latest.season), sim.latest.league].filter(Boolean).join(" · ")}>{ord(sim.latest.pos)}</HistoryRow>}
+              <HistoryRow label="Relegations">{sim.relegations}</HistoryRow>
             </ul>
           ) : <p className="text-sm text-muted">The first completed season will appear here.</p>}
-        </div>
-        <div>
-          <div className="mb-1 text-xs font-black uppercase text-muted">Rivals</div>
-          {h.rivals.length ? (
-            <ul className="grid gap-1 text-sm">
-              {h.rivals.map((r) => <li key={r.clubId} className="flex items-center gap-2"><Crest clubId={r.clubId} size={18} /> <b>{teamLabel(r.clubId)}</b> <Badge tone={r.level >= 0.6 ? "coral" : "paper"}>{r.label}</Badge></li>)}
-            </ul>
-          ) : <p className="text-sm text-muted">No standout rivals.</p>}
-        </div>
-        <div>
-          <div className="mb-1 text-xs font-black uppercase text-muted">Your contribution</div>
-          <p className="text-sm">{h.user.apps} appearances · {h.user.goals} goals · {h.user.assists} assists over {h.user.seasons} season{h.user.seasons === 1 ? "" : "s"}. {h.user.trophies} trophies · {h.user.memories} Football Memories here.</p>
-          {memories.length > 0 && (
-            <ul className="mt-2 grid gap-1 text-xs">
-              {memories.map((m) => (
-                <li key={m.id} className="rounded-lg border-2 border-line/15 px-2 py-1"><b>{m.icon} {m.title}</b> <span className="text-muted">· {m.seasonLabel}</span><div className="text-ink-2">{m.line}</div></li>
-              ))}
+        </section>
+
+        {sim.seasons > 0 && (
+          <>
+            <section data-testid="club-honours">
+              <div className={HEAD}>Honours <Badge tone="sun">simulated</Badge></div>
+              <ul className="grid gap-1 text-sm">
+                <HistoryRow label="League titles">{sim.leagueTitles}</HistoryRow>
+                <HistoryRow label="Domestic cups">{sim.cups}</HistoryRow>
+                <HistoryRow label="Continental">{sim.continental}</HistoryRow>
+                <HistoryRow label="Promotions">{sim.promotions}</HistoryRow>
+              </ul>
+              {h.honours.length > 0 && (
+                <ul className="mt-2 grid gap-1 border-t-2 border-line/15 pt-2 text-sm">
+                  {h.honours.slice(0, MAX_HONOURS_LISTED).map((t) => (
+                    <li key={`${t.season}-${t.name}`} className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <span className="min-w-0 break-words">🏆 {t.name}</span>
+                      <span className="text-xs text-muted">{seasonLabel(t.season)}</span>
+                    </li>
+                  ))}
+                  {h.honours.length > MAX_HONOURS_LISTED && <li className="text-xs text-muted">and {h.honours.length - MAX_HONOURS_LISTED} earlier</li>}
+                </ul>
+              )}
+            </section>
+            <section data-testid="club-records">
+              <div className={HEAD}>Club records <Badge tone="sun">simulated</Badge></div>
+              <ul className="grid gap-1 text-sm">
+                {h.records.map((r) => <HistoryRow key={r.id} label={r.label} detail={r.detail}>{r.value}</HistoryRow>)}
+              </ul>
+            </section>
+          </>
+        )}
+
+        <section className="md:col-span-2" data-testid="club-legacy">
+          <div className={HEAD}>Your legacy <Badge tone="sun">simulated</Badge></div>
+          <div className="text-sm">
+            <div className="font-bold">{plural(you.seasonsAtClub, "season")} at club</div>
+            {played ? (
+              <>
+                <p>{plural(you.apps, "appearance")}{you.starts !== null ? ` · ${plural(you.starts, "start")}` : ""}</p>
+                <p>{plural(you.goals, "goal")}{you.assists !== null ? ` · ${plural(you.assists, "assist")}` : ""}</p>
+              </>
+            ) : (
+              <p className="text-muted">No senior appearances yet.</p>
+            )}
+            <p>{plural(you.trophies, "trophy", "trophies")} · {plural(you.memories, "Football Memory", "Football Memories")}</p>
+          </div>
+          {you.best.length > 0 && (
+            <ul className="mt-2 grid gap-x-6 gap-y-1 border-t-2 border-line/15 pt-2 text-sm sm:grid-cols-2">
+              {you.best.map((r) => <HistoryRow key={r.id} label={r.label} detail={r.detail}>{r.value}</HistoryRow>)}
             </ul>
           )}
-        </div>
+        </section>
+
+        {moments.length > 0 && (
+          <section className="md:col-span-2" data-testid="club-moments">
+            <div className={HEAD}>Iconic moments</div>
+            <ul className="grid gap-1.5 text-sm sm:grid-cols-2">
+              {moments.map((m) => (
+                <li key={m.id} className="min-w-0 rounded-lg border-2 border-line/15 px-2.5 py-1.5">
+                  <b className="break-words">{m.icon} {m.title}</b> <span className="text-xs text-muted">· {m.seasonLabel}</span>
+                  <div className="break-words text-xs text-ink-2">{m.line}</div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </Disclosure>
   );

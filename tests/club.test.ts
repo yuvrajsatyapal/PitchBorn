@@ -1,14 +1,15 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { adjustRel, relReasons } from "../src/engine/career/relationships";
 import { ROLE_LABEL } from "../src/engine/career/offers";
-import { clubHistory, clubIdentity, competitionRuns, departments, finances, recentMoves, relationshipInsights, userTacticalFit } from "../src/engine/club/overview";
+import { clubHistory, clubIdentity, clubMoments, competitionRuns, departments, finances, recentMoves, relationshipInsights, userTacticalFit } from "../src/engine/club/overview";
 import { currentObjectives, deriveObjectives, ensureObjectives, objectiveLabel, progressOf, settleObjectives, youthMinutesShare, YOUTH_MINUTES_SHARE } from "../src/engine/club/objectives";
 import { rolePromiseBroken, roleView, selectionTrend } from "../src/engine/club/role";
 import { continentalSlots, standingOf } from "../src/engine/club/standing";
 import { WORLD, staticLeague } from "../src/engine/data/world";
 import { partsTotal, scoreParts, selectionScore, tacticalFit, fitFor } from "../src/engine/match/lineup";
 import { advanceTurn } from "../src/engine/season/advance";
-import type { GameState } from "../src/engine/types";
+import { emptyStat } from "../src/engine/players/generate";
+import type { GameState, Memory, StatLine, TableRow } from "../src/engine/types";
 import { squadOf, userPlayer } from "../src/engine/world/helpers";
 import { newCareer, strongUser } from "./helpers";
 
@@ -292,8 +293,7 @@ describe("history, transfers and finances", () => {
     for (let i = 0; i < 46; i++) advanceTurn(s);
     const arch = s.archive[0];
     const [leagueId, c] = Object.entries(arch.champions).find(([id]) => /-1-/.test(id))!;
-    void leagueId;
-    expect(clubHistory(s, c.winner).simulated.leagueTitles).toBeGreaterThanOrEqual(1);
+      expect(clubHistory(s, c.winner).simulated.leagueTitles).toBeGreaterThanOrEqual(1);
     expect(clubHistory(s, c.winner).simulated.seasons).toBe(1);
   });
 
@@ -308,5 +308,147 @@ describe("history, transfers and finances", () => {
     const f = finances(s, club)!;
     expect(["Healthy", "Stable", "Tight", "In trouble"]).toContain(f.verdict);
     expect(f.wageBill).toBe(squadOf(s, club).reduce((n, p) => n + (p.contract?.wage ?? 0), 0));
+  });
+});
+
+describe("club history and honours", () => {
+  const row = (team: string, o: Partial<TableRow> = {}): TableRow => ({ team, played: 38, won: 10, drawn: 10, lost: 18, gf: 40, ga: 55, points: 40, form: [], ...o });
+  const setup = () => {
+    const s = newCareer({ seed: "cl-honours" });
+    const club = userPlayer(s).clubId as string;
+    const top = Object.values(s.competitions).find((c) => c.kind === "league" && c.tier === 1)!.id.replace(/-\d{4}$/, "");
+    const second = Object.values(s.competitions).find((c) => c.kind === "league" && c.tier === 2)!.id.replace(/-\d{4}$/, "");
+    s.archive = [];
+    return { s, club, top, second };
+  };
+
+  it("no longer carries rivals: the dedicated Rivalries card is the only place for them", () => {
+    const { s, club } = setup();
+    expect(clubHistory(s, club)).not.toHaveProperty("rivals");
+  });
+
+  it("starts with no simulated honours or records and invents no real ones", () => {
+    const { s, club } = setup();
+    const h = clubHistory(s, club);
+    expect(h.honours).toEqual([]);
+    expect(h.records).toEqual([]);
+    expect(h.simulated).toMatchObject({ seasons: 0, leagueTitles: 0, cups: 0, continental: 0, promotions: 0, relegations: 0, bestPos: null, latest: null });
+  });
+
+  it("keeps the real record untouched by anything simulated", () => {
+    const { s, club, top } = setup();
+    const before = clubHistory(s, club).real;
+    s.archive.push({ season: 2026, champions: { [`${top}-2026`]: { name: "League", winner: club } }, topScorers: {}, awards: [], tables: { [`${top}-2026`]: [row(club, { points: 90 })] }, promoted: {}, relegated: {} });
+    const h = clubHistory(s, club);
+    expect(h.real).toEqual(before);
+    expect(h.simulated.leagueTitles).toBe(1);
+  });
+
+  it("counts titles, cups, continental trophies, promotions and relegations from the archive", () => {
+    const { s, club, top, second } = setup();
+    s.archive.push({
+      season: 2026,
+      champions: { [`${second}-2026`]: { name: "Second", winner: club }, "cup-eng-2026": { name: "FA Cup", winner: club }, "cup-eng-2026b": { name: "Other", winner: "someone-else" } },
+      topScorers: {}, awards: [],
+      tables: { [`${second}-2026`]: [row("a"), row("b"), row(club, { points: 70, won: 20, gf: 60 })] },
+      promoted: { [`${second}-2026`]: [club] }, relegated: {},
+    });
+    s.archive.push({
+      season: 2027,
+      champions: { "ccup-2027": { name: "Champions Cup", winner: club }, [`${top}-2027`]: { name: "Top", winner: "rival" } },
+      topScorers: {}, awards: [],
+      tables: { [`${top}-2027`]: [...Array.from({ length: 14 }, (_, i) => row(`t${i}`)), row(club, { points: 41, won: 11, gf: 35 })] },
+      promoted: {}, relegated: { [`${top}-2027`]: [club] },
+    });
+    const h = clubHistory(s, club);
+    expect(h.simulated).toMatchObject({ seasons: 2, leagueTitles: 1, cups: 1, continental: 1, promotions: 1, relegations: 1 });
+    expect(h.honours.map((x) => [x.season, x.kind])).toEqual([[2027, "continental"], [2026, "league"], [2026, "cup"]]);
+    // 15th in the top flight outranks 3rd in the second tier.
+    expect(h.simulated.bestPos).toBe(15);
+    expect(h.simulated.latest).toMatchObject({ pos: 15, season: 2027 });
+    const rec = Object.fromEntries(h.records.map((r) => [r.id, r.value]));
+    expect(rec).toMatchObject({ "best-finish": "15th", points: "70", wins: "20", goals: "60" });
+    expect(h.records.some((r) => r.label.toLowerCase().includes("unbeaten"))).toBe(false);
+  });
+});
+
+describe("your legacy at a club", () => {
+  const stat = (o: Partial<StatLine>): StatLine => ({ ...emptyStat(), ...o });
+  const rec = (season: number, clubId: string | null, by: Record<string, StatLine> | undefined, total: StatLine, intl?: { caps: number; goals: number }) => ({
+    season, clubId, age: 20 + season - 2026, overall: 70, stats: total, intl, byCompetition: by,
+  });
+
+  it("separates seasons at the club from games played, and says so when none were played", () => {
+    const s = newCareer({ seed: "cl-legacy0" });
+    const club = userPlayer(s).clubId as string;
+    const u = userPlayer(s);
+    u.history = [rec(2025, club, { "x-2025": stat({}) }, stat({}))];
+    const h = clubHistory(s, club);
+    expect(h.user.seasonsAtClub).toBe(2);
+    expect(h.user.apps).toBe(0);
+    expect(h.user.best).toEqual([]);
+  });
+
+  it("totals club games only and ignores other clubs and international matches", () => {
+    const s = newCareer({ seed: "cl-legacy1" });
+    const u = userPlayer(s);
+    const club = u.clubId as string;
+    u.history = [
+      rec(2024, "other-club", { "lg-2024": stat({ apps: 30, goals: 30 }) }, stat({ apps: 30, goals: 30 })),
+      rec(2025, club, { "lg-2025": stat({ apps: 20, starts: 15, goals: 8, assists: 3, ratingSum: 140 }), "intl-2025": stat({ apps: 5, goals: 2, assists: 1 }) }, stat({ apps: 25, starts: 20, goals: 10, assists: 4, ratingSum: 175 })),
+      rec(2026, club, { "lg-2026": stat({ apps: 30, starts: 28, goals: 12, assists: 9, ratingSum: 216 }), "cup-eng-2026": stat({ apps: 3, starts: 2, goals: 1 }) }, stat({ apps: 33, goals: 13 })),
+    ];
+    s.season = 2027;
+    u.season = { "lg-2027": stat({ apps: 4, starts: 4, goals: 2, assists: 1 }) };
+    s.user.trophies = [
+      { season: 2026, compId: "cup-eng-2026", name: "FA Cup", kind: "cup", clubId: club },
+      { season: 2025, compId: "lg", name: "Other", kind: "league", clubId: "other-club" },
+      { season: 2026, compId: "world-2026", name: "World Cup", kind: "international", country: "ENG" },
+    ];
+    s.user.memories = [{ id: "m1", clubId: club }, { id: "m2", clubId: "other-club" }, { id: "m3", clubId: club }] as unknown as Memory[];
+    const h = clubHistory(s, club);
+    expect(h.user).toMatchObject({ seasonsAtClub: 3, apps: 20 + 30 + 3 + 4, starts: 15 + 28 + 2 + 4, goals: 8 + 12 + 1 + 2, assists: 3 + 9 + 1, trophies: 1, memories: 2 });
+    const best = Object.fromEntries(h.user.best.map((r) => [r.id, r.value]));
+    expect(best).toMatchObject({ "best-goals": "13", "best-assists": "9", "best-rating": "7.0", "best-apps": "33" });
+  });
+
+  it("works on old saves that never stored the per-competition split", () => {
+    const s = newCareer({ seed: "cl-legacy2" });
+    const u = userPlayer(s);
+    const club = u.clubId as string;
+    u.history = [rec(2025, club, undefined, stat({ apps: 25, starts: 20, goals: 10, assists: 4 }), { caps: 5, goals: 2 })];
+    const h = clubHistory(s, club);
+    expect(h.user.apps).toBe(20);
+    expect(h.user.goals).toBe(8);
+    expect(h.user.starts).toBeNull();
+    expect(h.user.assists).toBeNull();
+    expect(h.user.best).toEqual([]);
+  });
+});
+
+describe("iconic club moments", () => {
+  const memory = (id: string, over: Partial<Memory>): Memory => ({ id, kind: "trophy", season: 2026, turn: 10, age: 20, importance: 80, factors: [], tags: [], ...over }) as Memory;
+
+  it("keeps only major and iconic memories of this club, best first, at most five", () => {
+    const s = newCareer({ seed: "cl-moments" });
+    const club = userPlayer(s).clubId as string;
+    s.user.memories = [
+      memory("a", { clubId: club, importance: 60 }),
+      memory("b", { clubId: club, importance: 90 }),
+      memory("small", { clubId: club, importance: 45 }),
+      memory("elsewhere", { clubId: "other-club", importance: 99 }),
+      memory("national", { clubId: club, importance: 95, kind: "intl-debut" }),
+      ...["c", "d", "e", "f"].map((id, i) => memory(id, { clubId: club, importance: 70 + i })),
+    ];
+    const ids = clubMoments(s, club).map((m) => m.id);
+    expect(ids).toEqual(["b", "f", "e", "d", "c"]);
+    expect(clubMoments(s, "other-club").map((m) => m.id)).toEqual(["elsewhere"]);
+  });
+
+  it("is empty when nothing meaningful happened", () => {
+    const s = newCareer({ seed: "cl-moments0" });
+    expect(clubMoments(s, userPlayer(s).clubId as string)).toEqual([]);
+    s.user.memories = [memory("minor", { clubId: userPlayer(s).clubId, importance: 40 })];
+    expect(clubMoments(s, userPlayer(s).clubId as string)).toEqual([]);
   });
 });

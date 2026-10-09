@@ -53,7 +53,7 @@ export default function ClubPage() {
               <Kit clubId={club.id} size={64} />
               <Kit clubId={club.id} size={64} away />
             </div>
-            <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
+            <dl className="grid min-w-0 flex-1 basis-[16rem] grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
               <div><dt className="text-xs text-muted">Stadium</dt><dd className="font-semibold">{stad?.name}</dd></div>
               <div><dt className="text-xs text-muted">Capacity</dt><dd className="font-semibold">{stad?.capacity.toLocaleString()}</dd></div>
               <div><dt className="text-xs text-muted">City</dt><dd className="font-semibold">{st.city}</dd></div>

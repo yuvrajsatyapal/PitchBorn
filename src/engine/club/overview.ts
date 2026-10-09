@@ -6,16 +6,24 @@
 import { clubRevenue, formatMoney } from "../players/economy";
 import { staticClub, staticLeague, stadium, WORLD, clubName } from "../data/world";
 import { FORMATIONS, fitFor, selectTeam, tacticalFit } from "../match/lineup";
-import { rivalsOf } from "../memory/rivalry";
+import { memoriesByImportance } from "../memory/store";
+import { tierOf } from "../memory/score";
+import { seasonLabel } from "../calendar";
+import { addStat, emptyStat, ageOf } from "../players/generate";
 import { positionGroup } from "../players/attributes";
-import { ageOf } from "../players/generate";
-import type { ClubState, GameState, Position } from "../types";
+import type { ClubState, GameState, Memory, MemoryKind, Player, Position, SeasonRecord, StatLine, TableRow } from "../types";
 import { squadOf, userPlayer } from "../world/helpers";
 import { adjustRel, relReasons } from "../career/relationships";
 import { journeyOf, type Journey } from "../competitions/bracket";
 import { standingOf } from "./standing";
 
 // ---------------------------------------------------------------------------------------------------- identity
+
+export const ord = (n: number) => {
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return `${n}th`;
+  return `${n}${({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
+};
 
 const band = (v: number, low: string, mid: string, high: string) => (v >= 0.62 ? high : v <= 0.38 ? low : mid);
 
@@ -204,86 +212,198 @@ export function recentMoves(state: GameState, clubId: string): { arrivals: MoveR
 
 // ---------------------------------------------------------------------------------------------------- history
 
+export interface ClubHonour {
+  season: number;
+  name: string;
+  kind: "league" | "cup" | "continental";
+}
+
+export interface ClubRecord {
+  id: string;
+  label: string;
+  value: string;
+  detail?: string;
+}
+
+export interface ClubLegacy {
+  /** Seasons the user was under contract here: says nothing about whether they played. */
+  seasonsAtClub: number;
+  /** Club games only: international and friendly games are not "for the club". */
+  apps: number;
+  /** Null when a season in an older save lacks the per-competition split these need. */
+  starts: number | null;
+  goals: number;
+  assists: number | null;
+  trophies: number;
+  memories: number;
+  /** Best completed seasons here, each only when the stats behind it are exact. */
+  best: ClubRecord[];
+}
+
 export interface ClubHistory {
   /** Real league seasons in the dataset (the last few years of actual tables). */
-  real: { span: string; seasons: number; titles: number; bestPos: number | null; lastPos: number | null; lastSeason: string | null };
+  real: {
+    span: string;
+    seasons: number;
+    titles: number;
+    founded: number | null;
+    bestPos: number | null;
+    bestLeague: string | null;
+    lastPos: number | null;
+    lastSeason: string | null;
+    lastLeague: string | null;
+  };
   /** What has happened in this save. */
-  simulated: { leagueTitles: number; cups: number; continental: number; bestPos: number | null; promotions: number; relegations: number; seasons: number };
-  rivals: { clubId: string; label: string; level: number }[];
-  user: { apps: number; goals: number; assists: number; trophies: number; seasons: number; memories: number };
-  records: { label: string; value: string }[];
+  simulated: { seasons: number; leagueTitles: number; cups: number; continental: number; bestPos: number | null; promotions: number; relegations: number; latest: { pos: number; league: string | null; season: number } | null };
+  /** Each simulated trophy, newest first. */
+  honours: ClubHonour[];
+  /** Club records from the archived league tables of this save. */
+  records: ClubRecord[];
+  user: ClubLegacy;
 }
+
+/** Summer tournaments and international windows: their stats belong to the nation, not the club. */
+const NATIONAL_COMP = /^(intl|world|euro)-\d{4}$/;
+const isClubComp = (compId: string) => !NATIONAL_COMP.test(compId);
+const leagueOfComp = (compId: string) => compId.replace(/-\d{4}$/, "");
+const tierOfComp = (compId: string) => staticLeague(leagueOfComp(compId))?.tier ?? 9;
+const leagueNameOf = (compId: string) => staticLeague(leagueOfComp(compId))?.name ?? null;
+
+function honourKind(compId: string): ClubHonour["kind"] {
+  if (compId.startsWith("cup-")) return "cup";
+  if (compId.startsWith("ccup") || compId.startsWith("ecup")) return "continental";
+  return "league";
+}
+
+/** The user's club-only totals for one season record, or null for the fields an older save cannot split. */
+function clubLine(rec: SeasonRecord): { line: StatLine; exact: boolean } {
+  const line = emptyStat();
+  if (rec.byCompetition) {
+    for (const [k, v] of Object.entries(rec.byCompetition)) if (isClubComp(k)) addStat(line, v);
+    return { line, exact: true };
+  }
+  line.apps = rec.stats.apps - (rec.intl?.caps ?? 0);
+  line.goals = rec.stats.goals - (rec.intl?.goals ?? 0);
+  line.ratingSum = rec.stats.ratingSum;
+  return { line, exact: false };
+}
+
+function currentClubLine(state: GameState, u: Player): StatLine {
+  const line = emptyStat();
+  for (const [k, v] of Object.entries(u.season)) {
+    const kind = state.competitions[k]?.kind;
+    if (kind ? kind !== "international" && kind !== "friendly" : isClubComp(k)) addStat(line, v);
+  }
+  return line;
+}
+
+const withSeason = (v: string, season: number, extra?: string | null) => ({ value: v, detail: [seasonLabel(season), extra].filter(Boolean).join(" · ") });
 
 export function clubHistory(state: GameState, clubId: string): ClubHistory {
   const rows = WORLD.history.flatMap((h) => h.table.filter((r) => r.clubId === clubId).map((r) => ({ season: h.season, pos: r.pos, leagueId: h.leagueId })));
   const sorted = [...rows].sort((a, b) => a.season.localeCompare(b.season));
-  const top = (pred: (r: (typeof rows)[number]) => boolean) => sorted.filter(pred);
-  const titles = top((r) => r.pos === 1 && (staticLeague(r.leagueId)?.tier ?? 9) === 1).length;
+  const titles = sorted.filter((r) => r.pos === 1 && (staticLeague(r.leagueId)?.tier ?? 9) === 1).length;
   const seasons = [...new Set(sorted.map((r) => r.season))];
+  // A third place in the top flight outranks a title in the second tier.
+  const realBest = [...sorted].sort((a, b) => (staticLeague(a.leagueId)?.tier ?? 9) - (staticLeague(b.leagueId)?.tier ?? 9) || a.pos - b.pos)[0];
+  const realLast = sorted[sorted.length - 1];
 
-  let leagueTitles = 0;
-  let cups = 0;
-  let continental = 0;
-  let best: number | null = null;
+  const honours: ClubHonour[] = [];
   let promotions = 0;
   let relegations = 0;
-  const finishes: { season: number; pos: number; goals: number }[] = [];
+  const finishes: { season: number; compId: string; pos: number; row: TableRow }[] = [];
   for (const a of state.archive) {
-    for (const [compId, c] of Object.entries(a.champions)) {
-      if (c.winner !== clubId) continue;
-      if (compId.startsWith("cup-")) cups++;
-      else if (compId.startsWith("ccup") || compId.startsWith("ecup")) continental++;
-      else leagueTitles++;
-    }
+    for (const [compId, c] of Object.entries(a.champions)) if (c.winner === clubId) honours.push({ season: a.season, name: c.name, kind: honourKind(compId) });
     for (const [compId, table] of Object.entries(a.tables)) {
       const i = table.findIndex((r) => r.team === clubId);
-      if (i >= 0) {
-        best = best === null ? i + 1 : Math.min(best, i + 1);
-        finishes.push({ season: a.season, pos: i + 1, goals: table[i].gf });
-      }
-      void compId;
+      if (i >= 0) finishes.push({ season: a.season, compId, pos: i + 1, row: table[i] });
     }
     for (const arr of Object.values(a.promoted)) if (arr.includes(clubId)) promotions++;
     for (const arr of Object.values(a.relegated)) if (arr.includes(clubId)) relegations++;
   }
+  const prestige = { league: 0, continental: 1, cup: 2 };
+  honours.sort((x, y) => y.season - x.season || prestige[x.kind] - prestige[y.kind]);
+  const best = [...finishes].sort((x, y) => tierOfComp(x.compId) - tierOfComp(y.compId) || x.pos - y.pos || y.season - x.season)[0];
+  const latest = finishes.reduce<(typeof finishes)[number] | null>((l, f) => (!l || f.season > l.season ? f : l), null);
+
+  const records: ClubRecord[] = [];
+  const topBy = (key: "points" | "won" | "gf") => finishes.reduce<(typeof finishes)[number] | null>((m, f) => (!m || f.row[key] > m.row[key] ? f : m), null);
+  if (best) records.push({ id: "best-finish", label: "Best finish", value: ord(best.pos), detail: [seasonLabel(best.season), leagueNameOf(best.compId)].filter(Boolean).join(" · ") });
+  for (const [id, label, key] of [["points", "Most points", "points"], ["wins", "Most wins", "won"], ["goals", "Most goals", "gf"]] as const) {
+    const f = topBy(key);
+    if (f) records.push({ id, label, value: String(f.row[key]), detail: [seasonLabel(f.season), leagueNameOf(f.compId)].filter(Boolean).join(" · ") });
+  }
+  const topScorer = state.archive.flatMap((a) => Object.values(a.topScorers).filter((t) => t.clubId === clubId && t.goals > 0).map((t) => ({ ...t, season: a.season }))).sort((a, b) => b.goals - a.goals)[0];
+  if (topScorer) records.push({ id: "top-scorer", label: "Club top scorer in a league season", value: `${topScorer.goals}`, detail: `${topScorer.name} · ${seasonLabel(topScorer.season)}` });
+
+  // The user's time here. Contracted seasons and played seasons are different things, so both are kept apart.
   const u = userPlayer(state);
-  let apps = 0;
-  let goals = 0;
-  let assists = 0;
-  let years = 0;
-  for (const h of u.history) if (h.clubId === clubId) {
-    apps += h.stats.apps;
-    goals += h.stats.goals;
-    assists += h.stats.assists;
-    years++;
-  }
+  const here = u.history.filter((h) => h.clubId === clubId);
+  const lines = here.map((h) => ({ rec: h, ...clubLine(h) }));
+  const total = emptyStat();
+  for (const l of lines) addStat(total, l.line);
+  const seasonSet = new Set(here.map((h) => h.season));
   if (u.clubId === clubId) {
-    for (const k in u.season) {
-      apps += u.season[k].apps;
-      goals += u.season[k].goals;
-      assists += u.season[k].assists;
-    }
-    years++;
+    addStat(total, currentClubLine(state, u));
+    seasonSet.add(state.season);
   }
-  const records: { label: string; value: string }[] = [];
-  const bestGoals = [...finishes].sort((a, b) => b.goals - a.goals)[0];
-  if (bestGoals) records.push({ label: "Most league goals in a season", value: `${bestGoals.goals} (${bestGoals.season}/${String((bestGoals.season + 1) % 100).padStart(2, "0")})` });
-  const topScorer = state.archive.flatMap((a) => Object.values(a.topScorers).filter((t) => t.clubId === clubId).map((t) => ({ ...t, season: a.season }))).sort((a, b) => b.goals - a.goals)[0];
-  if (topScorer) records.push({ label: "Best league top scorer", value: `${topScorer.name}, ${topScorer.goals} goals` });
+  const exactAll = lines.every((l) => l.exact);
+  const bestOf = (pick: (l: StatLine) => number, minApps = 1) =>
+    lines.filter((l) => l.exact && l.line.apps >= minApps).reduce<(typeof lines)[number] | null>((m, l) => (pick(l.line) > (m ? pick(m.line) : 0) ? l : m), null);
+  const legacyBest: ClubRecord[] = [];
+  const bg = bestOf((l) => l.goals);
+  if (bg) legacyBest.push({ id: "best-goals", label: "Most goals in a season", ...withSeason(String(bg.line.goals), bg.rec.season) });
+  const ba = bestOf((l) => l.assists);
+  if (ba) legacyBest.push({ id: "best-assists", label: "Most assists in a season", ...withSeason(String(ba.line.assists), ba.rec.season) });
+  const br = bestOf((l) => l.ratingSum / l.apps, 10);
+  if (br) legacyBest.push({ id: "best-rating", label: "Best average rating", ...withSeason((br.line.ratingSum / br.line.apps).toFixed(1), br.rec.season, `${br.line.apps} apps`) });
+  const bp = bestOf((l) => l.apps);
+  if (bp) legacyBest.push({ id: "best-apps", label: "Most appearances in a season", ...withSeason(String(bp.line.apps), bp.rec.season) });
+
   return {
     real: {
       span: seasons.length ? `${seasons[0]} – ${seasons[seasons.length - 1]}` : "",
       seasons: seasons.length,
       titles,
-      bestPos: sorted.length ? Math.min(...sorted.map((r) => r.pos)) : null,
-      lastPos: sorted.length ? sorted[sorted.length - 1].pos : null,
-      lastSeason: sorted.length ? sorted[sorted.length - 1].season : null,
+      founded: staticClub(clubId)?.founded ?? null,
+      bestPos: realBest?.pos ?? null,
+      bestLeague: realBest ? (staticLeague(realBest.leagueId)?.name ?? null) : null,
+      lastPos: realLast?.pos ?? null,
+      lastSeason: realLast?.season ?? null,
+      lastLeague: realLast ? (staticLeague(realLast.leagueId)?.name ?? null) : null,
     },
-    simulated: { leagueTitles, cups, continental, bestPos: best, promotions, relegations, seasons: state.archive.length },
-    rivals: rivalsOf(state, clubId, 4),
-    user: { apps, goals, assists, trophies: state.user.trophies.filter((t) => t.clubId === clubId).length, seasons: years, memories: state.user.memories.filter((m) => m.clubId === clubId).length },
+    simulated: {
+      seasons: new Set(finishes.map((f) => f.season)).size,
+      leagueTitles: honours.filter((h) => h.kind === "league").length,
+      cups: honours.filter((h) => h.kind === "cup").length,
+      continental: honours.filter((h) => h.kind === "continental").length,
+      bestPos: best?.pos ?? null,
+      promotions,
+      relegations,
+      latest: latest ? { pos: latest.pos, league: leagueNameOf(latest.compId), season: latest.season } : null,
+    },
+    honours,
     records,
+    user: {
+      seasonsAtClub: seasonSet.size,
+      apps: total.apps,
+      starts: exactAll ? total.starts : null,
+      goals: total.goals,
+      assists: exactAll ? total.assists : null,
+      trophies: state.user.trophies.filter((t) => t.clubId === clubId).length,
+      memories: state.user.memories.filter((m) => m.clubId === clubId).length,
+      best: legacyBest,
+    },
   };
+}
+
+const NATIONAL_MEMORY: MemoryKind[] = ["intl-debut", "first-intl-goal", "intl-trophy"];
+
+/** The big moments the user lived at this club, from Football Memories: only major and iconic ones. */
+export function clubMoments(state: GameState, clubId: string, limit = 5): Memory[] {
+  return memoriesByImportance(state)
+    .filter((m) => m.clubId === clubId && !NATIONAL_MEMORY.includes(m.kind) && ["iconic", "major"].includes(tierOf(m.importance)))
+    .slice(0, limit);
 }
 
 /** The club's cup and continental runs this season, for the context card. */
