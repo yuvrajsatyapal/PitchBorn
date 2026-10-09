@@ -17,6 +17,7 @@ import { squadOf, userPlayer } from "../world/helpers";
 import { adjustRel, relReasons } from "../career/relationships";
 import { journeyOf, type Journey } from "../competitions/bracket";
 import { standingOf } from "./standing";
+import { majorHonours, type MajorHonours } from "../data/majorHonours";
 
 // ---------------------------------------------------------------------------------------------------- identity
 
@@ -251,6 +252,8 @@ export interface ClubHistory {
     span: string;
     seasons: number;
     titles: number;
+    /** Real all-time league, Champions League and Europa League wins. */
+    majors: MajorHonours;
     founded: number | null;
     bestPos: number | null;
     bestLeague: string | null;
@@ -370,6 +373,7 @@ export function clubHistory(state: GameState, clubId: string): ClubHistory {
       span: seasons.length ? `${seasons[0]} – ${seasons[seasons.length - 1]}` : "",
       seasons: seasons.length,
       titles,
+      majors: majorHonours(clubId),
       founded: staticClub(clubId)?.founded ?? null,
       bestPos: realBest?.pos ?? null,
       bestLeague: realBest ? (staticLeague(realBest.leagueId)?.name ?? null) : null,

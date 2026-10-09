@@ -246,23 +246,17 @@ export function HistoryCard({ g, clubId }: { g: GameState; clubId: string }) {
   const { real, simulated: sim, user: you } = h;
   const played = you.apps > 0;
   return (
-    <Disclosure title="History & Honours" summary={`${real.titles} real top-flight title${real.titles === 1 ? "" : "s"} in the data · ${h.honours.length} won in this career`}>
+    <Disclosure title="History & Honours" summary={`${plural(real.majors.league, "league title")}${real.majors.champions ? ` · ${plural(real.majors.champions, "Champions League", "Champions Leagues")}` : ""} · ${h.honours.length} won in this career`}>
       <div className="grid gap-5 md:grid-cols-2">
         <section>
-          <div className={HEAD}>Real club history <Badge>from real tables</Badge></div>
+          <div className={HEAD}>Real club history <Badge>real</Badge></div>
           <ul className="grid gap-1 text-sm">
             {real.founded !== null && <HistoryRow label="Founded">{real.founded}</HistoryRow>}
-            {real.seasons > 0 && (
-              <>
-                <HistoryRow label="Seasons on record" detail={real.span}>{real.seasons}</HistoryRow>
-                <HistoryRow label="Top-flight titles" detail="in those seasons">{real.titles}</HistoryRow>
-                {real.bestPos !== null && <HistoryRow label="Best recorded finish" detail={real.bestLeague ?? undefined}>{ord(real.bestPos)}</HistoryRow>}
-                {real.lastPos !== null && <HistoryRow label="Latest recorded finish" detail={[real.lastSeason, real.lastLeague].filter(Boolean).join(" · ")}>{ord(real.lastPos)}</HistoryRow>}
-              </>
-            )}
+            <HistoryRow label="League titles" detail="all time">{real.majors.league}</HistoryRow>
+            <HistoryRow label="Champions League" detail="European Cup included">{real.majors.champions}</HistoryRow>
+            <HistoryRow label="Europa League" detail="UEFA Cup included">{real.majors.europa}</HistoryRow>
           </ul>
-          {real.seasons === 0 && <p className="text-sm text-muted">No real league tables in the dataset for this club.</p>}
-          <p className="mt-1.5 text-[11px] text-muted">Only the seasons in the game&apos;s open dataset are counted: older honours aren&apos;t invented.</p>
+          <p className="mt-1.5 text-[11px] text-muted">Major honours are real all-time totals to the end of 2024-25.</p>
         </section>
 
         <section>
