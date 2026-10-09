@@ -30,7 +30,7 @@ import { ageOf, emptyStat } from "../players/generate";
 import { clubLevel } from "../world/create";
 import { recoverWeek } from "../players/injuries";
 import { clamp, Rng } from "../rng";
-import { ensureMinimumSquads, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
+import { ensureMinimumSquads, listForFinancialReasons, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
 import { refreshRecall } from "../memory/recall";
@@ -43,6 +43,7 @@ import { applyWageRise, payPromotionBonus } from "../career/bonuses";
 import { adjustRel } from "../career/relationships";
 import { canRestFor } from "./selection";
 import { rolePromiseBroken } from "../club/role";
+import { ownerTopUp, ownershipProfile, restructurePenalty, restructuredBalance } from "../club/ownership";
 import { stepInvitations } from "../national/allegiance";
 import { ensureObjectives, settleObjectives } from "../club/objectives";
 import { endNumberTenure, offerVacatedNumber, repairAllSquads } from "../jersey/numbers";
@@ -168,10 +169,17 @@ function weeklyFinances(state: GameState): void {
     const revenue = clubRevenue(club.reputation, tier, cap);
     // Operating costs (staff, travel, facilities) take a share of revenue.
     club.balance = Math.round(club.balance + (revenue * 0.72) / C.turnsPerSeason - wages * 1.04);
-    // Deep debt triggers restructuring (owner bail-out with a reputational cost).
-    if (club.balance < -revenue * 0.6 && state.turn === C.endOfSeasonTurn) {
-      club.balance = Math.round(-revenue * 0.25);
-      club.reputation = clamp(club.reputation - 2, 8, 99);
+    if (state.turn === C.endOfSeasonTurn) {
+      const injection = ownerTopUp(club, revenue);
+      if (injection > 0) {
+        club.balance += injection;
+        club.ownerFunding = (club.ownerFunding ?? 0) + injection;
+      }
+    }
+    // Deep debt triggers restructuring (owner bail-out with a reputational cost); a backed owner tolerates deeper debt.
+    if (club.balance < -revenue * ownershipProfile(club.id).debtTolerance && state.turn === C.endOfSeasonTurn) {
+      club.balance = restructuredBalance(club, revenue);
+      club.reputation = clamp(club.reputation - restructurePenalty(club), 8, 99);
       for (const id of club.squad) {
         const p = state.players[id];
         if (p && !p.isUser && p.contract && p.contract.wage > revenue / 60) p.listed = true;
@@ -343,6 +351,7 @@ export function advanceTurn(state: GameState): AdvanceReport {
 
     // Transfers
     if (isTransferWindow(state.turn)) {
+      listForFinancialReasons(state);
       runAiTransfers(state, rng, windowName(state.turn) === "summer" ? 0.3 : 0.15);
       repairAllSquads(state);
     }

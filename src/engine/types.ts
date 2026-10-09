@@ -248,6 +248,8 @@ export interface ClubState {
   leagueId: string;
   reputation: number; // dynamic prestige 1-100
   balance: number; // euros
+  /** Lifetime owner top-ups (euros). Informational; absent in older saves. */
+  ownerFunding?: number;
   formation: FormationId;
   style: { pressing: number; tempo: number; directness: number }; // 0-1
   /** `id` is the stable key into `GameState.managers`; absent only in saves older than manager history (added on load). */

@@ -17,6 +17,7 @@ import { movePressure, tenure } from "../traits/career";
 import { careerProfile, hasTrait } from "../traits/effects";
 import { stayOf } from "../traits/stay";
 import type { ClubState, GameState, Player, SquadRole } from "../types";
+import { annualRevenue, wageTolerance } from "../club/ownership";
 import { squadOf } from "../world/helpers";
 
 /** The most a player's loyalty can take off the wage he will accept, as a share of his market wage. */
@@ -84,7 +85,7 @@ export function retentionOffer(state: GameState, club: ClubState, p: Player, rol
   if (premium > 1) premium = 1 + (premium - 1) * (1 - squeeze);
   premium *= 1 - 0.1 * squeeze;
   if (club.balance < 0) premium = Math.min(premium, 0.95);
-  const affordable = playerWage(p, state.season, club.reputation, "star") * 1.1;
+  const affordable = playerWage(p, state.season, club.reputation, "star") * 1.1 * wageTolerance(club, annualRevenue(club));
   let wage = market * premium;
   const current = p.contract?.wage ?? 0;
   if (current > 0) {

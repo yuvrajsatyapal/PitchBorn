@@ -6,6 +6,7 @@
  * a high one is a concession the club will give something back for. Everything is bounded so no clause can run away.
  */
 import { BALANCE } from "../balance";
+import { annualRevenue, spendableCash } from "../club/ownership";
 import { overallFor } from "../players/attributes";
 import { marketValue } from "../players/economy";
 import { clamp } from "../rng";
@@ -95,9 +96,10 @@ export function packageWeekly(t: ContractTerms, p: Player, club: ClubState, stat
  * bank (a club in debt pays none) and by the player's standing: bigger names command a bigger up-front sum.
  */
 export function signingBonusCeiling(club: ClubState, p: Player, wage: number): number {
-  if (club.balance <= 0) return 0;
+  const cash = spendableCash(club, annualRevenue(club));
+  if (cash <= 0) return 0;
   const byStanding = wage * (6 + p.reputation / 4);
-  const byCash = club.balance * 0.04;
+  const byCash = cash * 0.04;
   return Math.round(Math.min(byStanding, byCash) / 1000) * 1000;
 }
 

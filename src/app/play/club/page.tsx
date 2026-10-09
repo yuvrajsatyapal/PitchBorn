@@ -10,12 +10,17 @@ import { PlayerModal } from "@/components/game/PlayerModal";
 import { RivalryCard } from "@/components/game/RivalryCard";
 import { TeamForm } from "@/components/game/widgets";
 import { Badge, Card, Empty, PageTitle, Stat, Table, Tabs } from "@/components/ui";
+import { ownershipOf, ownershipProfile, type OwnershipType } from "@/engine/club/ownership";
 import { clubName, staticClub, staticLeague, stadium } from "@/engine/data/world";
 import { formatMoney } from "@/engine/players/economy";
 import type { Player } from "@/engine/types";
 import { squadOf } from "@/engine/world/helpers";
 import { age, name, ovr, POS_TONE, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
+
+const OWNERSHIP_TONE: Record<OwnershipType, "sun" | "pitch" | "plum" | "coral" | "sky" | "paper"> = {
+  "fan-owned": "pitch", billionaire: "sun", "state-backed": "plum", corporate: "sky", "private-equity": "coral", standard: "paper",
+};
 
 const ORDER = ["GK", "RB", "CB", "LB", "DM", "CM", "AM", "RW", "LW", "ST"];
 
@@ -59,6 +64,13 @@ export default function ClubPage() {
               <div><dt className="text-xs text-muted">City</dt><dd className="font-semibold">{st.city}</dd></div>
               <div><dt className="text-xs text-muted">Founded</dt><dd className="font-semibold">{st.founded ?? "—"}</dd></div>
               <div><dt className="text-xs text-muted">Formation</dt><dd className="font-semibold">{club.formation}</dd></div>
+              <div className="col-span-2 sm:col-span-3" data-testid="club-ownership">
+                <dt className="text-xs text-muted">Ownership</dt>
+                <dd className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <Badge tone={OWNERSHIP_TONE[ownershipOf(club.id)]} className="font-black">{ownershipProfile(club.id).label}</Badge>
+                  <span className="text-xs text-ink-2">{ownershipProfile(club.id).blurb}</span>
+                </dd>
+              </div>
               <CurrentManager g={g} clubId={club.id} />
             </dl>
           </div>

@@ -94,3 +94,29 @@ Baseline in the same run: equal sides, xG 1.22–1.34, 9.6 fouls, 1.46 yellow ca
 Goals per match stay within about 2% of the pre-change figures; yellow cards are unchanged within sampling noise; red cards are 0.20–0.24 per match in both runs. The reference team means behind the `REF` constants come from `npx tsx scripts/sim/attributes.ts` (team reference at overall 72: marking 0.0, aerial −3.4, lane −1.3, press −5.4, resistance −1.5, aggression 51.9, sweep 1.0, build-up 0.2).
 
 Other sanity sims: `npm run sim:attributes` (distributions, specialisation, team references), `npm run sim:attributes-world -- --seasons 10` (ageing, overall by age, tactical fit and recruitment in a living world, trait counts), `npm run sim:pairs`, `npm run sim:attribute-effects`.
+
+## Club ownership (`club/ownership.ts`, `data/ownership.json`)
+
+Every club has an ownership type: `fan-owned`, `billionaire`, `state-backed`, `corporate`, `private-equity` or `standard`.
+Classifications are static data in `src/data/ownership.json` (not in saves, so old saves pick them up); a club not listed is
+`standard`, which reproduces the pre-ownership economy exactly. Only well-established owners are listed; correct or extend the
+file without touching simulation code.
+
+`club/ownership.ts` is the single place that turns a type into behaviour; the rest of the engine only calls its functions:
+
+| Effect | Where it is used |
+|---|---|
+| Transfer budget (owner credit, cash weight, reputation-base multiplier, hard ceiling in multiples of the base) | `transfers/market.ts` |
+| Willingness to chase affordable targets | `transfers/market.ts` |
+| Star-wage tolerance (trimmed by debt) | `transfers/market.ts`, `career/wages.ts` |
+| Signing-bonus cash | `career/contracts.ts` |
+| Season-end owner top-up (towards a revenue-based floor, capped per year, stops once healthy) | `season/advance.ts` |
+| Debt tolerance before a forced restructuring, and how gentle it is | `season/advance.ts` |
+| Selling pressure: forced listings and fee discounts when finances are poor | `transfers/market.ts` |
+| Retention: backed sellers sometimes refuse a rival's bid for a key player (not a far bigger buyer; not when distressed) | `transfers/market.ts` |
+
+Everything is bounded: credit and top-ups are shares of the club's own revenue (so they scale with reputation), budgets are
+capped at a multiple of the reputation-driven base, and the owner stops paying once the books reach the target.
+
+Check the economy with `npx tsx scripts/sim/ownership-economy.ts --seasons 15 --seeds 3` (add `--off` for the all-standard
+baseline). It reports per-type balances, spend, wages, owner injections, elite-player concentration and chronic debt.

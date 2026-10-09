@@ -2,6 +2,7 @@ import { BALANCE } from "../balance";
 import { moveScoreDelta, stayBonus } from "../traits/career";
 import { noteApproachDeclined, noteRenewal } from "../traits/stay";
 import { clubName, staticClub, staticLeague } from "../data/world";
+import { annualRevenue, distressDiscount, forcedSales, refusalChance, spendWillingness, transferBudget as ownedBudget, wageTolerance } from "../club/ownership";
 import { overallFor, positionGroup } from "../players/attributes";
 import { tacticalFit } from "../match/lineup";
 import { marketValue, playerWage, formatMoney } from "../players/economy";
@@ -70,10 +71,22 @@ export function squadNeeds(state: GameState, club: ClubState): { pos: Position; 
 }
 
 function transferBudget(club: ClubState): number {
-  if (club.balance < 0) return 0;
   const tier = staticLeague(club.leagueId)?.tier ?? 1;
   const base = club.reputation * club.reputation * (tier === 1 ? 26000 : tier === 2 ? 7000 : 1800);
-  return Math.max(0, Math.min(club.balance * 0.6 + base * 0.4, base * 2.2));
+  return ownedBudget(club, base, annualRevenue(club));
+}
+
+/** Clubs squeezed by their finances put their best-paid squad players up for sale; ownership sets how readily. */
+export function listForFinancialReasons(state: GameState): void {
+  for (const club of Object.values(state.clubs)) {
+    const n = forcedSales(club, annualRevenue(club));
+    if (n <= 0) continue;
+    const squad = squadOf(state, club.id)
+      .filter((p) => !p.isUser && !p.listed && p.contract && !p.loan)
+      .sort((a, b) => (b.contract?.wage ?? 0) - (a.contract?.wage ?? 0));
+    // The very best are kept: sales come from the next tier of earners, which is where a club trims the bill.
+    for (const p of squad.slice(2, 2 + n)) p.listed = true;
+  }
 }
 
 /** Will the player agree to join? */
@@ -150,6 +163,7 @@ export function runAiTransfers(state: GameState, rng: Rng, intensity: number): v
     if (!needs.length) continue;
     const need = needs[0];
     const budget = transferBudget(club);
+    const revenue = annualRevenue(club);
     const level = clubLevel(club.reputation);
     const candidates = index.byPos[need.pos];
     let signed = false;
@@ -193,11 +207,13 @@ export function runAiTransfers(state: GameState, rng: Rng, intensity: number): v
       let fee = value * (key ? rng.range(1.3, 1.9) : rng.range(0.9, 1.3));
       if (p.contract?.releaseClause && fee > p.contract.releaseClause) fee = p.contract.releaseClause;
       if (p.contract && p.contract.expires <= state.season) fee *= 0.5;
+      if (p.listed) fee *= 1 - distressDiscount(seller, annualRevenue(seller));
       if (fee > budget) continue;
       if (sellerSquad <= S.min && !p.listed) continue;
-      if (rng.chance(0.55)) continue; // scouting noise — not every target is pursued
+      if (rng.chance(Math.min(0.9, 0.55 / spendWillingness(club.id)))) continue; // scouting noise — not every target is pursued
       const role: SquadRole = o >= level + 2 ? "star" : "first";
-      const wage = playerWage(p, state.season, club.reputation, role);
+      if (key && !p.listed && rng.chance(refusalChance(seller, club, annualRevenue(seller)))) continue; // a backed seller holds on to its key men
+      const wage = Math.round(playerWage(p, state.season, club.reputation, role) * (role === "star" ? wageTolerance(club, revenue) : 1) / 100) * 100;
       if (!playerWillJoin(state, p, club, wage)) {
         // A club with the money and the need came for him and he said no: that is the only outside interest the game really has.
         noteApproachDeclined(state, p, club.reputation);

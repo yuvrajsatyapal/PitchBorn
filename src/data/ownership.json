@@ -1,0 +1,41 @@
+{
+  "note": "Club ownership classifications. Anything not listed is 'standard'. Only classify clubs whose ownership is well established; correct entries here without touching simulation code.",
+  "clubs": {
+    "esp-real-madrid": "fan-owned",
+    "esp-barcelona": "fan-owned",
+    "esp-athletic": "fan-owned",
+    "esp-osasuna": "fan-owned",
+    "ger-bayern": "fan-owned",
+    "ger-union-berlin": "fan-owned",
+    "ger-mgladbach": "fan-owned",
+
+    "eng-man-city": "state-backed",
+    "fra-psg": "state-backed",
+    "eng-newcastle-united": "state-backed",
+
+    "eng-aston-villa": "billionaire",
+    "eng-brighton": "billionaire",
+    "eng-fulham": "billionaire",
+    "eng-everton": "billionaire",
+    "eng-nottm-forest": "billionaire",
+    "eng-arsenal": "billionaire",
+    "eng-tottenham": "billionaire",
+    "ita-como": "billionaire",
+    "ita-roma": "billionaire",
+    "fra-monaco": "billionaire",
+    "fra-marseille": "billionaire",
+    "esp-valencia": "billionaire",
+    "ger-hoffenheim": "billionaire",
+
+    "ita-juventus": "corporate",
+    "ger-rb-leipzig": "corporate",
+    "ger-bayer-leverkusen": "corporate",
+    "ger-wolfsburg": "corporate",
+    "eng-wolves": "corporate",
+    "fra-nice": "corporate",
+
+    "ita-milan": "private-equity",
+    "ita-inter": "private-equity",
+    "eng-chelsea": "private-equity"
+  }
+}
