@@ -1,10 +1,11 @@
 "use client";
 import { Crest } from "@/components/art/Crest";
+import { clubKit } from "@/components/art/clubKit";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { TraitStrip } from "@/components/game/PlayIdentity";
 import { AttrValue, Badge, Modal } from "@/components/ui";
-import { clubName, staticClub } from "@/engine/data/world";
+import { clubName } from "@/engine/data/world";
 import { ATTR_GROUPS, ATTR_LABEL, POSITION_LABEL } from "@/engine/players/attributes";
 import { formatMoney } from "@/engine/players/economy";
 import { avgRating } from "@/engine/players/generate";
@@ -13,11 +14,12 @@ import { age, name, ovr } from "@/game/selectors";
 
 export function PlayerModal({ g, p, onClose }: { g: GameState; p: Player | null; onClose: () => void }) {
   if (!p) return null;
+  const kit = clubKit(p.clubId, g.season);
   const groups = ATTR_GROUPS.filter((gr) => (p.position === "GK" ? true : gr.label !== "Goalkeeping"));
   return (
     <Modal open={!!p} onClose={onClose} title={name(p)} wide>
       <div className="flex flex-wrap items-center gap-4">
-        <PlayerPortrait appearance={p.look} age={age(g, p)} size={88} kit={staticClub(p.clubId ?? "")?.colors.primary} />
+        <PlayerPortrait appearance={p.look} age={age(g, p)} size={88} kit={kit} collar={kit.collar} />
         <div className="flex-1 text-sm">
           <div className="flex flex-wrap items-center gap-2">
             <Flag code={p.nationality} /> {POSITION_LABEL[p.position]} · Age {age(g, p)} · {p.height}cm

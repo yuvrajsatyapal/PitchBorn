@@ -111,7 +111,7 @@ export default function ClubPage() {
                   <td>
                     <span className="flex items-center gap-1.5">
                       <Flag code={x.nationality} /> {name(x)}
-                      {x.injury && <Badge tone="coral">inj</Badge>}
+                      {x.injury && <Badge tone="coral">in</Badge>}
                       {club.captain === x.id && <Badge tone="sun">C</Badge>}
                     </span>
                   </td>

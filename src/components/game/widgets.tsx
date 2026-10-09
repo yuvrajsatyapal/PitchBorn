@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
+import { clubKit } from "@/components/art/clubKit";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Badge, Bar, Button, Card, FormDots, LinkButton, Rating } from "@/components/ui";
 import { formatTurnDate, seasonLabel } from "@/engine/calendar";
-import { clubName, staticClub } from "@/engine/data/world";
+import { clubName } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { formatMoney } from "@/engine/players/economy";
 import { Rng } from "@/engine/rng";
@@ -44,12 +45,12 @@ export function Stars({ value, className = "text-base" }: { value: number; class
 }
 
 export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
-  const kit = staticClub(p.clubId ?? "")?.colors.primary ?? "#2e8b57";
+  const kit = clubKit(p.clubId, g.season);
   return (
     <Card className="bg-sun-2" flat={false}>
       <div className="flex items-center gap-3 sm:gap-4">
-        <span className="sm:hidden"><PlayerPortrait appearance={p.look} age={age(g, p)} size={72} kit={kit} /></span>
-        <span className="hidden sm:block"><PlayerPortrait appearance={p.look} age={age(g, p)} size={104} kit={kit} /></span>
+        <span className="sm:hidden"><PlayerPortrait appearance={p.look} age={age(g, p)} size={72} kit={kit} collar={kit.collar} /></span>
+        <span className="hidden sm:block"><PlayerPortrait appearance={p.look} age={age(g, p)} size={104} kit={kit} collar={kit.collar} /></span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2">
             <h1 className="font-display text-2xl leading-tight sm:text-4xl">{name(p)}</h1>

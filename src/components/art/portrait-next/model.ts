@@ -34,7 +34,7 @@ export interface NextModel extends PortraitModel {
 }
 
 /** The current model plus the extra structure the new renderer draws. Deterministic from the stored appearance. */
-export function nextModelFor(a: Appearance, age: number, kit: string, trim: string, background?: string): NextModel {
+export function nextModelFor(a: Appearance, age: number, kit: string, trim: string, background?: string, collar?: Collar): NextModel {
   const m = modelFor({ ...a, hair: newHairIndex(a.hair) }, age, kit, trim, background);
   const s = STRUCTURE[a.face] ?? STRUCTURE[0];
   const seed = a.aging * 977 + a.face * 31 + a.skin * 7 + 1;
@@ -48,5 +48,5 @@ export function nextModelFor(a: Appearance, age: number, kit: string, trim: stri
     tilt: v(3) * 1.6,
     cheekAsym: v(4) * 1.4,
   };
-  return { ...m, f, seed, collar: collarFor(seed) };
+  return { ...m, f, seed, collar: collar ?? collarFor(seed) };
 }

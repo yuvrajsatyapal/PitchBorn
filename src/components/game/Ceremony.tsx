@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { clubKit } from "@/components/art/clubKit";
 import { Crest } from "@/components/art/Crest";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Badge, Button, Card } from "@/components/ui";
@@ -8,7 +9,7 @@ import { buildScenes, type Scene } from "@/engine/awards/ceremony";
 import { careerHonours } from "@/engine/awards/honours";
 import { PODIUM_TIMING, PODIUM_TIMING_REDUCED, hasPodiumReveal, inContention, podiumPlaces, schedulePodium } from "@/engine/awards/podium";
 import { primaryRival } from "@/engine/career/rivalry/engine";
-import { clubName, staticClub } from "@/engine/data/world";
+import { clubName } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { ageOf } from "@/engine/players/generate";
 import type { AwardNominee, AwardResult, GameState, SeasonCeremony, TeamOfSeasonSlot } from "@/engine/types";
@@ -20,7 +21,8 @@ const nameOf = (g: GameState, id: string) => (g.players[id] ? `${g.players[id].f
 function Face({ g, id, size }: { g: GameState; id: string; size: number }) {
   const p = g.players[id];
   if (!p) return null;
-  return <PlayerPortrait appearance={p.look} age={ageOf(p, g.season)} size={size} kit={staticClub(p.clubId ?? "")?.colors.primary ?? "#2e8b57"} />;
+  const kit = clubKit(p.clubId, g.season);
+  return <PlayerPortrait appearance={p.look} age={ageOf(p, g.season)} size={size} kit={kit} collar={kit.collar} />;
 }
 
 function ClubLine({ clubId }: { clubId: string | null }) {
