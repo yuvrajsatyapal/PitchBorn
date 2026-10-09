@@ -38,7 +38,7 @@ export function AgentPanel({ g }: { g: GameState }) {
   const weeks = me.weeklyFee ? Math.floor(g.user.bank / me.weeklyFee) : null;
   return (
     <>
-      <Card title="Agent" action={<Badge tone={TIER_TONE[me.tier]}>{AGENT_TIER_LABEL[me.tier]}</Badge>}>
+      <Card className="flex flex-col" title="Agent" action={<Badge tone={TIER_TONE[me.tier]}>{AGENT_TIER_LABEL[me.tier]}</Badge>}>
         <div className="flex items-center gap-2 text-lg font-bold">
           {me.nationality && <Flag code={me.nationality} />} {me.name}
         </div>
@@ -56,9 +56,9 @@ export function AgentPanel({ g }: { g: GameState }) {
           {weeks !== null && ` · covers ${weeks} week${weeks === 1 ? "" : "s"} of fees`}
         </div>
         {(g.user.agentUnpaidWeeks ?? 0) > 0 && <p className="mt-1 text-xs font-bold text-coral">Unpaid fees: {g.user.agentUnpaidWeeks} week(s). Your agent leaves after 4.</p>}
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" tone="sun" onClick={() => setOpen(true)} data-testid="agent-market">Agent market</Button>
-          {!none && <Button size="sm" tone="paper" onClick={release}>Go without agent</Button>}
+        <div className={`mt-auto grid gap-2 pt-4 ${none ? "grid-cols-1" : "grid-cols-2"}`}>
+          <Button size="sm" tone="sun" className="w-full whitespace-nowrap" onClick={() => setOpen(true)} data-testid="agent-market">Agent market</Button>
+          {!none && <Button size="sm" tone="paper" className="w-full whitespace-nowrap" onClick={release}>Go without agent</Button>}
         </div>
       </Card>
       <Modal open={open} onClose={() => setOpen(false)} title="Agent market">
