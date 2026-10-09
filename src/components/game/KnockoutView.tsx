@@ -15,7 +15,7 @@ function Winner({ comp, final }: { comp: Competition; final?: Fixture }) {
     <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border-2 border-line bg-sun-2 p-3" data-testid="competition-winner">
       <span className="text-3xl" aria-hidden>🏆</span>
       <Crest clubId={comp.winner} size={44} />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 basis-full sm:basis-0 sm:flex-1 order-last sm:order-none">
         <div className="font-display text-xl leading-tight">{teamLabel(comp.winner)}</div>
         <div className="text-xs text-ink-2">Winners of the {comp.name}</div>
         {final?.result && (
@@ -26,7 +26,7 @@ function Winner({ comp, final }: { comp: Competition; final?: Fixture }) {
         )}
       </div>
       {comp.runnerUp && (
-        <div className="flex items-center gap-1.5 text-xs text-ink-2">
+        <div className="flex items-center gap-1.5 text-xs text-ink-2 sm:ml-0 ml-auto">
           <Crest clubId={comp.runnerUp} size={22} /> Runners-up: <b>{teamLabel(comp.runnerUp, true)}</b>
         </div>
       )}
