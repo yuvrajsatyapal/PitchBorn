@@ -23,9 +23,9 @@ export function scoutStars(g: GameState, p: Player): number {
   return Math.max(1, Math.min(5, Math.round(((est - 55) / 8) * 2) / 2));
 }
 
-export function Stars({ value }: { value: number }) {
+export function Stars({ value, className = "text-base" }: { value: number; className?: string }) {
   return (
-    <span className="inline-flex text-base leading-none" role="img" aria-label={`${value} of 5 stars`}>
+    <span className={`inline-flex leading-none ${className}`} role="img" aria-label={`${value} of 5 stars`}>
       {[0, 1, 2, 3, 4].map((i) => {
         const fill = Math.max(0, Math.min(1, value - i));
         return (
@@ -78,11 +78,13 @@ export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
           <Crest clubId={p.clubId} size={18} /> {clubName(p.clubId)}
           {p.loan && <Badge tone="sky">on loan</Badge>}
         </span>
-        <Badge tone="paper">Value {formatMoney(p.value)}</Badge>
-        {p.contract && <Badge tone="paper">{formatMoney(p.contract.wage)}/wk · until {p.contract.expires + 1}</Badge>}
-        <Badge tone="paper">
-          Potential <Stars value={scoutStars(g, p)} />
-        </Badge>
+        <div className="flex w-full gap-1 sm:w-auto sm:gap-2">
+          <Badge tone="paper" className="whitespace-nowrap px-1.5 text-[10.5px] sm:px-2 sm:text-xs">Value {formatMoney(p.value)}</Badge>
+          {p.contract && <Badge tone="paper" className="whitespace-nowrap px-1.5 text-[10.5px] sm:px-2 sm:text-xs">{formatMoney(p.contract.wage)}/wk · <span className="hidden sm:inline">until&nbsp;</span>{p.contract.expires + 1}</Badge>}
+          <Badge tone="paper" className="whitespace-nowrap px-1.5 text-[10.5px] sm:px-2 sm:text-xs">
+            Potential <Stars value={scoutStars(g, p)} className="text-[10px] sm:text-base" />
+          </Badge>
+        </div>
         {p.injury && <Badge tone="coral">🩹 {p.injury.type} · {p.injury.weeksLeft}w</Badge>}
         {p.suspension > 0 && <Badge tone="coral">Suspended {p.suspension}</Badge>}
       </div>
