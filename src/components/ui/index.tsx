@@ -217,7 +217,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
 export function Table({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div className={`overflow-x-auto rounded-xl border-2 border-line ${className}`}>
-      <table className="w-full min-w-max border-collapse text-sm [&_td]:border-t [&_td]:border-line/15 [&_td]:px-2.5 [&_td]:py-1.5 [&_th]:bg-paper-2 [&_th]:px-2.5 [&_th]:py-2 [&_th]:text-left [&_th]:text-[11px] [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-wider [&_tbody_tr:hover]:bg-paper-2/60">
+      <table className="w-full min-w-max border-collapse text-sm [&_td]:border-t [&_td]:border-line/15 [&_td]:px-2.5 [&_td]:py-1.5 [&_th]:bg-paper-2 [&_th]:px-2.5 [&_th]:py-2 [&_th]:text-left [&_th.text-right]:text-right [&_th.text-center]:text-center [&_th]:text-[11px] [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-wider [&_tbody_tr:hover]:bg-paper-2/60">
         {children}
       </table>
     </div>

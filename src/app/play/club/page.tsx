@@ -90,7 +90,7 @@ export default function ClubPage() {
         <Table>
           <thead>
             <tr>
-              <th className="w-10">#</th>
+              <th className="w-12 text-center">No.</th>
               <th>Pos</th>
               <th>Player</th>
               <th className="text-right">Age</th>
@@ -106,7 +106,7 @@ export default function ClubPage() {
               const s = Object.values(x.season).reduce((a, b) => ({ apps: a.apps + b.apps, goals: a.goals + b.goals }), { apps: 0, goals: 0 });
               return (
                 <tr key={x.id} className={`cursor-pointer ${x.isUser ? "bg-sun-2 font-bold" : ""}`} onClick={() => setSel(x)}>
-                  <td className="font-black tabular-nums text-muted">{x.squadNo ?? "–"}</td>
+                  <td className="text-center font-black tabular-nums text-muted">{x.squadNo ?? "–"}</td>
                   <td><span className={`rounded-md border-2 border-line px-1 text-xs font-black ${POS_TONE[x.position]}`}>{x.position}</span></td>
                   <td>
                     <span className="flex items-center gap-1.5">
@@ -120,7 +120,7 @@ export default function ClubPage() {
                   <td className="hidden text-right sm:table-cell">{s.apps}</td>
                   <td className="hidden text-right sm:table-cell">{s.goals}</td>
                   <td className="hidden text-right md:table-cell">{formatMoney(x.value)}</td>
-                  <td className="hidden text-xs md:table-cell">{x.contract?.role}</td>
+                  <td className="hidden text-xs capitalize md:table-cell">{x.contract?.role}</td>
                 </tr>
               );
             })}

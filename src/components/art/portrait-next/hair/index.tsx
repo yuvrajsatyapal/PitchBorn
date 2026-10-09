@@ -233,3 +233,14 @@ export const POC_IDS: Partial<Record<number, string>> = {
   43: "divine-ponytail",
   44: "dutch-dreads",
 };
+
+/**
+ * Older hairstyle index -> the nearest style that has a new design. Generated players and old saves still carry the
+ * original indices; they are drawn as the closest new style so no portrait uses the previous renderer.
+ */
+const NEW_FOR_OLD: Record<number, number> = {
+  1: 0, 2: 7, 3: 7, 4: 7, 5: 7, 6: 7, 9: 10, 11: 10, 12: 8, 13: 10, 14: 10, 15: 17, 16: 17, 18: 17, 19: 8, 20: 8, 21: 7, 22: 24,
+  25: 7, 26: 7, 27: 7, 28: 7, 30: 0, 31: 0, 32: 0, 33: 24, 34: 24, 35: 7, 36: 7, 37: 7, 38: 24,
+};
+
+export const newHairIndex = (hair: number): number => (POC_IDS[hair] ? hair : NEW_FOR_OLD[hair] ?? 7);

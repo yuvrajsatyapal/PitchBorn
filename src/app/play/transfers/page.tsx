@@ -5,7 +5,7 @@ import { Crest } from "@/components/art/Crest";
 import { AgentPanel } from "@/components/game/AgentPanel";
 import { Negotiation } from "@/components/game/Negotiation";
 import { SagaCard } from "@/components/game/SagaCard";
-import { Badge, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
+import { Badge, Bar, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
 import { isTransferWindow, windowName } from "@/engine/calendar";
 import { ROLE_LABEL } from "@/engine/career/offers";
 import { clubName, staticLeague } from "@/engine/data/world";
@@ -37,7 +37,7 @@ function OfferCard({ o }: { o: TransferOffer }) {
     <li className={`pb-card p-4 ${o.status === "terms" ? "" : "opacity-90"}`}>
       <div className="flex flex-wrap items-center gap-3">
         <Crest clubId={o.fromClubId} size={44} />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[10rem] flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-display text-xl">{clubName(o.fromClubId)}</span>
             <Badge tone={statusTone}>{statusLabel}</Badge>
@@ -47,7 +47,7 @@ function OfferCard({ o }: { o: TransferOffer }) {
             {league?.name} · reputation {Math.round(club?.reputation ?? 0)}
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+        <div className="grid w-full grid-cols-3 gap-2 rounded-xl border-2 border-line bg-card px-2 py-1.5 text-center text-xs sm:w-auto sm:border-0 sm:bg-transparent sm:p-0">
           <div><div className="text-muted">Fee</div><b>{o.fee ? formatMoney(o.fee) : "—"}</b></div>
           <div><div className="text-muted">Wage</div><b>{formatMoney(o.terms.wage)}/wk</b></div>
           <div><div className="text-muted">Role</div><b>{ROLE_LABEL[o.terms.role]}</b></div>
@@ -69,6 +69,24 @@ function OfferCard({ o }: { o: TransferOffer }) {
   );
 }
 
+function ContractTimeline({ signed, expires, season }: { signed: number; expires: number; season: number }) {
+  const total = Math.max(1, expires - signed + 1);
+  const done = Math.max(0, Math.min(total, season - signed));
+  const left = expires - season + 1;
+  return (
+    <div className="col-span-2 sm:col-span-4" data-testid="contract-timeline">
+      <div className="mb-1 flex justify-between text-[11px] font-bold uppercase tracking-wider text-muted">
+        <span>Signed {signed}</span>
+        <span>Expires summer {expires + 1}</span>
+      </div>
+      <Bar value={done} max={total} tone={left <= 1 ? "coral" : "pitch"} showValue={false} height={12} />
+      <div className="mt-1 text-xs text-ink-2">
+        {left <= 1 ? "Final season: expect renewal talks, or free-agent interest." : `${left} seasons remaining of a ${total}-season deal.`}
+      </div>
+    </div>
+  );
+}
+
 export default function CareerPage() {
   const g = useGameState();
   const transferRequest = useGame((s) => s.transferRequest);
@@ -84,6 +102,8 @@ export default function CareerPage() {
   const open = offers.filter((o) => o.status === "terms" || o.status === "club-pending");
   const past = offers.filter((o) => !open.includes(o)).slice(0, 8);
   const win = windowName(g.turn);
+  const squadWages = p.contract ? (g.clubs[p.contract.clubId]?.squad ?? []).map((id) => g.players[id]?.contract?.wage ?? 0).filter((w) => w > 0) : [];
+  const wageRank = p.contract && squadWages.length > 1 ? { rank: squadWages.filter((w) => w > p.contract!.wage).length + 1, total: squadWages.length } : null;
   return (
     <div className="grid gap-4">
       <PageTitle kicker={win ? `${win === "summer" ? "Summer" : "January"} window open` : "Transfer window closed"} title="Career & Contract" />
@@ -99,6 +119,13 @@ export default function CareerPage() {
               <Stat label="Release clause" value={p.contract.releaseClause ? formatMoney(p.contract.releaseClause) : "None"} />
               <Stat label="Bank" value={formatMoney(g.user.bank)} sub={`Earned ${formatMoney(g.user.earnings)} in total`} />
               <Stat label="Status" value={<span className="text-lg">{p.loan ? `On loan from ${clubName(p.loan.fromClubId, true)}` : g.user.transferRequest ? "Transfer-listed" : "Settled"}</span>} />
+              <ContractTimeline signed={p.contract.signed} expires={p.contract.expires} season={g.season} />
+              {wageRank && (
+                <div className="col-span-2 text-xs text-ink-2 sm:col-span-4" data-testid="wage-rank">
+                  Wage rank at {clubName(p.contract.clubId, true)}: <b>{wageRank.rank}</b> of {wageRank.total}
+                  {wageRank.rank === 1 ? " · top earner" : ""}
+                </div>
+              )}
               {bonusSummary(p.contract as unknown as TransferOffer["terms"]) && (
                 <div className="col-span-2 text-xs text-ink-2 sm:col-span-4" data-testid="contract-bonuses">Bonuses in your contract{bonusSummary(p.contract as unknown as TransferOffer["terms"]).replace(/^ ·/, ":")}. Each is paid once, when it is earned.</div>
               )}
