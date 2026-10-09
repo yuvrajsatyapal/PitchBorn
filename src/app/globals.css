@@ -106,6 +106,19 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
+/* Native selects: drop the OS arrow (it hugs the border) and draw a chevron with even inset. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 1.15rem) 50%, calc(100% - 0.8rem) 50%;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+select:disabled { opacity: 0.6; }
+
 /* Subtle paper grain via layered gradients (no image assets). */
 body::before {
   content: "";
