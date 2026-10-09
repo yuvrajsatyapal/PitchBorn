@@ -6,6 +6,7 @@
  * Ownership is computed from the squad itself (who is registered and wears what), so a number is free the moment its
  * wearer leaves, and the engine, not the UI, enforces uniqueness (`repairSquad`).
  */
+import { BALANCE } from "../balance";
 import { clubName } from "../data/world";
 import { Factors } from "../memory/score";
 import { recordMemory } from "../memory/store";
@@ -194,6 +195,17 @@ function numberMemory(state: GameState, clubId: ClubId, no: number, event: "icon
 export interface ChangeRule {
   ok: boolean;
   reason?: string;
+}
+
+/** The dashboard prompt for a free number lapses a month (4 weeks) after joining, even if never used. */
+export const NUMBER_PROMPT_WEEKS = 4;
+
+export function numberPromptOpen(state: GameState): boolean {
+  const j = state.user.jersey;
+  const last = j?.history[j.history.length - 1];
+  if (!j?.choice || !last || last.to) return false;
+  const weeks = (state.season - last.from.season) * BALANCE.calendar.turnsPerSeason + state.turn - last.from.turn;
+  return weeks < NUMBER_PROMPT_WEEKS;
 }
 
 /** Numbers are changed when joining a club or at the start of a season, not before every match. */

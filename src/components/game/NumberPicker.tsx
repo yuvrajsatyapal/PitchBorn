@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { Badge, Button, Card } from "@/components/ui";
 import { clubName, country } from "@/engine/data/world";
-import { PRESTIGE_NUMBERS, canChangeNumber, intlNumberOf, intlNumberOptions, jerseyRows, numberOptions, preferredNumber } from "@/engine/jersey/numbers";
+import { PRESTIGE_NUMBERS, canChangeNumber, intlNumberOf, intlNumberOptions, jerseyRows, numberOptions, numberPromptOpen, preferredNumber } from "@/engine/jersey/numbers";
 import type { GameState } from "@/engine/types";
 import { user } from "@/game/selectors";
 import { useGame } from "@/game/store";
@@ -76,7 +76,7 @@ export function NumberPickerPanel({ g, onDone }: { g: GameState; onDone?: () => 
 export function JerseyChoiceCard({ g }: { g: GameState }) {
   const [open, setOpen] = useState(false);
   const p = user(g);
-  if (!g.user.jersey?.choice || !p.clubId || g.user.retired || p.squadNo === undefined) return null;
+  if (!numberPromptOpen(g) || !p.clubId || g.user.retired || p.squadNo === undefined) return null;
   return (
     <Card tone="sky" title="Choose your squad number" data-testid="jersey-choice">
       <div className="flex flex-wrap items-center gap-3">

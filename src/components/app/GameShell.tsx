@@ -189,6 +189,7 @@ function BottomNav() {
   const [more, setMore] = useState(false);
   const game = useGameState();
   const items = NAV.filter((n) => n.mobile);
+  const offers = game?.user.offers.filter((o) => o.status === "terms" || o.status === "club-pending").length ?? 0;
   return (
     <>
       <nav aria-label="Game" className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-line bg-paper pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] lg:hidden">
@@ -198,10 +199,14 @@ function BottomNav() {
             return (
               <li key={n.href}>
                 <Link href={n.href} aria-current={active ? "page" : undefined} className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-bold [@media(max-height:480px)]:min-h-[46px] ${active ? "text-ink" : "text-muted"}`}>
-                  <span className={`text-lg ${active ? "scale-110" : ""}`} aria-hidden>
+                  <span className={`relative text-lg ${active ? "scale-110" : ""}`} aria-hidden>
                     {n.icon}
+                    {n.href === "/play/transfers" && offers > 0 && (
+                      <span className="absolute -right-2.5 -top-1 min-w-[1.1rem] rounded-full border-2 border-line bg-coral px-1 text-center text-[10px] font-black leading-[1rem] text-[#1b1712]">{offers}</span>
+                    )}
                   </span>
                   {n.label.split(" ")[0]}
+                  {n.href === "/play/transfers" && offers > 0 && <span className="sr-only">, {offers} pending</span>}
                 </Link>
               </li>
             );
