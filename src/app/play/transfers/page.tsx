@@ -109,7 +109,7 @@ export default function CareerPage() {
   return (
     <div className="grid gap-4">
       <PageTitle kicker={win ? `${win === "summer" ? "Summer" : "January"} window open` : "Transfer window closed"} title="Career & Contract" />
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3 2xl:grid-cols-5">
         <Card title="Contract" className="lg:col-span-2">
           {p.contract ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -141,39 +141,39 @@ export default function CareerPage() {
         <AgentPanel g={g} />
       </div>
       <Card title="Career moves">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
             <div className="font-bold">New contract</div>
             <p className="mb-3 text-xs text-ink-2">{renewalBlock ?? "Ask your club to open renewal talks."}</p>
-            <Button size="sm" className="mt-auto" tone="sun" disabled={!!renewalBlock} onClick={requestRenewal}>
+            <Button size="sm" className="mt-auto max-w-full whitespace-normal text-left leading-tight" tone="sun" disabled={!!renewalBlock} onClick={requestRenewal}>
               Request renewal
             </Button>
           </div>
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
             <div className="font-bold">Transfer request</div>
             <p className="mb-3 text-xs text-ink-2">Tell clubs you&apos;re available. Fans and board won&apos;t like it.</p>
-            <Button size="sm" className="mt-auto" tone={g.user.transferRequest ? "coral" : "paper"} disabled={!p.clubId || !!p.loan} onClick={() => transferRequest(!g.user.transferRequest)}>
+            <Button size="sm" className="mt-auto max-w-full whitespace-normal text-left leading-tight" tone={g.user.transferRequest ? "coral" : "paper"} disabled={!p.clubId || !!p.loan} onClick={() => transferRequest(!g.user.transferRequest)}>
               {g.user.transferRequest ? "Withdraw request" : "Hand in request"}
             </Button>
           </div>
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
             <div className="font-bold">Seek a loan</div>
             <p className="mb-3 text-xs text-ink-2">Young players (≤22) can go out for regular football.</p>
-            <Button size="sm" className="mt-auto" tone={g.user.wantsLoan ? "sky" : "paper"} disabled={a > 22 || !p.clubId || !!p.loan} onClick={() => setWantsLoan(!g.user.wantsLoan)}>
+            <Button size="sm" className="mt-auto max-w-full whitespace-normal text-left leading-tight" tone={g.user.wantsLoan ? "sky" : "paper"} disabled={a > 22 || !p.clubId || !!p.loan} onClick={() => setWantsLoan(!g.user.wantsLoan)}>
               {g.user.wantsLoan ? "Searching…" : "Ask agent"}
             </Button>
           </div>
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
             <div className="font-bold">International duty</div>
             <p className="mb-3 text-xs text-ink-2">{p.intl.retired ? "You have retired from international football." : `${p.intl.caps} caps so far.`}</p>
-            <Button size="sm" className="mt-auto" tone="paper" disabled={p.intl.retired || a < 28} onClick={() => setConfirm("intl")}>
+            <Button size="sm" className="mt-auto max-w-full whitespace-normal text-left leading-tight" tone="paper" disabled={p.intl.retired || a < 28} onClick={() => setConfirm("intl")}>
               Retire from internationals
             </Button>
           </div>
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
             <div className="font-bold">Hang up your boots</div>
             <p className="mb-3 text-xs text-ink-2">Available from age 32. Your legacy is calculated on retirement.</p>
-            <Button size="sm" className="mt-auto" tone="plum" disabled={a < 32 || g.user.retired} onClick={() => setConfirm("retire")}>
+            <Button size="sm" className="mt-auto max-w-full whitespace-normal text-left leading-tight" tone="plum" disabled={a < 32 || g.user.retired} onClick={() => setConfirm("retire")}>
               Retire
             </Button>
           </div>
