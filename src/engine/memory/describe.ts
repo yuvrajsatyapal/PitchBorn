@@ -124,6 +124,8 @@ export function describeMemory(state: GameState, m: Memory): MemoryView {
       const from = traitDef(String(m.data?.from ?? ""));
       t = m.data?.event === "evolved"
         ? dflt("Reinvented", `Your game evolved${from ? `: ${from.name} gave way to ${def?.name ?? "a new style"}` : ` into ${def?.name ?? "a new style"}`}.`)
+        : m.data?.event === "earned"
+        ? dflt(def?.name ?? "A reputation", `${def?.blurb.split(":")[0].replace(/\.$/, "") ?? "Your career earned you a reputation"}.`)
         : dflt(`Signature ${def?.name ?? "style"}`, `${pick(m.id, ["Your game became defined by", "Defenders learned to fear", "You made your own"])} ${def?.name ?? "a style"}.`);
       break;
     }

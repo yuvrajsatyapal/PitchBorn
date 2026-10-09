@@ -1,8 +1,10 @@
 import { BALANCE } from "../balance";
 import { agentSkill } from "../career/agents";
 import { baseRivalry } from "../memory/rivalry";
-import { recordMatchEvidence } from "../traits/develop";
-import { careerProfile, resolveMatchFx } from "../traits/effects";
+import { comebackContributions, recordMatchEvidence } from "../traits/develop";
+import { AMBIDEXTROUS } from "../players/foot";
+import { careerProfile, hasTrait, resolveMatchFx } from "../traits/effects";
+import { defeatSting } from "../traits/career";
 import { noteMatch } from "../career/rivalry/engine";
 import { detectInjuryComeback, detectMatchMemory, noteLastMatch, rememberMajorInjury } from "../memory/detect";
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
@@ -68,6 +70,9 @@ function toInput(p: Player, slot: Player["position"]): MatchPlayerInput {
     consistency: p.hidden.consistency,
     isUser: p.isUser,
     fx: resolveMatchFx(p.traits, p.attrs),
+    foot: p.foot,
+    weakFoot: p.weakFoot,
+    ambidextrous: hasTrait(p, AMBIDEXTROUS),
   };
 }
 
@@ -312,9 +317,9 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     const won = line.side === "home" ? homeWon : awayWon;
     const lost = line.side === "home" ? awayWon : homeWon;
     const cp = careerProfile(p);
-    p.morale = r1(clamp(p.morale + (won ? BALANCE.morale.winBoost : lost ? -BALANCE.morale.lossPenalty : 0.3) * cp.moraleSwing + (line.rating - 6.6) * 1.2, 5, 100));
+    p.morale = r1(clamp(p.morale + (won ? BALANCE.morale.winBoost : lost ? -BALANCE.morale.lossPenalty * defeatSting(p) : 0.3) * cp.moraleSwing + (line.rating - 6.6) * 1.2, 5, 100));
     // Everyone in the user's own matches is observed: their habits can turn into traits too.
-    if (involvesUser) recordMatchEvidence(state, p, line, { importance: matchImportance(state, comp, fixture) });
+    if (involvesUser) recordMatchEvidence(state, p, line, { importance: matchImportance(state, comp, fixture), comeback: comebackContributions(res.goals, line.side, p.id, res.homeGoals, res.awayGoals) });
     const keeperBonus = line.slot === "GK" && line.conceded === 0 && stat.minutes >= 60 ? 0.12 : 0;
     const repDelta = (line.rating - 6.5) * 0.22 * repWeight + (line.goals * 0.12 + keeperBonus) * repWeight;
     if (comp.kind === "continental" || nat) p.intlReputation = r1(clamp(p.intlReputation + repDelta * 1.2, 0, 100));

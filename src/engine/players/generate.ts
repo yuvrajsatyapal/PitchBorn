@@ -5,6 +5,7 @@ import { poolFor } from "../data/names";
 import { clamp, type Rng } from "../rng";
 import type { Appearance, CountryCode, Hidden, Player, Position, StatLine } from "../types";
 import { generateAppearance } from "../appearance/generate";
+import { initialWeakFoot } from "./foot";
 import { bestOverall, generateAttributes, overallFor } from "./attributes";
 
 export function emptyStat(): StatLine {
@@ -98,11 +99,9 @@ export function randomName(rng: Rng, nationality: CountryCode): { firstName: str
   return { firstName: rng.pick(pool.first), lastName: rng.pick(pool.last) };
 }
 
-function randomFoot(rng: Rng, p: Position): "L" | "R" | "B" {
-  const leftBias = p === "LB" || p === "LW" ? 0.55 : p === "RW" ? 0.35 : 0.2;
-  const r = rng.next();
-  if (r < 0.05) return "B";
-  return r < 0.05 + leftBias ? "L" : "R";
+function randomFoot(rng: Rng, p: Position): "L" | "R" {
+  const leftBias = p === "LB" || p === "LW" ? 0.55 : p === "RW" ? 0.35 : 0.25;
+  return rng.next() < leftBias ? "L" : "R";
 }
 
 export interface GenerateOptions {
@@ -132,6 +131,7 @@ export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
     position: o.position,
     secondary: secondaryFor(rng, o.position),
     foot: randomFoot(rng, o.position),
+    weakFoot: initialWeakFoot(o.id, attrs, o.age),
     height,
     attrs,
     hidden: randomHidden(rng, o.position, potential),

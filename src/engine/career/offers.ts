@@ -9,7 +9,7 @@ import type { ClubState, ContractTerms, GameState, Player, SquadRole, TransferOf
 import { clubLevel } from "../world/create";
 import { agentSkill, chargeCommission } from "./agents";
 import { rememberContractDispute, rememberRejection, rememberTransfer } from "../memory/detect";
-import { loyaltyStand, settlingEffect } from "../traits/career";
+import { loyaltyStand, negotiationPatience, settlingEffect } from "../traits/career";
 import { noteUserTransfer } from "./rivalry/engine";
 import { payOnce } from "./money";
 import { onUserJoinedClub } from "../managers/story";
@@ -163,7 +163,7 @@ export function generateUserOffers(state: GameState, rng: Rng, divert?: OfferDiv
       fee,
       terms,
       maxWage,
-      patience: rng.int(2, 3),
+      patience: negotiationPatience(p, rng.int(2, 3)),
       status: kind === "free" ? "terms" : "club-pending",
       createdTurn: state.turn,
       expiresTurn: state.turn + (kind === "free" ? 4 : 3),
@@ -480,7 +480,7 @@ export function checkUserContract(state: GameState, rng: Rng): void {
       const { terms, maxWage } = makeTerms(state, rng, club, p, "renewal");
       terms.wage = Math.max(terms.wage, Math.round(p.contract.wage * 1.08));
       state.user.offers.unshift({
-        id: nextId(state, "o"), kind: "renewal", fromClubId: club.id, toPlayerClubId: club.id, fee: 0, terms, maxWage: Math.max(maxWage, terms.wage * 1.15), patience: rng.int(2, 3),
+        id: nextId(state, "o"), kind: "renewal", fromClubId: club.id, toPlayerClubId: club.id, fee: 0, terms, maxWage: Math.max(maxWage, terms.wage * 1.15), patience: negotiationPatience(p, rng.int(2, 3)),
         status: "terms", createdTurn: state.turn, expiresTurn: state.turn + 6, season: state.season, history: [`${clubName(club.id)} offer a new contract.`],
       });
       addNews(state, { kind: "contract", title: "Contract renewal offered", body: `${clubName(club.id)} want to extend your deal.`, important: true });

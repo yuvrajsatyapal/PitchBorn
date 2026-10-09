@@ -1,6 +1,7 @@
 import { BALANCE } from "../balance";
 import { agentMarket, NO_AGENT } from "../career/agents";
 import { initialTraits } from "../traits/assign";
+import { careerProfile } from "../traits/effects";
 import { setupSeason } from "../competitions/setup";
 import { WORLD, country, leaguesInPlay, stadium, staticClub, staticLeague } from "../data/world";
 import type { StaticManager } from "../data/schema";
@@ -18,6 +19,7 @@ import type {
 } from "../types";
 import { SCHEMA_VERSION, addTimeline, nextId } from "./helpers";
 import { generateAttributes } from "../players/attributes";
+import { initialWeakFoot } from "../players/foot";
 
 export const START_SEASON = 2026;
 
@@ -215,7 +217,7 @@ export interface NewCareerInput {
   nationality: CountryCode;
   birthCountry: CountryCode;
   position: Position;
-  foot: "L" | "R" | "B";
+  foot: "L" | "R";
   height: number;
   look: Appearance;
   clubId: string;
@@ -245,8 +247,9 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   const hidden = randomHidden(rng, input.position, potential);
   hidden.professionalism = Math.max(hidden.professionalism, 55);
   hidden.injuryProneness = Math.min(hidden.injuryProneness, 55);
+  const id = nextId(state, "u");
   const p: Player = {
-    id: nextId(state, "u"),
+    id,
     firstName: input.firstName.trim(),
     lastName: input.lastName.trim(),
     nationality: input.nationality,
@@ -254,7 +257,8 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
     birthYear: season - age,
     position: input.position,
     secondary: [],
-    foot: input.foot,
+    foot: input.foot === "L" ? "L" : "R",
+    weakFoot: initialWeakFoot(id, attrs, age),
     height: input.height,
     attrs,
     hidden,
@@ -381,7 +385,7 @@ export function createWorld(input: NewCareerInput): GameState {
     for (const p of squad) state.players[p.id] = p;
     club.squad = squad.map((p) => p.id);
     club.formation = bestFormation(squad) as FormationId;
-    club.captain = [...squad].sort((a, b) => b.reputation + b.birthYear * -0.5 - (a.reputation + a.birthYear * -0.5))[0]?.id;
+    club.captain = [...squad].sort((a, b) => b.reputation + careerProfile(b).leader * 14 - b.birthYear * 0.5 - (a.reputation + careerProfile(a).leader * 14 - a.birthYear * 0.5))[0]?.id;
   }
 
   for (const c of WORLD.countries) {

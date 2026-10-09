@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Badge, Card } from "@/components/ui";
 import { STAGE_LABEL } from "@/engine/traits/effects";
-import { groupTraits, identityOf, type TraitRow } from "@/engine/traits/identity";
+import { groupTraits, identityOf, positionTag, type TraitRow } from "@/engine/traits/identity";
 import type { GameState, Player, TraitStage } from "@/engine/types";
 
 const STAGE_TONE: Record<TraitStage, "sun" | "pitch" | "paper"> = { signature: "sun", established: "pitch", emerging: "paper" };
@@ -30,6 +30,7 @@ function Group({ label, rows, flaw, explain }: { label: string; rows: TraitRow[]
             <li key={r.def.id} className="flex flex-wrap items-baseline gap-x-2 text-sm">
               <TraitChip row={r} flaw={flaw} />
               <span className="text-ink-2">{r.def.blurb}</span>
+              {positionTag(r.def) && <span className="text-xs font-bold text-muted">{positionTag(r.def)}</span>}
             </li>
           ))}
         </ul>

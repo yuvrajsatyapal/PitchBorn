@@ -34,7 +34,7 @@ import { ensureMinimumSquads, processExpiringContracts, processRetirements, refr
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
 import { refreshRecall } from "../memory/recall";
-import { weeklyPersonality, mentorsOf } from "../traits/career";
+import { captainScore, weeklyPersonality, mentorsOf } from "../traits/career";
 import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
 import { careerProfile } from "../traits/effects";
 import { rememberManagerConflict, rememberPromotionOrRelegation, rememberRecord, rememberRetirement } from "../memory/detect";
@@ -633,7 +633,7 @@ function rollover(state: GameState, rng: Rng): void {
     assignRoles(squad.filter((p) => !p.isUser));
     club.formation = bestFormation(squad);
     club.form = [];
-    if (!club.captain || !club.squad.includes(club.captain)) club.captain = [...squad].sort((a, b) => b.reputation - a.reputation)[0]?.id;
+    if (!club.captain || !club.squad.includes(club.captain)) club.captain = [...squad].sort((a, b) => captainScore(b) - captainScore(a))[0]?.id;
   }
   // Drop last season's detailed competitions (archive keeps the summary).
   for (const id of Object.keys(state.competitions)) if (state.competitions[id].season < state.season - 0) delete state.competitions[id];

@@ -7,11 +7,20 @@ import { overallFor } from "../players/attributes";
 import { Rng, clamp } from "../rng";
 import type { Hidden, OwnedTrait, Player } from "../types";
 import { STAGE_XP } from "./types";
-import { TRAITS } from "./registry";
+import { NO_RECORD } from "./catalogue/derive";
+import { TRAITS, TRAIT_BY_ID } from "./registry";
 import { candidateTraits, canBeSignature, conflictWith, hasRoom, limitsFor, meetsRequirements } from "./rules";
 import type { DeriveInput } from "./types";
 
-type Subject = Pick<Player, "id" | "position" | "secondary" | "attrs" | "hidden" | "birthYear" | "reputation" | "isUser"> & { traits?: OwnedTrait[] };
+type Subject = Pick<Player, "id" | "position" | "secondary" | "attrs" | "hidden" | "birthYear" | "reputation" | "isUser" | "weakFoot"> &
+  Partial<Pick<Player, "career" | "history" | "injuries">> & { traits?: OwnedTrait[] };
+
+/** What the game knows about a player beyond the player record itself (the user's standing with supporters and match ratings, captaincy). */
+export interface DeriveExtra {
+  supporters?: number;
+  ratings?: DeriveInput["ratings"];
+  captain?: boolean;
+}
 
 const sum = (a: Record<string, number>) => Object.values(a).reduce((s, v) => s + v, 0);
 
@@ -26,14 +35,20 @@ function derivedXp(score: number, age: number, canSign: boolean): number {
   return STAGE_XP.owned + 4 + Math.round(clamp(score, 0, 0.6) * 20);
 }
 
+/** Traits scored from a profile or record (computed once: this runs for every player every season). */
+const DERIVED = TRAITS.filter((d) => d.derive);
+
 /** Traits implied by a player's temperament and profile. These do not need on-pitch evidence. */
-export function derivedTraits(p: Subject, age: number, season: number, tenure = 0): OwnedTrait[] {
-  const input: DeriveInput = { hidden: p.hidden as Hidden, attrs: p.attrs, age, reputation: p.reputation, tenure };
+export function derivedTraits(p: Subject, age: number, season: number, tenure = 0, extra: DeriveExtra = {}): OwnedTrait[] {
+  const input: DeriveInput = {
+    hidden: p.hidden as Hidden, attrs: p.attrs, age, reputation: p.reputation, weakFoot: p.weakFoot ?? 50, tenure,
+    position: p.position, secondary: p.secondary, career: p.career ?? NO_RECORD, history: p.history ?? [], injuries: p.injuries ?? 0, ...extra,
+  };
   const ovr = overallFor(p.attrs, p.position);
   const out: OwnedTrait[] = [];
-  const scored = TRAITS.filter((d) => d.derive)
+  const scored = DERIVED
     .map((def) => ({ def, score: def.derive!(input) }))
-    .filter((x) => x.score >= (x.def.flaw ? 0.35 : 0.25) && (!x.def.req || meetsRequirements(x.def, p.attrs)))
+    .filter((x) => x.def.positions.includes(p.position) && x.score >= (x.def.flaw ? 0.35 : 0.25) && (!x.def.req || meetsRequirements(x.def, p.attrs)))
     .sort((a, b) => b.score - a.score);
   for (const { def, score } of scored) {
     if (conflictWith(def, out.map((t) => t.id))) continue;
@@ -42,6 +57,15 @@ export function derivedTraits(p: Subject, age: number, season: number, tenure = 
     out.push({ id: def.id, xp: derivedXp(score, age, canBeSignature(out, ovr, age, false) && !def.flaw), since: season });
   }
   return out;
+}
+
+/** Chance that a generated player with no temperament flaw has a playing flaw. */
+const FLAW_CHANCE = 0.13;
+
+/** Number of playing-style traits a player of this level and age would plausibly show (before random variation). */
+export function expectedStyleCount(ovr: number, age: number): number {
+  const youth = age <= 18 ? -1.4 : age <= 20 ? -0.7 : 0;
+  return clamp(Math.round((ovr - 56) / 8.5 + youth), 0, limitsFor(ovr, age).style);
 }
 
 /** Number of playing-style traits a player of this level and age would plausibly show. */
@@ -61,7 +85,7 @@ export function initialTraits(p: Subject, season: number, opts: { tier?: "npc" |
   // Playing style: weighted draws from what the position and attributes make natural.
   const want = styleCount(ovr, age, rng);
   for (let i = 0; i < want; i++) {
-    const pool = candidateTraits({ ...p, traits: out }).filter((c) => !c.def.flaw && hasRoom(c.def, out, ovr, age));
+    const pool = candidateTraits({ ...p, traits: out }, true).filter((c) => !c.def.flaw && hasRoom(c.def, out, ovr, age));
     if (!pool.length) break;
     const total = pool.reduce((s, c) => s + c.weight, 0);
     let r = rng.next() * total;
@@ -80,9 +104,9 @@ export function initialTraits(p: Subject, season: number, opts: { tier?: "npc" |
     const xp = signature ? STAGE_XP.signature + rng.int(0, 25) : roll < 0.15 + 0.5 * strong ? STAGE_XP.established + rng.int(0, 60) : STAGE_XP.owned + rng.int(0, 40);
     out.push({ id: pick.def.id, xp, since: season - rng.int(0, Math.max(0, Math.min(6, age - 18))) });
   }
-  // A flaw now and then: genuine trade-offs, never a pile of them.
-  if (rng.chance(0.22)) {
-    const flaws = candidateTraits({ ...p, traits: out }).filter((c) => c.def.flaw && hasRoom(c.def, out, ovr, age));
+  // A flaw now and then: genuine trade-offs, never a pile of them. Temperament flaws already derived count.
+  if (!out.some((t) => TRAIT_BY_ID.get(t.id)?.flaw) && rng.chance(FLAW_CHANCE)) {
+    const flaws = candidateTraits({ ...p, traits: out }, true).filter((c) => c.def.flaw && hasRoom(c.def, out, ovr, age));
     if (flaws.length) out.push({ id: rng.pick(flaws).def.id, xp: STAGE_XP.owned + rng.int(0, 35), since: season });
   }
   return out;

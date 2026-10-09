@@ -15,6 +15,7 @@ import { rememberSaga } from "../../memory/detect";
 import { noteSagaCompetition } from "../rivalry/engine";
 import { baseRivalry, bumpRivalHeat } from "../../memory/rivalry";
 import { careerProfile } from "../../traits/effects";
+import { negotiationPatience } from "../../traits/career";
 import type { CareerDecision, ClubId, ClubState, ContractTerms, GameState, Player, SagaOutcome, SagaStage, TransferOffer, TransferSaga } from "../../types";
 import { clubLevel } from "../../world/create";
 import { addNews, nextId, userPlayer } from "../../world/helpers";
@@ -73,7 +74,7 @@ function createOffer(state: GameState, rng: Rng, s: TransferSaga, club: ClubStat
     fee,
     terms,
     maxWage,
-    patience: rng.int(2, 3),
+    patience: negotiationPatience(p, rng.int(2, 3)),
     status,
     createdTurn: state.turn,
     expiresTurn: state.turn + 6,

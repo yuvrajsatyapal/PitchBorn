@@ -11,6 +11,7 @@ import { addNews, squadOf, userPlayer } from "../world/helpers";
 import { staticClub } from "../data/world";
 import { rememberRejection } from "../memory/detect";
 import { careerProfile } from "./effects";
+import { clubTenure } from "./tenure";
 
 /** Cached count of mentoring influence at a club (sum of Mentor strength among its senior players). */
 export function mentorsOf(state: GameState, clubId: string, cache: Map<string, number>): number {
@@ -45,8 +46,8 @@ export function movePressure(state: GameState, p: Player): MovePressure {
 }
 
 /** Seasons spent at the current club (completed seasons plus the current one). */
-export function tenure(p: Player): number {
-  return (p.clubId ? p.history.filter((h) => h.clubId === p.clubId).length : 0) + 1;
+export function tenure(p: Player, season: number): number {
+  return Math.max(1, clubTenure(p, season));
 }
 
 /**
@@ -59,7 +60,7 @@ export function moveScoreDelta(state: GameState, p: Player, buyer: ClubState, wa
   const current = p.clubId ? state.clubs[p.clubId] : null;
   if (!current) return 0;
   const { crisis } = movePressure(state, p);
-  const bond = Math.min(1, cp.loyalty + Math.max(0, tenure(p) - 5) * 0.04 * (cp.loyalty > 0 ? 1 : 0));
+  const bond = Math.min(1, cp.loyalty + Math.max(0, tenure(p, state.season) - 5) * 0.04 * (cp.loyalty > 0 ? 1 : 0));
   const loyalty = crisis ? bond * 0.2 : bond;
   const up = buyer.reputation - current.reputation;
   let delta = -loyalty * 16;
@@ -74,7 +75,23 @@ export function moveScoreDelta(state: GameState, p: Player, buyer: ClubState, wa
 export function stayBonus(state: GameState, p: Player): number {
   const cp = careerProfile(p);
   const { crisis } = movePressure(state, p);
-  return (crisis ? 0.2 : 1) * cp.loyalty * 0.12 - cp.ambition * 0.05;
+  // Loyalty and a bond with the stands keep a player; ambition, a hunger for money and a habit of difficult talks let him go.
+  return (crisis ? 0.2 : 1) * (cp.loyalty * 0.12 + Math.max(0, cp.fan) * 0.04) - cp.ambition * 0.05 - cp.money * 0.04 - cp.contract * 0.05;
+}
+
+/** Clubs run out of patience a round sooner with a player known for difficult contract talks. */
+export function negotiationPatience(p: Pick<Player, "traits">, base: number): number {
+  return Math.max(1, base - (careerProfile(p).contract >= 0.4 ? 1 : 0));
+}
+
+/** Who gets the armband: standing first, with natural leaders favoured. Never decisive on its own. */
+export function captainScore(p: Player): number {
+  return p.reputation + careerProfile(p).leader * 14;
+}
+
+/** Share of a defeat's sting that a resilient player shrugs off. */
+export function defeatSting(p: Pick<Player, "traits">): number {
+  return 1 - careerProfile(p).resilience * 0.35;
 }
 
 /**
@@ -87,9 +104,9 @@ export function loyaltyStand(state: GameState, o: TransferOffer): boolean {
   const cur = p.clubId ? state.clubs[p.clubId] : null;
   const from = state.clubs[o.fromClubId];
   if (!cur || !from || (o.kind !== "transfer" && o.kind !== "free")) return false;
-  if (cp.loyalty < 0.35 || tenure(p) < 3 || from.reputation < cur.reputation + 8) return false;
+  if (cp.loyalty < 0.35 || tenure(p, state.season) < 3 || from.reputation < cur.reputation + 8) return false;
   const r = state.user.relationships;
-  const bond = clamp((tenure(p) - 2) / 8, 0.3, 1);
+  const bond = clamp((tenure(p, state.season) - 2) / 8, 0.3, 1);
   r.supporters = clamp(r.supporters + 8 * bond, 0, 100);
   r.board = clamp(r.board + 4 * bond, 0, 100);
   p.morale = clamp(p.morale + 2, 0, 100);
@@ -105,12 +122,21 @@ const staticClubName = (id: string) => staticClub(id)?.shortName ?? id;
 export function weeklyPersonality(state: GameState): void {
   const p = userPlayer(state);
   const cp = careerProfile(p);
-  if (cp.friction === 0 && cp.team === 0 && cp.ambition === 0) return;
+  if (!p.traits?.length) return;
   const r = state.user.relationships;
-  if (cp.friction > 0 && r.manager > 30) r.manager = clamp(r.manager - cp.friction * 0.35, 0, 100);
+  // A big personality amplifies whatever he already does to the room.
+  const amp = cp.amp;
+  if (cp.friction > 0 && r.manager > 30) r.manager = clamp(r.manager - cp.friction * 0.35 * amp, 0, 100);
   else if (cp.friction < 0) r.manager = clamp(r.manager + -cp.friction * 0.2, 0, 100);
-  if (cp.team !== 0) r.teammates = clamp(r.teammates + cp.team * 0.25, 0, 100);
+  if (cp.team !== 0) r.teammates = clamp(r.teammates + cp.team * 0.25 * (cp.team < 0 ? amp : 1), 0, 100);
+  if (cp.fan !== 0) r.supporters = clamp(r.supporters + cp.fan * 0.3 * (cp.fan > 0 ? amp : 1), 0, 100);
+  if (cp.resilience > 0 && p.morale < 55) p.morale = clamp(p.morale + cp.resilience * 0.6, 0, 100);
   const club = p.clubId ? state.clubs[p.clubId] : null;
+  // Ego: sulks when the role is below his own opinion of himself (only when he is genuinely good enough to feel it).
+  if (club && cp.ego > 0.2 && p.contract && ["rotation", "backup", "prospect"].includes(p.contract.role) && overallFor(p.attrs, p.position) >= clubLevel(club.reputation) - 2) {
+    p.morale = clamp(p.morale - cp.ego * 0.5, 0, 100);
+    if (r.manager > 30) r.manager = clamp(r.manager - cp.ego * 0.25 * amp, 0, 100);
+  }
   if (club && cp.ambition >= 0.4) {
     const gap = overallFor(p.attrs, p.position) - clubLevel(club.reputation);
     if (gap > 6) p.morale = clamp(p.morale - cp.ambition * 0.4, 0, 100);

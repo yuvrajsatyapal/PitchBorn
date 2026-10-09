@@ -33,7 +33,7 @@ export default function NewCareer() {
   const [nationality, setNat] = useState("ENG");
   const [birthCountry, setBirth] = useState("ENG");
   const [position, setPos] = useState<Position>("ST");
-  const [foot, setFoot] = useState<"L" | "R" | "B">("R");
+  const [foot, setFoot] = useState<"L" | "R">("R");
   const [height, setHeight] = useState(180);
   const [look, setLook] = useState<Appearance>(() => generateAppearance("new-career-start"));
   const [path, setPath] = useState<StartPath>("academy");
@@ -148,7 +148,8 @@ export default function NewCareer() {
               </div>
               <div className="mt-1 text-sm text-ink-2">{POSITION_LABEL[position]}</div>
               <div className="mt-4 mb-2 text-sm font-bold">Preferred foot</div>
-              <Tabs value={foot} onChange={setFoot} items={[{ id: "R", label: "Right" }, { id: "L", label: "Left" }, { id: "B", label: "Both" }]} />
+              <Tabs value={foot} onChange={setFoot} items={[{ id: "R", label: "Right" }, { id: "L", label: "Left" }]} />
+              <div className="mt-1 text-xs text-muted">Everyone has a stronger foot. Being truly two-footed is rare and has to be earned by developing your weaker one.</div>
               <label className="mt-4 grid gap-1 text-sm font-bold">
                 Height: {height} cm
                 <input type="range" min={160} max={202} value={height} onChange={(e) => setHeight(Number(e.target.value))} className="accent-[var(--pitch)]" />
@@ -250,7 +251,7 @@ export default function NewCareer() {
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                   <Flag code={nationality} /> {country(nationality)?.name}
-                  {birthCountry !== nationality && <> · born in {country(birthCountry)?.name}</>} · {POSITION_LABEL[position]} · {height} cm · {foot === "R" ? "Right" : foot === "L" ? "Left" : "Two"}-footed
+                  {birthCountry !== nationality && <> · born in {country(birthCountry)?.name}</>} · {POSITION_LABEL[position]} · {height} cm · {foot === "R" ? "Right" : "Left"}-footed
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-sm">
                   <Crest clubId={club.id} size={28} /> {path === "academy" || (path === "custom" && custom.age <= 18) ? "Academy" : "First-team squad"} at <b>{club.name}</b>

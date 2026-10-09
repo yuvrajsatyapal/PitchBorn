@@ -13,6 +13,7 @@
  */
 import { BALANCE } from "../balance";
 import { overallFor } from "../players/attributes";
+import { footAttrMultipliers, type Foot } from "../players/foot";
 import type { MatchFx, SignalKey } from "../traits/types";
 import { clamp, type Rng } from "../rng";
 import type { Attributes, AttrKey, Position } from "../types";
@@ -34,6 +35,11 @@ export interface MatchPlayerInput {
   isUser?: boolean;
   /** Behavioural modifiers from the player's traits (see engine/traits). */
   fx?: MatchFx;
+  /** Dominant foot and weak-foot rating; absent = neutral (national sides built from bare inputs, tests). */
+  foot?: Foot;
+  weakFoot?: number;
+  /** The Ambidextrous trait: the weak foot is as good as the strong one. */
+  ambidextrous?: boolean;
 }
 
 export interface TeamInput {
@@ -160,9 +166,24 @@ interface TeamAgg {
   freqHeader: number; freqLong: number; freq1v1: number;
   againstFreqHeader: number; againstFreqLong: number; againstFreq1v1: number;
   againstXgOpen: number; againstXgHeader: number; againstXgLong: number; againstXg1v1: number;
+  /** Chance per opposition phase that a defensive lapse hands them a chance. */
+  lapse: number;
+  /** Chance that winning the ball back becomes an immediate counter-attack. */
+  counter: number;
+  /** Multiplier on the quality of chances for the opposition's most dangerous finisher. */
+  againstStar: number;
 }
 
-const NEUTRAL_AGG: TeamAgg = { freqHeader: 0, freqLong: 0, freq1v1: 0, againstFreqHeader: 1, againstFreqLong: 1, againstFreq1v1: 1, againstXgOpen: 1, againstXgHeader: 1, againstXgLong: 1, againstXg1v1: 1 };
+const NEUTRAL_AGG: TeamAgg = {
+  freqHeader: 0, freqLong: 0, freq1v1: 0, againstFreqHeader: 1, againstFreqLong: 1, againstFreq1v1: 1, againstXgOpen: 1, againstXgHeader: 1, againstXgLong: 1, againstXg1v1: 1,
+  lapse: 0, counter: 0, againstStar: 1,
+};
+
+/** Hard ceilings on the situational levers, so stacking traits can never swamp the football. */
+const MAX_LAPSE = 0.03;
+const MAX_COUNTER = 0.05;
+/** Minutes after coming on during which a Super Sub's fresh legs count. */
+const SUB_WINDOW = 30;
 
 interface LiveTeam {
   input: TeamInput;
@@ -180,7 +201,7 @@ interface LiveTeam {
   yellows: number;
   reds: number;
   possessionTicks: number;
-  cache?: { mid: number; att: number; def: number; gk: number; agg: TeamAgg };
+  cache?: { mid: number; att: number; def: number; gk: number; agg: TeamAgg; star?: LivePlayer };
 }
 
 type ChanceType = "open" | "header" | "long" | "oneonone" | "penalty" | "freekick";
@@ -215,7 +236,10 @@ function conditionFactor(p: MatchPlayerInput): number {
 
 function effective(input: MatchPlayerInput, condition: number): Record<AttrKey, number> {
   const eff = {} as Record<AttrKey, number>;
-  for (const k in input.attrs) eff[k as AttrKey] = input.attrs[k as AttrKey] * condition;
+  // Footedness: the actions that force a weaker foot (cut inside onto the wrong foot, cross from the off flank) cost a little,
+  // relative to a typical player in the role. Applied to the effective attributes so every shot, pass and cross sees it.
+  const foot = input.foot ? footAttrMultipliers(input.foot, input.weakFoot ?? 60, !!input.ambidextrous, input.slot) : undefined;
+  for (const k in input.attrs) eff[k as AttrKey] = input.attrs[k as AttrKey] * condition * (foot?.[k as AttrKey] ?? 1);
   return eff;
 }
 
@@ -322,7 +346,8 @@ export class MatchEngine {
         const pw = weights[p.input.slot];
         if (pw <= 0) continue;
         const fast = p.fx?.fast && this.minute < 20 ? 1 + p.fx.fast : 1;
-        sum += p.zones[zi] * (0.88 + 0.12 * (p.energy / 100)) * pw * fast;
+        const fresh = this.isFresh(p) ? 1 + (p.fx?.subBoost ?? 0) : 1;
+        sum += p.zones[zi] * (0.88 + 0.12 * (p.energy / 100)) * pw * fast * fresh;
         w += pw;
       }
       return w ? sum / w : 40;
@@ -338,7 +363,16 @@ export class MatchEngine {
     const gk = keeper ? (this.val(keeper, "reflexes") + this.val(keeper, "diving") + this.val(keeper, "handling") + this.val(keeper, "command") * 0.5) / 3.5 : 25;
     let teamMid = 0, teamAtt = 0, teamDef = 0;
     let agg: TeamAgg | undefined;
+    let star: LivePlayer | undefined;
+    let starQ = -1;
     for (const p of on) {
+      if (p.input.slot !== "GK") {
+        const q = p.eff.finishing + p.eff.composure;
+        if (q > starQ) {
+          starQ = q;
+          star = p;
+        }
+      }
       const fx = p.fx;
       if (!fx) continue;
       agg ??= { ...NEUTRAL_AGG };
@@ -355,6 +389,13 @@ export class MatchEngine {
       agg.againstXgHeader *= fx.againstXgHeader ?? 1;
       agg.againstXgLong *= fx.againstXgLong ?? 1;
       agg.againstXg1v1 *= fx.againstXg1v1 ?? 1;
+      agg.lapse += fx.lapse ?? 0;
+      agg.counter += fx.counter ?? 0;
+      agg.againstStar *= fx.againstStar ?? 1;
+    }
+    if (agg) {
+      agg.lapse = Math.min(agg.lapse, MAX_LAPSE);
+      agg.counter = Math.min(agg.counter, MAX_COUNTER);
     }
     // Style is bounded and symmetrical about neutral: pressing wins the midfield, tempo and directness open the game up
     // at both ends, and a direct side gives up some control of the ball.
@@ -368,6 +409,7 @@ export class MatchEngine {
       def: def * penalty * homeBoost * styleDef * (1 - mentality * 0.03) * (1 + clamp(teamDef, -0.05, 0.06)),
       gk,
       agg: agg ?? NEUTRAL_AGG,
+      star,
     };
     return t.cache;
   }
@@ -377,11 +419,18 @@ export class MatchEngine {
     this.teams.away.cache = undefined;
   }
 
+  /** A substitute in his first half-hour on the pitch. */
+  private isFresh(p: LivePlayer): boolean {
+    return p.line.minuteOn > 0 && this.minute - p.line.minuteOn <= SUB_WINDOW;
+  }
+
   /** Preference multiplier from a player's traits for up to two selection keys. */
   private pref(p: LivePlayer, k1?: keyof MatchFx, k2?: keyof MatchFx): number {
     const fx = p.fx;
     if (!fx) return 1;
-    return (k1 ? (fx[k1] ?? 1) : 1) * (k2 ? (fx[k2] ?? 1) : 1);
+    // A fresh Super Sub is hungrier for the ball than his rating alone suggests.
+    const hungry = fx.subBoost && this.isFresh(p) ? 1 + fx.subBoost * 2 : 1;
+    return (k1 ? (fx[k1] ?? 1) : 1) * (k2 ? (fx[k2] ?? 1) : 1) * hungry;
   }
 
   private pickWeighted(t: LiveTeam, weight: Record<Position, number>, attr: AttrKey, exclude?: LivePlayer, exp = 1, k1?: keyof MatchFx, k2?: keyof MatchFx): LivePlayer | undefined {
@@ -526,6 +575,18 @@ export class MatchEngine {
       return;
     }
 
+    // A defensive lapse (Error Prone, Poor Concentration…) can hand over a chance before the phase is even contested.
+    // Only sides with such a player ever draw this random number, so everyone else's matches are untouched.
+    if (sDef.agg.lapse > 0 && this.rng.chance(sDef.agg.lapse)) {
+      const culprit = this.lapseCulprit(def);
+      if (culprit) {
+        this.bump(culprit, -0.3);
+        this.log({ minute: this.minute, side: def.side, type: "foul", text: `${this.name(culprit)} gifts the ball away!` });
+      }
+      this.createChance(att, def, this.rng.chance(0.45) ? "oneonone" : "open");
+      return;
+    }
+
     // Soft-limit huge mismatches so cup ties stay believable.
     const gap = sAtt.att - sDef.def;
     const quality = Math.exp((15 * Math.tanh(gap / 15)) / 45);
@@ -540,6 +601,11 @@ export class MatchEngine {
           d.line.tackles++;
           if (inter) this.act(d, "intercept");
           this.bump(d, 0.06);
+          // Winning it back can turn straight into a break (Counter-Attack Threat, Transition Specialist…).
+          if (sDef.agg.counter > 0 && this.rng.chance(sDef.agg.counter)) {
+            this.createChance(def, att, this.rng.chance(0.4) ? "oneonone" : "open");
+            return;
+          }
           if (d.input.isUser && this.input.interactive && this.canAsk() && this.rng.chance(0.22)) {
             this.askDefend(d, att, def);
             return;
@@ -550,6 +616,20 @@ export class MatchEngine {
       return;
     }
     this.createChance(att, def);
+  }
+
+  /** Who is to blame for a lapse: the player most prone to them, weighted by how prone. */
+  private lapseCulprit(t: LiveTeam): LivePlayer | undefined {
+    const prone = this.onPitch(t).filter((p) => (p.fx?.lapse ?? 0) > 0);
+    if (!prone.length) return undefined;
+    let total = 0;
+    for (const p of prone) total += p.fx?.lapse ?? 0;
+    let r = this.rng.next() * total;
+    for (const p of prone) {
+      r -= p.fx?.lapse ?? 0;
+      if (r <= 0) return p;
+    }
+    return prone[prone.length - 1];
   }
 
   /** The kind of chance that arises. Both sides' traits tilt the mix: crossers and target men bring headers, a sweeper keeper takes away one-on-ones. */
@@ -587,11 +667,13 @@ export class MatchEngine {
       let adj = (fx.bigMatch ?? 0) * 0.05 * imp;
       const diff = att.goals - def.goals;
       if (this.minute >= 75 && Math.abs(diff) <= 1) adj += (fx.clutch ?? 0) * 0.06;
+      if (diff < 0) adj += (fx.trailing ?? 0) * 0.06;
       if (type === "oneonone" || type === "penalty") adj += (fx.composure ?? 0) * 0.04;
       m *= clamp(1 + adj, 0.8, 1.25);
     }
     if (creator?.fx?.xgCreated) m *= creator.fx.xgCreated;
     const ag = this.strength(def).agg;
+    if (ag.againstStar !== 1 && this.strength(att).star === shooter) m *= ag.againstStar;
     m *= type === "open" ? ag.againstXgOpen : type === "header" ? ag.againstXgHeader : type === "long" ? ag.againstXgLong : type === "oneonone" ? ag.againstXg1v1 : 1;
     const gk = this.onPitch(def).find((p) => p.input.slot === "GK")?.fx;
     if (gk) {
@@ -758,7 +840,7 @@ export class MatchEngine {
     fouler.line.fouls++;
     this.bump(fouler, -0.05);
     const card = this.rng.next();
-    const cardMul = fouler.fx?.card ?? 1;
+    const cardMul = (fouler.fx?.card ?? 1) * (def.goals < att.goals ? fouler.fx?.cardBehind ?? 1 : 1);
     const redP = M.redPerFoul * (dangerous ? 2 : 1) * cardMul;
     if (card < redP) this.sendOff(def, fouler, "a reckless challenge");
     else if (card < redP + M.yellowPerFoul * (dangerous ? 1.5 : 1) * cardMul) {
@@ -847,10 +929,10 @@ export class MatchEngine {
     const pick = candidates.sort((x, y) => this.subFit(y, slot) - this.subFit(x, slot))[0];
     off.onPitch = false;
     off.line.minuteOff = this.minute;
+    pick.input = { ...pick.input, slot };
     pick.eff = effective(pick.input, pick.condition);
     pick.zones = zonesOfFx(pick.eff, pick.fx);
     pick.onPitch = true;
-    pick.input = { ...pick.input, slot };
     pick.line.slot = slot;
     pick.line.minuteOn = this.minute;
     t.players.push(pick);

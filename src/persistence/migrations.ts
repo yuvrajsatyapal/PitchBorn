@@ -10,7 +10,9 @@ import { sanitizeCeremony } from "../engine/awards/sanitize";
 import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
-import { initialTraits } from "../engine/traits/assign";
+import { AMBI_MIN, AMBIDEXTROUS, isFoot, migrateFoot } from "../engine/players/foot";
+import { derivedTraits, initialTraits } from "../engine/traits/assign";
+import { sanitizeTraits, seedDerivedTraits } from "../engine/traits/sanitize";
 import { SCHEMA_VERSION } from "../engine/world/helpers";
 import { sanitizeCareerData } from "../engine/world/sanitize";
 
@@ -146,6 +148,32 @@ MIGRATIONS[10] = (s) => {
   return s;
 };
 
+MIGRATIONS[11] = (s) => {
+  // v11 → v12: dominant foot is left or right only; the weak foot is rated separately. Old "both" players become a left or
+  // right foot with a strong weak foot, and anyone near-perfect gets the Ambidextrous trait.
+  sanitizeFootedness(s as unknown as GameState);
+  return s;
+};
+
+MIGRATIONS[12] = (s) => {
+  // v12 → v13: the trait catalogue grew (record-based and temperament traits, flaws with attribute ceilings) and players now remember
+  // when they joined their club. NPCs receive the traits their profile and record already imply; nothing established is re-rolled.
+  seedDerivedTraits(s as unknown as GameState);
+  return s;
+};
+
+/** Every player has a left or right foot and a weak-foot rating; old "both" players are converted (and given the trait if earned). */
+function sanitizeFootedness(state: GameState): void {
+  for (const p of Object.values(state.players ?? {})) {
+    if (isFoot(p.foot) && typeof p.weakFoot === "number" && Number.isFinite(p.weakFoot)) continue;
+    migrateFoot(p);
+    if (p.weakFoot >= AMBI_MIN && !p.traits?.some((t) => t.id === AMBIDEXTROUS)) {
+      const earned = derivedTraits(p, state.season - p.birthYear, state.season).find((t) => t.id === AMBIDEXTROUS);
+      if (earned) (p.traits ??= []).push(earned);
+    }
+  }
+}
+
 export class MigrationError extends Error {}
 
 export function migrateState(raw: RawState): GameState {
@@ -171,6 +199,16 @@ export function migrateState(raw: RawState): GameState {
     sanitizeCareerData(state);
   } catch {
     // The additions are optional: a save must always load. Engine code treats every one of them as possibly absent.
+  }
+  try {
+    sanitizeFootedness(state);
+  } catch {
+    // A save must always load; a player without a valid foot is repaired again on the next load.
+  }
+  try {
+    sanitizeTraits(state);
+  } catch {
+    // A save must always load; traits are re-validated on the next load.
   }
   try {
     sanitizeCeremony(state);

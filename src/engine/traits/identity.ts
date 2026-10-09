@@ -41,6 +41,16 @@ export function groupTraits(p: Pick<Player, "traits">): TraitGroups {
   return g;
 }
 
+const POSITION_TAG: Record<Position, string> = { GK: "GK", CB: "CB", RB: "FB", LB: "FB", DM: "DM", CM: "CM", AM: "AM", RW: "W", LW: "W", ST: "ST" };
+const TAG_ORDER = ["GK", "CB", "FB", "DM", "CM", "AM", "W", "ST"];
+
+/** Where a trait mostly belongs ("ST · W"), or nothing when it fits any outfield player (or any player). */
+export function positionTag(def: Pick<TraitDef, "positions">): string {
+  if (def.positions.length >= 8) return "";
+  const tags = new Set(def.positions.map((p) => POSITION_TAG[p]));
+  return TAG_ORDER.filter((t) => tags.has(t)).join(" · ");
+}
+
 export const CATEGORY_LABEL: Record<TraitCategory, string> = { playstyle: "Playstyle", technical: "Technical", mental: "Mental", physical: "Physical", personality: "Personality" };
 
 const POSITION_NOUN: Record<Position, string> = {

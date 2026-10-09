@@ -3,6 +3,7 @@ import { clamp, r1, r2, Rng } from "../rng";
 import type { AttrKey, ClubState, GameState, Player, TrainingFocus, TrainingPlan } from "../types";
 import { careerProfile } from "../traits/effects";
 import { applyGrowth, overallFor, SPEED } from "./attributes";
+import { developWeakFoot, trainWeakFoot, WEAK_FOOT_FOCUS } from "./foot";
 import { ageOf } from "./generate";
 import { applyInjury, injuryRiskFactor, rollInjury } from "./injuries";
 
@@ -95,6 +96,7 @@ export function developPlayer(state: GameState, rng: Rng, p: Player, ctx: DevCon
   }
   // Speed has its own curve above, so general decline never takes it.
   applyGrowth(rng, p.attrs, p.position, growth, ctx.focus, physical, SPEED);
+  developWeakFoot(p, age, 1 / ticksPerSeason);
   return growth;
 }
 
@@ -178,6 +180,8 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
     const kAgeMul = isSpeed ? (age <= D.speedTrainingAge ? Math.max(ageMul, 0.7) : 0.25) : ageMul;
     p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * int.growth * kAgeMul * capMul * (1 + boost) * careerProfile(p).training * (focus.length ? 1 : 0.45), 1, 99));
   }
+  // Shooting, passing, dribbling and set-piece work all exercise the weaker foot, slowly and only up to what the player's touch allows.
+  if (WEAK_FOOT_FOCUS.includes(plan.focus)) trainWeakFoot(p, age, T.weakFootGain * int.growth * (1 + boost));
   p.sharpness = clamp(p.sharpness + (plan.intensity === "intense" ? 3 : 1.5), 0, 100);
   return {
     fitnessDelta: -int.fatigue,

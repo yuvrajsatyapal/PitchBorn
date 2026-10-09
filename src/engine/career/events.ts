@@ -195,6 +195,19 @@ const EVENTS: CareerEventDef[] = [
     fallback: "private",
   },
   {
+    // Only for players with a name for it, and only when there is a story to tell: a poor run or a fraying relationship.
+    id: "media-controversy", weight: 1.3, cooldown: 40,
+    when: (s, p) => !!p.clubId && careerProfile(p).controversy >= 0.35 && p.reputation >= 25 && s.turn > 6 && s.turn < 44 && (p.form < 6.5 || s.user.relationships.manager < 55),
+    title: () => "Headlines for the wrong reasons",
+    body: () => "A remark, a night out, a leaked message: the papers have found a story about you while results are poor.",
+    options: [
+      { id: "apologise", label: "Apologise publicly", hint: "Calms it down; pride dented", effect: (s, p) => ({ rel: { manager: 2, supporters: 1 }, morale: -1, reputation: -0.3 * careerProfile(p).amp }) },
+      { id: "ignore", label: "Say nothing", hint: "It may blow over", effect: () => ({ rel: { manager: -3, supporters: -2 } }) },
+      { id: "hit-back", label: "Hit back", hint: "Fans like the fire; the club doesn't", effect: (s, p) => ({ rel: { supporters: 3, manager: -6, board: -3 }, reputation: 0.5 * careerProfile(p).amp }) },
+    ],
+    fallback: "apologise",
+  },
+  {
     id: "dressing-room-speech", weight: 1.2, cooldown: 36,
     when: (s, p) => !!p.clubId && careerProfile(p).leader >= 0.4 && s.turn > 10 && s.turn < 42 && s.user.relationships.teammates < 85,
     title: () => "The dressing room looks to you",

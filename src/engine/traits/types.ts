@@ -14,7 +14,9 @@ export type SignalKey =
   | "goals" | "assists" | "shots" | "keyPasses" | "tackles" | "saves" | "cleanSheet" | "full90" | "highRating" | "bigGame" | "yellow" | "red"
   // counted by the match engine
   | "shotOpen" | "goalOpen" | "shotHeader" | "goalHeader" | "shotLong" | "goalLong" | "shot1v1" | "goal1v1"
-  | "chanceCross" | "chanceThrough" | "chanceOpen" | "intercept" | "block" | "save1v1" | "claim" | "lateGoal";
+  | "chanceCross" | "chanceThrough" | "chanceOpen" | "intercept" | "block" | "save1v1" | "claim" | "lateGoal"
+  // counted from the whole match result (see develop.ts)
+  | "comeback";
 
 /** The match-engine levers a trait can pull. Missing = neutral (×1, or +0 for additive keys). */
 export interface MatchFx {
@@ -51,17 +53,31 @@ export interface MatchFx {
   drain?: number;
   /** Injury risk (×). */
   injury?: number;
+  // ── situational levers (all additive/multiplicative around neutral, so a side without them is unchanged) ──
+  /** Defensive lapses: probability per opposition phase that a mistake hands them a chance (summed over the XI; never negative). */
+  lapse?: number;
+  /** Multiplies the quality of chances taken by the opposition's most dangerous finisher (man-marking). */
+  againstStar?: number;
+  /** Chance that winning the ball back turns straight into a counter-attack (summed over the XI). */
+  counter?: number;
+  /** Extra zone strength for 30 minutes after coming on from the bench (additive fraction). */
+  subBoost?: number;
+  /** Extra effect on shot quality while the team is behind (additive; ±1 ≈ ±6%). */
+  trailing?: number;
+  /** Card risk while the team is behind (×). */
+  cardBehind?: number;
 }
 
 /** Keys that are additive; everything else multiplies. */
 export const ADDITIVE_FX: ReadonlySet<keyof MatchFx> = new Set<keyof MatchFx>([
   "freqHeader", "freqLong", "freq1v1", "teamMid", "teamAtt", "teamDef", "bigMatch", "clutch", "composure", "fast",
+  "lapse", "counter", "subBoost", "trailing",
 ]);
 
 /** Keys describing how WELL something is done: they scale with the player's attributes. Everything else is preference. */
 export const EFFECT_FX: ReadonlySet<keyof MatchFx> = new Set<keyof MatchFx>([
   "xgOpen", "xgHeader", "xgLong", "xg1v1", "xgFree", "xgPen", "xgCreated", "save", "save1v1", "claim", "penSave",
-  "zoneMid", "zoneAtt", "zoneDef", "composure", "teamMid", "teamAtt", "teamDef",
+  "zoneMid", "zoneAtt", "zoneDef", "composure", "teamMid", "teamAtt", "teamDef", "againstStar", "trailing", "subBoost",
 ]);
 
 /** How a trait shapes a player's career, relationships and decisions. All small; none is absolute. */
@@ -90,6 +106,18 @@ export interface CareerFx {
   mentor?: number;
   /** Teammate relationship drift per week (−1…1). */
   team?: number;
+  /** Bounce-back after setbacks (0–1): softens losses and lifts a low mood. */
+  resilience?: number;
+  /** Sense of entitlement (−1…1): friction and a sour mood when the role is below the player's level. */
+  ego?: number;
+  /** Chance of media rows (0–1), in context: needs a profile and a poor spell. */
+  controversy?: number;
+  /** Difficulty in contract talks (0–1): clubs run out of patience sooner, and renewals are less likely. */
+  contract?: number;
+  /** Supporter relationship drift per week (−1…1). */
+  fan?: number;
+  /** Amplifies the media and relationship consequences of everything else (multiplier). */
+  amp?: number;
 }
 
 /** What a personality trait can be derived from. */
@@ -98,13 +126,33 @@ export interface DeriveInput {
   attrs: import("../types").Attributes;
   age: number;
   reputation: number;
+  /** Weak-foot rating (0–100). */
+  weakFoot: number;
   /** Seasons at the current club (0 when unknown). */
   tenure: number;
+  position: import("../types").Position;
+  secondary: readonly import("../types").Position[];
+  /** Career totals and per-season records (empty before any football has been played: a generated veteran has none). */
+  career: import("../types").StatLine;
+  history: readonly import("../types").SeasonRecord[];
+  /** Injuries suffered in the career so far. */
+  injuries: number;
+  /** User only: supporter relationship (0–100) and the match-rating record. */
+  supporters?: number;
+  ratings?: { n: number; mean: number; sd: number };
+  /** Whether the player is (or has been) club captain. */
+  captain?: boolean;
 }
 
 export interface AttrReq {
   attr: AttrKey;
   min: number;
+}
+
+/** An attribute ceiling: a flaw only fits a player whose attribute is not already strong (a strong positioner is never "Poor Positioning"). */
+export interface AttrCap {
+  attr: AttrKey;
+  max: number;
 }
 
 export type ConflictKind = "exclusive" | "unlikely";
@@ -125,6 +173,20 @@ export interface TraitDef {
   core: readonly AttrKey[];
   /** Minimum attributes to acquire and to keep. */
   req?: readonly AttrReq[];
+  /** Flaws: ceilings that must hold to acquire and keep it. A flaw fades as the attribute grows past them. */
+  cap?: readonly AttrCap[];
+  /**
+   * Earned from a record rather than drawn: never part of a generated player's starting set or an NPC's random drift.
+   * It appears only from evidence (match signals or a derived score) once the sample is large enough.
+   */
+  earned?: boolean;
+  /** Minutes of career football needed before evidence can award it (sample size). */
+  minMinutes?: number;
+  /**
+   * Tactical fit: how much the player's habits suit each style dial (−1…1; positive likes a high setting, negative a low one).
+   * A manager weighs this lightly when picking the side; it never outweighs quality, fitness, form or position.
+   */
+  tactic?: Partial<Record<"pressing" | "tempo" | "directness", number>>;
   conflicts?: readonly { id: TraitId; kind: ConflictKind }[];
   /** 1 common … 4 very rare. Higher = slower to acquire and to reach signature. */
   rarity: number;

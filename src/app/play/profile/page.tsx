@@ -10,6 +10,8 @@ import { AttrValue, Badge, Card, PageTitle, Table } from "@/components/ui";
 import { clubName, countryName } from "@/engine/data/world";
 import { ATTR_GROUPS, ATTR_LABEL, POSITION_LABEL, overallFor } from "@/engine/players/attributes";
 import { avgRating } from "@/engine/players/generate";
+import { AMBIDEXTROUS, weakFootLabel } from "@/engine/players/foot";
+import { hasTrait } from "@/engine/traits/effects";
 import { seasonLabel } from "@/engine/calendar";
 import { age, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
@@ -77,7 +79,9 @@ export default function Profile() {
               <dt className="text-muted">Height</dt>
               <dd>{p.height} cm</dd>
               <dt className="text-muted">Foot</dt>
-              <dd>{p.foot === "R" ? "Right" : p.foot === "L" ? "Left" : "Both"}</dd>
+              <dd>{p.foot === "L" ? "Left" : "Right"}{hasTrait(p, AMBIDEXTROUS) ? " · Ambidextrous" : ""}</dd>
+              <dt className="text-muted">Weak foot</dt>
+              <dd>{weakFootLabel(p.weakFoot)} <span className="text-muted">({Math.round(p.weakFoot)})</span></dd>
               <dt className="text-muted">Reputation</dt>
               <dd>{Math.round(p.reputation)} domestic · {Math.round(p.intlReputation)} intl</dd>
               <dt className="text-muted">Career</dt>

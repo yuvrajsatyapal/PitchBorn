@@ -117,7 +117,7 @@ export function assessSaga(state: GameState, club: ClubState, kind: "transfer" |
   }
   add("Not getting the role you were promised", !free && rolePromiseBroken(state) ? 6 : 0);
   add("Unrest at the club", free ? 0 : p.morale < 45 || rel.manager < 35 ? 7 : 0);
-  add("Pulled between loyalty and ambition", !free && ((tenure(p) >= 5 && rel.supporters >= 70) || cp.loyalty >= 0.35 || (cp.ambition >= 0.4 && club.reputation > current + 12)) ? 7 : 0);
+  add("Pulled between loyalty and ambition", !free && ((tenure(p, state.season) >= 5 && rel.supporters >= 70) || cp.loyalty >= 0.35 || (cp.ambition >= 0.4 && club.reputation > current + 12)) ? 7 : 0);
   add("Crisis at the club", from && movePressure(state, p).crisis ? 4 : 0);
   add("A club in financial trouble", from && from.balance < 0 ? 5 : 0);
   add("Buyer can't afford it", fee > 0 && club.balance < fee * 0.4 ? -8 : 0);

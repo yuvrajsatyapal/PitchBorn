@@ -25,6 +25,7 @@ export function coreFit(def: TraitDef, attrs: Attributes): number {
     f = clamp((sum / def.core.length - 48) / 34, 0.3, 1);
   }
   if (def.req) for (const r of def.req) if (attrs[r.attr] < r.min) f *= 0.6;
+  if (def.cap) for (const c of def.cap) if (attrs[c.attr] > c.max) f *= 0.6;
   return f;
 }
 
@@ -52,7 +53,8 @@ export function resolveMatchFx(traits: readonly OwnedTrait[] | undefined, attrs:
   if (!any) return undefined;
   for (const k of Object.keys(acc) as (keyof MatchFx)[]) {
     const v = acc[k] as number;
-    acc[k] = ADDITIVE_FX.has(k) ? clamp(v, -0.5, 0.6) : EFFECT_FX.has(k) ? clamp(v, 0.82, 1.2) : clamp(v, 0.4, 2.8);
+    // `lapse` and `counter` are propensities (never negative); `subBoost` and `trailing` are small situational swings.
+    acc[k] = k === "lapse" || k === "counter" ? clamp(v, 0, 0.06) : ADDITIVE_FX.has(k) ? clamp(v, -0.5, 0.6) : EFFECT_FX.has(k) ? clamp(v, 0.82, 1.2) : clamp(v, 0.4, 2.8);
   }
   return acc;
 }
@@ -70,9 +72,19 @@ export interface CareerProfile {
   adapt: number;
   mentor: number;
   team: number;
+  resilience: number;
+  ego: number;
+  controversy: number;
+  contract: number;
+  fan: number;
+  /** Multiplier (1 = none) on the media and relationship consequences of everything else. */
+  amp: number;
 }
 
-export const NEUTRAL_CAREER: Readonly<CareerProfile> = { training: 1, moraleSwing: 1, media: 1, loyalty: 0, ambition: 0, money: 0, home: 0, leader: 0, friction: 0, adapt: 0, mentor: 0, team: 0 };
+export const NEUTRAL_CAREER: Readonly<CareerProfile> = {
+  training: 1, moraleSwing: 1, media: 1, loyalty: 0, ambition: 0, money: 0, home: 0, leader: 0, friction: 0, adapt: 0, mentor: 0, team: 0,
+  resilience: 0, ego: 0, controversy: 0, contract: 0, fan: 0, amp: 1,
+};
 const MULT_CAREER: ReadonlySet<keyof CareerFx> = new Set<keyof CareerFx>(["training", "moraleSwing", "media"]);
 
 /** Merged career-side effects (training, morale, loyalty, ambition…). Cheap: a handful of traits at most. */
@@ -99,6 +111,16 @@ export function careerProfile(p: Pick<Player, "traits">): CareerProfile {
   acc.friction = clamp(acc.friction, -1, 1);
   acc.adapt = clamp(acc.adapt, -1, 1);
   acc.team = clamp(acc.team, -1, 1);
+  acc.resilience = clamp(acc.resilience, 0, 1);
+  acc.ego = clamp(acc.ego, -1, 1);
+  acc.controversy = clamp(acc.controversy, 0, 1);
+  acc.contract = clamp(acc.contract, 0, 1);
+  acc.fan = clamp(acc.fan, -1, 1);
+  acc.amp = clamp(acc.amp, 1, 1.6);
+  // Multipliers stay in a sane band however many traits stack.
+  acc.training = clamp(acc.training, 0.75, 1.25);
+  acc.moraleSwing = clamp(acc.moraleSwing, 0.7, 1.8);
+  acc.media = clamp(acc.media, 0.7, 1.7);
   return acc;
 }
 
@@ -115,4 +137,24 @@ export function traitStage(p: Pick<Player, "traits">, id: TraitId): TraitStage |
 /** Match-engine injury risk multiplier from traits (Durable / Injury Prone). */
 export function injuryTraitFactor(p: Pick<Player, "traits" | "attrs">): number {
   return resolveMatchFx(p.traits, p.attrs)?.injury ?? 1;
+}
+
+/** Most a player's habits can add to (or take from) how well he suits a style, in tactical-fit points. */
+const TACTIC_CAP = 6;
+
+/** How well a player's habits suit a style of play: −6…+6. Uses only traits that declare a tactical lean, scaled by stage. */
+export function traitFit(p: Pick<Player, "traits">, style: Readonly<Record<"pressing" | "tempo" | "directness", number>>): number {
+  if (!p.traits?.length) return 0;
+  let sum = 0;
+  for (const t of p.traits) {
+    const def = TRAIT_BY_ID.get(t.id);
+    const stage = stageOf(t.xp);
+    if (!def?.tactic || !stage) continue;
+    const s = STAGE_STRENGTH[stage];
+    for (const d of ["pressing", "tempo", "directness"] as const) {
+      const lean = def.tactic[d];
+      if (lean) sum += lean * (style[d] - 0.5) * 2 * 4 * s;
+    }
+  }
+  return clamp(sum, -TACTIC_CAP, TACTIC_CAP);
 }

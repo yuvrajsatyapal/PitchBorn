@@ -24,7 +24,7 @@ export function positionWeight(id: Identity, def: TraitDef): number {
 }
 
 export function meetsRequirements(def: TraitDef, attrs: Attributes): boolean {
-  return !def.req || def.req.every((r) => attrs[r.attr] >= r.min);
+  return (!def.req || def.req.every((r) => attrs[r.attr] >= r.min)) && (!def.cap || def.cap.every((c) => attrs[c.attr] <= c.max));
 }
 
 /** Conflict between holding `owned` and acquiring `def` (symmetric). Exclusive blocks; unlikely makes it much harder. */
@@ -45,6 +45,8 @@ const isMindBody = (d: TraitDef) => (d.category === "mental" || d.category === "
 const isPersonality = (d: TraitDef) => d.category === "personality" && !d.flaw;
 
 export interface Limits {
+  /** Playing traits (style + mind/body) together: a footballer is recognisable for a few things, not a long list. */
+  playing: number;
   style: number;
   mindBody: number;
   personality: number;
@@ -56,7 +58,8 @@ export interface Limits {
 export function limitsFor(ovr: number, age: number): Limits {
   const style = ovr < 62 ? 1 : ovr < 70 ? 2 : ovr < 78 ? 3 : ovr < 86 ? 4 : 5;
   const signature = age < 22 || ovr < 76 ? 0 : ovr < 84 ? 1 : 2;
-  return { style, mindBody: 3, personality: 4, flaws: 2, signature };
+  const playing = Math.max(1, (ovr < 62 ? 2 : ovr < 70 ? 3 : ovr < 78 ? 4 : ovr < 86 ? 5 : 6) - (age < 21 ? 1 : 0));
+  return { playing, style, mindBody: 3, personality: 3, flaws: 2, signature };
 }
 
 export interface Counts {
@@ -86,8 +89,8 @@ export function hasRoom(def: TraitDef, traits: readonly OwnedTrait[] | undefined
   const c = countTraits(traits);
   const l = limitsFor(ovr, age);
   if (def.flaw) return c.flaws < l.flaws;
-  if (isStyle(def)) return c.style < l.style;
-  if (isMindBody(def)) return c.mindBody < l.mindBody;
+  if (isStyle(def)) return c.style < l.style && c.style + c.mindBody < l.playing;
+  if (isMindBody(def)) return c.mindBody < l.mindBody && c.style + c.mindBody < l.playing;
   return c.personality < l.personality;
 }
 
@@ -96,14 +99,19 @@ export function canBeSignature(traits: readonly OwnedTrait[] | undefined, ovr: n
   return currentlySignature || countTraits(traits).signature < l.signature;
 }
 
-/** Natural candidates for a player: eligible by position, attributes and not blocked by what he already has. */
-export function candidateTraits(id: Identity): { def: TraitDef; weight: number }[] {
+/**
+ * Natural candidates for a player: eligible by position, attributes and not blocked by what he already has.
+ * `draw` is set when picking at random (creation, NPC drift): earned traits are then left out.
+ */
+export function candidateTraits(id: Identity, draw = false): { def: TraitDef; weight: number }[] {
   const owned = id.traits?.map((t) => t.id) ?? [];
   const pool = new Map<TraitId, TraitDef>();
   for (const pos of [id.position, ...id.secondary]) for (const d of traitsForPosition(pos)) pool.set(d.id, d);
   const out: { def: TraitDef; weight: number }[] = [];
   for (const def of pool.values()) {
-    if (owned.includes(def.id) || def.derive || def.category === "personality") continue; // temperament comes from the profile, not behaviour
+    // Temperament comes from the profile, never from behaviour. Record-based traits (Comeback Specialist…) are never *drawn*,
+    // but they are candidates for match evidence.
+    if (owned.includes(def.id) || def.derive || def.category === "personality" || (draw && def.earned)) continue;
     const pw = positionWeight(id, def);
     if (pw <= 0 || !meetsRequirements(def, id.attrs)) continue;
     const fit = coreFit(def, id.attrs);

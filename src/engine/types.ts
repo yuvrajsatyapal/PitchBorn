@@ -152,7 +152,10 @@ export interface Player {
   birthYear: number;
   position: Position;
   secondary: Position[];
-  foot: "L" | "R" | "B";
+  /** Dominant foot. Everyone has one; two-footedness is the separate Ambidextrous trait. */
+  foot: "L" | "R";
+  /** Ability with the weaker foot, 0–100. Grows slowly; a near-perfect one earns the Ambidextrous trait. */
+  weakFoot: number;
   height: number;
   attrs: Attributes;
   hidden: Hidden;
@@ -203,6 +206,8 @@ export interface Player {
   traits?: OwnedTrait[];
   /** Behaviour evidence towards traits not yet owned (tracked for the user and players in the user's matches). */
   traitProgress?: Record<TraitId, number>;
+  /** The season he joined his current club. NPC season history is capped at a few years, so a long stay cannot be read from it. */
+  clubSince?: { clubId: ClubId; season: number };
 }
 
 export type FormationId = "4-3-3" | "4-4-2" | "4-2-3-1" | "3-5-2" | "5-3-2" | "4-1-4-1";

@@ -1,5 +1,7 @@
 import { overallFor, positionGroup } from "../players/attributes";
+import { flankFitPenalty } from "../players/foot";
 import type { Rng } from "../rng";
+import { hasTrait, traitFit } from "../traits/effects";
 import type { FormationId, Player, Position } from "../types";
 
 export const FORMATIONS: Record<FormationId, Position[]> = {
@@ -13,11 +15,16 @@ export const FORMATIONS: Record<FormationId, Position[]> = {
 
 /** How well a player fits a slot (ability in that role minus unfamiliarity). */
 export function fitFor(p: Player, slot: Position): number {
+  return baseFit(p, slot) - flankFitPenalty(p, slot);
+}
+
+function baseFit(p: Player, slot: Position): number {
   if (p.position === slot) return overallFor(p.attrs, slot);
   if (p.secondary.includes(slot)) return overallFor(p.attrs, slot) - 2;
   if (slot === "GK" || p.position === "GK") return overallFor(p.attrs, slot) - 35;
   const sameGroup = positionGroup(p.position) === positionGroup(slot);
-  return overallFor(p.attrs, slot) - (sameGroup ? 6 : 14);
+  // A genuinely versatile player loses a third less when asked to fill in elsewhere.
+  return overallFor(p.attrs, slot) - (sameGroup ? 6 : 14) * (hasTrait(p, "versatile") ? 0.65 : 1);
 }
 
 export function availability(p: Player): boolean {
@@ -53,7 +60,9 @@ export function tacticalFit(p: Player, style: PlayStyle): number {
     const v = style[d];
     sum += v > 0.5 ? (v - 0.5) * 2 * (hi[d] - 60) : (0.5 - v) * 2 * (lo[d] - 60);
   }
-  return Math.max(20, Math.min(95, 60 + sum * 0.5));
+  // Habits that suit the manager's style count for a little (a pressing side likes a Pressing Machine). Capped, and well below
+  // the weight of ability, fitness and form in the selection score.
+  return Math.max(20, Math.min(95, 60 + sum * 0.5 + traitFit(p, style)));
 }
 
 export interface SelectionOpts {

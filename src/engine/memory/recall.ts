@@ -62,7 +62,7 @@ export function recallPhrase(m: Memory): string {
     case "financial-exit": return "leaving a club in crisis";
     case "manager-conflict": return "that falling-out";
     case "career-decision": return "that defining decision";
-    case "identity": return m.data?.event === "evolved" ? "reinventing your game" : `becoming a signature ${traitDef(String(m.data?.trait ?? ""))?.name ?? "talent"}`;
+    case "identity": return m.data?.event === "evolved" ? "reinventing your game" : m.data?.event === "earned" ? `earning a name as ${traitDef(String(m.data?.trait ?? ""))?.name ?? "a talent"}` : `becoming a signature ${traitDef(String(m.data?.trait ?? ""))?.name ?? "talent"}`;
     default: return "that moment";
   }
 }

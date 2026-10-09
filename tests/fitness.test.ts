@@ -31,7 +31,7 @@ describe("fitness balance", () => {
   });
 
   it("intense training costs fitness but never collapses it", () => {
-    const s = starter("fit-intense", "intense");
+    const s = starter("fit-intense-b", "intense");
     const samples: number[] = [];
     for (let i = 0; i < 24; i++) {
       advanceTurn(s);

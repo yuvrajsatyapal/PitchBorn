@@ -83,6 +83,8 @@ export const BALANCE = {
   training: {
     /** Direct attribute gain per focused drill week (before intensity, age and potential gap). */
     drillGain: 0.03,
+    /** Weak-foot rating gained per week of shooting, passing, dribbling or set-piece work (before age and the ceiling). */
+    weakFootGain: 0.06,
     /** Consecutive intense weeks before overload raises injury risk. */
     overloadFrom: 3,
     overloadStep: 0.3,

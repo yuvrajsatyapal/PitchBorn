@@ -460,13 +460,13 @@ export function rememberDecision(state: GameState, eventId: string, optionId: st
 
 // --------------------------------------------------------------------------- identity
 
-/** A trait reaching its signature stage, or a player's game evolving: the moments that define what kind of footballer you are. */
-export function rememberIdentity(state: GameState, id: string, event: "signature" | "evolved", from?: string): Memory | null {
+/** A trait reaching its signature stage, a career-earned one arriving, or a player's game evolving: the moments that define what kind of footballer you are. */
+export function rememberIdentity(state: GameState, id: string, event: "signature" | "evolved" | "earned", from?: string): Memory | null {
   const def = traitDef(id);
   if (!def) return null;
   const u = userPlayer(state);
   const f = new Factors()
-    .add(event === "signature" ? `Signature ${def.name}` : `Reinvention: ${def.name}`, 28 + def.rarity * 4 + (event === "evolved" ? 4 : 0))
+    .add(event === "signature" ? `Signature ${def.name}` : event === "earned" ? `Earned: ${def.name}` : `Reinvention: ${def.name}`, (event === "earned" ? 22 : 28) + def.rarity * 4 + (event === "evolved" ? 4 : 0))
     .add("Young talent", ageOf(u, state.season) <= 23 ? 6 : 0);
   return recordMemory(state, {
     kind: "identity",

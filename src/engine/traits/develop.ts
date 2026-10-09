@@ -16,18 +16,44 @@ import { addNews } from "../world/helpers";
 import { rememberIdentity } from "../memory/detect";
 import { coreFit, stageOf } from "./effects";
 import { TRAIT_BY_ID, TRAITS } from "./registry";
-import { candidateTraits, canBeSignature, conflictWith, hasRoom, meetsRequirements } from "./rules";
-import { derivedTraits } from "./assign";
+import { candidateTraits, canBeSignature, conflictWith, countTraits, hasRoom, meetsRequirements } from "./rules";
+import { derivedTraits, expectedStyleCount, type DeriveExtra } from "./assign";
+import { clubTenure, trackClub } from "./tenure";
 import { STAGE_XP, type SignalKey, type TraitDef } from "./types";
 
 const PER_MATCH_CAP = 3.5;
 const TRAINING_BUDGET = 22;
 const TRAINING_GATE = 6;
 const REMOVE_BELOW = STAGE_XP.owned;
+/** Yearly chance a flawless NPC picks up a playing flaw. */
+const FLAW_DRIFT = 0.008;
 
 export interface MatchCtx {
   /** Match importance (1 normal … 3 final). */
   importance: number;
+  /** Goals and assists by this player that pulled his side level or ahead from behind, in a match it did not lose. */
+  comeback?: number;
+}
+
+/** Contributions to goals scored while the side was behind, counted only when it avoided defeat (a comeback that came off). */
+export function comebackContributions(
+  goals: readonly { minute: number; side: "home" | "away"; scorer: string; assist?: string }[],
+  side: "home" | "away",
+  playerId: string,
+  homeGoals: number,
+  awayGoals: number,
+): number {
+  if ((side === "home" ? homeGoals - awayGoals : awayGoals - homeGoals) < 0) return 0;
+  let mine = 0;
+  let theirs = 0;
+  let n = 0;
+  for (const g of [...goals].sort((a, b) => a.minute - b.minute)) {
+    if (g.side === side) {
+      if (mine < theirs && (g.scorer === playerId || g.assist === playerId)) n++;
+      mine++;
+    } else theirs++;
+  }
+  return n;
 }
 
 /** Evidence of what a player did in one match: line stats plus the engine's own action counts. */
@@ -46,6 +72,7 @@ export function signalValues(line: PlayerLine, ctx: MatchCtx): Partial<Record<Si
   if (line.conceded === 0 && mins >= 60 && ["GK", "CB", "RB", "LB", "DM"].includes(line.slot)) sig.cleanSheet = 1;
   if (line.rating >= 7.4) sig.highRating = 1;
   if (ctx.importance >= 1.6 && line.rating >= 7.2) sig.bigGame = 1;
+  if (ctx.comeback) sig.comeback = ctx.comeback;
   return sig;
 }
 
@@ -74,8 +101,11 @@ export function gainTrait(state: GameState, p: Player, id: TraitId, xp: number, 
   logEvent(state, p, { id, kind, stage: stageOf(capped) ?? "emerging", from });
   if (p.isUser) {
     const stage = stageOf(capped);
-    addNews(state, { kind: "career", title: kind === "evolved" ? `Your game evolves: ${def.name}` : `A new side to your game: ${def.name}`, body: def.blurb, important: stage !== "emerging" });
+    // A temperament settling into place at its first stage is not news; a new way of playing, or a strong trait, is.
+    if (!(def.derive && stage === "emerging" && kind === "gained")) addNews(state, { kind: "career", title: kind === "evolved" ? `Your game evolves: ${def.name}` : `A new side to your game: ${def.name}`, body: def.blurb, important: stage !== "emerging" });
     if (kind === "evolved") rememberIdentity(state, id, "evolved", from);
+    // Only the traits a career genuinely earns, and only once they are more than a hint: not every recalculation is a memory.
+    else if (def.earned && !def.flaw && stage !== "emerging") rememberIdentity(state, id, "earned");
   }
   return true;
 }
@@ -112,7 +142,8 @@ function applyEvidence(state: GameState, p: Player, def: TraitDef, gain: number)
   }
   const prog = (p.traitProgress ??= {});
   prog[def.id] = (prog[def.id] ?? 0) + gain;
-  if (prog[def.id] >= STAGE_XP.owned) gainTrait(state, p, def.id, STAGE_XP.owned + (prog[def.id] - STAGE_XP.owned));
+  // A record-based trait also needs a real sample of football behind it, however good a few matches looked.
+  if (prog[def.id] >= STAGE_XP.owned && p.career.minutes >= (def.minMinutes ?? 0)) gainTrait(state, p, def.id, STAGE_XP.owned + (prog[def.id] - STAGE_XP.owned));
 }
 
 /** Behaviour evidence from one match. Run for the user and for everyone who played in the user's matches. */
@@ -214,26 +245,34 @@ export function reviewTraits(state: GameState, p: Player, rng: Rng, tracked: boo
     if (next && oldXp >= 12) gainTrait(state, p, next.to, Math.min(90, 34 + oldXp * 0.5), "evolved", t.id);
   }
   // Temperament follows the profile (reputation, age and so on).
+  trackClub(p, state.season);
   reviewDerived(state, p, age, ovr);
-  // NPCs drift into new habits: a cheap stand-in for the evidence the user's own career provides.
-  if (!p.isUser && !p.virtual && age <= 33 && rng.chance(0.2 + (minutes >= 1500 ? 0.12 : 0))) {
-    const pool = candidateTraits({ position: p.position, secondary: p.secondary, attrs: p.attrs, traits: p.traits }).filter((c) => hasRoom(c.def, p.traits, ovr, age) && (!c.def.flaw || rng.chance(0.25)));
-    if (pool.length) {
-      const total = pool.reduce((s, c) => s + c.weight, 0);
-      let r = rng.next() * total;
-      let pick = pool[pool.length - 1];
-      for (const c of pool) {
-        r -= c.weight;
-        if (r <= 0) {
-          pick = c;
-          break;
-        }
-      }
-      gainTrait(state, p, pick.def.id, STAGE_XP.owned + rng.int(0, 12));
-    }
+  // NPCs drift into new habits: a cheap stand-in for the evidence the user's own career provides. A player only grows
+  // towards the number of habits his level suggests, so a long career does not pile traits up; flaws are rare additions.
+  if (!p.isUser && !p.virtual && age <= 33 && rng.chance(0.3 + (minutes >= 1500 ? 0.12 : 0))) {
+    const owned = countTraits(p.traits).style;
+    const pool = owned < expectedStyleCount(ovr, age) ? candidateTraits({ position: p.position, secondary: p.secondary, attrs: p.attrs, traits: p.traits }, true).filter((c) => !c.def.flaw && hasRoom(c.def, p.traits, ovr, age)) : [];
+    const pick = weightedPick(pool, rng);
+    if (pick) gainTrait(state, p, pick.id, STAGE_XP.owned + rng.int(0, 12));
+  }
+  if (!p.isUser && !p.virtual && countTraits(p.traits).flaws === 0 && rng.chance(FLAW_DRIFT)) {
+    const pool = candidateTraits({ position: p.position, secondary: p.secondary, attrs: p.attrs, traits: p.traits }, true).filter((c) => c.def.flaw && hasRoom(c.def, p.traits, ovr, age));
+    const pick = weightedPick(pool, rng);
+    if (pick) gainTrait(state, p, pick.id, STAGE_XP.owned + rng.int(0, 12));
   }
   if (tracked) fadeProgress(p);
   else if (p.traitProgress && !p.isUser) delete p.traitProgress;
+}
+
+function weightedPick(pool: { def: TraitDef; weight: number }[], rng: Rng): TraitDef | undefined {
+  if (!pool.length) return undefined;
+  const total = pool.reduce((s, c) => s + c.weight, 0);
+  let r = rng.next() * total;
+  for (const c of pool) {
+    r -= c.weight;
+    if (r <= 0) return c.def;
+  }
+  return pool[pool.length - 1].def;
 }
 
 function candidateFor(p: Player, id: TraitId): boolean {
@@ -246,13 +285,15 @@ function candidateFor(p: Player, id: TraitId): boolean {
 
 /** Personality and temperament traits: appear, fade or strengthen as the profile (reputation, age) changes. */
 export function reviewDerived(state: GameState, p: Player, age: number, ovr: number): void {
-  const wanted = derivedTraits(p, age, state.season, p.clubId ? p.history.filter((h) => h.clubId === p.clubId).length + 1 : 0);
+  const wanted = derivedTraits(p, age, state.season, clubTenure(p, state.season), deriveExtra(state, p));
   const wantedIds = new Set(wanted.map((t) => t.id));
   p.traits ??= [];
   for (const w of wanted) {
     const have = p.traits.find((t) => t.id === w.id);
     if (!have) {
-      if (hasRoom(TRAIT_BY_ID.get(w.id)!, p.traits, ovr, age)) gainTrait(state, p, w.id, w.xp);
+      const def = TRAIT_BY_ID.get(w.id)!;
+      // Someone already shaped by an opposing trait does not simply acquire its opposite.
+      if (!conflictWith(def, p.traits.map((t) => t.id)) && hasRoom(def, p.traits, ovr, age)) gainTrait(state, p, w.id, w.xp);
     } else if (w.xp > have.xp) have.xp = r1(Math.min(w.xp, have.xp + 12));
   }
   for (const t of [...p.traits]) {
@@ -262,6 +303,26 @@ export function reviewDerived(state: GameState, p: Player, age: number, ovr: num
     t.xp = r1(t.xp - 10);
     if (t.xp < REMOVE_BELOW) removeTrait(state, p, t.id, "lost");
   }
+}
+
+/** Match-rating record of the user (all that is kept): sample size, level and spread. */
+export function ratingRecord(state: GameState): { n: number; mean: number; sd: number } | undefined {
+  const r = state.user.recentRatings;
+  if (!r?.length) return undefined;
+  const mean = r.reduce((s, x) => s + x.rating, 0) / r.length;
+  const sd = Math.sqrt(r.reduce((s, x) => s + (x.rating - mean) ** 2, 0) / r.length);
+  return { n: r.length, mean, sd };
+}
+
+/** What the game knows about a player beyond the record on the player (supporters, ratings and the armband). */
+function deriveExtra(state: GameState, p: Player): DeriveExtra {
+  const club = p.clubId ? state.clubs[p.clubId] : undefined;
+  const extra: DeriveExtra = { captain: club?.captain === p.id };
+  if (p.isUser) {
+    extra.supporters = state.user.relationships.supporters;
+    extra.ratings = ratingRecord(state);
+  }
+  return extra;
 }
 
 /** Season-end pass over every player (the user and tracked players get the full treatment, everyone else the cheap one). */
