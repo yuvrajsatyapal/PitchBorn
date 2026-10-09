@@ -5,7 +5,7 @@ import { Flag } from "@/components/art/Flag";
 import { RunBadge } from "@/components/game/CompetitionRun";
 import { PlayerModal } from "@/components/game/PlayerModal";
 import { TeamForm } from "@/components/game/widgets";
-import { Badge, Card, Empty, PageTitle, Stat, Table } from "@/components/ui";
+import { CompChip, Card, Empty, PageTitle, Stat, Table } from "@/components/ui";
 import { country } from "@/engine/data/world";
 import type { Player } from "@/engine/types";
 import { age, name, ovr, POS_TONE, scoreText, teamLabel, user } from "@/game/selectors";
@@ -82,7 +82,7 @@ export default function National() {
               <ul className="grid gap-1 text-sm">
                 {fixtures.map(({ c, f }) => (
                   <li key={f.id} className="flex items-center gap-2">
-                    <Badge>{f.stage ?? c.shortName}</Badge>
+                    <CompChip comp={c} stage={f.stage} />
                     <Flag code={f.home} /> {teamLabel(f.home, true)} <span className="scoreboard text-xs">{scoreText(f)}</span> {teamLabel(f.away, true)} <Flag code={f.away} />
                   </li>
                 ))}

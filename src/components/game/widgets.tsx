@@ -5,7 +5,7 @@ import { Crest } from "@/components/art/Crest";
 import { clubKit } from "@/components/art/clubKit";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
-import { Badge, Bar, Button, Card, FormDots, LinkButton, Rating } from "@/components/ui";
+import { Badge, Bar, Button, Card, CompChip, FormDots, LinkButton, Rating } from "@/components/ui";
 import { formatTurnDate, seasonLabel } from "@/engine/calendar";
 import { clubName } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
@@ -111,12 +111,12 @@ export function FixtureRow({ comp, f, teamId, compact }: { comp: Competition; f:
       <Crest clubId={opp} size={22} />
       <span className="min-w-0 flex-1 truncate">
         <span className="font-semibold">{teamLabel(opp, compact)}</span> <span className="text-muted">({home ? "H" : "A"})</span>
-        {!compact && <span className="ml-1 text-xs text-muted">· {comp.shortName}{f.stage ? ` ${f.stage}` : ""}</span>}
+        {!compact && <CompChip comp={comp} stage={f.stage} className="ml-1.5 align-middle" />}
       </span>
       {f.result ? (
         <span className={`rounded-md border-2 border-line px-1.5 text-xs font-black tabular-nums ${res === "W" ? "bg-pitch text-white" : res === "L" ? "bg-coral" : "bg-sun"}`}>{scoreText(f)}</span>
       ) : (
-        <span className="text-xs font-bold text-muted">{comp.shortName}</span>
+        <CompChip comp={comp} />
       )}
     </li>
   );
