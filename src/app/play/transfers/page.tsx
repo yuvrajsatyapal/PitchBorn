@@ -109,7 +109,7 @@ export default function CareerPage() {
   return (
     <div className="grid gap-4">
       <PageTitle kicker={win ? `${win === "summer" ? "Summer" : "January"} window open` : "Transfer window closed"} title="Career & Contract" />
-      <div className="grid gap-4 lg:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card title="Contract" className="lg:col-span-2">
           {p.contract ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
