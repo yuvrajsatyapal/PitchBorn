@@ -1,11 +1,14 @@
 import { expect, type Page } from "@playwright/test";
 
-export async function createCareer(page: Page, opts: { club?: string; position?: string } = {}) {
+export async function createCareer(page: Page, opts: { club?: string; position?: string; focus?: string } = {}) {
   await page.goto("/new/");
   await page.getByLabel("First name").fill("Test");
   await page.getByLabel("Last name").fill("Striker");
   await page.getByRole("button", { name: "Next ›" }).click();
   if (opts.position) await page.getByRole("button", { name: opts.position, exact: true }).click();
+  await page.getByRole("button", { name: "Next ›" }).click();
+  // Desired playstyle: left on "No preference" unless a test asks for one.
+  if (opts.focus) await page.getByTestId(`focus-${opts.focus}`).click();
   await page.getByRole("button", { name: "Next ›" }).click();
   await page.getByRole("button", { name: "Late starter · age 20" }).click();
   await page.getByRole("button", { name: new RegExp(opts.club ?? "Southampton") }).first().click();

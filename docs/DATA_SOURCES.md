@@ -6,7 +6,7 @@
 | [OpenFootball clubs](https://github.com/openfootball/clubs) | CC0 1.0 | Canonical names and aliases for cross-source matching |
 | [OpenFootball football.json](https://github.com/openfootball/football.json) | CC0 1.0 | Real results 2020-21 → 2024-25 → historical tables and prestige |
 | [flag-icons](https://github.com/lipis/flag-icons) | MIT | Country flags |
-| Lilita One, Outfit, Silkscreen (Google Fonts) | SIL OFL 1.1 | Typography (self-hosted at build) |
+| Lilita One, Outfit, Chakra Petch (Google Fonts) | SIL OFL 1.1 | Typography (self-hosted at build) |
 
 Provenance per club is stored in `world.json` (`sources`). The visual asset registry is `src/data/assets.json` (rendered on /credits).
 

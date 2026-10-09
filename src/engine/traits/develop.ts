@@ -10,6 +10,7 @@
  */
 import type { PlayerLine } from "../match/engine";
 import { overallFor } from "../players/attributes";
+import { EVIDENCE_LIFT, favours, focusStrength } from "../players/focus";
 import { clamp, r1, Rng } from "../rng";
 import type { GameState, OwnedTrait, Player, TraitEvent, TraitId, TrainingFocus } from "../types";
 import { addNews } from "../world/helpers";
@@ -18,6 +19,7 @@ import { coreFit, stageOf } from "./effects";
 import { TRAIT_BY_ID, TRAITS } from "./registry";
 import { candidateTraits, canBeSignature, conflictWith, countTraits, hasRoom, meetsRequirements } from "./rules";
 import { derivedTraits, expectedStyleCount, type DeriveExtra } from "./assign";
+import { reviewStay } from "./stay";
 import { clubTenure, trackClub } from "./tenure";
 import { STAGE_XP, type SignalKey, type TraitDef } from "./types";
 
@@ -25,6 +27,9 @@ const PER_MATCH_CAP = 3.5;
 const TRAINING_BUDGET = 22;
 const TRAINING_GATE = 6;
 const REMOVE_BELOW = STAGE_XP.owned;
+const ONE_CLUB_ID = "club_oriented";
+/** xp lost a season by a one-club man who no longer plays for his club: a Signature bond is gone in about four years, an Established one in two or three. */
+const LEFT_CLUB_FADE = 35;
 /** Yearly chance a flawless NPC picks up a playing flaw. */
 const FLAW_DRIFT = 0.008;
 
@@ -150,6 +155,8 @@ function applyEvidence(state: GameState, p: Player, def: TraitDef, gain: number)
 export function recordMatchEvidence(state: GameState, p: Player, line: PlayerLine, ctx: MatchCtx): void {
   const sig = signalValues(line, ctx);
   const ownedIds = p.traits?.map((t) => t.id) ?? [];
+  // The aspiration only ever multiplies behaviour that actually happened: no signal, no progress.
+  const aspiration = focusStrength(p, state.season);
   const seen = new Set<TraitId>();
   const consider = (def: TraitDef, conflictMul: number) => {
     if (!def.signals || seen.has(def.id)) return;
@@ -158,7 +165,8 @@ export function recordMatchEvidence(state: GameState, p: Player, line: PlayerLin
     for (const k of Object.keys(def.signals) as SignalKey[]) ev += (sig[k] ?? 0) * (def.signals[k] ?? 0);
     if (ev <= 0) return;
     const fit = coreFit(def, p.attrs) * (meetsRequirements(def, p.attrs) ? 1 : 0.5);
-    const gain = (Math.min(ev, PER_MATCH_CAP) * (0.55 + 0.9 * fit) * conflictMul) / (0.8 + 0.2 * def.rarity);
+    const lift = aspiration > 0 && favours(p.focus, def.id) ? 1 + EVIDENCE_LIFT * aspiration : 1;
+    const gain = (Math.min(ev, PER_MATCH_CAP) * (0.55 + 0.9 * fit) * conflictMul * lift) / (0.8 + 0.2 * def.rarity);
     applyEvidence(state, p, def, gain);
   };
   for (const id of ownedIds) {
@@ -246,12 +254,13 @@ export function reviewTraits(state: GameState, p: Player, rng: Rng, tracked: boo
   }
   // Temperament follows the profile (reputation, age and so on).
   trackClub(p, state.season);
+  reviewStay(state, p, minutes);
   reviewDerived(state, p, age, ovr);
   // NPCs drift into new habits: a cheap stand-in for the evidence the user's own career provides. A player only grows
   // towards the number of habits his level suggests, so a long career does not pile traits up; flaws are rare additions.
   if (!p.isUser && !p.virtual && age <= 33 && rng.chance(0.3 + (minutes >= 1500 ? 0.12 : 0))) {
     const owned = countTraits(p.traits).style;
-    const pool = owned < expectedStyleCount(ovr, age) ? candidateTraits({ position: p.position, secondary: p.secondary, attrs: p.attrs, traits: p.traits }, true).filter((c) => !c.def.flaw && hasRoom(c.def, p.traits, ovr, age)) : [];
+    const pool = owned < expectedStyleCount(ovr, age) ? candidateTraits({ position: p.position, secondary: p.secondary, attrs: p.attrs, traits: p.traits, lift: p.focus ? { focus: p.focus, strength: focusStrength(p, state.season) } : undefined }, true).filter((c) => !c.def.flaw && hasRoom(c.def, p.traits, ovr, age)) : [];
     const pick = weightedPick(pool, rng);
     if (pick) gainTrait(state, p, pick.id, STAGE_XP.owned + rng.int(0, 12));
   }
@@ -299,8 +308,11 @@ export function reviewDerived(state: GameState, p: Player, age: number, ovr: num
   for (const t of [...p.traits]) {
     const def = TRAIT_BY_ID.get(t.id);
     if (!def?.derive || wantedIds.has(t.id)) continue;
-    // Reputation- and age-based traits can fade; temperament built into the profile is steadier.
-    t.xp = r1(t.xp - 10);
+    // On loan he is only away for a while; the bond is judged again when he is back.
+    if (p.loan && t.id === ONE_CLUB_ID) continue;
+    // Reputation- and age-based traits can fade; temperament built into the profile is steadier. A bond with a badge he has
+    // since left does not outlive the move for long: it was the club he loved, and it is no longer his.
+    t.xp = r1(t.xp - (t.id === ONE_CLUB_ID && clubTenure(p, state.season) < 4 ? LEFT_CLUB_FADE : 10));
     if (t.xp < REMOVE_BELOW) removeTrait(state, p, t.id, "lost");
   }
 }
@@ -318,9 +330,11 @@ export function ratingRecord(state: GameState): { n: number; mean: number; sd: n
 function deriveExtra(state: GameState, p: Player): DeriveExtra {
   const club = p.clubId ? state.clubs[p.clubId] : undefined;
   const extra: DeriveExtra = { captain: club?.captain === p.id };
+  if (p.stay?.clubId === p.clubId) extra.stay = p.stay;
   if (p.isUser) {
     extra.supporters = state.user.relationships.supporters;
     extra.ratings = ratingRecord(state);
+    extra.standing = { manager: state.user.relationships.manager, board: state.user.relationships.board };
   }
   return extra;
 }

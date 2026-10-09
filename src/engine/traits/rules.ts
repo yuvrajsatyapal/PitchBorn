@@ -4,6 +4,7 @@
  */
 import type { Attributes, OwnedTrait, Position, TraitId } from "../types";
 import { overallFor } from "../players/attributes";
+import { DRAW_LIFT, favours } from "../players/focus";
 import { TRAIT_BY_ID, traitsForPosition } from "./registry";
 import { stageOf, coreFit } from "./effects";
 import { STAGE_XP, type ConflictKind, type TraitDef } from "./types";
@@ -13,6 +14,8 @@ export interface Identity {
   secondary: readonly Position[];
   attrs: Attributes;
   traits?: readonly OwnedTrait[];
+  /** The player's aspiration and how much of it is still alive: tilts which natural trait a draw favours, nothing more. */
+  lift?: { focus: string; strength: number };
 }
 
 /** How naturally a position develops this trait: 1 primary, 0.5 secondary, 0 not at all (× affinity). */
@@ -118,7 +121,8 @@ export function candidateTraits(id: Identity, draw = false): { def: TraitDef; we
     if (fit < 0.45) continue;
     const conflict = conflictWith(def, owned);
     if (conflict === "exclusive") continue;
-    out.push({ def, weight: pw * fit * fit * (conflict === "unlikely" ? 0.2 : 1) / Math.pow(def.rarity, 1.1) });
+    const lift = id.lift && favours(id.lift.focus, def.id) ? 1 + DRAW_LIFT * id.lift.strength : 1;
+    out.push({ def, weight: pw * fit * fit * lift * (conflict === "unlikely" ? 0.2 : 1) / Math.pow(def.rarity, 1.1) });
   }
   return out;
 }

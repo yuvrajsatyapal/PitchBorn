@@ -10,6 +10,7 @@ import { sanitizeCeremony } from "../engine/awards/sanitize";
 import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
+import { NO_FOCUS } from "../engine/players/focus";
 import { AMBI_MIN, AMBIDEXTROUS, isFoot, migrateFoot } from "../engine/players/foot";
 import { derivedTraits, initialTraits } from "../engine/traits/assign";
 import { sanitizeTraits, seedDerivedTraits } from "../engine/traits/sanitize";
@@ -159,6 +160,16 @@ MIGRATIONS[12] = (s) => {
   // v12 → v13: the trait catalogue grew (record-based and temperament traits, flaws with attribute ceilings) and players now remember
   // when they joined their club. NPCs receive the traits their profile and record already imply; nothing established is re-rolled.
   seedDerivedTraits(s as unknown as GameState);
+  return s;
+};
+
+MIGRATIONS[13] = (s) => {
+  // v13 → v14: development focus and the loyalty record behind One-Club Minded. Nobody's childhood aspiration is invented from the
+  // traits they have today: the user's focus is recorded as "no preference" and NPCs simply have none. The loyalty record starts
+  // from what each player's recorded seasons show at the next season review. No trait is added, changed or removed here.
+  const state = s as unknown as GameState;
+  const u = (state.players ?? {})[(state.user as { playerId?: string } | undefined)?.playerId ?? ""];
+  if (u && u.focus === undefined) u.focus = NO_FOCUS;
   return s;
 };
 

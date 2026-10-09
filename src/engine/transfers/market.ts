@@ -1,5 +1,6 @@
 import { BALANCE } from "../balance";
 import { moveScoreDelta, stayBonus } from "../traits/career";
+import { noteApproachDeclined, noteRenewal } from "../traits/stay";
 import { clubName, staticClub, staticLeague } from "../data/world";
 import { overallFor, positionGroup } from "../players/attributes";
 import { marketValue, wageFor, formatMoney } from "../players/economy";
@@ -152,7 +153,11 @@ export function runAiTransfers(state: GameState, rng: Rng, intensity: number): v
       if (rng.chance(0.55)) continue; // scouting noise — not every target is pursued
       const role: SquadRole = o >= level + 2 ? "star" : "first";
       const wage = wageFor(o, club.reputation, role);
-      if (!playerWillJoin(state, p, club, wage)) continue;
+      if (!playerWillJoin(state, p, club, wage)) {
+        // A club with the money and the need came for him and he said no: that is the only outside interest the game really has.
+        noteApproachDeclined(state, p, club.reputation);
+        continue;
+      }
       executeTransfer(state, p, club, Math.round(fee / 50000) * 50000, wage, rng.int(2, 5), role);
       candidates.splice(i, 1);
       signed = true;
@@ -186,6 +191,7 @@ export function processExpiringContracts(state: GameState, rng: Rng): void {
     const wanted = (o >= level - 7 && age <= 32) || (age <= 22 && p.hidden.potential >= level - 2);
     const stays = wanted && rng.chance(clamp(0.78 + p.hidden.loyalty / 500 + stayBonus(state, p), 0.3, 0.97));
     if (stays) {
+      noteRenewal(state, p);
       p.contract = { ...p.contract, expires: state.season + rng.int(1, age > 30 ? 2 : 4), wage: wageFor(o, club.reputation, p.contract.role === "prospect" && age > 20 ? "rotation" : p.contract.role), signed: state.season + 1 };
     } else {
       removeFromSquad(state, p.id);

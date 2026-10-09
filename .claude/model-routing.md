@@ -67,6 +67,16 @@ On receiving an ESCALATE, the main (Sonnet) session investigates and fixes it, t
 
 Do not stop after design to ask for approval. Only stop for destructive actions, credentials, or legal decisions.
 
+## When the support agents are mandatory
+
+After implementing, Sonnet MUST run `support-verifier` and `support-reviewer` (and `support-docs` if behaviour or docs changed) when ANY of these is true:
+
+- the change touches more than 2 files
+- it touches anything in `src/engine/` or `src/persistence/`
+- it changes test, e2e or sim behaviour (`tests/`, `e2e/`, `scripts/sim/`)
+
+This holds even if the change itself is small (a one-line engine fix still goes through them). Smaller changes (1–2 files, outside those paths, such as a UI tweak) may be verified directly by Sonnet with typecheck, lint and a quick browser check; the support agents are optional there.
+
 ## Parallelism
 
 After Sonnet finishes, `support-verifier`, `support-reviewer` and `support-docs` may run in parallel as long as their write sets do not overlap (reviewer is read-only; docs only touch docs; verifier only touches tests and trivial lint/type fixes). Never run two writers on the same file. Architecture and core implementation stay with the single Sonnet owner.

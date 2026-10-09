@@ -326,12 +326,13 @@ describe("sample size: no performance trait from a tiny record", () => {
     expect(D.captainMaterial({ ...vet, reputation: 8, captain: false })).toBeLessThan(0.25);
   });
 
-  it("One-Club Minded is rare: long attachment to one club, and only with some loyalty", () => {
-    expect(D.oneClub(base({ tenure: 7 }))).toBe(-1);
-    const loyal = base({ tenure: 14 });
+  it("One-Club Minded is rare: it needs a recorded career of staying, not just years (more in tests/oneClub.test.ts)", () => {
+    const stay = { clubId: "c", seasons: 13, minutes: 13 * 2800, renewals: 4, freeStays: 3, declined: 0, wavered: 0 };
+    expect(D.oneClub(base({ tenure: 14 }))).toBe(-1);
+    const loyal = base({ tenure: 14, stay });
     loyal.hidden = { ...loyal.hidden, loyalty: 85 };
-    expect(D.oneClub(loyal)).toBeGreaterThan(0.6);
-    const mercenary = base({ tenure: 12 });
+    expect(D.oneClub(loyal)).toBeGreaterThan(0.25);
+    const mercenary = base({ tenure: 12, stay });
     mercenary.hidden = { ...mercenary.hidden, loyalty: 20 };
     expect(D.oneClub(mercenary)).toBeLessThan(0.25);
   });

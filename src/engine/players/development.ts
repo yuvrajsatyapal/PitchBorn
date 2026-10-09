@@ -3,6 +3,7 @@ import { clamp, r1, r2, Rng } from "../rng";
 import type { AttrKey, ClubState, GameState, Player, TrainingFocus, TrainingPlan } from "../types";
 import { careerProfile } from "../traits/effects";
 import { applyGrowth, overallFor, SPEED } from "./attributes";
+import { focusTilt } from "./focus";
 import { developWeakFoot, trainWeakFoot, WEAK_FOOT_FOCUS } from "./foot";
 import { ageOf } from "./generate";
 import { applyInjury, injuryRiskFactor, rollInjury } from "./injuries";
@@ -95,7 +96,7 @@ export function developPlayer(state: GameState, rng: Rng, p: Player, ctx: DevCon
     physical = decline * 1.3;
   }
   // Speed has its own curve above, so general decline never takes it.
-  applyGrowth(rng, p.attrs, p.position, growth, ctx.focus, physical, SPEED);
+  applyGrowth(rng, p.attrs, p.position, growth, ctx.focus, physical, SPEED, focusTilt(p, state.season));
   developWeakFoot(p, age, 1 / ticksPerSeason);
   return growth;
 }
@@ -132,7 +133,7 @@ export function matchExperience(state: GameState, rng: Rng, p: Player, minutes: 
   if (minutes <= 0) return 0;
   const perf = clamp((rating - 5.8) / 1.5, 0, 1.5);
   const gain = BALANCE.matchGrowth * (minutes / 90) * perf * trainingAgeMul(ageOf(p, state.season)) * gapMul(p);
-  if (gain > 0) applyGrowth(rng, p.attrs, p.position, gain);
+  if (gain > 0) applyGrowth(rng, p.attrs, p.position, gain, undefined, 0, [], focusTilt(p, state.season));
   return gain;
 }
 

@@ -422,8 +422,8 @@ const CORE: TraitDef[] = [
   def("money_motivated", "Mercenary", "personality", [...GK, ...OUT], "Follows the wage: the biggest offer is hard to turn down.", [], 2, {
     conflicts: [u("loyal"), u("club_oriented")], derive: (p) => Math.min((p.hidden.ambition - 62) / 20, (40 - p.hidden.loyalty) / 20), career: { money: 0.6 },
   }),
-  def("club_oriented", "One-Club Minded", "personality", [...GK, ...OUT], "Lives for the badge: after many years at one club, leaving is close to unthinkable.", [], 3, {
-    conflicts: [u("ambitious"), x("money_motivated")], derive: D.oneClub, career: { loyalty: 0.5, team: 0.2, fan: 0.2 },
+  def("club_oriented", "One-Club Minded", "personality", [...GK, ...OUT], "Lives for the badge: years of staying when he could have gone have made this his club, and leaving is close to unthinkable.", [], 3, {
+    conflicts: [u("ambitious"), x("money_motivated")], derive: D.oneClub, earned: true, career: { loyalty: 0.8, team: 0.2, fan: 0.2 },
   }),
   def("big_club_ambition", "Big-Club Ambition", "personality", [...GK, ...OUT], "Dreams of the giants: moves to the biggest clubs are far more tempting, and a small club is never enough.", [], 3, {
     conflicts: [u("loyal"), u("club_oriented")], derive: (p) => (p.hidden.ambition - 78) / 20, career: { ambition: 0.7 },

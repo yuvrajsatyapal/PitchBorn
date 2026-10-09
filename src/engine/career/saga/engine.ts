@@ -16,6 +16,7 @@ import { noteSagaCompetition } from "../rivalry/engine";
 import { baseRivalry, bumpRivalHeat } from "../../memory/rivalry";
 import { careerProfile } from "../../traits/effects";
 import { negotiationPatience } from "../../traits/career";
+import { noteApproachDeclined } from "../../traits/stay";
 import type { CareerDecision, ClubId, ClubState, ContractTerms, GameState, Player, SagaOutcome, SagaStage, TransferOffer, TransferSaga } from "../../types";
 import { clubLevel } from "../../world/create";
 import { addNews, nextId, userPlayer } from "../../world/helpers";
@@ -538,6 +539,7 @@ export function resolveSagaDecision(state: GameState, d: CareerDecision, optionI
       nudge(state, { manager: 10, supporters: 8, board: 4 });
       p.morale = clamp(p.morale + 3 - Math.round(lean.ambition * 7), 0, 100);
       state.user.loyaltyStands = (state.user.loyaltyStands ?? 0) + 1;
+      noteApproachDeclined(state, p, state.clubs[s.clubId]?.reputation ?? 0);
       s.flags.committed = true;
       finish(state, s, "player-declined", `You tell ${clubName(p.clubId)} you are staying. ${clubName(s.clubId)} move on.`);
       return "You commit your future to the club.";

@@ -208,6 +208,27 @@ export interface Player {
   traitProgress?: Record<TraitId, number>;
   /** The season he joined his current club. NPC season history is capped at a few years, so a long stay cannot be read from it. */
   clubSince?: { clubId: ClubId; season: number };
+  /** What the player has done with his place at the club he is at now (reset by any move). See traits/stay.ts. */
+  stay?: StayRecord;
+  /** Development focus: the kind of player he is trying to become (absent = no preference). See players/focus.ts. */
+  focus?: string;
+}
+
+/** Evidence of commitment to the current club, kept as a few counters so nobody's history is ever scanned. */
+export interface StayRecord {
+  clubId: ClubId;
+  /** Seasons reviewed at this club, and the minutes played in them. */
+  seasons: number;
+  minutes: number;
+  /** Contract extensions agreed here, and how many of them came while he could have walked into another club. */
+  renewals: number;
+  freeStays: number;
+  /** Seasons in which a comparable or bigger club approached and he said no. */
+  declined: number;
+  /** Seasons he asked to leave or was listed; fades with calm seasons. */
+  wavered: number;
+  /** Season of the last declined approach (counted at most once a season). */
+  lastDeclined?: number;
 }
 
 export type FormationId = "4-3-3" | "4-4-2" | "4-2-3-1" | "3-5-2" | "5-3-2" | "4-1-4-1";

@@ -4,6 +4,7 @@
  * main random stream, so adding or changing traits cannot disturb match results.
  */
 import { overallFor } from "../players/attributes";
+import { focusStrength } from "../players/focus";
 import { Rng, clamp } from "../rng";
 import type { Hidden, OwnedTrait, Player } from "../types";
 import { STAGE_XP } from "./types";
@@ -13,13 +14,15 @@ import { candidateTraits, canBeSignature, conflictWith, hasRoom, limitsFor, meet
 import type { DeriveInput } from "./types";
 
 type Subject = Pick<Player, "id" | "position" | "secondary" | "attrs" | "hidden" | "birthYear" | "reputation" | "isUser" | "weakFoot"> &
-  Partial<Pick<Player, "career" | "history" | "injuries">> & { traits?: OwnedTrait[] };
+  Partial<Pick<Player, "career" | "history" | "injuries" | "focus">> & { traits?: OwnedTrait[] };
 
 /** What the game knows about a player beyond the player record itself (the user's standing with supporters and match ratings, captaincy). */
 export interface DeriveExtra {
   supporters?: number;
   ratings?: DeriveInput["ratings"];
   captain?: boolean;
+  stay?: DeriveInput["stay"];
+  standing?: DeriveInput["standing"];
 }
 
 const sum = (a: Record<string, number>) => Object.values(a).reduce((s, v) => s + v, 0);
@@ -84,8 +87,9 @@ export function initialTraits(p: Subject, season: number, opts: { tier?: "npc" |
   if (opts.tier === "user") return out.slice(0, 3);
   // Playing style: weighted draws from what the position and attributes make natural.
   const want = styleCount(ovr, age, rng);
+  const lift = p.focus ? { focus: p.focus, strength: focusStrength({ birthYear: p.birthYear, career: p.career ?? NO_RECORD, focus: p.focus, position: p.position }, season) } : undefined;
   for (let i = 0; i < want; i++) {
-    const pool = candidateTraits({ ...p, traits: out }, true).filter((c) => !c.def.flaw && hasRoom(c.def, out, ovr, age));
+    const pool = candidateTraits({ ...p, traits: out, lift }, true).filter((c) => !c.def.flaw && hasRoom(c.def, out, ovr, age));
     if (!pool.length) break;
     const total = pool.reduce((s, c) => s + c.weight, 0);
     let r = rng.next() * total;

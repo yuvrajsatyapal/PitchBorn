@@ -11,7 +11,7 @@ Youth/academy → first contract → development squad / loans → debut → bre
 - Each week: training plan → user's matches (live or sim) → world simulates → development, finances, transfers, offers, random events, news.
 
 ## Starting out
-Your starting ability depends only on the path, never on the club: academy prospect ≈61 overall (age 17, hidden potential ~89), late starter ≈67 (age 20, potential ~85). The club decides the environment instead: elite clubs mean little early game time (development squad, loans) but better facilities, reputation and wages; smaller clubs mean early minutes, which drive development. The club picker shows each squad's level against your start.
+Your starting ability depends only on the path, never on the club: academy prospect ≈61 overall (age 17, hidden potential ~89), late starter ≈67 (age 20, potential ~85). The club decides the environment instead: elite clubs mean little early game time (development squad, loans) but better facilities, reputation and wages; smaller clubs mean early minutes, which drive development. The club picker shows each squad's level against your start. A **Playstyle** step lets you pick a *desired playstyle* for your position (or No preference): a small, fading lean to your early development and starting attributes at no cost to your overall, never a trait. See `docs/TRAITS.md`.
 
 ## Player model
 Visible attributes (1–99): pace, acceleration, stamina, strength, finishing, long shots, passing, vision, crossing, dribbling, first touch, tackling, positioning, heading, composure, plus GK reflexes, handling, diving, kicking, command. Overall is a position-weighted blend.

@@ -4,11 +4,13 @@
  * temperament-based traits the earlier catalogue could not express.
  */
 import { overallFor } from "../players/attributes";
+import { NO_FOCUS, isValidFocus } from "../players/focus";
 import { r1 } from "../rng";
 import type { GameState, OwnedTrait, Player } from "../types";
 import { derivedTraits } from "./assign";
 import { TRAIT_BY_ID } from "./registry";
 import { conflictWith, hasRoom } from "./rules";
+import { cleanStay } from "./stay";
 import { clubTenure, trackClub } from "./tenure";
 import { STAGE_XP } from "./types";
 
@@ -39,6 +41,13 @@ function cleanTraits(list: unknown): OwnedTrait[] {
   return kept.slice(0, HARD_TRAIT_CAP);
 }
 
+/** A development focus has to be one this position can choose. Anything else, or an NPC's explicit "none", is no preference (absent); the user keeps an explicit one. */
+function cleanFocus(p: Player): void {
+  if (p.focus === undefined) return;
+  if (!isValidFocus(p.position, p.focus)) p.focus = p.isUser ? NO_FOCUS : undefined;
+  if (p.focus === undefined || (!p.isUser && p.focus === NO_FOCUS)) delete p.focus;
+}
+
 export function sanitizeTraits(state: GameState): void {
   for (const p of Object.values(state.players ?? {})) {
     if (p.traits !== undefined) p.traits = cleanTraits(p.traits);
@@ -50,6 +59,8 @@ export function sanitizeTraits(state: GameState): void {
       }
       if (!Object.keys(p.traitProgress).length) delete p.traitProgress;
     }
+    cleanStay(p);
+    cleanFocus(p);
     const cs = p.clubSince;
     if (cs && (typeof cs.clubId !== "string" || !Number.isFinite(cs.season) || cs.clubId !== p.clubId)) delete p.clubSince;
   }

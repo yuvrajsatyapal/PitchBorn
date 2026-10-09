@@ -5,6 +5,7 @@
  */
 import { overallFor } from "../players/attributes";
 import type { GameState, OwnedTrait, Player, Position, TraitStage } from "../types";
+import { favours, focusOf, focusStrength, NO_FOCUS, type FocusDef } from "../players/focus";
 import { STAGE_LABEL, stageOf } from "./effects";
 import { TRAIT_BY_ID } from "./registry";
 import type { TraitCategory, TraitDef } from "./types";
@@ -121,3 +122,27 @@ export const rowOf = (t: OwnedTrait): TraitRow | null => {
   const stage = stageOf(t.xp);
   return def && stage ? { def, xp: t.xp, stage } : null;
 };
+
+// ─────────────────────────────────────────────────────────────── aspiration vs. what the career shows
+
+export type FocusVerdict = "open" | "early" | "aligned" | "mixed" | "diverged";
+export type FocusInfluence = "shaping" | "fading" | "settled";
+
+export interface FocusReading {
+  focus: FocusDef;
+  influence: FocusInfluence;
+  verdict: FocusVerdict;
+  /** The traits the career has actually produced, strongest first (playing style, then mind and body). */
+  current: TraitRow[];
+}
+
+/** How the player's aspiration compares with the habits his career has produced. A reading of the record, never an input to it. */
+export function focusReading(p: Pick<Player, "traits" | "position" | "focus" | "birthYear" | "career">, season: number): FocusReading {
+  const focus = focusOf(p);
+  const strength = focusStrength(p, season);
+  const g = groupTraits(p);
+  const current = [...g.style, ...g.mindBody];
+  const matching = current.filter((r) => favours(p.focus, r.def.id)).length;
+  const verdict: FocusVerdict = focus.id === NO_FOCUS ? "open" : !current.length ? "early" : matching * 2 >= current.length ? "aligned" : matching > 0 ? "mixed" : "diverged";
+  return { focus, influence: strength >= 0.5 ? "shaping" : strength >= 0.12 ? "fading" : "settled", verdict, current };
+}

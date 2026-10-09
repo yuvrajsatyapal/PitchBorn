@@ -5,6 +5,7 @@ import { AttrValue, Badge, Card, PageTitle } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
 import { ATTR_LABEL } from "@/engine/players/attributes";
 import { INTENSITY, TRAINING_FOCUS } from "@/engine/players/development";
+import { focusOf, focusStrength } from "@/engine/players/focus";
 import type { TrainingFocus } from "@/engine/types";
 import { user } from "@/game/selectors";
 import { useGame, useGameState } from "@/game/store";
@@ -18,6 +19,7 @@ export default function Training() {
   const p = user(g);
   const plan = g.user.training;
   const focuses = (Object.keys(TRAINING_FOCUS) as TrainingFocus[]).filter((f) => (p.position === "GK" ? f !== "finishing" : f !== "goalkeeping"));
+  const suggested = focusStrength(p, g.season) >= 0.12 ? focusOf(p).training : [];
   const boosts = g.user.boosts.filter((b) => b.untilTurnIndex >= g.turnIndex);
   const cd = (k: "training" | "recovery" | "morale", turns: number) => Math.max(0, turns - (g.turnIndex - (g.user.rewardCooldowns[k] ?? -999)));
   return (
@@ -28,7 +30,7 @@ export default function Training() {
           🩹 You&apos;re in rehab ({p.injury.type}, {p.injury.weeksLeft} week{p.injury.weeksLeft === 1 ? "" : "s"} left). Training resumes when you&apos;re fit.
         </Card>
       )}
-      <PlayIdentityCard g={g} p={p} title="Play identity" />
+      <PlayIdentityCard g={g} p={p} title="Play identity" showFocus />
       <Card title="Focus">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {focuses.map((f) => {
@@ -36,7 +38,10 @@ export default function Training() {
             const active = plan.focus === f;
             return (
               <button key={f} onClick={() => setTraining({ ...plan, focus: f })} aria-pressed={active} className={`rounded-2xl border-2 border-line p-3 text-left transition ${active ? "bg-sun-2 shadow-[3px_3px_0_var(--shadow)]" : "bg-card hover:bg-paper-2"}`}>
-                <div className="font-display text-lg">{def.label}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-display text-lg">{def.label}</div>
+                  {suggested.includes(f) && <Badge tone="pitch">Suits your focus</Badge>}
+                </div>
                 <div className="text-xs text-ink-2">{def.blurb}</div>
                 {def.attrs.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">

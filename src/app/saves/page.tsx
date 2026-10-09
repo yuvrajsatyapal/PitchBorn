@@ -66,21 +66,27 @@ export default function SavesPage() {
         ) : (
           <ul className="grid gap-3">
             {saves.map((s) => (
-              <li key={s.id} className="pb-card flex flex-wrap items-center gap-4 p-4">
+              <li key={s.id} className="pb-card grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-3 p-3 sm:flex sm:gap-4 sm:p-4">
                 <Crest clubId={s.clubId} size={48} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-display text-xl">{s.playerName}</span>
+                <div className="min-w-0 sm:flex-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-display min-w-0 text-xl leading-tight">{s.playerName}</span>
                     <Flag code={s.nationality} />
                     <Badge>{s.position}</Badge>
-                    <Badge tone="sun">OVR {s.overall}</Badge>
+                    <Badge tone="sun" className="num">OVR {s.overall}</Badge>
                     {s.retired && <Badge tone="plum">Retired · {s.legacyTier}</Badge>}
                   </div>
-                  <div className="text-sm text-ink-2">
-                    {clubName(s.clubId)} · Age {s.age} · {seasonLabel(s.season)} week {s.turn} · saved {new Date(s.updatedAt).toLocaleString()}
+                  <div className="mt-1 text-sm text-ink-2">
+                    <div className="truncate">{clubName(s.clubId)} · Age <span className="num">{s.age}</span></div>
+                    <div>
+                      {seasonLabel(s.season)} · week <span className="num">{s.turn}</span>
+                    </div>
+                    <div className="text-xs text-muted">
+                      saved <span className="num">{new Date(s.updatedAt).toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="col-span-2 grid grid-cols-[1fr_auto] gap-2 sm:col-span-1 sm:flex">
                   <Button
                     onClick={async () => {
                       close();

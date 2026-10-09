@@ -6,6 +6,7 @@ import { clamp, type Rng } from "../rng";
 import type { Appearance, CountryCode, Hidden, Player, Position, StatLine } from "../types";
 import { generateAppearance } from "../appearance/generate";
 import { initialWeakFoot } from "./foot";
+import { npcFocus } from "./focus";
 import { bestOverall, generateAttributes, overallFor } from "./attributes";
 
 export function emptyStat(): StatLine {
@@ -157,6 +158,9 @@ export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
     trophies: 0,
     month: { apps: 0, ratingSum: 0, goals: 0, assists: 0 },
   };
+  // Depth-pool players never play a minute of simulated football, so an aspiration would only add bytes to every save.
+  const focus = o.virtual ? undefined : npcFocus(p, o.season);
+  if (focus) p.focus = focus;
   p.traits = initialTraits(p, o.season);
   // Seed plausible past career numbers for veterans so records/caps feel lived-in.
   const seasonsPlayed = Math.max(0, o.age - 19);

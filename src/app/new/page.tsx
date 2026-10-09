@@ -12,11 +12,12 @@ import { Badge, Button, Card, Tabs } from "@/components/ui";
 import { NAME_POOLS } from "@/engine/data/names";
 import { WORLD, country, stadium } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
+import { NO_FOCUS, focusFor, focusOptions } from "@/engine/players/focus";
 import { POSITIONS, type Appearance, type Position } from "@/engine/types";
 import { CUSTOM_LIMITS, playingTimeOutlook, sanitizeCustom, type CustomStart, type StartPath } from "@/engine/world/create";
 import { useGame } from "@/game/store";
 
-const STEPS = ["Identity", "Player", "Path & club", "Confirm"];
+const STEPS = ["Identity", "Player", "Playstyle", "Path & club", "Confirm"];
 const LEAGUE_COUNTRIES = ["ENG", "ESP", "GER", "ITA", "FRA"];
 
 function pick<T>(xs: T[]): T {
@@ -34,6 +35,7 @@ export default function NewCareer() {
   const [birthCountry, setBirth] = useState("ENG");
   const [position, setPos] = useState<Position>("ST");
   const [foot, setFoot] = useState<"L" | "R">("R");
+  const [focus, setFocus] = useState<string>(NO_FOCUS);
   const [height, setHeight] = useState(180);
   const [look, setLook] = useState<Appearance>(() => generateAppearance("new-career-start"));
   const [path, setPath] = useState<StartPath>("academy");
@@ -58,13 +60,13 @@ export default function NewCareer() {
     setFirst(pick(pool.first));
     setLast(pick(pool.last));
   };
-  const canNext = step === 0 ? firstName.trim().length >= 2 && lastName.trim().length >= 2 : step === 2 ? !!clubId : true;
+  const canNext = step === 0 ? firstName.trim().length >= 2 && lastName.trim().length >= 2 : step === 3 ? !!clubId : true;
 
   const start = async () => {
     setErr(null);
     setStarting(true);
     try {
-      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty });
+      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty });
       router.push("/play");
     } catch (e) {
       setStarting(false);
@@ -141,7 +143,7 @@ export default function NewCareer() {
               <div className="mb-2 text-sm font-bold">Position</div>
               <div className="grid grid-cols-5 gap-2">
                 {POSITIONS.map((p) => (
-                  <button key={p} onClick={() => setPos(p)} aria-pressed={position === p} title={POSITION_LABEL[p]} className={`min-h-[44px] rounded-xl border-2 border-line text-sm font-black ${position === p ? "bg-sun text-[#1b1712] shadow-[2px_2px_0_var(--shadow)]" : "bg-card"}`}>
+                  <button key={p} onClick={() => (setPos(p), setFocus(NO_FOCUS))} aria-pressed={position === p} title={POSITION_LABEL[p]} className={`min-h-[44px] rounded-xl border-2 border-line text-sm font-black ${position === p ? "bg-sun text-[#1b1712] shadow-[2px_2px_0_var(--shadow)]" : "bg-card"}`}>
                     {p}
                   </button>
                 ))}
@@ -163,6 +165,24 @@ export default function NewCareer() {
         )}
 
         {step === 2 && (
+          <Card title="What kind of player do you want to become?">
+            <p className="mb-3 text-sm text-ink-2">
+              This is an aspiration, not a trait. It gives your early development a small lean towards the role, without making you any better overall. What you actually become — your traits — is decided by how you play, train and behave, and a career can take you somewhere else entirely.
+            </p>
+            <div className="mb-2 text-xs font-black uppercase tracking-wider text-muted">{POSITION_LABEL[position]}</div>
+            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Desired playstyle">
+              {focusOptions(position).map((o) => (
+                <button key={o.id} role="radio" aria-checked={focus === o.id} onClick={() => setFocus(o.id)} data-testid={`focus-${o.id}`} className={`rounded-2xl border-2 border-line p-3 text-left ${focus === o.id ? "bg-sun-2 shadow-[3px_3px_0_var(--shadow)]" : "bg-card hover:bg-paper-2"}`}>
+                  <div className="font-display text-lg uppercase leading-tight">{o.name}</div>
+                  <div className="text-sm text-ink-2">{o.blurb}</div>
+                  <div className="mt-1.5 text-xs font-bold text-muted">{o.areas.join(" · ")}</div>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {step === 3 && (
           <div className="grid gap-4">
             <Card title="How does it start?">
               <div className="grid gap-3 sm:grid-cols-3">
@@ -241,7 +261,7 @@ export default function NewCareer() {
           </div>
         )}
 
-        {step === 3 && club && (
+        {step === 4 && club && (
           <Card title="Ready?">
             <div className="flex flex-wrap items-center gap-5">
               <PlayerPortrait appearance={look} age={path === "custom" ? custom.age : path === "academy" ? 17 : 20} size="large" kit={club.colors.primary} />
@@ -253,6 +273,7 @@ export default function NewCareer() {
                   <Flag code={nationality} /> {country(nationality)?.name}
                   {birthCountry !== nationality && <> · born in {country(birthCountry)?.name}</>} · {POSITION_LABEL[position]} · {height} cm · {foot === "R" ? "Right" : "Left"}-footed
                 </div>
+                <div className="mt-1 text-sm">Desired playstyle: <b>{focusFor(position, focus)?.name ?? "No preference"}</b></div>
                 <div className="mt-2 flex items-center gap-2 text-sm">
                   <Crest clubId={club.id} size={28} /> {path === "academy" || (path === "custom" && custom.age <= 18) ? "Academy" : "First-team squad"} at <b>{club.name}</b>
                 </div>
@@ -267,7 +288,7 @@ export default function NewCareer() {
           <Button tone="paper" onClick={() => (step === 0 ? router.push("/") : setStep(step - 1))}>
             ‹ Back
           </Button>
-          {step < 3 ? (
+          {step < 4 ? (
             <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
               Next ›
             </Button>

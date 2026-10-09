@@ -4,7 +4,7 @@
  * (minutes, seasons, appearances): a player generated with no history never has them from day one, they grow out of the career.
  */
 import { overallFor, positionGroup } from "../../players/attributes";
-import type { StatLine } from "../../types";
+import type { StatLine, StayRecord } from "../../types";
 import type { DeriveInput } from "../types";
 
 /** A career with no football played yet (a generated player starts with no record to read). */
@@ -100,9 +100,43 @@ export function fanFavourite(p: DeriveInput): number {
   return p.tenure >= 5 ? Math.min((p.tenure - 4) / 6, (p.reputation - 22) / 30) + (p.hidden.loyalty - 50) / 150 : -1;
 }
 
-/** Rare by design: a decade at one club, and a player whose loyalty is real, not just a long contract. */
+/** What it takes to be the club's man. Each bar is one of several: none of them alone is enough. */
+export const ONE_CLUB = {
+  /** Seasons at the club, counting the current one (the brief: six to eight and more; eight is a player who has lived through two contracts and a managerial change or two). */
+  tenure: 8,
+  /** Seasons actually recorded at the club (a long stay that left no record cannot be read as commitment). */
+  seasons: 7,
+  /** Average minutes a season: a regular, not a name on the squad list. */
+  minutes: 1700,
+  /** Hidden loyalty needed to feel it as a bond rather than a habit. */
+  loyalty: 60,
+  /** The user's standing with the stands and the board (a stay in a club that has turned on him is not devotion). */
+  supporters: 60,
+  board: 40,
+};
+
+/** Counters of the stay, weighted by how much each says he chose to stay: leaving a club is the only way to refuse it. */
+export function commitment(s: StayRecord): number {
+  // Capped: a long career does not buy the trait by repetition. An extension is the club's wish as much as his; one he could
+  // have turned into a better club, and a bid he turned down, are the stays that were his.
+  const e = 0.25 * Math.min(s.renewals, 4) + 0.8 * Math.min(s.freeStays, 3) + 1.2 * Math.min(s.declined, 3) - 1.2 * s.wavered;
+  return Math.max(-2, Math.min(6, e));
+}
+
+/**
+ * Rare, and earned by a career: years at one club, a regular's minutes, loyalty that is real and, above all, stays that
+ * were a choice (an extension he could have walked away from, an approach he turned down). Years alone never qualify, and a
+ * player nobody wanted accumulates none of the evidence.
+ */
 export function oneClub(p: DeriveInput): number {
-  return p.tenure >= 10 ? Math.min((p.tenure - 9) / 4, (p.hidden.loyalty - 58) / 28) : -1;
+  const s = p.stay;
+  if (!s || p.tenure < ONE_CLUB.tenure || s.seasons < ONE_CLUB.seasons) return -1;
+  if (s.minutes / s.seasons < ONE_CLUB.minutes || p.hidden.loyalty < ONE_CLUB.loyalty) return -1;
+  // Nothing to show that he ever had a way out: the years were not a decision.
+  if (s.freeStays + s.declined < 1 || commitment(s) < 2.5) return -1;
+  if (p.supporters !== undefined && p.supporters < ONE_CLUB.supporters) return -1;
+  if (p.standing && (p.standing.board < ONE_CLUB.board || p.standing.manager < ONE_CLUB.board)) return -1;
+  return Math.min((p.tenure - 7) / 4, (p.hidden.loyalty - 50) / 26, (commitment(s) - 2.5) / 2);
 }
 
 export const driven = (p: DeriveInput) => (mean(p.hidden.ambition, p.hidden.professionalism) - 66) / 24;

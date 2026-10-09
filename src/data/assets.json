@@ -10,7 +10,7 @@
     { "id": "flag-icons", "name": "flag-icons", "author": "Panayiotis Lipiridis & contributors", "license": "MIT", "url": "https://github.com/lipis/flag-icons", "redistributable": true, "usage": "Country flag SVGs, bundled via npm." },
     { "id": "font-lilita", "name": "Lilita One", "author": "Juan Montoreano", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Lilita+One", "redistributable": true, "usage": "Display typeface (self-hosted by next/font at build time)." },
     { "id": "font-outfit", "name": "Outfit", "author": "Smartsheet / On Brand Investments", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Outfit", "redistributable": true, "usage": "Body typeface." },
-    { "id": "font-silkscreen", "name": "Silkscreen", "author": "Jason Kottke", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Silkscreen", "redistributable": true, "usage": "Pixel scoreboard typeface." }
+    { "id": "font-chakra-petch", "name": "Chakra Petch", "author": "Cadson Demak", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Chakra+Petch", "redistributable": true, "usage": "Numerals: ratings, scores, dates, money and shirt numbers." }
   ],
   "notBundled": [
     { "id": "club-crests", "name": "Official club crests", "reason": "Trademarked; redistribution and endorsement implications. Architecture supports a per-club asset override once licensed (see docs/DATA_SOURCES.md)." },

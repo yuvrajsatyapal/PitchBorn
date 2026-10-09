@@ -3,7 +3,7 @@ import { onSquadJoin, onSquadLeave } from "../jersey/numbers";
 import { closeStint } from "../managers/history";
 import type { ClubState, GameState, NewsItem, Player, TimelineEvent } from "../types";
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 export function nextId(state: GameState, prefix: string): string {
   state.idCounter++;

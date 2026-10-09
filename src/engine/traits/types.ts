@@ -144,6 +144,10 @@ export interface DeriveInput {
   ratings?: { n: number; mean: number; sd: number };
   /** Whether the player is (or has been) club captain. */
   captain?: boolean;
+  /** Loyalty record at the current club (see traits/stay.ts); absent when none has been kept yet. */
+  stay?: import("../types").StayRecord;
+  /** User only: how the manager and the board see him (0–100). */
+  standing?: { manager: number; board: number };
 }
 
 export interface AttrReq {

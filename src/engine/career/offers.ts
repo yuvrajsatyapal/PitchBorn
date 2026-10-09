@@ -10,6 +10,7 @@ import { clubLevel } from "../world/create";
 import { agentSkill, chargeCommission } from "./agents";
 import { rememberContractDispute, rememberRejection, rememberTransfer } from "../memory/detect";
 import { loyaltyStand, negotiationPatience, settlingEffect } from "../traits/career";
+import { noteApproachDeclined, noteRenewal } from "../traits/stay";
 import { noteUserTransfer } from "./rivalry/engine";
 import { payOnce } from "./money";
 import { onUserJoinedClub } from "../managers/story";
@@ -287,7 +288,10 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
   if (action.type === "reject") {
     o.status = "rejected";
     o.history.push("You turned the offer down.");
-    if (o.kind !== "renewal" && o.kind !== "loan" && !loyaltyStand(state, o)) rememberRejection(state, o);
+    if (o.kind !== "renewal" && o.kind !== "loan") {
+      if (!loyaltyStand(state, o)) rememberRejection(state, o);
+      noteApproachDeclined(state, p, state.clubs[o.fromClubId]?.reputation ?? 0);
+    }
     if (o.kind === "renewal") adjustRel(state, "board", -6, "You turned down a new contract");
     return { ok: true, message: "Offer rejected." };
   }
@@ -399,6 +403,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
     };
     paySigningBonus(state, o);
     chargeCommission(state, o.terms.wage, o.terms.signingBonus);
+    noteRenewal(state, p);
     p.morale = clamp(p.morale + 6, 0, 100);
     adjustRel(state, "board", 8, "You signed a new contract");
     addTimeline(state, { kind: "contract", title: `New contract with ${clubName(club.id)}`, detail: `${formatMoney(o.terms.wage)}/wk until ${p.contract.expires + 1}` });

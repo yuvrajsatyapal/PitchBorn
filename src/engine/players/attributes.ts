@@ -110,6 +110,8 @@ export function applyGrowth(
   physicalDecline = 0,
   /** Attributes that neither lose points to general decline nor to `physicalDecline`. */
   protect: AttrKey[] = [],
+  /** A small lean towards some attributes (a development focus); the same single draw per step, so no focus changes nothing. */
+  tilt?: { weights: Readonly<Partial<Record<AttrKey, number>>>; k: number },
 ): void {
   const w = POSITION_WEIGHTS[position];
   const all = Object.keys(w) as AttrKey[];
@@ -120,7 +122,7 @@ export function applyGrowth(
     const per = points / steps;
     for (let i = 0; i < steps; i++) {
       const pool = focus && focus.length && rng.chance(0.55) ? focus : keys;
-      const key = rng.weighted(pool, (k) => (w[k] ?? 0.05) + 0.05);
+      const key = rng.weighted(pool, (k) => (w[k] ?? 0.05) + 0.05 + (tilt && points > 0 ? tilt.k * (tilt.weights[k] ?? 0) : 0));
       const ceilingDrag = attrs[key] > 88 && per > 0 ? 0.5 : 1;
       attrs[key] = r2(clamp(attrs[key] + per * 4 * ceilingDrag * (1 + rng.normal(0, 0.15)), 1, 99));
     }

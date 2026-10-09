@@ -20,6 +20,7 @@ import type {
 import { SCHEMA_VERSION, addTimeline, nextId } from "./helpers";
 import { generateAttributes } from "../players/attributes";
 import { initialWeakFoot } from "../players/foot";
+import { NO_FOCUS, isValidFocus, leanAttributes } from "../players/focus";
 
 export const START_SEASON = 2026;
 
@@ -229,6 +230,8 @@ export interface NewCareerInput {
   /** Restrict the simulated world (stress tests). */
   countries?: string[];
   priorities?: GameState["user"]["priorities"];
+  /** Development focus: the kind of player to grow into (an id from players/focus.ts for the chosen position). Absent or invalid means no preference. */
+  focus?: string;
 }
 
 export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInput): Player {
@@ -244,6 +247,9 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   const potBase = input.path === "academy" ? 89 : 85;
   const potential = start.potential ?? clamp(potBase + rng.normal(0, 4) + (diff === "relaxed" ? 2 : diff === "hardcore" ? -2 : 0), 76, 97);
   const attrs = generateAttributes(rng, input.position, startOvr, input.height);
+  // An aspiration leans the starting attributes (same total quality); an unknown or wrong-position id is simply no preference.
+  const focus = isValidFocus(input.position, input.focus) ? input.focus : NO_FOCUS;
+  leanAttributes(attrs, input.position, focus);
   const hidden = randomHidden(rng, input.position, potential);
   hidden.professionalism = Math.max(hidden.professionalism, 55);
   hidden.injuryProneness = Math.min(hidden.injuryProneness, 55);
@@ -281,6 +287,7 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
     intl: { caps: 0, goals: 0, retired: false },
     look: input.look,
     isUser: true,
+    focus,
     trophies: 0,
     month: { apps: 0, ratingSum: 0, goals: 0, assists: 0 },
   };
