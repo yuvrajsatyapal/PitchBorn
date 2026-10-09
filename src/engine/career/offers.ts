@@ -391,6 +391,15 @@ function paySigningBonus(state: GameState, o: TransferOffer): void {
   }
 }
 
+/** Signing any contract (new club, loan or renewal) closes every other offer still on the table. */
+function withdrawOtherOffers(state: GameState, signed: TransferOffer): void {
+  for (const other of state.user.offers) {
+    if (other === signed || (other.status !== "terms" && other.status !== "club-pending")) continue;
+    other.status = "withdrawn";
+    other.history.push("Withdrawn after you signed elsewhere.");
+  }
+}
+
 function completeOffer(state: GameState, o: TransferOffer) {
   const p = userPlayer(state);
   o.status = "accepted";
@@ -420,6 +429,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
     adjustRel(state, "board", undervalued ? 3 : 8, "You signed a new contract");
     addTimeline(state, { kind: "contract", title: `New contract with ${clubName(club.id)}`, detail: `${formatMoney(o.terms.wage)}/wk until ${p.contract.expires + 1}` });
     addNews(state, { kind: "contract", title: "Contract extension signed", body: `${formatMoney(o.terms.wage)}/wk · ${o.terms.years} years`, important: true });
+    withdrawOtherOffers(state, o);
     return;
   }
   const from = p.clubId;
@@ -434,6 +444,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
     state.user.relationships.manager = 50;
     state.user.wantsLoan = false;
     onUserJoinedClub(state, club.id);
+    withdrawOtherOffers(state, o);
     return;
   }
   const seller = from ? state.clubs[from] : null;
@@ -467,11 +478,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
     detail: `${from ? `From ${clubName(from)}` : "As a free agent"}${o.fee ? ` · ${formatMoney(o.fee)}` : ""} · ${formatMoney(o.terms.wage)}/wk`,
   });
   addNews(state, { kind: "transfer", title: `Done deal: you join ${clubName(club.id)}`, body: o.fee ? `Fee: ${formatMoney(o.fee)}` : "Free transfer", important: true });
-  // Other open offers lapse once a move is done.
-  for (const other of state.user.offers) if (other !== o && (other.status === "terms" || other.status === "club-pending")) {
-    other.status = "withdrawn";
-    other.history.push("Withdrawn after you signed elsewhere.");
-  }
+  withdrawOtherOffers(state, o);
   const lg = staticLeague(club.leagueId);
   if (lg && state.user.startTier > lg.tier && lg.tier === 1 && !state.user.milestones.includes("top-flight")) {
     state.user.milestones.push("top-flight");
