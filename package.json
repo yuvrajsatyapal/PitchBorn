@@ -16,6 +16,7 @@
     "sim:careers": "tsx scripts/sim/careers.mts",
     "sim:match": "tsx scripts/sim/calibrate-match.ts",
     "sim:traits": "tsx scripts/sim/traits.ts",
+    "sim:wages": "tsx scripts/sim/wages.ts",
     "preview": "npx --yes serve out -l 4173",
     "icons": "node scripts/pwa/render-icons.mjs",
     "e2e:only": "playwright test"

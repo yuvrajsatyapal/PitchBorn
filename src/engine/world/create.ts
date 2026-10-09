@@ -7,7 +7,7 @@ import { WORLD, country, leaguesInPlay, stadium, staticClub, staticLeague } from
 import type { StaticManager } from "../data/schema";
 import { bestFormation } from "../match/lineup";
 import { overallFor } from "../players/attributes";
-import { clubRevenue, marketValue, wageFor } from "../players/economy";
+import { clubLevel, clubRevenue, marketValue, playerWage } from "../players/economy";
 import { emptyStat, generatePlayer, randomHidden, randomName } from "../players/generate";
 import { jerseyOf, recordNumber, repairAllSquads } from "../jersey/numbers";
 import { managerPool } from "./managers";
@@ -24,11 +24,7 @@ import { NO_FOCUS, isValidFocus, leanAttributes } from "../players/focus";
 
 export const START_SEASON = 2026;
 
-/** Average first-XI overall a club of this prestige fields (Pitchborn scale). */
-export function clubLevel(prestige: number): number {
-  // Elite ≈85–87, bottom of a top flight ≈75, second tier ≈70–76, third tier ≈65–71.
-  return 54.6 + prestige * 0.316;
-}
+export { clubLevel };
 
 /** Starting overall for a new career depends only on the path, never on the club. */
 export const STARTING_OVERALL = { academy: 61, late: 67 } as const;
@@ -62,10 +58,9 @@ export function managerName(rng: Rng, nat: CountryCode): string {
 }
 
 function contractFor(rng: Rng, p: Player, club: ClubState, season: number, role: SquadRole) {
-  const ovr = overallFor(p.attrs, p.position);
   return {
     clubId: club.id,
-    wage: wageFor(ovr, club.reputation, role),
+    wage: playerWage(p, season, club.reputation, role),
     expires: season + rng.int(role === "prospect" ? 1 : 0, role === "prospect" ? 3 : 4),
     signed: season - rng.int(0, 3),
     role,
@@ -291,10 +286,9 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
     trophies: 0,
     month: { apps: 0, ratingSum: 0, goals: 0, assists: 0 },
   };
-  const ovr = overallFor(attrs, input.position);
   p.contract = {
     clubId: club.id,
-    wage: wageFor(ovr, club.reputation, "prospect"),
+    wage: playerWage(p, season, club.reputation, "prospect"),
     expires: season + start.contractYears,
     signed: season,
     role: "prospect",

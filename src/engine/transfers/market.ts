@@ -3,7 +3,8 @@ import { moveScoreDelta, stayBonus } from "../traits/career";
 import { noteApproachDeclined, noteRenewal } from "../traits/stay";
 import { clubName, staticClub, staticLeague } from "../data/world";
 import { overallFor, positionGroup } from "../players/attributes";
-import { marketValue, wageFor, formatMoney } from "../players/economy";
+import { marketValue, playerWage, formatMoney } from "../players/economy";
+import { loyaltyPull, renewalGap, reservationWage, retentionOffer } from "../career/wages";
 import { ageOf, generatePlayer } from "../players/generate";
 import { clamp, type Rng } from "../rng";
 import type { ClubState, GameState, Player, Position, SquadRole } from "../types";
@@ -53,9 +54,10 @@ export function playerWillJoin(state: GameState, p: Player, buyer: ClubState, wa
   const current = p.clubId ? state.clubs[p.clubId] : null;
   const repGap = buyer.reputation - (current?.reputation ?? 0);
   const wageGain = p.contract ? wage / Math.max(1, p.contract.wage) : 2;
-  const loyalty = p.hidden.loyalty / 100;
   const ambition = p.hidden.ambition / 100;
-  const score = repGap * (0.6 + ambition) + (wageGain - 1) * 30 - loyalty * 8 + (p.listed ? 10 : 0) + moveScoreDelta(state, p, buyer, wageGain);
+  // The more tied he is to his club, the more a rival has to offer to move him.
+  const leaveBar = loyaltyPull(state, p) * 5;
+  const score = repGap * (0.6 + ambition) + (wageGain - 1) * 30 - leaveBar + (p.listed ? 10 : 0) + moveScoreDelta(state, p, buyer, wageGain);
   return score > -2;
 }
 
@@ -127,7 +129,7 @@ export function runAiTransfers(state: GameState, rng: Rng, intensity: number): v
     // Free agents first — cheap and quick.
     const freeAgent = index.free.find((p) => p.position === need.pos && ovr(p) >= need.floor - 2 && ovr(p) <= level + 6 && ageOf(p, state.season) <= 33);
     if (freeAgent) {
-      const wage = wageFor(ovr(freeAgent), club.reputation, "rotation");
+      const wage = playerWage(freeAgent, state.season, club.reputation, "rotation");
       executeTransfer(state, freeAgent, club, 0, wage, rng.int(1, 3), "rotation");
       index.free.splice(index.free.indexOf(freeAgent), 1);
       continue;
@@ -152,7 +154,7 @@ export function runAiTransfers(state: GameState, rng: Rng, intensity: number): v
       if (sellerSquad <= S.min && !p.listed) continue;
       if (rng.chance(0.55)) continue; // scouting noise — not every target is pursued
       const role: SquadRole = o >= level + 2 ? "star" : "first";
-      const wage = wageFor(o, club.reputation, role);
+      const wage = playerWage(p, state.season, club.reputation, role);
       if (!playerWillJoin(state, p, club, wage)) {
         // A club with the money and the need came for him and he said no: that is the only outside interest the game really has.
         noteApproachDeclined(state, p, club.reputation);
@@ -189,10 +191,17 @@ export function processExpiringContracts(state: GameState, rng: Rng): void {
     const age = ageOf(p, state.season + 1);
     const o = ovr(p);
     const wanted = (o >= level - 7 && age <= 32) || (age <= 22 && p.hidden.potential >= level - 2);
-    const stays = wanted && rng.chance(clamp(0.78 + p.hidden.loyalty / 500 + stayBonus(state, p), 0.3, 0.97));
+    const role = p.contract.role === "prospect" && age > 20 ? "rotation" : p.contract.role;
+    // The club prices him; the player decides whether that is enough. A club that badly wants him pays up to what he asks.
+    const offer = retentionOffer(state, club, p, role);
+    const need = reservationWage(state, p);
+    const wage = offer.importance >= 0.3 && need > offer.wage && need <= offer.maxWage ? need : offer.wage;
+    const gap = renewalGap(state, p, wage);
+    const willing = clamp(1 - gap / 0.12, 0, 1);
+    const stays = wanted && rng.chance(clamp(0.78 + stayBonus(state, p), 0.3, 0.97) * willing);
     if (stays) {
       noteRenewal(state, p);
-      p.contract = { ...p.contract, expires: state.season + rng.int(1, age > 30 ? 2 : 4), wage: wageFor(o, club.reputation, p.contract.role === "prospect" && age > 20 ? "rotation" : p.contract.role), signed: state.season + 1 };
+      p.contract = { ...p.contract, expires: state.season + rng.int(1, age > 30 ? 2 : 4), wage, signed: state.season + 1 };
     } else {
       removeFromSquad(state, p.id);
       p.clubId = null;
@@ -259,7 +268,7 @@ export function youthIntake(state: GameState, rng: Rng): void {
         nationality: rng.chance(0.85) ? st?.countryCode ?? "ENG" : rng.pick(["FRA", "BRA", "NGA", "SEN", "POR", "NED", "ESP"]),
         position, age, season, overall: clamp(potential - 24 - (18 - age) * 2 + rng.normal(0, 3), 45, 72), potential, clubId: club.id,
       });
-      p.contract = { clubId: club.id, wage: wageFor(ovr(p), club.reputation, "prospect"), expires: season + 2, signed: season, role: "prospect", youth: true };
+      p.contract = { clubId: club.id, wage: playerWage(p, season, club.reputation, "prospect"), expires: season + 2, signed: season, role: "prospect", youth: true };
       p.value = marketValue(p, season);
       p.reputation = 3;
       state.players[p.id] = p;
@@ -302,13 +311,13 @@ export function ensureMinimumSquads(state: GameState, rng: Rng): void {
         const fa = index.free.find((p) => p.position === pos && Math.abs(ovr(p) - level) < 12);
         if (fa) {
           index.free.splice(index.free.indexOf(fa), 1);
-          executeTransfer(state, fa, club, 0, wageFor(ovr(fa), club.reputation, "backup"), 1, "backup");
+          executeTransfer(state, fa, club, 0, playerWage(fa, state.season, club.reputation, "backup"), 1, "backup");
         } else {
           const p = generatePlayer(rng, {
             id: nextId(state, "p"), nationality: staticClub(club.id)?.countryCode ?? "ENG", position: pos, age: rng.int(19, 29), season: state.season,
             overall: level - 6 + rng.normal(0, 2), potential: level - 2, clubId: club.id,
           });
-          p.contract = { clubId: club.id, wage: wageFor(ovr(p), club.reputation, "backup"), expires: state.season + 1, signed: state.season, role: "backup" };
+          p.contract = { clubId: club.id, wage: playerWage(p, state.season, club.reputation, "backup"), expires: state.season + 1, signed: state.season, role: "backup" };
           p.value = marketValue(p, state.season);
           state.players[p.id] = p;
           club.squad.push(p.id);
@@ -323,7 +332,7 @@ export function ensureMinimumSquads(state: GameState, rng: Rng): void {
         id: nextId(state, "p"), nationality: staticClub(club.id)?.countryCode ?? "ENG", position: pos, age: rng.int(18, 30), season: state.season,
         overall: level - 7 + rng.normal(0, 2), potential: level - 2, clubId: club.id,
       });
-      p.contract = { clubId: club.id, wage: wageFor(ovr(p), club.reputation, "backup"), expires: state.season + 1, signed: state.season, role: "backup" };
+      p.contract = { clubId: club.id, wage: playerWage(p, state.season, club.reputation, "backup"), expires: state.season + 1, signed: state.season, role: "backup" };
       state.players[p.id] = p;
       club.squad.push(p.id);
       squad = squadOf(state, club.id);

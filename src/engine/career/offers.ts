@@ -2,12 +2,13 @@ import { BALANCE } from "../balance";
 import { isTransferWindow, windowName } from "../calendar";
 import { clubName, staticClub, staticLeague } from "../data/world";
 import { overallFor } from "../players/attributes";
-import { formatMoney, marketValue, wageFor } from "../players/economy";
+import { formatMoney, marketValue, playerWage } from "../players/economy";
 import { ageOf } from "../players/generate";
 import { clamp, type Rng } from "../rng";
 import type { ClubState, ContractTerms, GameState, Player, SquadRole, TransferOffer } from "../types";
 import { clubLevel } from "../world/create";
 import { agentSkill, chargeCommission } from "./agents";
+import { renewalGap, retentionOffer } from "./wages";
 import { rememberContractDispute, rememberRejection, rememberTransfer } from "../memory/detect";
 import { loyaltyStand, negotiationPatience, settlingEffect } from "../traits/career";
 import { noteApproachDeclined, noteRenewal } from "../traits/stay";
@@ -51,11 +52,13 @@ export function expectedRole(state: GameState, club: ClubState, p: Player): Squa
 
 export function makeTerms(state: GameState, rng: Rng, club: ClubState, p: Player, kind: TransferOffer["kind"]): { terms: ContractTerms; maxWage: number } {
   const role = expectedRole(state, club, p);
-  const o = uOvr(p);
-  const base = wageFor(o, club.reputation, role);
   const diff = state.settings.difficulty;
   const generosity = diff === "relaxed" ? 1.12 : diff === "hardcore" ? 0.92 : 1;
-  const wage = Math.round((base * rng.range(0.9, 1.08) * generosity) / 100) * 100;
+  // A renewal comes from the player's own club's valuation of him; every other offer is that club's market price.
+  const retention = kind === "renewal" ? retentionOffer(state, club, p, role) : undefined;
+  const base = retention?.wage ?? playerWage(p, state.season, club.reputation, role);
+  // Difficulty colours what other clubs offer; a renewal is priced by the club's own valuation, already bounded.
+  const wage = Math.round((base * (retention ? rng.range(0.98, 1.02) : rng.range(0.9, 1.08) * generosity)) / 100) * 100;
   const age = ageOf(p, state.season);
   const years = kind === "loan" ? 1 : age <= 23 ? rng.int(3, 5) : age <= 29 ? rng.int(2, 4) : rng.int(1, 2);
   const wantedBonus = Math.round((kind === "free" ? wage * rng.int(8, 20) : kind === "renewal" ? wage * rng.int(2, 6) : 0) * (0.9 + agentSkill(state, "negotiation") / 250));
@@ -70,7 +73,7 @@ export function makeTerms(state: GameState, rng: Rng, club: ClubState, p: Player
       ...openingClauses(p, wage, role),
       releaseClause: staticClub(club.id)?.countryCode === "ESP" ? Math.round((marketValue(p, state.season) * rng.range(3, 5)) / 1e6) * 1e6 : undefined,
     },
-    maxWage: Math.round(wage * rng.range(1.12, 1.38)),
+    maxWage: retention ? Math.max(wage, retention.maxWage) : Math.round(wage * rng.range(1.12, 1.38)),
   };
 }
 
@@ -292,7 +295,11 @@ export function negotiate(state: GameState, offerId: string, action: Negotiation
       if (!loyaltyStand(state, o)) rememberRejection(state, o);
       noteApproachDeclined(state, p, state.clubs[o.fromClubId]?.reputation ?? 0);
     }
-    if (o.kind === "renewal") adjustRel(state, "board", -6, "You turned down a new contract");
+    if (o.kind === "renewal") {
+      // Turning down money you were never going to accept is a business decision; turning down a fair deal is a snub.
+      const lowball = renewalGap(state, p, o.terms.wage) > 0;
+      adjustRel(state, "board", lowball ? -2 : -6, lowball ? "You turned down a renewal below your market value" : "You turned down a new contract");
+    }
     return { ok: true, message: "Offer rejected." };
   }
   if (action.type === "accept") {
@@ -391,6 +398,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
   const season = state.season;
   const afterSeason = state.turn >= BALANCE.calendar.endOfSeasonTurn;
   if (o.kind === "renewal") {
+    const prevWage = p.contract?.wage ?? 0;
     // A renewal adds its years on top of the contract you already have; it never shortens it.
     const current = p.contract?.expires ?? season - (afterSeason ? 0 : 1);
     p.contract = {
@@ -403,9 +411,13 @@ function completeOffer(state: GameState, o: TransferOffer) {
     };
     paySigningBonus(state, o);
     chargeCommission(state, o.terms.wage, o.terms.signingBonus);
+    // Judged before this signing is recorded, so it doesn't raise the bar it is measured against.
+    const undervalued = renewalGap(state, p, o.terms.wage) > 0.03;
+    const cut = prevWage > 0 && o.terms.wage < prevWage * 0.9;
     noteRenewal(state, p);
-    p.morale = clamp(p.morale + 6, 0, 100);
-    adjustRel(state, "board", 8, "You signed a new contract");
+    // Signing for less than the market rate, or taking a visible cut, is remembered in the dressing room.
+    p.morale = clamp(p.morale + 6 - (undervalued ? 3 : 0) - (cut ? 3 : 0), 0, 100);
+    adjustRel(state, "board", undervalued ? 3 : 8, "You signed a new contract");
     addTimeline(state, { kind: "contract", title: `New contract with ${clubName(club.id)}`, detail: `${formatMoney(o.terms.wage)}/wk until ${p.contract.expires + 1}` });
     addNews(state, { kind: "contract", title: "Contract extension signed", body: `${formatMoney(o.terms.wage)}/wk · ${o.terms.years} years`, important: true });
     return;
@@ -483,9 +495,8 @@ export function checkUserContract(state: GameState, rng: Rng): void {
     const wantChance = valued ? 0.85 : 0.25;
     if (rng.chance(wantChance * (state.user.transferRequest ? 0.3 : 1))) {
       const { terms, maxWage } = makeTerms(state, rng, club, p, "renewal");
-      terms.wage = Math.max(terms.wage, Math.round(p.contract.wage * 1.08));
       state.user.offers.unshift({
-        id: nextId(state, "o"), kind: "renewal", fromClubId: club.id, toPlayerClubId: club.id, fee: 0, terms, maxWage: Math.max(maxWage, terms.wage * 1.15), patience: negotiationPatience(p, rng.int(2, 3)),
+        id: nextId(state, "o"), kind: "renewal", fromClubId: club.id, toPlayerClubId: club.id, fee: 0, terms, maxWage, patience: negotiationPatience(p, rng.int(2, 3)),
         status: "terms", createdTurn: state.turn, expiresTurn: state.turn + 6, season: state.season, history: [`${clubName(club.id)} offer a new contract.`],
       });
       addNews(state, { kind: "contract", title: "Contract renewal offered", body: `${clubName(club.id)} want to extend your deal.`, important: true });

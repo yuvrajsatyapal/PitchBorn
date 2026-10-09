@@ -41,6 +41,45 @@ export function wageFor(ovr: number, clubReputation: number, role: SquadRole = "
   return roundMoney(clamp(w, 600, 650_000));
 }
 
+/** Club level ↔ reputation: the overall a club's first team plays at (elite ≈85, bottom of a top flight ≈75). */
+export function clubLevel(prestige: number): number {
+  return 54.6 + prestige * 0.316;
+}
+
+/** The reputation of a club whose first team plays at the given overall. */
+export function repForLevel(level: number): number {
+  return clamp((level - 54.6) / 0.316, 15, 100);
+}
+
+/**
+ * The overall a wage is priced on. Young players with room to grow are paid partly for what they will become;
+ * a few points at most, so a prospect never out-earns a proven player of the same standing.
+ */
+export function pricedOvr(p: Player, season: number): number {
+  const o = overall(p);
+  const age = ageOf(p, season);
+  const k = age <= 20 ? 0.12 : age <= 23 ? 0.08 : age <= 25 ? 0.04 : 0;
+  return o + Math.min(3, k * clamp(p.hidden.potential - o, 0, 25));
+}
+
+/** Clubs pay less for players on the way down. */
+function ageWageFactor(age: number): number {
+  return age > 31 ? Math.max(0.8, 1 - 0.04 * (age - 31)) : 1;
+}
+
+/**
+ * What a club of the given reputation pays this player for the given role. The one wage model: transfer offers, free-agent
+ * deals, NPC renewals and the market benchmark below all come from here.
+ */
+export function playerWage(p: Player, season: number, clubReputation: number, role: SquadRole = "first"): number {
+  return roundMoney(clamp(wageFor(pricedOvr(p, season), clubReputation, role) * ageWageFactor(ageOf(p, season)), 600, 650_000));
+}
+
+/** What the open market pays him: a first-team wage at the club whose level matches his. Club-independent. */
+export function marketWage(p: Player, season: number): number {
+  return playerWage(p, season, repForLevel(pricedOvr(p, season)), "first");
+}
+
 export function roundMoney(v: number): number {
   if (v >= 10_000_000) return Math.round(v / 500_000) * 500_000;
   if (v >= 1_000_000) return Math.round(v / 100_000) * 100_000;

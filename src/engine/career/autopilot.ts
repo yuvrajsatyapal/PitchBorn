@@ -14,6 +14,7 @@ import { movePressure } from "../traits/career";
 import { careerProfile } from "../traits/effects";
 import { resolveDecision } from "./events";
 import { negotiate, setTransferRequest } from "./offers";
+import { renewalGap, reservationWage } from "./wages";
 
 const FOCUS_BY_POS: Record<string, TrainingFocus[]> = {
   GK: ["goalkeeping"], CB: ["defending", "physical"], RB: ["defending", "pace"], LB: ["defending", "pace"], DM: ["defending", "passing"],
@@ -53,7 +54,13 @@ export function autopilotStep(state: GameState, rng: Rng): void {
     const roleScore = ROLE_SCORE[o.terms.role];
     if (o.kind === "renewal") {
       const better = u.offers.some((x) => x !== o && x.status === "terms" && x.kind !== "loan" && state.clubs[x.fromClubId].reputation > currentRep + 5);
-      if (!better) negotiate(state, o.id, { type: "counter", wage: Math.round(o.terms.wage * 1.1) }, rng);
+      if (!better) {
+        // Ask for no more than he would accept anywhere else; take the deal if the club stops short of that only slightly.
+        const need = reservationWage(state, p);
+        const res = o.terms.wage >= need ? { completed: false } : negotiate(state, o.id, { type: "counter", wage: need }, rng);
+        const open = state.user.offers.find((x) => x.id === o.id);
+        if (!res.completed && open?.status === "terms" && renewalGap(state, p, open.terms.wage) <= 0.03) negotiate(state, o.id, { type: "accept" }, rng);
+      }
       continue;
     }
     if (o.kind === "loan") {

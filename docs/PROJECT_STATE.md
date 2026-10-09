@@ -27,6 +27,7 @@ Read this first after any context reset. Keep it short and current.
 ## Key engine entry points
 - createWorld(NewCareerInput) → GameState (world/create.ts)
 - beginTurn / advanceTurn / simUserMatch / completeUserMatch / liveMatchRng / retireUser (season/advance.ts)
+- Wages: playerWage / marketWage (players/economy.ts, the one model); retentionOffer / reservationWage (career/wages.ts) for renewals. Sim: `npm run sim:wages`. Design: docs/CAREER_SYSTEMS.md §10.
 - prepareMatch(state, fixture, rng, {interactive, detail}) → MatchEngine (step/resolve/runToEnd) (season/matchday.ts, match/engine.ts)
 - negotiate / setTransferRequest (career/offers.ts), resolveDecision (career/events.ts), retireFromInternational (national/national.ts)
 - Calendar: 50 turns/season; season turns 4–43; season end 44; summer 45–50 (tournaments in even years)

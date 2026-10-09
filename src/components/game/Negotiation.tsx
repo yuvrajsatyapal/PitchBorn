@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Badge, Button } from "@/components/ui";
 import { CLAUSE_LIMIT, extrasWeekly, relevantClauses, signingBonusCeiling, type ClauseKey } from "@/engine/career/contracts";
 import { CLAUSE_NAME, ROLE_LABEL } from "@/engine/career/offers";
-import { formatMoney, marketValue } from "@/engine/players/economy";
+import { formatMoney, marketValue, marketWage } from "@/engine/players/economy";
 import type { ContractTerms, GameState, SquadRole, TransferOffer } from "@/engine/types";
 import { user } from "@/game/selectors";
 import { useGame } from "@/game/store";
@@ -78,6 +78,11 @@ export function Negotiation({ o, g }: { o: TransferOffer; g: GameState }) {
     );
   return (
     <div className="mt-3 rounded-xl border-2 border-line bg-card p-3" data-testid="negotiation">
+      {o.kind === "renewal" && (
+        <p className="mb-3 text-[11px] text-muted">
+          Other clubs would pay you about <b className="text-ink">{formatMoney(marketWage(p, g.season))}</b> a week.
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-3">
         <Slider label="Weekly wage" value={d.wage} min={min} max={max} step={Math.max(100, Math.round(min / 50))} onChange={(v) => set("wage", v)} display={formatMoney(d.wage)} offered={formatMoney(t0.wage)} />
         <label className="grid gap-1 text-xs font-bold">
