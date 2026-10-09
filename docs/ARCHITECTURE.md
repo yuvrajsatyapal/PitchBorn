@@ -23,7 +23,7 @@ Advertising (`src/ads`) is a presentation concern wired into page layouts only; 
 | `src/engine/rng.ts` | sfc32 seeded RNG with serialisable state |
 | `src/engine/balance.ts` | Every balancing constant in one place |
 | `src/engine/data/` | Dataset schema/validation, world lookups, name pools |
-| `src/engine/players/` | Attributes, generation, development/training, injuries, economy |
+| `src/engine/players/` | Attribute model (`model.ts`: meanings, position weights, ageing, training, style profiles, seeding), attributes and overall (`attributes.ts`), generation, expansion of older saves (`expansion.ts`), development/training, desired playstyles (`focus.ts`), injuries, economy |
 | `src/engine/match/` | Lineups/formations and the event-based match engine |
 | `src/engine/competitions/` | Fixtures, tables, season setup, knockout progression |
 | `src/engine/season/` | Matchday application, awards, the weekly orchestrator (`advance.ts`) |

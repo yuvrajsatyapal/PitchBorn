@@ -17,7 +17,7 @@ import { advanceTurn } from "../../src/engine/season/advance";
 import { stageOf } from "../../src/engine/traits/effects";
 import { focusReading } from "../../src/engine/traits/identity";
 import { TRAIT_BY_ID } from "../../src/engine/traits/registry";
-import { POSITIONS, type AttrKey, type GameState, type Player, type Position } from "../../src/engine/types";
+import { ALL_ATTRS, POSITIONS, type AttrKey, type GameState, type Player, type Position } from "../../src/engine/types";
 import { createWorld } from "../../src/engine/world/create";
 
 const arg = (n: string, d: string) => (process.argv.includes(`--${n}`) ? process.argv[process.argv.indexOf(`--${n}`) + 1] : d);
@@ -44,7 +44,7 @@ for (const pos of POSITIONS) {
       for (const k of Object.keys(o.attrs)) (lean[k] ??= []).push(attrs[k as AttrKey]);
     }
     if (o.id === NO_FOCUS) {
-      for (const k of ["pace", "finishing", "passing", "tackling", "heading", "strength", "vision", "dribbling", "positioning", "stamina", "crossing", "reflexes", "kicking", "command"] as AttrKey[]) {
+      for (const k of ALL_ATTRS) {
         baseline.set(k, mean(Array.from({ length: 500 }, (_, i) => generateAttributes(Rng.fromSeed(`A:${pos}:${i}`), pos, 65, 180)[k])));
       }
     }

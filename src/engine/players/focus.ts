@@ -33,96 +33,113 @@ const none: FocusDef = { id: NO_FOCUS, name: "No preference", blurb: "Let your c
 
 const f = (id: string, name: string, blurb: string, areas: string[], attrs: FocusDef["attrs"], traits: TraitId[], training: TrainingFocus[]): FocusDef => ({ id, name, blurb, areas, attrs, traits, training });
 
+/*
+ * Each option leans on a handful of attributes (0–1). The first three `areas` are what the creation card shows; the weights are
+ * broader. Attributes the role does not weigh are free colour (they show on the profile and in the match engine but never touch
+ * the overall). Options for one position are written to differ in what they ask of the engine, not only in their label.
+ */
 const ST: FocusDef[] = [
-  f("st_goalscorer", "Goalscorer", "Lives for goals.", ["Finishing", "Movement", "Composure"], { finishing: 1, positioning: 0.8, composure: 0.6 },
+  f("st_goalscorer", "Goalscorer", "Lives for goals.", ["Finishing", "Movement", "Composure"], { finishing: 1, offBall: 0.8, composure: 0.6, anticipation: 0.3 },
     ["poacher", "clinical_finisher", "first_time_finisher", "box_predator", "advanced_runner", "finesse_finisher", "penalty_specialist"], ["finishing"]),
-  f("st_complete", "Complete Forward", "Contributes across the entire attack.", ["Finishing", "Passing", "Strength", "Technique"], { finishing: 0.6, passing: 0.7, strength: 0.6, firstTouch: 0.7, dribbling: 0.6 },
+  f("st_complete", "Complete Forward", "Contributes across the entire attack.", ["Finishing", "Technique", "Strength"], { finishing: 0.6, technique: 0.7, firstTouch: 0.7, strength: 0.6, dribbling: 0.5, decisions: 0.4, passing: 0.5 },
     ["complete_forward", "hold_up", "close_control", "false_nine", "power_finisher"], ["finishing", "passing"]),
-  f("st_target", "Target Forward", "Wins the aerial duels and holds the ball up.", ["Heading", "Strength", "First touch"], { heading: 1, strength: 0.9, firstTouch: 0.5 },
+  f("st_target", "Target Forward", "Wins the aerial duels and holds the ball up.", ["Heading", "Jumping", "Strength"], { heading: 1, jumping: 0.8, strength: 0.9, balance: 0.4, firstTouch: 0.4 },
     ["target_forward", "hold_up", "aerial_presence", "back_post_threat", "power_finisher", "strong_on_ball"], ["physical", "finishing"]),
-  f("st_mobile", "Mobile Forward", "Runs the channels and stretches the defence.", ["Pace", "Acceleration", "Movement"], { pace: 1, acceleration: 0.9, positioning: 0.5 },
+  f("st_mobile", "Mobile Forward", "Runs the channels and stretches the defence.", ["Pace", "Acceleration", "Movement"], { pace: 1, acceleration: 0.9, offBall: 0.6, agility: 0.3 },
     ["advanced_runner", "channel_runner", "counter_attack_threat", "explosive_starter", "one_on_one_runner"], ["pace"]),
-  f("st_creative", "Creative Forward", "Links play and makes chances for others.", ["Passing", "Vision", "First touch", "Dribbling"], { passing: 1, vision: 0.9, firstTouch: 0.7, dribbling: 0.6 },
+  f("st_creative", "Creative Forward", "Links play and makes chances for others.", ["Passing", "Creativity", "First touch"], { technique: 0.7, firstTouch: 0.7, decisions: 0.5, passing: 0.7, vision: 0.6, creativity: 0.4 },
     ["false_nine", "creative", "close_control", "through_ball_specialist", "flair", "risk_taker"], ["passing", "dribbling"]),
 ];
 
 const W: FocusDef[] = [
-  f("w_inside", "Inside Forward", "Cuts in from the flank to shoot.", ["Finishing", "Dribbling", "Pace"], { finishing: 1, dribbling: 0.7, pace: 0.5, composure: 0.4 },
+  f("w_inside", "Inside Forward", "Cuts in from the flank to shoot.", ["Finishing", "Dribbling", "Movement"], { finishing: 1, dribbling: 0.7, agility: 0.5, offBall: 0.5, composure: 0.4, pace: 0.4 },
     ["inside_threat", "cut_in_threat", "finesse_finisher", "clinical_finisher", "box_predator", "first_time_finisher"], ["finishing", "dribbling"]),
-  f("w_traditional", "Traditional Winger", "Hugs the touchline and delivers.", ["Pace", "Crossing", "Stamina"], { crossing: 1, pace: 0.7, stamina: 0.5, acceleration: 0.5 },
+  f("w_traditional", "Traditional Winger", "Hugs the touchline and delivers.", ["Crossing", "Pace", "Stamina"], { crossing: 1, pace: 0.7, stamina: 0.5, acceleration: 0.5, workRate: 0.3 },
     ["touchline_runner", "byline_creator", "byline_runner", "crossing_specialist", "speed_runner"], ["setPieces", "pace"]),
-  f("w_creative", "Creative Winger", "Drifts inside to make things happen.", ["Vision", "Passing", "First touch"], { vision: 1, passing: 0.9, firstTouch: 0.6 },
+  f("w_creative", "Creative Winger", "Drifts inside to make things happen.", ["Creativity", "Passing", "Vision"], { creativity: 0.9, vision: 1, passing: 0.9, technique: 0.6, firstTouch: 0.5 },
     ["inverted_creator", "creative_spark", "half_space", "killer_pass", "through_ball_specialist", "creative", "playmaker"], ["passing"]),
-  f("w_dribbler", "Direct Dribbler", "Takes defenders on, every time.", ["Dribbling", "Acceleration", "First touch"], { dribbling: 1, acceleration: 0.8, firstTouch: 0.6 },
+  f("w_dribbler", "Direct Dribbler", "Takes defenders on, every time.", ["Dribbling", "Agility", "Acceleration"], { dribbling: 1, agility: 0.9, acceleration: 0.7, firstTouch: 0.5, balance: 0.3 },
     ["direct_winger", "isolation_dribbler", "flair", "close_control", "progressive_carrier", "one_on_one_runner"], ["dribbling"]),
-  f("w_scorer", "Wide Goalscorer", "Plays wide, scores like a striker.", ["Finishing", "Composure", "Pace", "Movement"], { finishing: 1, composure: 0.7, pace: 0.6, positioning: 0.4 },
+  f("w_scorer", "Wide Goalscorer", "Plays wide, scores like a striker.", ["Finishing", "Movement", "Composure"], { finishing: 1, offBall: 0.8, composure: 0.7, pace: 0.5 },
     ["poacher", "advanced_runner", "box_predator", "back_post_threat", "clinical_finisher", "counter_attack_threat"], ["finishing"]),
 ];
 
 const AM: FocusDef[] = [
-  f("am_playmaker", "Playmaker", "Sets the tempo of the attack.", ["Passing", "Composure", "First touch"], { passing: 1, composure: 0.7, firstTouch: 0.6, vision: 0.5 },
+  f("am_playmaker", "Playmaker", "Sets the tempo and creates for others.", ["Passing", "Vision", "Decisions"], { passing: 1, vision: 0.8, decisions: 0.7, composure: 0.6, firstTouch: 0.5, technique: 0.5 },
     ["playmaker", "line_breaker", "killer_pass", "through_ball_specialist", "creative", "one_touch_passer"], ["passing"]),
-  f("am_scorer", "Goalscoring Midfielder", "Arrives late and scores.", ["Finishing", "Long shots", "Movement"], { finishing: 1, longShots: 0.8, composure: 0.5, pace: 0.3 },
-    ["second_striker", "late_box_runner", "distance_shooter", "clinical_finisher", "finesse_finisher", "power_finisher"], ["finishing"]),
-  f("am_dribbler", "Creative Dribbler", "Beats players to open them up.", ["Dribbling", "First touch", "Acceleration"], { dribbling: 1, firstTouch: 0.8, acceleration: 0.6 },
+  f("am_scorer", "Goalscoring Midfielder", "Arrives late and scores from midfield.", ["Long shots", "Movement", "Stamina"], { longShots: 1, offBall: 0.8, finishing: 0.6, stamina: 0.7, workRate: 0.6, anticipation: 0.3 },
+    ["late_box_runner", "distance_shooter", "second_striker", "clinical_finisher", "finesse_finisher", "power_finisher"], ["finishing"]),
+  f("am_dribbler", "Creative Dribbler", "Beats players to open them up.", ["Dribbling", "Agility", "First touch"], { dribbling: 1, agility: 0.9, firstTouch: 0.7, acceleration: 0.6, technique: 0.5 },
     ["free_roamer", "flair", "close_control", "half_space", "creative_spark", "progressive_carrier", "final_third"], ["dribbling"]),
-  f("am_creator", "Advanced Creator", "The final ball in the final third.", ["Vision", "Passing", "Dribbling"], { vision: 1, passing: 0.6, dribbling: 0.6, longShots: 0.4 },
+  f("am_creator", "Advanced Creator", "The final ball in the final third.", ["Creativity", "Vision", "Technique"], { creativity: 1, vision: 0.9, passing: 0.7, technique: 0.6, crossing: 0.3 },
     ["advanced_creator", "killer_pass", "through_ball_specialist", "line_breaker", "creative_spark", "set_piece_specialist", "dead_ball_specialist"], ["passing", "setPieces"]),
+  f("am_shadow", "Shadow Striker", "Plays off the striker and attacks the box.", ["Finishing", "Movement", "Composure"], { finishing: 1, offBall: 1, acceleration: 0.7, composure: 0.7, anticipation: 0.5, pace: 0.4 },
+    ["second_striker", "box_predator", "poacher", "first_time_finisher", "clinical_finisher", "advanced_runner"], ["finishing", "pace"]),
 ];
 
 const CM: FocusDef[] = [
-  f("cm_box", "Box-to-Box", "Covers every blade of grass.", ["Stamina", "Tackling", "Strength"], { stamina: 1, tackling: 0.7, strength: 0.6, pace: 0.4, longShots: 0.3 },
+  f("cm_box", "Box-to-Box", "Covers every blade of grass.", ["Stamina", "Work rate", "Tackling"], { stamina: 1, workRate: 0.8, tackling: 0.6, strength: 0.5, offBall: 0.3, longShots: 0.3, pace: 0.3 },
     ["box_to_box", "midfield_engine", "relentless_runner", "transition_specialist", "late_box_runner", "pressing_machine"], ["physical"]),
-  f("cm_playmaker", "Playmaker", "Dictates the game with the ball.", ["Passing", "Vision", "First touch"], { passing: 1, vision: 0.9, firstTouch: 0.6 },
+  f("cm_playmaker", "Playmaker", "Dictates the game with the ball.", ["Passing", "Vision", "Technique"], { passing: 1, vision: 0.9, technique: 0.7, decisions: 0.6, firstTouch: 0.6 },
     ["playmaker", "line_breaker", "killer_pass", "through_ball_specialist", "long_pass_specialist", "switcher", "one_touch_passer"], ["passing"]),
-  f("cm_tempo", "Tempo Controller", "Sets the rhythm of the match.", ["Passing", "Composure", "Positioning"], { passing: 0.8, composure: 1, positioning: 0.7, vision: 0.5 },
+  f("cm_tempo", "Tempo Controller", "Sets the rhythm of the match.", ["Decisions", "Composure", "Passing"], { decisions: 1, composure: 0.9, passing: 0.7, positioning: 0.5, firstTouch: 0.5, technique: 0.4 },
     ["tempo_controller", "metronome", "deep_controller", "one_touch_passer", "composed", "press_resistant"], ["passing"]),
-  f("cm_winner", "Ball Winner", "Wins it back, and wins it early.", ["Tackling", "Stamina", "Strength"], { tackling: 1, stamina: 0.7, strength: 0.7, positioning: 0.5 },
+  f("cm_winner", "Ball Winner", "Wins it back, and wins it early.", ["Tackling", "Work rate", "Interceptions"], { tackling: 1, interceptions: 0.6, stamina: 0.7, workRate: 0.7, anticipation: 0.5, aggression: 0.6 },
     ["ball_hunter", "aggressive", "clean_tackler", "pressing_machine", "lane_reader", "midfield_engine"], ["defending", "physical"]),
+  f("cm_eight", "Advanced No. 8", "Drives forward into attacking space and links midfield to attack.", ["Movement", "Technique", "Dribbling"], { offBall: 1, technique: 0.8, dribbling: 0.8, passing: 0.7, stamina: 0.7, creativity: 0.7 },
+    ["late_box_runner", "box_to_box", "progressive_carrier", "half_space", "transition_specialist", "distance_shooter"], ["dribbling", "passing"]),
 ];
 
 const DM: FocusDef[] = [
-  f("dm_anchor", "Defensive Anchor", "Shields the back four.", ["Positioning", "Tackling", "Strength"], { positioning: 1, tackling: 0.8, strength: 0.6, heading: 0.4 },
+  f("dm_anchor", "Defensive Anchor", "Shields the back four.", ["Positioning", "Marking", "Interceptions"], { positioning: 1, marking: 0.8, interceptions: 0.7, strength: 0.6, tackling: 0.6, anticipation: 0.5 },
     ["anchor", "defensive_screen", "aerial_dominator", "clean_tackler", "man_marker", "deep_controller"], ["defending"]),
-  f("dm_winner", "Ball Winner", "Breaks up play and wins it back.", ["Tackling", "Stamina", "Strength"], { tackling: 1, stamina: 0.8, strength: 0.6, pace: 0.3 },
+  f("dm_winner", "Ball Winner", "Breaks up play and wins it back.", ["Tackling", "Aggression", "Work rate"], { tackling: 1, aggression: 0.8, workRate: 0.7, stamina: 0.7, strength: 0.5 },
     ["ball_hunter", "aggressive", "pressing_machine", "lane_reader", "midfield_engine", "transition_specialist"], ["defending", "physical"]),
-  f("dm_dlp", "Deep-Lying Playmaker", "Starts the attack from deep.", ["Passing", "Vision", "Composure"], { passing: 1, vision: 0.9, composure: 0.6, firstTouch: 0.5 },
+  f("dm_dlp", "Deep-Lying Playmaker", "Starts the attack from deep.", ["Passing", "Vision", "Technique"], { passing: 1, vision: 0.9, technique: 0.7, composure: 0.6, firstTouch: 0.5 },
     ["deep_distributor", "metronome", "tempo_controller", "long_pass_specialist", "quick_distributor", "switcher"], ["passing"]),
-  f("dm_controller", "Defensive Controller", "Reads the game and keeps it under control.", ["Positioning", "Composure", "Passing"], { positioning: 0.9, composure: 1, passing: 0.6, vision: 0.5 },
+  f("dm_controller", "Defensive Controller", "Reads the game and keeps it under control.", ["Interceptions", "Anticipation", "Decisions"], { interceptions: 1, anticipation: 0.9, decisions: 0.9, composure: 0.5, tackling: 0.4, positioning: 0.4 },
     ["deep_controller", "lane_reader", "anchor", "composed", "press_resistant", "tempo_controller"], ["defending", "passing"]),
+  f("dm_halfback", "Half-Back", "Drops between the centre-backs to build, and protects the defence.", ["Positioning", "Passing", "Composure"], { positioning: 1, passing: 0.9, composure: 0.8, decisions: 0.7, anticipation: 0.6, marking: 0.4 },
+    ["deep_controller", "lane_reader", "anchor", "deep_distributor", "composed", "press_resistant"], ["defending", "passing"]),
 ];
 
 const CB: FocusDef[] = [
-  f("cb_stopper", "Stopper", "Steps out to win it early.", ["Tackling", "Pace", "Strength"], { tackling: 1, strength: 0.7, pace: 0.6, acceleration: 0.5 },
-    ["front_foot", "aggressive", "last_line", "man_marker", "clean_tackler"], ["defending"]),
-  f("cb_ballplaying", "Ball-Playing Defender", "Builds the attack from the back.", ["Passing", "Composure", "First touch"], { passing: 1, composure: 0.8, firstTouch: 0.6, vision: 0.6 },
+  f("cb_stopper", "Stopper", "Quick off the mark: steps out early and recovers behind.", ["Tackling", "Pace", "Anticipation"], { tackling: 1, pace: 0.8, acceleration: 0.7, anticipation: 0.7, interceptions: 0.4 },
+    ["front_foot", "last_line", "man_marker", "clean_tackler"], ["defending", "pace"]),
+  f("cb_aggressive", "Aggressive Stopper", "Steps forward to win duels and break attacks up early, at the price of bookings and space behind.", ["Aggression", "Strength", "Tackling"], { aggression: 1, strength: 0.9, tackling: 0.8, heading: 0.6, jumping: 0.5, anticipation: 0.5 },
+    ["front_foot", "aggressive", "man_marker", "no_nonsense", "aerial_dominator"], ["defending", "physical"]),
+  f("cb_ballplaying", "Ball-Playing Defender", "Builds the attack from the back.", ["Passing", "Composure", "Decisions"], { passing: 1, composure: 0.8, technique: 0.6, decisions: 0.6, firstTouch: 0.5, vision: 0.5 },
     ["ball_progressor", "long_pass_specialist", "quick_distributor", "composed", "one_touch_passer", "switcher", "press_resistant"], ["passing"]),
-  f("cb_cover", "Cover Defender", "Reads danger and covers the space.", ["Positioning", "Pace", "Composure"], { positioning: 1, pace: 0.7, acceleration: 0.6, composure: 0.6 },
+  f("cb_cover", "Cover Defender", "Reads danger and covers the space.", ["Positioning", "Anticipation", "Pace"], { positioning: 1, anticipation: 0.8, pace: 0.7, acceleration: 0.6, marking: 0.5, interceptions: 0.5 },
     ["cover_defender", "recovery_defender", "lane_reader", "last_line", "clean_tackler"], ["defending", "pace"]),
-  f("cb_aerial", "Aerial Defender", "Rules the air at both ends.", ["Heading", "Strength", "Positioning"], { heading: 1, strength: 0.9, positioning: 0.4 },
+  f("cb_aerial", "Aerial Defender", "Rules the air at both ends.", ["Heading", "Jumping", "Strength"], { heading: 1, jumping: 0.9, strength: 0.8, marking: 0.4 },
     ["aerial_dominator", "set_piece_threat", "aerial_presence", "no_nonsense", "man_marker"], ["defending", "physical"]),
 ];
 
 const FB: FocusDef[] = [
-  f("fb_defensive", "Defensive Full-Back", "Defends first.", ["Tackling", "Positioning", "Strength"], { tackling: 1, positioning: 0.8, strength: 0.5 },
+  f("fb_defensive", "Defensive Full-Back", "Defends first.", ["Tackling", "Marking", "Positioning"], { tackling: 1, marking: 0.8, positioning: 0.8, strength: 0.4, interceptions: 0.5 },
     ["defensive_fullback", "last_line", "man_marker", "clean_tackler", "aggressive", "recovery_defender", "lane_reader"], ["defending"]),
-  f("fb_attacking", "Attacking Full-Back", "A winger in all but name.", ["Crossing", "Dribbling", "Stamina"], { crossing: 0.8, dribbling: 0.9, passing: 0.6, stamina: 0.6, firstTouch: 0.5 },
+  f("fb_attacking", "Attacking Full-Back", "A winger in all but name.", ["Crossing", "Dribbling", "Stamina"], { crossing: 0.8, dribbling: 0.9, passing: 0.6, stamina: 0.6, technique: 0.6, agility: 0.4 },
     ["attacking_fullback", "early_crosser", "crossing_specialist", "progressive_carrier", "byline_runner", "relentless_runner"], ["dribbling", "setPieces"]),
-  f("fb_inverted", "Inverted Full-Back", "Steps into midfield to build play.", ["Passing", "Positioning", "Composure"], { passing: 1, positioning: 0.7, composure: 0.6, firstTouch: 0.6, vision: 0.7 },
+  f("fb_inverted", "Inverted Full-Back", "Steps into midfield to build play.", ["Passing", "Decisions", "Technique"], { passing: 1, positioning: 0.6, decisions: 0.8, firstTouch: 0.6, technique: 0.6, vision: 0.7, composure: 0.5 },
     ["inverted_fullback", "one_touch_passer", "switcher", "composed", "press_resistant"], ["passing"]),
-  f("fb_overlap", "Overlapping Full-Back", "Goes outside, goes past, delivers.", ["Pace", "Stamina", "Crossing"], { pace: 1, acceleration: 0.8, stamina: 0.9, crossing: 0.7 },
+  f("fb_overlap", "Overlapping Full-Back", "Goes outside, goes past, delivers.", ["Pace", "Stamina", "Crossing"], { pace: 1, acceleration: 0.8, stamina: 0.9, crossing: 0.7, workRate: 0.6 },
     ["overlapping_runner", "byline_runner", "touchline_runner", "early_crosser", "relentless_runner", "explosive_starter"], ["pace", "physical"]),
+  f("fb_complete", "Complete Full-Back", "Does a bit of everything: defends, progresses, supports attacks and recovers.", ["Stamina", "Positioning", "Crossing"], { stamina: 0.8, workRate: 0.7, tackling: 0.6, positioning: 0.6, crossing: 0.6, passing: 0.6, technique: 0.5, decisions: 0.5, anticipation: 0.4 },
+    ["attacking_fullback", "defensive_fullback", "relentless_runner", "recovery_defender", "early_crosser", "lane_reader"], ["physical", "defending", "passing"]),
 ];
 
 const GK: FocusDef[] = [
-  f("gk_shot_stopper", "Shot Stopper", "Lives on the line and on reflexes.", ["Reflexes", "Diving", "Handling"], { reflexes: 1, diving: 0.9, handling: 0.6 },
+  f("gk_shot_stopper", "Shot Stopper", "Lives on the line and on reflexes.", ["Reflexes", "Diving", "One-on-ones"], { reflexes: 1, diving: 0.9, oneOnOnes: 0.6, handling: 0.5 },
     ["shot_stopper", "reflex_keeper", "one_on_one_specialist", "penalty_reader", "safe_hands"], ["goalkeeping"]),
-  f("gk_sweeper", "Sweeper Keeper", "Plays as an eleventh outfield player.", ["Command", "Positioning", "Kicking"], { command: 1, positioning: 0.8, kicking: 0.6, composure: 0.4 },
+  f("gk_sweeper", "Sweeper Keeper", "Plays as an eleventh outfield player.", ["Anticipation", "Command", "Kicking"], { anticipation: 1, command: 0.8, oneOnOnes: 0.7, kicking: 0.6, decisions: 0.5 },
     ["sweeper_keeper", "one_on_one_specialist", "quick_distributor", "cross_claimer"], ["goalkeeping"]),
-  f("gk_ballplaying", "Ball-Playing Keeper", "Starts attacks with the ball at their feet.", ["Kicking", "Composure"], { kicking: 1, composure: 0.9, positioning: 0.3 },
+  f("gk_ballplaying", "Ball-Playing Keeper", "Starts attacks with the ball at their feet.", ["Kicking", "Composure", "Decisions"], { kicking: 1, composure: 0.9, decisions: 0.7, anticipation: 0.3 },
     ["build_up_keeper", "quick_distributor", "long_distributor", "safe_hands", "composed"], ["goalkeeping", "passing"]),
-  f("gk_commanding", "Commanding Keeper", "Rules the box and the back line.", ["Command", "Handling", "Positioning"], { command: 1, handling: 0.8, positioning: 0.5 },
+  f("gk_commanding", "Commanding Keeper", "Rules the box and the back line.", ["Command", "Handling", "Decisions"], { command: 1, handling: 0.8, decisions: 0.5, positioning: 0.4 },
     ["cross_commander", "cross_claimer", "safe_hands"], ["goalkeeping"]),
+  f("gk_line", "Line Keeper", "Traditional and conservative: stays on the line, reads the shot and protects the goal.", ["Positioning", "Handling", "Reflexes"], { positioning: 1, handling: 0.9, reflexes: 0.7, diving: 0.5, composure: 0.4 },
+    ["safe_hands", "shot_stopper", "reflex_keeper", "penalty_reader"], ["goalkeeping"]),
 ];
 
 const BY_POSITION: Record<Position, FocusDef[]> = { ST, RW: W, LW: W, AM, CM, DM, CB, RB: FB, LB: FB, GK };

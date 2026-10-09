@@ -8,7 +8,8 @@ import { HonoursCard, RivalriesCard } from "@/components/game/RivalCards";
 import { PlayerHero, scoutStars, Stars } from "@/components/game/widgets";
 import { AttrValue, Badge, Card, PageTitle, Table } from "@/components/ui";
 import { clubName, countryName } from "@/engine/data/world";
-import { ATTR_GROUPS, ATTR_LABEL, POSITION_LABEL, overallFor } from "@/engine/players/attributes";
+import { POSITION_LABEL, overallFor } from "@/engine/players/attributes";
+import { ATTR_LABEL, groupsFor } from "@/engine/players/model";
 import { avgRating } from "@/engine/players/generate";
 import { AMBIDEXTROUS, weakFootLabel } from "@/engine/players/foot";
 import { hasTrait } from "@/engine/traits/effects";
@@ -20,22 +21,32 @@ export default function Profile() {
   const g = useGameState();
   if (!g) return null;
   const p = user(g);
-  const isGK = p.position === "GK";
-  const groups = ATTR_GROUPS.filter((gr) => (isGK ? gr.label !== "Defending" || true : gr.label !== "Goalkeeping"));
-  const posOverall = (["GK", "CB", "RB", "LB", "DM", "CM", "AM", "RW", "LW", "ST"] as const).map((pos) => ({ pos, v: overallFor(p.attrs, pos) })).sort((a, b) => b.v - a.v).slice(0, 4);
+  const groups = groupsFor(p.position);
+  const LINE: Record<string, readonly string[]> = {
+    GK: ["GK"],
+    DEF: ["CB", "RB", "LB"],
+    MID: ["DM", "CM", "AM"],
+    ATT: ["ST", "RW", "LW", "AM"],
+  };
+  const myLine = LINE[Object.keys(LINE).find((k) => LINE[k].includes(p.position)) ?? "MID"];
+  // Own position first, then neighbours on the same line, so a striker never sees only defenders.
+  const posOverall = (["GK", "CB", "RB", "LB", "DM", "CM", "AM", "RW", "LW", "ST"] as const)
+    .map((pos) => ({ pos, v: overallFor(p.attrs, pos), rank: pos === p.position ? 0 : myLine.includes(pos) ? 1 : 2 }))
+    .sort((a, b) => a.rank - b.rank || b.v - a.v)
+    .slice(0, 4);
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="My player" title="Player profile" />
+      <PageTitle kicker="My player" title="Player profile" className="-mb-1" />
       <PlayerHero g={g} p={p} />
       <JerseyCard g={g} />
       <HonoursCard g={g} />
       <RivalriesCard g={g} />
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card title="Attributes">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="gap-x-6 sm:columns-2">
             {groups.map((gr) => (
-              <div key={gr.label}>
-                <div className="mb-1 text-xs font-black uppercase tracking-wider text-muted">{gr.label}</div>
+              <div key={gr.label} className="mb-4 break-inside-avoid">
+                <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-muted">{gr.label}</h3>
                 <ul className="grid gap-1">
                   {gr.keys.map((k) => (
                     <li key={k} className="flex items-center justify-between text-sm">

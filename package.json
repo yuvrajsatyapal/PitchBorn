@@ -19,7 +19,11 @@
     "sim:wages": "tsx scripts/sim/wages.ts",
     "preview": "npx --yes serve out -l 4173",
     "icons": "node scripts/pwa/render-icons.mjs",
-    "e2e:only": "playwright test"
+    "e2e:only": "playwright test",
+    "sim:attributes": "tsx scripts/sim/attributes.ts",
+    "sim:pairs": "tsx scripts/sim/calibrate-pairs.ts",
+    "sim:attribute-effects": "tsx scripts/sim/attribute-effects.ts",
+    "sim:attributes-world": "tsx scripts/sim/attributes-world.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",

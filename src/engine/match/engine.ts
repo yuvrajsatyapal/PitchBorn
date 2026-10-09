@@ -12,7 +12,7 @@
  * world.
  */
 import { BALANCE } from "../balance";
-import { overallFor } from "../players/attributes";
+import { overallExact, overallFor } from "../players/attributes";
 import { footAttrMultipliers, type Foot } from "../players/foot";
 import type { MatchFx, SignalKey } from "../traits/types";
 import { clamp, type Rng } from "../rng";
@@ -159,6 +159,27 @@ interface LivePlayer {
   fx?: MatchFx;
   eff: Record<AttrKey, number>;
   condition: number;
+  /** His overall in this slot, scaled like `eff`: the level the specialist attributes are measured against. */
+  lvl: number;
+  /** Specialist readings above his own level (before fatigue), worked out once when he takes the pitch: they feed the side's cached metrics. */
+  sp: Specials;
+}
+
+interface Specials { mark: number; air: number; lane: number; press: number; resist: number }
+const MARK_MIX: Mix = [["marking", 0.7], ["anticipation", 0.3]];
+const AIR_MIX: Mix = [["jumping", 0.45], ["heading", 0.35], ["strength", 0.2]];
+const LANE_MIX: Mix = [["interceptions", 0.6], ["anticipation", 0.4]];
+const PRESS_MIX: Mix = [["workRate", 0.4], ["aggression", 0.2], ["stamina", 0.2], ["anticipation", 0.2]];
+const RESIST_MIX: Mix = [["firstTouch", 0.35], ["balance", 0.25], ["composure", 0.25], ["agility", 0.15]];
+
+function blend(eff: Record<AttrKey, number>, mix: Mix): number {
+  let sum = 0;
+  for (let i = 0; i < mix.length; i++) sum += eff[mix[i][0]] * mix[i][1];
+  return sum;
+}
+
+function specials(eff: Record<AttrKey, number>, lvl: number): Specials {
+  return { mark: blend(eff, MARK_MIX) - lvl, air: blend(eff, AIR_MIX) - lvl, lane: blend(eff, LANE_MIX) - lvl, press: blend(eff, PRESS_MIX) - lvl, resist: blend(eff, RESIST_MIX) - lvl };
 }
 
 /** Trait effects summed over the XI on the pitch (cached with the team's strength). */
@@ -201,7 +222,27 @@ interface LiveTeam {
   yellows: number;
   reds: number;
   possessionTicks: number;
-  cache?: { mid: number; att: number; def: number; gk: number; agg: TeamAgg; star?: LivePlayer };
+  cache?: TeamCache;
+}
+
+interface TeamCache {
+  mid: number; att: number; def: number; gk: number; agg: TeamAgg; star?: LivePlayer;
+  /** Marking and anticipation of the back line: what a runner's movement is up against. */
+  mark: number;
+  /** Aerial defence: jumping, heading and strength of the back line. */
+  air: number;
+  /** Passing-lane defence: interceptions and anticipation of the back line and screen. */
+  lane: number;
+  /** Pressing intensity: work rate, aggression, stamina, anticipation of the outfield players. */
+  press: number;
+  /** Resistance to being pressed: first touch, balance, composure, agility of the outfield players. */
+  resist: number;
+  /** Average aggression of the outfield players (challenge frequency, fouls, cards). */
+  aggr: number;
+  /** The keeper's reading of through-balls: anticipation, command and one-on-ones. */
+  sweep: number;
+  /** The keeper as a first passer: kicking, decisions, composure. */
+  build: number;
 }
 
 type ChanceType = "open" | "header" | "long" | "oneonone" | "penalty" | "freekick";
@@ -212,15 +253,39 @@ const XG_KEY: Record<ChanceType, keyof MatchFx> = { open: "xgOpen", header: "xgH
 const SHOT_ACT: Partial<Record<ChanceType, SignalKey>> = { open: "shotOpen", header: "shotHeader", long: "shotLong", oneonone: "shot1v1" };
 const GOAL_ACT: Partial<Record<ChanceType, SignalKey>> = { open: "goalOpen", header: "goalHeader", long: "goalLong", oneonone: "goal1v1" };
 
+/** The shot quality at which a chance converts at its base rate. Shot quality is now a blend of finishing, composure, touch, technique and decisions, which sits a few points under finishing alone. */
+const Q_CENTRE = 72;
+
 const SHOOT_WEIGHT: Record<Position, number> = { GK: 0, CB: 0.28, RB: 0.32, LB: 0.32, DM: 0.4, CM: 0.85, AM: 1.5, RW: 1.6, LW: 1.6, ST: 2.7 };
 const HEADER_WEIGHT: Record<Position, number> = { GK: 0, CB: 1.1, RB: 0.2, LB: 0.2, DM: 0.5, CM: 0.5, AM: 0.4, RW: 0.6, LW: 0.6, ST: 2.8 };
 const LONG_WEIGHT: Record<Position, number> = { GK: 0, CB: 0.15, RB: 0.3, LB: 0.3, DM: 0.7, CM: 1.4, AM: 1.6, RW: 1.1, LW: 1.1, ST: 0.9 };
 const CREATE_WEIGHT: Record<Position, number> = { GK: 0.02, CB: 0.15, RB: 0.9, LB: 0.9, DM: 0.6, CM: 1.3, AM: 2.4, RW: 2.0, LW: 2.0, ST: 0.9 };
 const DEFEND_WEIGHT: Record<Position, number> = { GK: 0, CB: 2.2, RB: 1.3, LB: 1.3, DM: 1.8, CM: 0.9, AM: 0.35, RW: 0.4, LW: 0.4, ST: 0.2 };
 
-const MID_KEYS: AttrKey[] = ["passing", "vision", "firstTouch", "positioning", "stamina"];
-const ATT_KEYS: AttrKey[] = ["finishing", "dribbling", "pace", "composure", "firstTouch"];
-const DEF_KEYS: AttrKey[] = ["tackling", "positioning", "strength", "heading", "pace"];
+const MID_KEYS: AttrKey[] = ["passing", "vision", "firstTouch", "positioning", "stamina", "decisions", "workRate"];
+const ATT_KEYS: AttrKey[] = ["finishing", "dribbling", "pace", "composure", "firstTouch", "offBall", "technique", "agility"];
+const DEF_KEYS: AttrKey[] = ["tackling", "positioning", "strength", "heading", "pace", "marking", "interceptions", "anticipation"];
+
+/** A weighted blend of attributes (weights sum to 1). Who gets involved in an action, and how well it goes, usually depends on several. */
+type Mix = readonly (readonly [AttrKey, number])[];
+const PICK_SHOOT: Mix = [["finishing", 0.7], ["offBall", 0.3]];
+const PICK_HEADER: Mix = [["heading", 0.55], ["jumping", 0.25], ["offBall", 0.2]];
+const PICK_LONG: Mix = [["longShots", 0.75], ["technique", 0.25]];
+const PICK_CREATE: Mix = [["vision", 0.4], ["creativity", 0.3], ["passing", 0.15], ["decisions", 0.15]];
+const PICK_CROSS: Mix = [["crossing", 0.7], ["technique", 0.3]];
+const PICK_TACKLE: Mix = [["tackling", 0.75], ["aggression", 0.25]];
+const PICK_INTERCEPT: Mix = [["interceptions", 0.6], ["anticipation", 0.4]];
+const PICK_BLOCK: Mix = [["positioning", 0.7], ["anticipation", 0.3]];
+const PICK_FOUL: Mix = [["aggression", 0.6], ["tackling", 0.4]];
+
+/*
+ * The new attributes act as specialisms: each effect compares an attribute with the player's (or the side's) own overall level, so a
+ * better team is not simply "more of everything" twice over. These are the typical excesses in a generated league (an ordinary
+ * defender's marking sits about a point under his overall, an ordinary striker's movement a little over it), so an ordinary side is
+ * unaffected and only real specialists or real weaknesses move the numbers. Aggression is measured in absolute terms: it is generated relative to a player's level, so it
+ * is the same for good and ordinary sides. (scripts/sim/attributes.ts prints the figures these were set from.)
+ */
+const REF = { mark: 0, air: -3.4, lane: -1.3, press: -5.4, resist: -1.5, aggr: 52, decisions: -5, creativity: 1, offBall: -1.5, anticipation: -1, oneOnOne: -0.5, command: 1.5, sweep: 1, build: 0.2 } as const;
 const MID_W: Record<Position, number> = { DM: 1.4, CM: 1.6, AM: 1.3, RW: 0.7, LW: 0.7, RB: 0.5, LB: 0.5, ST: 0.4, CB: 0.4, GK: 0 };
 const ATT_W: Record<Position, number> = { ST: 2, RW: 1.6, LW: 1.6, AM: 1.5, CM: 0.6, DM: 0.2, RB: 0.35, LB: 0.35, CB: 0.1, GK: 0 };
 const DEF_W: Record<Position, number> = { CB: 2, RB: 1.3, LB: 1.3, DM: 1.5, CM: 0.6, AM: 0.15, RW: 0.2, LW: 0.2, ST: 0.1, GK: 0 };
@@ -259,12 +324,15 @@ function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm
   const condition = conditionFactor(input) * (1 + dayForm);
   // Bench players get their effective attributes lazily when they come on.
   const eff = started ? effective(input, condition) : (input.attrs as Record<AttrKey, number>);
+  const lvl = overallExact(input.attrs, input.slot) * condition;
   return {
     zones: started ? zonesOfFx(eff, input.fx) : [0, 0, 0],
     fx: input.fx,
     input,
     condition,
     eff,
+    lvl,
+    sp: started ? specials(eff, lvl) : { mark: 0, air: 0, lane: 0, press: 0, resist: 0 },
     energy: clamp(input.fitness, 30, 100),
     onPitch: started,
     dayForm,
@@ -335,6 +403,24 @@ export class MatchEngine {
     return p.eff[k] * fatigue;
   }
 
+  /** The level a player's specialist attributes are measured against (his overall in this slot, as tired and as fit as he is). */
+  private levelOf(p: LivePlayer): number {
+    return p.lvl * (0.88 + 0.12 * (p.energy / 100));
+  }
+
+  /** How far an attribute (or blend) sits above the player's own overall level. */
+  private spec(p: LivePlayer, attr: AttrKey | Mix): number {
+    return this.rate(p, attr) - this.levelOf(p);
+  }
+
+  /** One attribute, or a weighted blend of several, as the player has it right now. */
+  private rate(p: LivePlayer, attr: AttrKey | Mix): number {
+    if (typeof attr === "string") return this.val(p, attr);
+    let sum = 0;
+    for (let i = 0; i < attr.length; i++) sum += this.val(p, attr[i][0]) * attr[i][1];
+    return sum;
+  }
+
   /** Zonal strengths; cached and refreshed every few minutes or on changes. */
   private strength(t: LiveTeam) {
     if (t.cache) return t.cache;
@@ -360,7 +446,26 @@ export class MatchEngine {
     const att = zoneAvg(1, ATT_W);
     const def = zoneAvg(2, DEF_W);
     const keeper = on.find((p) => p.input.slot === "GK");
-    const gk = keeper ? (this.val(keeper, "reflexes") + this.val(keeper, "diving") + this.val(keeper, "handling") + this.val(keeper, "command") * 0.5) / 3.5 : 25;
+    const gk = keeper ? (this.val(keeper, "reflexes") + this.val(keeper, "diving") + this.val(keeper, "handling") + this.val(keeper, "command") * 0.5 + this.val(keeper, "positioning") * 0.6) / 4.1 : 25;
+    const sweep = keeper ? this.spec(keeper, [["anticipation", 0.4], ["command", 0.3], ["oneOnOnes", 0.3]]) : REF.sweep;
+    const build = keeper ? this.spec(keeper, [["kicking", 0.4], ["decisions", 0.3], ["composure", 0.3]]) : REF.build;
+    // The back line's marking, aerial and lane-cutting work, weighted by who does the defending; the whole side's pressing and resistance to it.
+    let mark = 0, air = 0, lane = 0, dw = 0, press = 0, resist = 0, aggr = 0, field = 0;
+    for (const p of on) {
+      if (p.input.slot === "GK") continue;
+      const fat = 0.88 + 0.12 * (p.energy / 100);
+      const pw = DEFEND_WEIGHT[p.input.slot];
+      if (pw > 0) {
+        dw += pw;
+        mark += pw * p.sp.mark * fat;
+        air += pw * p.sp.air * fat;
+        lane += pw * p.sp.lane * fat;
+      }
+      field++;
+      press += p.sp.press * fat;
+      resist += p.sp.resist * fat;
+      aggr += p.eff.aggression * fat;
+    }
     let teamMid = 0, teamAtt = 0, teamDef = 0;
     let agg: TeamAgg | undefined;
     let star: LivePlayer | undefined;
@@ -404,12 +509,20 @@ export class MatchEngine {
     const styleAtt = st ? 1 + (st.tempo - 0.5) * 0.03 + (st.directness - 0.5) * 0.02 : 1;
     const styleDef = st ? 1 - (st.tempo - 0.5) * 0.02 + (st.pressing - 0.5) * 0.015 : 1;
     t.cache = {
-      mid: mid * penalty * homeBoost * styleMid * (1 + clamp(teamMid, -0.05, 0.06)),
+      mid: mid * penalty * homeBoost * styleMid * (1 + clamp(teamMid, -0.05, 0.06)) * (1 + clamp((build - REF.build) / 100, -0.2, 0.2) * 0.04),
       att: att * penalty * homeBoost * styleAtt * (1 + mentality * 0.03) * (1 + clamp(teamAtt, -0.05, 0.06)),
       def: def * penalty * homeBoost * styleDef * (1 - mentality * 0.03) * (1 + clamp(teamDef, -0.05, 0.06)),
       gk,
       agg: agg ?? NEUTRAL_AGG,
       star,
+      mark: dw ? mark / dw : REF.mark,
+      air: dw ? air / dw : REF.air,
+      lane: dw ? lane / dw : REF.lane,
+      press: field ? press / field : REF.press,
+      resist: field ? resist / field : REF.resist,
+      aggr: field ? aggr / field : REF.aggr,
+      sweep,
+      build,
     };
     return t.cache;
   }
@@ -433,7 +546,7 @@ export class MatchEngine {
     return (k1 ? (fx[k1] ?? 1) : 1) * (k2 ? (fx[k2] ?? 1) : 1) * hungry;
   }
 
-  private pickWeighted(t: LiveTeam, weight: Record<Position, number>, attr: AttrKey, exclude?: LivePlayer, exp = 1, k1?: keyof MatchFx, k2?: keyof MatchFx): LivePlayer | undefined {
+  private pickWeighted(t: LiveTeam, weight: Record<Position, number>, attr: AttrKey | Mix, exclude?: LivePlayer, exp = 1, k1?: keyof MatchFx, k2?: keyof MatchFx): LivePlayer | undefined {
     // Hot path: avoid allocations.
     let total = 0;
     const players = t.players;
@@ -442,7 +555,8 @@ export class MatchEngine {
       if (!p.onPitch || p === exclude) continue;
       const w = weight[p.input.slot];
       if (w <= 0) continue;
-      const v = (exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp)) * (k1 ? this.pref(p, k1, k2) : 1);
+      const rate = this.rate(p, attr);
+      const v = (exp === 1 ? rate / 60 : Math.pow(rate / 60, exp)) * (k1 ? this.pref(p, k1, k2) : 1);
       total += w * v;
     }
     if (total <= 0) return undefined;
@@ -453,7 +567,8 @@ export class MatchEngine {
       if (!p.onPitch || p === exclude) continue;
       const w = weight[p.input.slot];
       if (w <= 0) continue;
-      const v = (exp === 1 ? this.val(p, attr) / 60 : Math.pow(this.val(p, attr) / 60, exp)) * (k1 ? this.pref(p, k1, k2) : 1);
+      const rate = this.rate(p, attr);
+      const v = (exp === 1 ? rate / 60 : Math.pow(rate / 60, exp)) * (k1 ? this.pref(p, k1, k2) : 1);
       r -= w * v;
       last = p;
       if (r <= 0) return p;
@@ -549,7 +664,8 @@ export class MatchEngine {
       for (const p of this.teams[side].players) {
         if (!p.onPitch) continue;
         const stamina = p.input.attrs.stamina;
-        const drain = (0.55 - stamina / 300) * (this.half === 3 ? 1.2 : 1);
+        // Hard workers run themselves down a little faster; stamina is what lets them keep it up.
+        const drain = (0.55 - stamina / 300) * (this.half === 3 ? 1.2 : 1) * (0.94 + p.input.attrs.workRate / 800);
         p.energy = clamp(p.energy - 3 * Math.max(0.12, drain) * (p.fx?.drain ?? 1), 5, 100);
       }
     }
@@ -561,7 +677,12 @@ export class MatchEngine {
     const a = this.teams.away;
     const sh = this.strength(h);
     const sa = this.strength(a);
-    const pHome = Math.pow(sh.mid, M.possessionExponent) / (Math.pow(sh.mid, M.possessionExponent) + Math.pow(sa.mid, M.possessionExponent));
+    // Pressing against composure: a side that hunts the ball in packs wins it more from a team that cannot keep it under pressure,
+    // and wins it less from one that can. Bounded and centred, so a side of ordinary players is unaffected.
+    const duel = (own: TeamCache, opp: TeamCache) => 1 + clamp((own.resist - REF.resist - (opp.press - REF.press)) * 0.0025, -0.03, 0.03);
+    const midH = sh.mid * duel(sh, sa);
+    const midA = sa.mid * duel(sa, sh);
+    const pHome = Math.pow(midH, M.possessionExponent) / (Math.pow(midH, M.possessionExponent) + Math.pow(midA, M.possessionExponent));
     const attSide: Side = this.rng.chance(pHome) ? "home" : "away";
     const att = this.teams[attSide];
     const def = this.teams[this.other(attSide)];
@@ -570,7 +691,10 @@ export class MatchEngine {
     const sDef = this.strength(def);
 
     // Foul in midfield / transition
-    if (this.rng.chance(M.foulPerMinute * 0.5)) {
+    const sDef0 = this.strength(def);
+    // Aggressive sides foul more; passive ones less.
+    const foulMul = clamp(1 + (sDef0.aggr - REF.aggr) / 180, 0.8, 1.25);
+    if (this.rng.chance(M.foulPerMinute * 0.5 * foulMul)) {
       this.foul(def, att, false);
       return;
     }
@@ -590,19 +714,23 @@ export class MatchEngine {
     // Soft-limit huge mismatches so cup ties stay believable.
     const gap = sAtt.att - sDef.def;
     const quality = Math.exp((15 * Math.tanh(gap / 15)) / 45);
-    const pChance = clamp(M.chanceBase * 2.2 * quality, 0.07, 0.55);
+    // A back line that reads the game cuts passes out before they become chances.
+    const laneMul = 1 - clamp((sDef.lane - REF.lane) * 0.0035, -0.05, 0.07);
+    const pChance = clamp(M.chanceBase * 2.2 * quality * laneMul, 0.07, 0.55);
     if (!this.rng.chance(pChance)) {
       // Defensive success — credit a defender occasionally.
       if (this.rng.chance(0.35)) {
         // Winning the ball back: a tackle or a read-the-play interception.
         const inter = this.rng.chance(0.4);
-        const d = this.pickWeighted(def, DEFEND_WEIGHT, inter ? "positioning" : "tackling", undefined, 1, inter ? "intercept" : "tackle");
+        const d = this.pickWeighted(def, DEFEND_WEIGHT, inter ? PICK_INTERCEPT : PICK_TACKLE, undefined, 1, inter ? "intercept" : "tackle");
         if (d) {
           d.line.tackles++;
           if (inter) this.act(d, "intercept");
           this.bump(d, 0.06);
           // Winning it back can turn straight into a break (Counter-Attack Threat, Transition Specialist…).
-          if (sDef.agg.counter > 0 && this.rng.chance(sDef.agg.counter)) {
+          // Reading where the ball will go next turns a won ball into a break a little more often.
+          const counter = sDef.agg.counter + clamp((this.spec(d, [["anticipation", 0.7], ["acceleration", 0.3]]) - REF.anticipation) / 600, 0, 0.02);
+          if (counter > 0 && this.rng.chance(counter)) {
             this.createChance(def, att, this.rng.chance(0.4) ? "oneonone" : "open");
             return;
           }
@@ -612,7 +740,7 @@ export class MatchEngine {
           }
         }
       }
-      if (this.rng.chance(0.12)) this.foul(def, att, true);
+      if (this.rng.chance(0.12 * foulMul)) this.foul(def, att, true);
       return;
     }
     this.createChance(att, def);
@@ -638,7 +766,9 @@ export class MatchEngine {
     const d = this.strength(def).agg;
     const hdr = clamp((1 + a.freqHeader) * d.againstFreqHeader, 0.55, 1.5);
     const lng = clamp((1 + a.freqLong) * d.againstFreqLong, 0.55, 1.5);
-    const one = clamp((1 + a.freq1v1) * d.againstFreq1v1, 0.55, 1.6);
+    // A keeper who reads the through-ball and sweeps up behind the line sees fewer one-on-ones against him.
+    const sweepMul = 1 - clamp((this.strength(def).sweep - REF.sweep) / 280, -0.08, 0.12);
+    const one = clamp((1 + a.freq1v1) * d.againstFreq1v1 * sweepMul, 0.55, 1.6);
     const r = this.rng.next();
     const pen = M.penaltyPerChance;
     const h = 0.19 * hdr;
@@ -691,16 +821,16 @@ export class MatchEngine {
     const type = forced ?? this.chooseChanceType(att, def);
     let shooter: LivePlayer | undefined = forcedShooter;
     if (!shooter) {
-      if (type === "header") shooter = this.pickWeighted(att, HEADER_WEIGHT, "heading", undefined, M.pickExponent, "shootHeader");
-      else if (type === "long" || type === "freekick") shooter = this.pickWeighted(att, LONG_WEIGHT, "longShots", undefined, M.pickExponent, "shootLong");
+      if (type === "header") shooter = this.pickWeighted(att, HEADER_WEIGHT, PICK_HEADER, undefined, M.pickExponent, "shootHeader");
+      else if (type === "long" || type === "freekick") shooter = this.pickWeighted(att, LONG_WEIGHT, PICK_LONG, undefined, M.pickExponent, "shootLong");
       else if (type === "penalty") shooter = this.onPitch(att).sort((x, y) => this.val(y, "finishing") + this.val(y, "composure") - this.val(x, "finishing") - this.val(x, "composure"))[0];
-      else shooter = this.pickWeighted(att, SHOOT_WEIGHT, "finishing", undefined, M.pickExponent, "shoot", type === "oneonone" ? "shoot1v1" : undefined);
+      else shooter = this.pickWeighted(att, SHOOT_WEIGHT, PICK_SHOOT, undefined, M.pickExponent, "shoot", type === "oneonone" ? "shoot1v1" : undefined);
     }
     if (!shooter) return;
     let creator: LivePlayer | undefined | null = forcedCreator;
     if (creator === undefined) {
       const assistProb = type === "header" ? 0.92 : type === "oneonone" ? 0.85 : type === "open" ? 0.72 : 0;
-      creator = this.rng.chance(assistProb) ? this.pickWeighted(att, CREATE_WEIGHT, type === "header" ? "crossing" : "vision", shooter, M.pickExponent, "create", type === "header" ? "createCross" : type === "oneonone" ? "createThrough" : "createOpen") ?? null : null;
+      creator = this.rng.chance(assistProb) ? this.pickWeighted(att, CREATE_WEIGHT, type === "header" ? PICK_CROSS : PICK_CREATE, shooter, M.pickExponent, "create", type === "header" ? "createCross" : type === "oneonone" ? "createThrough" : "createOpen") ?? null : null;
     }
 
     // Key moments for the user's player.
@@ -730,13 +860,34 @@ export class MatchEngine {
 
   private shooterQuality(p: LivePlayer, type: ChanceType): number {
     switch (type) {
-      case "header": return this.val(p, "heading") * 0.75 + this.val(p, "strength") * 0.25;
+      case "header": return this.val(p, "heading") * 0.5 + this.val(p, "jumping") * 0.25 + this.val(p, "strength") * 0.25;
       case "long":
-      case "freekick": return this.val(p, "longShots") * 0.8 + this.val(p, "composure") * 0.2;
-      case "penalty": return this.val(p, "finishing") * 0.5 + this.val(p, "composure") * 0.5;
-      case "oneonone": return this.val(p, "finishing") * 0.6 + this.val(p, "composure") * 0.4;
-      default: return this.val(p, "finishing") * 0.7 + this.val(p, "composure") * 0.15 + this.val(p, "firstTouch") * 0.15;
+      case "freekick": return this.val(p, "longShots") * 0.6 + this.val(p, "technique") * 0.25 + this.val(p, "composure") * 0.15;
+      case "penalty": return this.val(p, "finishing") * 0.4 + this.val(p, "composure") * 0.4 + this.val(p, "technique") * 0.2;
+      case "oneonone": return this.val(p, "finishing") * 0.5 + this.val(p, "composure") * 0.3 + this.val(p, "technique") * 0.1 + this.val(p, "decisions") * 0.1;
+      default: return this.val(p, "finishing") * 0.55 + this.val(p, "composure") * 0.15 + this.val(p, "firstTouch") * 0.1 + this.val(p, "technique") * 0.1 + this.val(p, "decisions") * 0.1;
     }
+  }
+
+  /**
+   * What the new attributes add to a shot's quality, as one bounded multiplier: the runner's movement against the back line's marking,
+   * the aerial contest, the creator's imagination, the taker's choice of moment, and the keeper's particular strengths (one-on-ones, crosses).
+   */
+  private skillXg(shooter: LivePlayer, creator: LivePlayer | null, def: LiveTeam, type: ChanceType, keeper: LivePlayer | undefined): number {
+    if (type === "penalty") return 1;
+    const sDef = this.strength(def);
+    let m = 1;
+    if (type !== "long" && type !== "freekick") m *= Math.exp(clamp((this.spec(shooter, "offBall") - REF.offBall - (sDef.mark - REF.mark)) / 130, -0.1, 0.1));
+    if (type === "header") m *= Math.exp(-clamp((sDef.air - REF.air) / 200, -0.08, 0.08));
+    if (type === "open" || type === "oneonone" || type === "header") {
+      if (creator) m *= 1 + clamp((this.spec(creator, "creativity") - REF.creativity) / 250, -0.03, 0.05);
+      m *= 1 + clamp((this.spec(shooter, "decisions") - REF.decisions) / 400, -0.03, 0.04);
+    }
+    if (keeper) {
+      if (type === "oneonone") m *= Math.exp(-clamp((this.spec(keeper, [["oneOnOnes", 0.6], ["anticipation", 0.2], ["reflexes", 0.2]]) - REF.oneOnOne) / 100, -0.12, 0.12));
+      else if (type === "header") m *= Math.exp(-clamp((this.spec(keeper, [["command", 0.5], ["handling", 0.3], ["positioning", 0.2]]) - REF.command) / 180, -0.08, 0.08));
+    }
+    return m;
   }
 
   private resolveShot(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType, xgMul = 1, keeperMul = 1) {
@@ -744,9 +895,10 @@ export class MatchEngine {
     const q = this.shooterQuality(shooter, type);
     const pressure = type === "penalty" ? 1 : Math.exp(-(sDef.def - 70) / 120);
     const bigMatch = 1 + ((shooter.input.bigMatch - 50) / 50) * 0.06 * (this.input.importance - 1);
-    let xg = XG_BASE[type] * Math.exp((q - 73) / M.xgSlope) * pressure * bigMatch * xgMul;
+    let xg = XG_BASE[type] * Math.exp((q - Q_CENTRE) / M.xgSlope) * pressure * bigMatch * xgMul;
     xg *= Math.exp(-(sDef.gk - 73) / 70) * keeperMul;
     xg *= this.traitXg(att, def, shooter, creator, type);
+    xg *= this.skillXg(shooter, creator, def, type, this.onPitch(def).find((p) => p.input.slot === "GK"));
     xg = clamp(xg, 0.01, type === "penalty" ? 0.92 : 0.8);
     att.shots++;
     att.xg += xg;
@@ -771,7 +923,7 @@ export class MatchEngine {
       this.scoreGoal(att, def, shooter, creator, type, desc);
       return;
     }
-    const onTargetRate = clamp(0.32 + (q - 70) / 220, 0.18, 0.62);
+    const onTargetRate = clamp(0.32 + (q - (Q_CENTRE - 3)) / 220, 0.18, 0.62);
     if (r < Math.max(xg + 0.05, onTargetRate)) {
       shooter.line.onTarget++;
       att.onTarget++;
@@ -791,7 +943,7 @@ export class MatchEngine {
     if (miss < 0.06) {
       this.log({ minute: this.minute, side: sideTag, type: "woodwork", text: `${desc} — off the woodwork!`, playerId: shooter.input.id, user: shooter.input.isUser });
     } else if (miss < 0.4) {
-      const blocker = this.pickWeighted(def, DEFEND_WEIGHT, "positioning");
+      const blocker = this.pickWeighted(def, DEFEND_WEIGHT, PICK_BLOCK);
       if (blocker) {
         blocker.line.tackles++;
         this.act(blocker, "block");
@@ -850,13 +1002,15 @@ export class MatchEngine {
   }
 
   private foul(def: LiveTeam, att: LiveTeam, dangerous: boolean) {
-    const fouler = this.pickWeighted(def, DEFEND_WEIGHT, "tackling", undefined, 1, "foul");
+    const fouler = this.pickWeighted(def, DEFEND_WEIGHT, PICK_FOUL, undefined, 1, "foul");
     if (!fouler) return;
     def.fouls++;
     fouler.line.fouls++;
     this.bump(fouler, -0.05);
     const card = this.rng.next();
-    const cardMul = (fouler.fx?.card ?? 1) * (def.goals < att.goals ? fouler.fx?.cardBehind ?? 1 : 1);
+    // Bookings go to the aggressive and the rash: a clear head (decisions) makes the same challenge a cleaner one.
+    const temper = clamp(1 + (this.val(fouler, "aggression") - REF.aggr) / 140 - (this.spec(fouler, "decisions") - REF.decisions) / 200, 0.6, 1.5);
+    const cardMul = (fouler.fx?.card ?? 1) * (def.goals < att.goals ? fouler.fx?.cardBehind ?? 1 : 1) * temper;
     const redP = M.redPerFoul * (dangerous ? 2 : 1) * cardMul;
     if (card < redP) this.sendOff(def, fouler, "a reckless challenge");
     else if (card < redP + M.yellowPerFoul * (dangerous ? 1.5 : 1) * cardMul) {
@@ -947,6 +1101,8 @@ export class MatchEngine {
     off.line.minuteOff = this.minute;
     pick.input = { ...pick.input, slot };
     pick.eff = effective(pick.input, pick.condition);
+    pick.lvl = overallExact(pick.input.attrs, slot) * pick.condition;
+    pick.sp = specials(pick.eff, pick.lvl);
     pick.zones = zonesOfFx(pick.eff, pick.fx);
     pick.onPitch = true;
     pick.line.slot = slot;
@@ -1113,15 +1269,50 @@ export class MatchEngine {
     this.log({ minute: this.minute, side: ctx.team.side, type: "decision", text: d.prompt, playerId: ctx.player.input.id, user: true });
   }
 
+  // The odds of the moments a controlled player can choose, from the attributes each one really asks for.
+  private touchOdds(p: LivePlayer): number {
+    return clamp(0.5 + (this.rate(p, [["firstTouch", 0.4], ["composure", 0.3], ["balance", 0.15], ["technique", 0.15]]) - 62) / 70, 0.2, 0.92);
+  }
+
+  private dribbleOdds(p: LivePlayer, keeperOrDefender: number): number {
+    return clamp(0.38 + (this.rate(p, [["dribbling", 0.6], ["agility", 0.25], ["balance", 0.15]]) - keeperOrDefender) / 120, 0.12, 0.8);
+  }
+
+  private passOdds(p: LivePlayer): number {
+    return clamp(0.55 + (this.rate(p, [["passing", 0.45], ["vision", 0.25], ["decisions", 0.15], ["technique", 0.15]]) - 62) / 80, 0.25, 0.92);
+  }
+
+  private throughOdds(p: LivePlayer): number {
+    return clamp(0.42 + (this.rate(p, [["vision", 0.35], ["passing", 0.3], ["creativity", 0.2], ["technique", 0.15]]) - 62) / 75, 0.15, 0.9);
+  }
+
+  private crossOdds(p: LivePlayer): number {
+    return clamp(0.48 + (this.rate(p, PICK_CROSS) - 62) / 80, 0.15, 0.9);
+  }
+
+  /** A sliding challenge: tackling (with timing and bite) against the dribbler's skill, agility and balance. */
+  private slideOdds(d: LivePlayer, attacker: LivePlayer): number {
+    return clamp(0.48 + (this.rate(d, [["tackling", 0.7], ["anticipation", 0.15], ["aggression", 0.15]]) - this.rate(attacker, [["dribbling", 0.6], ["agility", 0.25], ["balance", 0.15]])) / 90, 0.15, 0.9);
+  }
+
+  /** Staying on your feet: shape and a quick turn against the attacker's speed. */
+  private jockeyOdds(d: LivePlayer, attacker: LivePlayer): number {
+    return clamp(0.4 + (this.rate(d, [["positioning", 0.45], ["agility", 0.3], ["anticipation", 0.25]]) - this.rate(attacker, [["pace", 0.6], ["acceleration", 0.4]])) / 110 + 0.15, 0.15, 0.9);
+  }
+
+  private rushOdds(keeper: LivePlayer, shooter: LivePlayer): number {
+    return clamp(0.45 + (this.rate(keeper, [["command", 0.4], ["oneOnOnes", 0.4], ["anticipation", 0.2]]) - this.val(shooter, "composure")) / 90, 0.15, 0.9);
+  }
+
   private askShoot(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType) {
     const gk = this.strength(def).gk;
-    const touch = clamp(0.5 + ((this.val(shooter, "firstTouch") + this.val(shooter, "composure")) / 2 - 62) / 70, 0.2, 0.92);
-    const mate = this.pickWeighted(att, SHOOT_WEIGHT, "finishing", shooter);
-    const pass = clamp(0.55 + ((this.val(shooter, "passing") + this.val(shooter, "vision")) / 2 - 62) / 80, 0.25, 0.92);
-    const dribble = clamp(0.38 + (this.val(shooter, "dribbling") - gk) / 120, 0.12, 0.8);
+    const touch = this.touchOdds(shooter);
+    const mate = this.pickWeighted(att, SHOOT_WEIGHT, PICK_SHOOT, shooter);
+    const pass = this.passOdds(shooter);
+    const dribble = this.dribbleOdds(shooter, gk);
     const where = type === "header" ? "The cross is coming in — you're unmarked at the back post." : type === "long" ? "The ball sits up for you 25 yards out." : type === "oneonone" ? "You're clean through on goal!" : "The ball drops to you in the box.";
     const options: DecisionOption[] = [
-      { id: "shoot", label: type === "header" ? "Power header" : "Shoot first time", detail: "Quick strike before the defence recovers.", odds: clamp(XG_BASE[type] * Math.exp((this.shooterQuality(shooter, type) - 68) / 20) * 2.2, 0.08, 0.9) },
+      { id: "shoot", label: type === "header" ? "Power header" : "Shoot first time", detail: "Quick strike before the defence recovers.", odds: clamp(XG_BASE[type] * Math.exp((this.shooterQuality(shooter, type) - (Q_CENTRE - 5)) / 20) * 2.2, 0.08, 0.9) },
     ];
     if (type !== "header") {
       options.push({ id: "touch", label: "Take a touch, pick your spot", detail: "Better angle if your touch is good — risk losing it.", odds: touch * 0.85 });
@@ -1132,8 +1323,8 @@ export class MatchEngine {
   }
 
   private askCreate(att: LiveTeam, def: LiveTeam, creator: LivePlayer, shooter: LivePlayer, type: ChanceType) {
-    const through = clamp(0.42 + ((this.val(creator, "vision") + this.val(creator, "passing")) / 2 - 62) / 75, 0.15, 0.9);
-    const cross = clamp(0.48 + (this.val(creator, "crossing") - 62) / 80, 0.15, 0.9);
+    const through = this.throughOdds(creator);
+    const cross = this.crossOdds(creator);
     const options: DecisionOption[] = [
       { id: "through", label: `Thread it through to ${this.name(shooter)}`, detail: "Split the defence for a one-on-one.", odds: through },
       { id: "cross", label: "Whip in a cross", detail: "Find a head in the box.", odds: cross },
@@ -1146,8 +1337,8 @@ export class MatchEngine {
   private askDefend(d: LivePlayer, att: LiveTeam, def: LiveTeam) {
     const attacker = this.pickWeighted(att, SHOOT_WEIGHT, "dribbling");
     if (!attacker) return;
-    const slide = clamp(0.48 + (this.val(d, "tackling") - this.val(attacker, "dribbling")) / 90, 0.15, 0.9);
-    const jockey = clamp(0.4 + (this.val(d, "positioning") - this.val(attacker, "pace")) / 110 + 0.15, 0.15, 0.9);
+    const slide = this.slideOdds(d, attacker);
+    const jockey = this.jockeyOdds(d, attacker);
     const options: DecisionOption[] = [
       { id: "slide", label: "Slide tackle", detail: "Win it cleanly — or concede a foul.", odds: slide },
       { id: "jockey", label: "Stay on your feet", detail: "Shepherd them wide and wait for help.", odds: jockey },
@@ -1157,10 +1348,10 @@ export class MatchEngine {
   }
 
   private askKeep(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType, keeper: LivePlayer) {
-    const rush = clamp(0.45 + (this.val(keeper, "command") - this.val(shooter, "composure")) / 90, 0.15, 0.9);
+    const rush = this.rushOdds(keeper, shooter);
     const options: DecisionOption[] = [
       { id: "rush", label: "Rush out and smother", detail: "Close the angle fast.", odds: rush },
-      { id: "stay", label: "Stay big on your line", detail: "React to the shot.", odds: clamp(0.5 + (this.val(keeper, "reflexes") - 65) / 100, 0.2, 0.9) },
+      { id: "stay", label: "Stay big on your line", detail: "React to the shot.", odds: clamp(0.5 + (this.rate(keeper, [["reflexes", 0.6], ["oneOnOnes", 0.4]]) - 65) / 100, 0.2, 0.9) },
     ];
     this.ask({ minute: this.minute, kind: "keep", prompt: `${this.name(shooter)} is bearing down on your goal!`, options }, { kind: "keep", team: def, opp: att, player: keeper, creator, type, mate: shooter });
   }
@@ -1178,6 +1369,8 @@ export class MatchEngine {
       case "knock": {
         if (optionId === "play") {
           for (const k in p.eff) p.eff[k as AttrKey] *= 0.88;
+          p.lvl *= 0.88;
+          for (const k of Object.keys(p.sp) as (keyof Specials)[]) p.sp[k] *= 0.88;
           p.line.injured = r.chance(0.5); // may aggravate
           this.log({ minute: this.minute, side: ctx.team.side, type: "info", text: "You grit your teeth and play on.", playerId: p.input.id, user: true });
           if (!p.line.injured) this.injuries = this.injuries.filter((i) => i.id !== p.input.id);
@@ -1188,14 +1381,14 @@ export class MatchEngine {
         const opp = ctx.opp as LiveTeam;
         if (optionId === "shoot") this.resolveShot(ctx.team, opp, p, ctx.creator, ctx.type, 0.95);
         else if (optionId === "touch") {
-          const ok = r.chance(clamp(0.5 + ((this.val(p, "firstTouch") + this.val(p, "composure")) / 2 - 62) / 70, 0.2, 0.92));
+          const ok = r.chance(this.touchOdds(p));
           if (ok) this.resolveShot(ctx.team, opp, p, ctx.creator, ctx.type, 1.5);
           else {
             this.bump(p, -0.1);
             this.log({ minute: this.minute, side: ctx.team.side, type: "tackle", text: "Your touch is heavy and the chance is gone.", playerId: p.input.id, user: true });
           }
         } else if (optionId === "dribble") {
-          const ok = r.chance(clamp(0.38 + (this.val(p, "dribbling") - this.strength(opp).gk) / 120, 0.12, 0.8));
+          const ok = r.chance(this.dribbleOdds(p, this.strength(opp).gk));
           if (ok) {
             this.bump(p, 0.15);
             this.resolveShot(ctx.team, opp, p, ctx.creator, "oneonone", 1.9);
@@ -1204,7 +1397,7 @@ export class MatchEngine {
             this.log({ minute: this.minute, side: ctx.team.side, type: "tackle", text: "Too ambitious — the ball is snatched away.", playerId: p.input.id, user: true });
           }
         } else if (optionId === "pass" && ctx.mate) {
-          const ok = r.chance(clamp(0.55 + ((this.val(p, "passing") + this.val(p, "vision")) / 2 - 62) / 80, 0.25, 0.92));
+          const ok = r.chance(this.passOdds(p));
           if (ok) this.resolveShot(ctx.team, opp, ctx.mate, p, "open", 1.35);
           else this.log({ minute: this.minute, side: ctx.team.side, type: "tackle", text: "The pass is cut out.", playerId: p.input.id, user: true });
         }
@@ -1214,12 +1407,12 @@ export class MatchEngine {
         const opp = ctx.opp as LiveTeam;
         const mate = ctx.mate as LivePlayer;
         if (optionId === "through") {
-          const ok = r.chance(clamp(0.42 + ((this.val(p, "vision") + this.val(p, "passing")) / 2 - 62) / 75, 0.15, 0.9));
+          const ok = r.chance(this.throughOdds(p));
           if (ok) this.resolveShot(ctx.team, opp, mate, p, "oneonone", 1);
           else this.log({ minute: this.minute, side: ctx.team.side, type: "tackle", text: "Your through ball is intercepted.", playerId: p.input.id, user: true });
         } else if (optionId === "cross") {
-          const ok = r.chance(clamp(0.48 + (this.val(p, "crossing") - 62) / 80, 0.15, 0.9));
-          const header = this.pickWeighted(ctx.team, HEADER_WEIGHT, "heading", p) ?? mate;
+          const ok = r.chance(this.crossOdds(p));
+          const header = this.pickWeighted(ctx.team, HEADER_WEIGHT, PICK_HEADER, p) ?? mate;
           if (ok) this.resolveShot(ctx.team, opp, header, p, "header", 1.15);
           else this.log({ minute: this.minute, side: ctx.team.side, type: "tackle", text: "The cross is cleared.", playerId: p.input.id, user: true });
         } else if (optionId === "self") this.resolveShot(ctx.team, opp, p, null, "long", 1);
@@ -1233,7 +1426,7 @@ export class MatchEngine {
         const attTeam = ctx.opp as LiveTeam;
         const attacker = ctx.mate as LivePlayer;
         if (optionId === "slide") {
-          const win = r.chance(clamp(0.48 + (this.val(p, "tackling") - this.val(attacker, "dribbling")) / 90, 0.15, 0.9));
+          const win = r.chance(this.slideOdds(p, attacker));
           if (win) {
             p.line.tackles++;
             this.bump(p, 0.25);
@@ -1241,7 +1434,7 @@ export class MatchEngine {
           } else if (r.chance(0.45)) this.foul(ctx.team, attTeam, true);
           else this.createChance(attTeam, ctx.team, "oneonone", attacker, null, 1.1);
         } else if (optionId === "jockey") {
-          const win = r.chance(clamp(0.4 + (this.val(p, "positioning") - this.val(attacker, "pace")) / 110 + 0.15, 0.15, 0.9));
+          const win = r.chance(this.jockeyOdds(p, attacker));
           if (win) {
             p.line.tackles++;
             this.bump(p, 0.15);
@@ -1263,7 +1456,7 @@ export class MatchEngine {
         const attTeam = ctx.opp as LiveTeam;
         const shooter = ctx.mate as LivePlayer;
         if (optionId === "rush") {
-          const ok = r.chance(clamp(0.45 + (this.val(p, "command") - this.val(shooter, "composure")) / 90, 0.15, 0.9));
+          const ok = r.chance(this.rushOdds(p, shooter));
           this.resolveShot(attTeam, ctx.team, shooter, ctx.creator, ctx.type, 1, ok ? 0.45 : 1.35);
         } else this.resolveShot(attTeam, ctx.team, shooter, ctx.creator, ctx.type, 1, 0.92);
         break;

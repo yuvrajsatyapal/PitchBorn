@@ -119,9 +119,12 @@ export interface GenerateOptions {
 
 export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
   const height = randomHeight(rng, o.position);
-  const attrs = generateAttributes(rng, o.position, o.overall, height);
+  // Temperament first: work rate follows professionalism a little, so the two have to agree.
+  const hidden = randomHidden(rng, o.position, o.potential);
+  const attrs = generateAttributes(rng, o.position, o.overall, height, { professionalism: hidden.professionalism, age: o.age });
   const ovr = overallFor(attrs, o.position);
   const potential = Math.max(ovr, Math.round(o.potential));
+  hidden.potential = Math.round(clamp(potential, 35, 99));
   const name = randomName(rng, o.nationality);
   const rep = clamp((ovr - 55) * 2 + rng.normal(0, 4), 1, 95);
   const p: Player = {
@@ -135,7 +138,7 @@ export function generatePlayer(rng: Rng, o: GenerateOptions): Player {
     weakFoot: initialWeakFoot(o.id, attrs, o.age),
     height,
     attrs,
-    hidden: randomHidden(rng, o.position, potential),
+    hidden,
     clubId: o.clubId,
     contract: null,
     fitness: 100,

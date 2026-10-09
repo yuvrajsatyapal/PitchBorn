@@ -16,3 +16,10 @@ Added, all optional: `GameState.managers` (tenure registry), `ClubState.manager.
 
 ## Schema 14 (development focus and loyalty record)
 Added, all optional: `Player.focus` (the development focus id; absent means no preference) and `Player.stay` (the loyalty counters behind One-Club Minded, tied to the club they were kept at). Migration 13 → 14 records the user's focus as "none" (a childhood aspiration is never inferred from today's traits) and changes no trait. `sanitizeTraits` runs on every load: a focus the position cannot choose becomes no preference, an NPC's explicit "none" is dropped, and a loyalty record for another club or with invalid numbers is discarded (it rebuilds from the recorded seasons at the next review). Nothing here is part of the codec's fixed-shape arrays; both fields ride along in the player record.
+
+## Schema 15 (attribute model)
+`SCHEMA_VERSION` is 15. Migration 14 → 15 (`migrations.ts`) calls `expandAllAttributes` (`players/expansion.ts`). Every player missing any of the thirteen new attributes (`ADDED_KEYS`) gets them derived from his original twenty, with a stream seeded by his id (`attrs15:<id>`), then fitted so his overall equals his pre-expansion overall (`legacyOverall`). The original twenty, potential, traits, identity and history are not changed; a new attribute an owned trait requires is raised to that trait's floor. It is deterministic and idempotent.
+
+The same expansion runs on every load, after the migrations and inside the same guard that lets a save always open, so a player who is still missing attributes is completed then. A complete player is left alone.
+
+**Codec order.** `attrs` is stored as a positional array in `ALL_ATTRS` order. `ALL_ATTRS` is the twenty legacy attributes (`LEGACY_ATTRS`, in the same order as schema 14), then the thirteen new ones appended. Schema 14 saves therefore decode with the new slots empty, and the expansion fills them. Do not reorder or insert into the legacy part; new attributes may only be appended (`src/engine/types.ts`; `codec.ts` is unchanged). Model: `docs/ATTRIBUTES.md`.

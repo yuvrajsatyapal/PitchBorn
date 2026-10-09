@@ -3,6 +3,7 @@ import { clamp, r1, r2, Rng } from "../rng";
 import type { AttrKey, ClubState, GameState, Player, TrainingFocus, TrainingPlan } from "../types";
 import { careerProfile } from "../traits/effects";
 import { applyGrowth, overallFor, SPEED } from "./attributes";
+import { MATURITY, POSITION_WEIGHTS, TRAINING_MODEL } from "./model";
 import { focusTilt } from "./focus";
 import { developWeakFoot, trainWeakFoot, WEAK_FOOT_FOCUS } from "./foot";
 import { ageOf } from "./generate";
@@ -10,18 +11,10 @@ import { applyInjury, injuryRiskFactor, rollInjury } from "./injuries";
 
 const D = BALANCE.development;
 
-export const TRAINING_FOCUS: Record<TrainingFocus, { label: string; attrs: AttrKey[]; blurb: string }> = {
-  balanced: { label: "Balanced", attrs: [], blurb: "Spread work across your role's key attributes." },
-  finishing: { label: "Finishing", attrs: ["finishing", "composure", "longShots"], blurb: "Shooting drills, composure in front of goal." },
-  passing: { label: "Passing", attrs: ["passing", "vision", "firstTouch"], blurb: "Rondos, switches of play, weight of pass." },
-  dribbling: { label: "Dribbling", attrs: ["dribbling", "firstTouch", "acceleration"], blurb: "Close control and 1v1 work." },
-  pace: { label: "Speed", attrs: ["pace", "acceleration"], blurb: "Sprint mechanics. Gains slow after 28." },
-  physical: { label: "Physical", attrs: ["strength", "stamina"], blurb: "Gym and conditioning — tiring." },
-  defending: { label: "Defending", attrs: ["tackling", "positioning", "heading"], blurb: "Shape, duels and aerial work." },
-  setPieces: { label: "Set Pieces", attrs: ["crossing", "longShots", "heading"], blurb: "Deliveries, free kicks and attacking corners." },
-  goalkeeping: { label: "Goalkeeping", attrs: ["reflexes", "handling", "diving", "command", "kicking"], blurb: "Shot-stopping and distribution." },
-  recovery: { label: "Recovery", attrs: [], blurb: "Rest, physio and analysis. Restores fitness and sharpens the mind." },
-};
+/** Training focuses as the UI and the plan see them: label, the attributes the card shows, and the blurb. The full mapping is TRAINING_MODEL. */
+export const TRAINING_FOCUS: Record<TrainingFocus, { label: string; attrs: AttrKey[]; blurb: string }> = Object.fromEntries(
+  (Object.keys(TRAINING_MODEL) as TrainingFocus[]).map((f) => [f, { label: TRAINING_MODEL[f].label, attrs: TRAINING_MODEL[f].attrs, blurb: TRAINING_MODEL[f].blurb }]),
+) as Record<TrainingFocus, { label: string; attrs: AttrKey[]; blurb: string }>;
 
 export const INTENSITY = {
   light: { growth: 0.8, fatigue: 0, injury: 0.5, label: "Light" },
@@ -95,6 +88,14 @@ export function developPlayer(state: GameState, rng: Rng, p: Player, ctx: DevCon
     growth -= decline * 0.65;
     physical = decline * 1.3;
   }
+  // The reading of the game keeps coming on into the late twenties (a few tenths a season), then simply holds.
+  if (age >= 20 && age <= 30) {
+    const lift = ((0.4 * (1 - (age - 20) / 11)) * (0.85 + p.hidden.professionalism / 400)) / ticksPerSeason;
+    for (const k in MATURITY) {
+      const key = k as AttrKey;
+      if ((POSITION_WEIGHTS[p.position][key] ?? 0) > 0 && p.attrs[key] < 90) p.attrs[key] = r2(clamp(p.attrs[key] + lift * (MATURITY[key] ?? 0), 1, 99));
+    }
+  }
   // Speed has its own curve above, so general decline never takes it.
   applyGrowth(rng, p.attrs, p.position, growth, ctx.focus, physical, SPEED, focusTilt(p, state.season));
   developWeakFoot(p, age, 1 / ticksPerSeason);
@@ -137,6 +138,24 @@ export function matchExperience(state: GameState, rng: Rng, p: Player, minutes: 
   return gain;
 }
 
+/**
+ * Who gains what in a drill session: each attribute's share of the focus's budget. Balanced work follows the player's role weights;
+ * a named focus splits its budget between primary (full) and related (half) attributes. The UI only offers focuses that suit the position.
+ */
+export function trainingShares(p: Pick<Player, "position">, model: (typeof TRAINING_MODEL)[TrainingFocus]): [AttrKey, number][] {
+  const role = POSITION_WEIGHTS[p.position];
+  if (!model.attrs.length) {
+    if (model.budget <= 0) return [];
+    const keys = Object.keys(role) as AttrKey[];
+    // Spread by role weight, scaled so the whole session is worth the same overall as balanced work always was (0.45 per weighted point).
+    const squares = keys.reduce((s, k) => s + (role[k] ?? 0) ** 2, 0);
+    return keys.map((k) => [k, (0.45 * (role[k] ?? 0)) / squares]);
+  }
+  const rated: [AttrKey, number][] = [...model.attrs.map((k) => [k, 1] as [AttrKey, number]), ...model.secondary.map((k) => [k, 0.5] as [AttrKey, number])];
+  const total = rated.reduce((s, [, r]) => s + r, 0);
+  return rated.map(([k, r]) => [k, (model.budget * r) / total]);
+}
+
 export interface TrainingOutcome {
   fitnessDelta: number;
   growthMultiplier: number;
@@ -154,7 +173,6 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
     const before = p.fitness;
     p.fitness = clamp(p.fitness + 14, 0, 100);
     p.morale = clamp(p.morale + 1.5, 0, 100);
-    p.attrs.composure = r2(clamp(p.attrs.composure + 0.03, 1, 99));
     state.user.intenseStreak = 0;
     return { fitnessDelta: p.fitness - before, growthMultiplier: 0.25, note: "Recovery week: legs feel fresh." };
   }
@@ -169,17 +187,18 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
     state.user.injuryHistory.push({ season: state.season, type: injury.type, weeks: injury.totalWeeks });
     return { fitnessDelta: -int.fatigue, growthMultiplier: 0, injured: injury.type, note: `Picked up a ${injury.type.toLowerCase()} in training.` };
   }
-  // Focused drills add small direct gains on top of monthly development.
-  const focus = TRAINING_FOCUS[plan.focus].attrs;
+  // Focused drills add small direct gains on top of monthly development. Primary attributes gain at full rate, related ones at half,
+  // and the focus is scaled to its budget, so a focus that trains five things is not a faster way to grow than one that trains three.
+  const model = TRAINING_MODEL[plan.focus];
   const age = ageOf(p, state.season);
   const ageMul = trainingAgeMul(age);
-  const keys = focus.length ? focus : (Object.keys(p.attrs) as AttrKey[]).filter((k) => !["reflexes", "handling", "diving", "kicking", "command"].includes(k) || p.position === "GK");
   const capMul = gapMul(p);
-  for (const k of keys) {
+  const drills = trainingShares(p, model);
+  for (const [k, share] of drills) {
     // Speed responds to sprint work until 28, then only slowly.
     const isSpeed = SPEED.includes(k);
     const kAgeMul = isSpeed ? (age <= D.speedTrainingAge ? Math.max(ageMul, 0.7) : 0.25) : ageMul;
-    p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * int.growth * kAgeMul * capMul * (1 + boost) * careerProfile(p).training * (focus.length ? 1 : 0.45), 1, 99));
+    p.attrs[k] = r2(clamp(p.attrs[k] + T.drillGain * share * int.growth * kAgeMul * capMul * (1 + boost) * careerProfile(p).training, 1, 99));
   }
   // Shooting, passing, dribbling and set-piece work all exercise the weaker foot, slowly and only up to what the player's touch allows.
   if (WEAK_FOOT_FOCUS.includes(plan.focus)) trainWeakFoot(p, age, T.weakFootGain * int.growth * (1 + boost));

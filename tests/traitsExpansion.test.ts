@@ -265,6 +265,8 @@ describe("limits", () => {
 
 const base = (over: Partial<DeriveInput> = {}): DeriveInput => {
   const p = mk("derive", "CM", 76);
+  // A fixed temperament, so the derivations below do not depend on what a seeded draw happened to give.
+  p.hidden = { ...p.hidden, injuryProneness: 40, professionalism: 60 };
   return {
     hidden: p.hidden, attrs: p.attrs, age: 28, reputation: 40, weakFoot: 55, tenure: 3, position: "CM", secondary: [], career: p.career, history: [], injuries: 0, ...over,
   };
@@ -537,8 +539,8 @@ describe("match behaviour: traits shift tendencies in the intended direction", (
 
   it("Shoots Too Often: more shots, worse ones", () => {
     const cm = star("CM");
-    const plain = profile(cm, []);
-    const t = profile(cm, [own("shoots_too_often", 200)]);
+    const plain = profile(cm, [], 700);
+    const t = profile(cm, [own("shoots_too_often", 200)], 700);
     expect(t.shots).toBeGreaterThan(plain.shots * 1.15);
     expect(t.goals / Math.max(0.01, t.shots)).toBeLessThan(plain.goals / Math.max(0.01, plain.shots) + 0.015);
   });
@@ -618,9 +620,11 @@ describe("match behaviour: traits shift tendencies in the intended direction", (
   });
 
   it("Pressing Machine: wins the ball more and pays for it in energy", () => {
-    const st = star("ST");
-    const plain = profile(st, []);
-    const t = profile(st, [own("pressing_machine", 200)]);
+    // A presser is a player with the work rate, stamina and bite for it: the habit is only as effective as the attributes behind it.
+    const base = star("CM");
+    const st = { ...base, attrs: { ...base.attrs, workRate: 88, stamina: 86, aggression: 82, anticipation: 78 } };
+    const plain = profile(st, [], 500);
+    const t = profile(st, [own("pressing_machine", 200)], 500);
     expect(t.tackles).toBeGreaterThan(plain.tackles);
     expect(resolveMatchFx([own("pressing_machine", 200)], st.attrs)!.drain).toBeGreaterThan(1.05);
     expect(resolveMatchFx([own("tires_easily", 200)], st.attrs)!.drain).toBeGreaterThan(1.1);
@@ -677,7 +681,7 @@ describe("match behaviour: traits shift tendencies in the intended direction", (
     expect(w.xg1v1!).toBeLessThan(c.xg1v1!);
     // A clinical finisher chooses his shots: slightly fewer, better ones.
     expect(c.shoot!).toBeLessThan(1);
-    const plain = profile(st, [], 500);
+    const plain = profile(st, [], 2000);
     const wasteful = profile(st, [own("wasteful_finisher", 200)], 500);
     expect(wasteful.goals).toBeLessThan(plain.goals);
   });

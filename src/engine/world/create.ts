@@ -241,13 +241,13 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   const diff = input.difficulty ?? "standard";
   const potBase = input.path === "academy" ? 89 : 85;
   const potential = start.potential ?? clamp(potBase + rng.normal(0, 4) + (diff === "relaxed" ? 2 : diff === "hardcore" ? -2 : 0), 76, 97);
-  const attrs = generateAttributes(rng, input.position, startOvr, input.height);
-  // An aspiration leans the starting attributes (same total quality); an unknown or wrong-position id is simply no preference.
-  const focus = isValidFocus(input.position, input.focus) ? input.focus : NO_FOCUS;
-  leanAttributes(attrs, input.position, focus);
   const hidden = randomHidden(rng, input.position, potential);
   hidden.professionalism = Math.max(hidden.professionalism, 55);
   hidden.injuryProneness = Math.min(hidden.injuryProneness, 55);
+  const attrs = generateAttributes(rng, input.position, startOvr, input.height, { professionalism: hidden.professionalism, age });
+  // An aspiration leans the starting attributes (same total quality); an unknown or wrong-position id is simply no preference.
+  const focus = isValidFocus(input.position, input.focus) ? input.focus : NO_FOCUS;
+  leanAttributes(attrs, input.position, focus);
   const id = nextId(state, "u");
   const p: Player = {
     id,

@@ -21,7 +21,7 @@ Read this first after any context reset. Keep it short and current.
 - [x] UI screens: landing, new, saves, credits, privacy, /play/{dashboard, match, schedule, profile, training, club, league, transfers, national, stats, awards, history, world, settings, legacy}
 - [x] Ads architecture (src/ads) — placeholder in dev, none in prod by default
 - [x] PWA/offline (manifest, icons, generated sw.js)
-- [x] Tests: vitest (35), Playwright e2e (desktop+mobile), stress sims (100 careers done; rebalanced after)
+- [x] Tests: vitest (see docs/TESTING.md), Playwright e2e (desktop+mobile), stress sims (100 careers done; rebalanced after)
 - [x] Docs (docs/*.md, README)
 
 ## Key engine entry points
@@ -33,6 +33,9 @@ Read this first after any context reset. Keep it short and current.
 - Calendar: 50 turns/season; season turns 4–43; season end 44; summer 45–50 (tournaments in even years)
 - Perf: ~115ms/turn full world (node). Lite world via settings.countries for stress tests.
 
+## Attribute model (schema 15)
+`SCHEMA_VERSION` is 15. Players have 33 attributes (27 outfield, 6 goalkeeping); the canonical model is `src/engine/players/model.ts` (meanings, position weights, ageing, training, style profiles, seeding). Older saves are expanded on load by `players/expansion.ts` (migration 14 → 15, fitted to the old overall). The codec stores attributes in `ALL_ATTRS` order: legacy twenty first, new ones appended; never reorder. The match engine reads the new attributes as specialisms (`match/engine.ts`, `REF`); tactical fit is `match/lineup.ts`; recruitment `transfers/market.ts`; trait overlay `traits/attributeModel.ts`. Full reference: `docs/ATTRIBUTES.md`.
+
 ## Career systems pass (schema 10)
 Club overview/relationships, Match Day briefing + selection reasons, knockout brackets, contract clauses and bonuses, national-team allegiance and invitations, match log + analytics, dashboard rating chart. Design and limits: `docs/CAREER_SYSTEMS.md`.
 
@@ -40,3 +43,4 @@ Club overview/relationships, Match Day briefing + selection reasons, knockout br
 - Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
 - Academy prospects at elite clubs rarely play — UI should surface loan advice
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).
+- Acceleration's automatic-play use is small (a share of the counter-attack chance after a won ball, plus the overall, ageing and the interactive jockey odds); keeper anticipation has no measurable effect on shots against (see docs/ATTRIBUTES.md, docs/SIMULATION.md).

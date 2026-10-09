@@ -11,12 +11,22 @@ export const POSITIONS = ["GK", "RB", "CB", "LB", "DM", "CM", "AM", "RW", "LW", 
 export type Position = (typeof POSITIONS)[number];
 export type PositionGroup = "GK" | "DEF" | "MID" | "ATT";
 
-export const OUTFIELD_ATTRS = [
+/**
+ * Attribute keys. The first 20 keep the order of schema 14 and earlier because saves store attributes as a positional array
+ * (persistence/codec.ts); new keys are only ever appended. Definitions, groups and meanings live in players/model.ts.
+ */
+export const LEGACY_ATTRS = [
   "pace", "acceleration", "stamina", "strength", "finishing", "longShots", "passing", "vision",
   "crossing", "dribbling", "firstTouch", "tackling", "positioning", "heading", "composure",
+  "reflexes", "handling", "diving", "kicking", "command",
 ] as const;
-export const GK_ATTRS = ["reflexes", "handling", "diving", "kicking", "command"] as const;
-export const ALL_ATTRS = [...OUTFIELD_ATTRS, ...GK_ATTRS] as const;
+export const ADDED_ATTRS = [
+  "agility", "balance", "jumping", "technique", "offBall", "creativity", "marking", "interceptions",
+  "decisions", "anticipation", "workRate", "aggression", "oneOnOnes",
+] as const;
+export const GK_ATTRS = ["reflexes", "handling", "diving", "kicking", "command", "oneOnOnes"] as const;
+export const ALL_ATTRS = [...LEGACY_ATTRS, ...ADDED_ATTRS] as const;
+export const OUTFIELD_ATTRS = ALL_ATTRS.filter((k) => !(GK_ATTRS as readonly string[]).includes(k)) as readonly (typeof ALL_ATTRS)[number][];
 export type AttrKey = (typeof ALL_ATTRS)[number];
 export type Attributes = Record<AttrKey, number>;
 

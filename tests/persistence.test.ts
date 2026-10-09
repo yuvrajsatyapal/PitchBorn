@@ -51,7 +51,9 @@ describe("IndexedDB saves", () => {
     expect(list.map((m) => m.id)).toContain(s.id);
     const { state } = await loadSave(s.id);
     expect(state.turn).toBe(s.turn);
-    expect(norm(state.players[s.user.playerId])).toEqual(norm(s.players[s.user.playerId]));
+    // A player with no traits is stored without the field (sanitizeTraits), so compare on that footing.
+    const bare = (p: unknown) => { const o = norm(p); if (Array.isArray(o.traits) && !o.traits.length) delete o.traits; return o; };
+    expect(bare(state.players[s.user.playerId])).toEqual(bare(s.players[s.user.playerId]));
     await deleteSave(s.id);
     expect(await listSaves()).toEqual([]);
   });

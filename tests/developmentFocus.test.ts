@@ -104,7 +104,8 @@ describe("creation: an identity, not a power-up", () => {
         const p = userPlayer(newCareer({ seed: `focus-budget-${pos}`, position: pos, focus: o.id }));
         expect(Math.abs(ovrOf(p) - ovrOf(base)), `${pos} ${o.id} overall`).toBeLessThanOrEqual(1);
         // A few attribute points moved around. The overall (what the role is worth) is what must not change; the raw sum can drift a little either way.
-        expect(total(p) - total(base), `${pos} ${o.id} total`).toBeLessThanOrEqual(8);
+        // (A role whose lean falls on low-weight attributes, such as the Creative Forward's touch and vision, adds a few raw points: the role overall is what is held.)
+        expect(total(p) - total(base), `${pos} ${o.id} total`).toBeLessThanOrEqual(10);
         expect(total(base) - total(p), `${pos} ${o.id} total`).toBeLessThanOrEqual(16);
       }
     }
@@ -117,7 +118,7 @@ describe("creation: an identity, not a power-up", () => {
     const mobile = made("st_mobile");
     const creative = made("st_creative");
     expect(scorer.attrs.finishing).toBeGreaterThan(none.attrs.finishing + 1.5);
-    expect(scorer.attrs.positioning).toBeGreaterThan(none.attrs.positioning);
+    expect(scorer.attrs.offBall).toBeGreaterThan(none.attrs.offBall);
     expect(target.attrs.heading).toBeGreaterThan(none.attrs.heading + 1.5);
     expect(target.attrs.strength).toBeGreaterThan(none.attrs.strength + 1.5);
     expect(mobile.attrs.pace).toBeGreaterThan(none.attrs.pace + 1.5);
@@ -125,7 +126,10 @@ describe("creation: an identity, not a power-up", () => {
     expect(creative.attrs.passing).toBeGreaterThan(none.attrs.passing + 1.5);
     expect(creative.attrs.vision).toBeGreaterThan(none.attrs.vision + 1.5);
     // What it gives is small: no attribute moves by more than the lean allows.
-    for (const o of ST) for (const k of Object.keys(none.attrs) as AttrKey[]) expect(Math.abs(made(o.id).attrs[k] - none.attrs[k]), `${o.id} ${k}`).toBeLessThanOrEqual(4);
+    for (const o of ST) {
+      const p = made(o.id);
+      for (const k of Object.keys(none.attrs) as AttrKey[]) expect(Math.abs(p.attrs[k] - none.attrs[k]), `${o.id} ${k}`).toBeLessThanOrEqual(4);
+    }
   });
 
   it("No preference changes nothing at all", () => {
@@ -281,7 +285,7 @@ describe("a focus never grants, skips or overrides", () => {
 
   it("a Goalscorer whose career says playmaker becomes a playmaker, not a Poacher", () => {
     const { s, u } = scorer();
-    u.attrs = { ...u.attrs, finishing: 62, positioning: 60, passing: 80, vision: 82, firstTouch: 76, dribbling: 72, composure: 72 };
+    u.attrs = { ...u.attrs, finishing: 62, positioning: 60, offBall: 60, passing: 80, vision: 82, creativity: 78, technique: 76, decisions: 74, firstTouch: 76, dribbling: 72, composure: 72 };
     for (let i = 0; i < 160; i++) {
       recordMatchEvidence(s, u, line({ id: u.id, goals: 0, assists: 1, keyPasses: 4, shots: 1, acts: { chanceThrough: 3, chanceOpen: 2 } }) as never, { importance: 1 } as never);
     }
@@ -406,6 +410,7 @@ describe("what the player sees", () => {
   it("compares the aspiration with the record", () => {
     const s = newCareer({ seed: "focus-read", position: "ST", focus: "st_goalscorer" });
     const u = userPlayer(s);
+    u.traits = [];
     expect(focusReading(u, s.season).verdict).toBe("early");
     expect(focusReading(u, s.season).influence).toBe("shaping");
     u.traits = [{ id: "poacher", xp: 90, since: 2026 }, { id: "box_predator", xp: 40, since: 2026 }];

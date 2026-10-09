@@ -10,6 +10,7 @@ import { sanitizeCeremony } from "../engine/awards/sanitize";
 import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
+import { expandAllAttributes } from "../engine/players/expansion";
 import { NO_FOCUS } from "../engine/players/focus";
 import { AMBI_MIN, AMBIDEXTROUS, isFoot, migrateFoot } from "../engine/players/foot";
 import { derivedTraits, initialTraits } from "../engine/traits/assign";
@@ -173,6 +174,13 @@ MIGRATIONS[13] = (s) => {
   return s;
 };
 
+MIGRATIONS[14] = (s) => {
+  // v14 → v15: the attribute model grew from twenty to thirty-three. Every player keeps the original twenty, his potential, traits,
+  // identity and history exactly; the new thirteen are derived from them (never rerolled) and fitted so his overall is unchanged.
+  expandAllAttributes(s as unknown as GameState);
+  return s;
+};
+
 /** Every player has a left or right foot and a weak-foot rating; old "both" players are converted (and given the trait if earned). */
 function sanitizeFootedness(state: GameState): void {
   for (const p of Object.values(state.players ?? {})) {
@@ -210,6 +218,11 @@ export function migrateState(raw: RawState): GameState {
     sanitizeCareerData(state);
   } catch {
     // The additions are optional: a save must always load. Engine code treats every one of them as possibly absent.
+  }
+  try {
+    expandAllAttributes(state);
+  } catch {
+    // A save must always load; a player still missing attributes is completed on the next load.
   }
   try {
     sanitizeFootedness(state);

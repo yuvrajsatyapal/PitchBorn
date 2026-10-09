@@ -6,7 +6,7 @@ import { currentObjectives, deriveObjectives, ensureObjectives, objectiveLabel, 
 import { rolePromiseBroken, roleView, selectionTrend } from "../src/engine/club/role";
 import { continentalSlots, standingOf } from "../src/engine/club/standing";
 import { WORLD, staticLeague } from "../src/engine/data/world";
-import { partsTotal, scoreParts, selectionScore, tacticalFit, fitFor } from "../src/engine/match/lineup";
+import { FIT_PER_POINT, partsTotal, scoreParts, selectionScore, tacticalFit, fitFor } from "../src/engine/match/lineup";
 import { advanceTurn } from "../src/engine/season/advance";
 import { emptyStat } from "../src/engine/players/generate";
 import type { GameState, Memory, StatLine, TableRow } from "../src/engine/types";
@@ -85,13 +85,16 @@ describe("club identity and tactics", () => {
     const a = squad.find((p) => p.position !== "GK")!;
     const style = { pressing: 1, tempo: 0.5, directness: 0.5 };
     const parts = scoreParts(a, fitFor(a, a.position), { style });
-    expect(parts.tactical).toBeCloseTo((tacticalFit(a, style) - 60) / 25);
+    expect(parts.tactical).toBeCloseTo((tacticalFit(a, style) - 60) / FIT_PER_POINT);
     expect(partsTotal(parts)).toBeCloseTo(selectionScore(a, a.position, null, { style }));
     // A pressing side prefers the player with the engine.
-    const runner = { ...a, attrs: { ...a.attrs, stamina: 95, tackling: 95, acceleration: 90, strength: 90 } };
-    const walker = { ...a, attrs: { ...a.attrs, stamina: 30, tackling: 30, acceleration: 30, strength: 30 } };
+    const runner = { ...a, attrs: { ...a.attrs, stamina: 95, workRate: 95, aggression: 90, anticipation: 90, tackling: 90 } };
+    const walker = { ...a, attrs: { ...a.attrs, stamina: 30, workRate: 30, aggression: 30, anticipation: 30, tackling: 30 } };
     expect(tacticalFit(runner, style)).toBeGreaterThan(tacticalFit(walker, style));
-    expect(tacticalFit({ ...a, position: "GK" }, style)).toBe(60);
+    // Goalkeepers answer to the same dials with their own attributes, inside the same bounds.
+    const keeperFit = tacticalFit({ ...a, position: "GK" }, style);
+    expect(keeperFit).toBeGreaterThanOrEqual(20);
+    expect(keeperFit).toBeLessThanOrEqual(95);
     expect(userTacticalFit(s, club).score).toBeGreaterThanOrEqual(20);
   });
 

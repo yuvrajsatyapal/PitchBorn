@@ -6,7 +6,8 @@ import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { TraitStrip } from "@/components/game/PlayIdentity";
 import { AttrValue, Badge, Modal } from "@/components/ui";
 import { clubName } from "@/engine/data/world";
-import { ATTR_GROUPS, ATTR_LABEL, POSITION_LABEL } from "@/engine/players/attributes";
+import { POSITION_LABEL } from "@/engine/players/attributes";
+import { ATTR_LABEL, groupsFor } from "@/engine/players/model";
 import { formatMoney } from "@/engine/players/economy";
 import { avgRating } from "@/engine/players/generate";
 import type { GameState, Player } from "@/engine/types";
@@ -15,7 +16,7 @@ import { age, name, ovr } from "@/game/selectors";
 export function PlayerModal({ g, p, onClose }: { g: GameState; p: Player | null; onClose: () => void }) {
   if (!p) return null;
   const kit = clubKit(p.clubId, g.season);
-  const groups = ATTR_GROUPS.filter((gr) => (p.position === "GK" ? true : gr.label !== "Goalkeeping"));
+  const groups = groupsFor(p.position);
   return (
     <Modal open={!!p} onClose={onClose} title={name(p)} wide>
       <div className="flex flex-wrap items-center gap-4">
@@ -38,10 +39,10 @@ export function PlayerModal({ g, p, onClose }: { g: GameState; p: Player | null;
           <div className="mt-2"><TraitStrip p={p} /></div>
         </div>
       </div>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 gap-x-6 sm:columns-2">
         {groups.map((gr) => (
-          <div key={gr.label}>
-            <div className="mb-1 text-xs font-black uppercase text-muted">{gr.label}</div>
+          <div key={gr.label} className="mb-4 break-inside-avoid">
+            <h3 className="mb-1 text-xs font-black uppercase text-muted">{gr.label}</h3>
             {gr.keys.map((k) => (
               <div key={k} className="flex justify-between py-0.5 text-sm">
                 <span>{ATTR_LABEL[k]}</span>

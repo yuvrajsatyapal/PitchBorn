@@ -14,8 +14,9 @@ import { selectTeam } from "../match/lineup";
 import { baseRivalry, rivalryLevel } from "../memory/rivalry";
 import { describeMemory } from "../memory/describe";
 import { overallFor } from "../players/attributes";
+import { ATTR_LABEL } from "../players/model";
 import { squadOf, userPlayer } from "../world/helpers";
-import type { Competition, Fixture, GameState, Memory, Player } from "../types";
+import type { AttrKey, Competition, Fixture, GameState, Memory, Player } from "../types";
 import { adjustRel } from "../career/relationships";
 import { isNationalComp, teamSelection } from "./matchday";
 import { COMMIT_RATING } from "./commitments";
@@ -219,8 +220,10 @@ const MIRROR: Record<string, string[]> = {
   ST: ["CB"], RW: ["LB"], LW: ["RB"], AM: ["DM", "CM"], CM: ["CM", "DM"], DM: ["AM", "CM"], CB: ["ST"], RB: ["LW"], LB: ["RW"], GK: ["ST"],
 };
 const DUEL_ATTRS: Record<string, (keyof Player["attrs"])[]> = {
-  ST: ["finishing", "pace", "strength", "heading"], RW: ["pace", "dribbling", "crossing"], LW: ["pace", "dribbling", "crossing"], AM: ["vision", "passing", "dribbling"],
-  CM: ["passing", "stamina", "tackling"], DM: ["tackling", "positioning", "strength"], CB: ["tackling", "heading", "strength", "pace"], RB: ["pace", "tackling", "stamina"], LB: ["pace", "tackling", "stamina"], GK: ["reflexes", "handling"],
+  ST: ["finishing", "offBall", "pace", "strength", "heading", "jumping"], RW: ["pace", "agility", "dribbling", "crossing"], LW: ["pace", "agility", "dribbling", "crossing"],
+  AM: ["creativity", "vision", "passing", "dribbling", "offBall"], CM: ["passing", "stamina", "tackling", "workRate", "decisions"],
+  DM: ["tackling", "positioning", "interceptions", "strength", "anticipation"], CB: ["tackling", "marking", "heading", "jumping", "strength", "pace"],
+  RB: ["pace", "tackling", "stamina", "marking"], LB: ["pace", "tackling", "stamina", "marking"], GK: ["reflexes", "handling", "oneOnOnes", "command"],
 };
 
 export function tacticalPreview(state: GameState, fixture: Fixture): TacticalPreview | null {
@@ -245,7 +248,7 @@ export function tacticalPreview(state: GameState, fixture: Fixture): TacticalPre
     ? {
         yours: { name: u.lastName, ovr: Math.round(overallFor(u.attrs, u.position)) },
         theirs: { name: facing.player.lastName, ovr: Math.round(overallFor(facing.player.attrs, facing.slot)), position: facing.slot },
-        edges: attrs.map((a) => ({ a, d: u.attrs[a] - facing.player.attrs[a] })).filter((x) => Math.abs(x.d) >= 8).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)).slice(0, 2).map((x) => `${x.a} ${x.d > 0 ? "+" : ""}${Math.round(x.d)}`),
+        edges: attrs.map((a) => ({ a, d: u.attrs[a] - facing.player.attrs[a] })).filter((x) => Math.abs(x.d) >= 8).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)).slice(0, 2).map((x) => `${ATTR_LABEL[x.a as AttrKey].toLowerCase()} ${x.d > 0 ? "+" : ""}${Math.round(x.d)}`),
       }
     : null;
   return {

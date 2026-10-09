@@ -294,7 +294,8 @@ describe("persistence", () => {
     expect(a.schemaVersion).toBe(SCHEMA_VERSION);
     expect(a.user.traitLog).toEqual([]);
     const some = Object.values(a.players).filter((p) => !p.isUser).slice(0, 50);
-    expect(some.every((p) => Array.isArray(p.traits))).toBe(true);
+    // A player with no traits is stored without the field (the migration deletes empty lists).
+    expect(some.every((p) => p.traits === undefined || Array.isArray(p.traits))).toBe(true);
     expect(JSON.stringify(a.players)).toBe(JSON.stringify(b.players));
   });
 

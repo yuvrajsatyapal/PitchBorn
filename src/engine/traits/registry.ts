@@ -8,6 +8,7 @@ import type { TraitDef } from "./types";
 import { AM, ATTACKERS, CB, CM, DM, FB, GK, MIDFIELD, OUT, ST, W, def, u, x } from "./catalogue/helpers";
 import * as D from "./catalogue/derive";
 import { EXTENSIONS } from "./catalogue";
+import { withAttributeModel } from "./attributeModel";
 
 /** The original catalogue, revised in place; `EXTENSIONS` (catalogue/) adds the rest. */
 const CORE: TraitDef[] = [
@@ -481,7 +482,7 @@ const CORE: TraitDef[] = [
   }),
 ];
 
-export const TRAITS: TraitDef[] = [...CORE, ...EXTENSIONS];
+export const TRAITS: TraitDef[] = withAttributeModel([...CORE, ...EXTENSIONS]);
 
 export const TRAIT_BY_ID: ReadonlyMap<TraitId, TraitDef> = new Map(TRAITS.map((t) => [t.id, t]));
 

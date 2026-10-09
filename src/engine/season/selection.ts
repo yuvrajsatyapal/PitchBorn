@@ -47,8 +47,8 @@ export function userTeamFor(state: GameState, fixture: Fixture): string | null {
 }
 
 function describe(p: Player, slot: Position, other: Player, otherSlot: Position, setup: ReturnType<typeof selectionSetup>, userIsP: boolean): Reason[] {
-  const a = scoreParts(p, fitFor(p, slot), setup.opts);
-  const b = scoreParts(other, fitFor(other, otherSlot), setup.opts);
+  const a = scoreParts(p, fitFor(p, slot), setup.opts, slot);
+  const b = scoreParts(other, fitFor(other, otherSlot), setup.opts, otherSlot);
   const out: Reason[] = [];
   const diff = (k: keyof ScoreParts) => a[k] - b[k];
   const add = (kind: ReasonKind, d: number, good: string, bad: string, min: number) => {
@@ -87,7 +87,7 @@ export function matchStatus(state: GameState, fixture: Fixture): MatchStatus {
     const mine = sel.starters[startIdx];
     // The nearest rival for the place: the best player left out (or on the bench) who could fill the slot.
     const rivals = setup.squad.filter((p) => p.id !== u.id && availability(p));
-    const alt = [...rivals].sort((a, b) => partsTotal(scoreParts(b, fitFor(b, mine.slot), setup.opts)) - partsTotal(scoreParts(a, fitFor(a, mine.slot), setup.opts)))[0];
+    const alt = [...rivals].sort((a, b) => partsTotal(scoreParts(b, fitFor(b, mine.slot), setup.opts, mine.slot)) - partsTotal(scoreParts(a, fitFor(a, mine.slot), setup.opts, mine.slot)))[0];
     // A starter is explained by what went for them; a different gap never contradicts the team sheet.
     const reasons = (alt ? describe(u, mine.slot, alt, mine.slot, setup, true) : []).filter((r) => r.tone === "good");
     if (!reasons.length) reasons.push({ kind: "competition", tone: "neutral", text: `The manager picked you at ${mine.slot}: a close call between you and ${alt?.lastName ?? "the others"}.`, weight: 0 });

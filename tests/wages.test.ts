@@ -251,7 +251,7 @@ describe("expiring NPC contracts", () => {
     const p = npc(s, (x) => ageOf(x, s.season + 1) <= 27);
     const club = s.clubs[p.clubId as string];
     // A backup of a level that wants him at the going rate, with no form or standing to add to his importance.
-    raiseTo(p, clubLevel(club.reputation) + 6);
+    raiseTo(p, clubLevel(club.reputation) + 3);
     fresh(s, p);
     p.form = 5.8;
     p.reputation = 0;

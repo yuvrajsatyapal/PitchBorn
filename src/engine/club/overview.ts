@@ -5,13 +5,14 @@
  */
 import { clubRevenue, formatMoney } from "../players/economy";
 import { staticClub, staticLeague, stadium, WORLD, clubName } from "../data/world";
-import { FORMATIONS, fitFor, selectTeam, tacticalFit } from "../match/lineup";
+import { FORMATIONS, fitDrivers, fitFor, selectTeam, tacticalFit } from "../match/lineup";
+import { ATTR_LABEL } from "../players/model";
 import { memoriesByImportance } from "../memory/store";
 import { tierOf } from "../memory/score";
 import { seasonLabel } from "../calendar";
 import { addStat, emptyStat, ageOf } from "../players/generate";
 import { positionGroup } from "../players/attributes";
-import type { ClubState, GameState, Memory, MemoryKind, Player, Position, SeasonRecord, StatLine, TableRow } from "../types";
+import type { AttrKey, ClubState, GameState, Memory, MemoryKind, Player, Position, SeasonRecord, StatLine, TableRow } from "../types";
 import { squadOf, userPlayer } from "../world/helpers";
 import { adjustRel, relReasons } from "../career/relationships";
 import { journeyOf, type Journey } from "../competitions/bracket";
@@ -81,11 +82,15 @@ export function userTacticalFit(state: GameState, club: ClubState): FitView {
   const u = userPlayer(state);
   const score = Math.round(tacticalFit(u, club.style));
   const label = score >= 68 ? "Natural fit" : score >= 55 ? "Good fit" : score >= 42 ? "Awkward fit" : "Poor fit";
+  const { helps, hurts } = fitDrivers(u, club.style);
+  const names = (ks: AttrKey[]) => ks.map((k) => ATTR_LABEL[k].toLowerCase()).join(" and ");
   const note =
-    u.position === "GK"
-      ? "Goalkeepers are not affected by the outfield style."
-      : score >= 55
-        ? "Your attributes suit how the team plays."
+    score >= 55
+      ? helps.length
+        ? `Your ${names(helps)} suit how the team plays.`
+        : "Your attributes suit how the team plays."
+      : hurts.length
+        ? `Your ${names(hurts)} don't suit how the team plays, which costs a little in selection.`
         : "Your attributes don't suit how the team plays, which costs a little in selection.";
   return { score, label, note };
 }

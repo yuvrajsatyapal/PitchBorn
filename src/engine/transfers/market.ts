@@ -3,6 +3,7 @@ import { moveScoreDelta, stayBonus } from "../traits/career";
 import { noteApproachDeclined, noteRenewal } from "../traits/stay";
 import { clubName, staticClub, staticLeague } from "../data/world";
 import { overallFor, positionGroup } from "../players/attributes";
+import { tacticalFit } from "../match/lineup";
 import { marketValue, playerWage, formatMoney } from "../players/economy";
 import { loyaltyPull, renewalGap, reservationWage, retentionOffer } from "../career/wages";
 import { ageOf, generatePlayer } from "../players/generate";
@@ -13,6 +14,9 @@ import { addNews, addToSquad, fullName, nextId, removeFromSquad, squadOf } from 
 
 const S = BALANCE.squad;
 
+/** How many comparable targets a club weighs up for a need. */
+const SHORTLIST = 30;
+
 const MIN_BY_POS: Record<Position, number> = { GK: 3, CB: 3, RB: 1, LB: 1, DM: 1, CM: 2, AM: 1, RW: 1, LW: 1, ST: 2 };
 
 export function ovr(p: Player): number {
@@ -22,6 +26,24 @@ export function ovr(p: Player): number {
 function starterQuality(squad: Player[], pos: Position): number {
   const best = squad.filter((p) => p.position === pos || p.secondary.includes(pos)).map(ovr).sort((a, b) => b - a);
   return best[0] ?? 0;
+}
+
+/** Tactical fit moves a target by at most this many overall points, so it breaks ties between comparable players and never ranks a clearly weaker one first. */
+const STYLE_BONUS_MAX = 2;
+/** Fit points per overall point of that bonus. */
+const STYLE_BONUS_PER = 12;
+/** A starter whose profile fits the club's style this badly is a reason to look, if nothing else is wrong. */
+const POOR_FIT = 42;
+
+/** What a club adds to a player's attractiveness for fitting how it plays. 0 for a neutral fit. */
+export function styleBonus(p: Player, club: Pick<ClubState, "style">): number {
+  return clamp((tacticalFit(p, club.style) - 60) / STYLE_BONUS_PER, -STYLE_BONUS_MAX, STYLE_BONUS_MAX);
+}
+
+function bestAt(squad: Player[], pos: Position): Player | undefined {
+  let best: Player | undefined;
+  for (const p of squad) if ((p.position === pos || p.secondary.includes(pos)) && (!best || ovr(p) > ovr(best))) best = p;
+  return best;
 }
 
 /** Positions a club most urgently wants to strengthen, best first. */
@@ -37,6 +59,11 @@ export function squadNeeds(state: GameState, club: ClubState): { pos: Position; 
     if (sq < level - 3) urgency += (level - 3 - sq) / 3;
     const aging = squad.filter((p) => p.position === pos && ageOf(p, state.season) >= 32).length;
     urgency += aging * 0.4;
+    // "We need a CM" becomes "we need a CM who suits how we play": a starter who fits the style badly nudges the club to look.
+    if (urgency > 0 && count >= MIN_BY_POS[pos]) {
+      const starter = bestAt(squad, pos);
+      if (starter && tacticalFit(starter, club.style) < POOR_FIT) urgency += 0.6;
+    }
     if (urgency > 0.5) needs.push({ pos, urgency, floor: Math.max(sq, level - 6) });
   }
   return needs.sort((a, b) => b.urgency - a.urgency);
@@ -127,23 +154,39 @@ export function runAiTransfers(state: GameState, rng: Rng, intensity: number): v
     const candidates = index.byPos[need.pos];
     let signed = false;
     // Free agents first — cheap and quick.
-    const freeAgent = index.free.find((p) => p.position === need.pos && ovr(p) >= need.floor - 2 && ovr(p) <= level + 6 && ageOf(p, state.season) <= 33);
+    let freeAgent: Player | undefined;
+    let freeScore = -Infinity;
+    for (const p of index.free) {
+      if (p.position !== need.pos || ovr(p) < need.floor - 2 || ovr(p) > level + 6 || ageOf(p, state.season) > 33) continue;
+      const score = ovr(p) + styleBonus(p, club);
+      if (score > freeScore) {
+        freeScore = score;
+        freeAgent = p;
+      }
+    }
     if (freeAgent) {
       const wage = playerWage(freeAgent, state.season, club.reputation, "rotation");
       executeTransfer(state, freeAgent, club, 0, wage, rng.int(1, 3), "rotation");
       index.free.splice(index.free.indexOf(freeAgent), 1);
       continue;
     }
-    for (let i = 0; i < candidates.length && !signed; i++) {
+    // The shortlist is cut by ability first (the list is sorted by it), then ordered by ability plus a bounded credit for fitting the club's style.
+    const shortlist: Player[] = [];
+    for (let i = 0; i < candidates.length && shortlist.length < SHORTLIST; i++) {
       const p = candidates[i];
       const o = ovr(p);
       if (o > level + 7) continue;
       if (o < need.floor + 1) break; // sorted desc — the rest are worse
       if (!p.clubId || p.clubId === club.id) continue;
-      const seller = state.clubs[p.clubId];
+      if (ageOf(p, state.season) > 31 && o < level + 3) continue;
+      shortlist.push(p);
+    }
+    const ranked = shortlist.map((p) => ({ p, score: ovr(p) + styleBonus(p, club) })).sort((a, b) => b.score - a.score);
+    for (const { p } of ranked) {
+      if (signed) break;
+      const o = ovr(p);
+      const seller = state.clubs[p.clubId ?? ""];
       if (!seller) continue;
-      const age = ageOf(p, state.season);
-      if (age > 31 && o < level + 3) continue;
       const value = marketValue(p, state.season);
       const sellerSquad = seller.squad.length;
       const key = (p.contract?.role === "star" || p.contract?.role === "first") && seller.reputation >= club.reputation - 5;
@@ -161,7 +204,7 @@ export function runAiTransfers(state: GameState, rng: Rng, intensity: number): v
         continue;
       }
       executeTransfer(state, p, club, Math.round(fee / 50000) * 50000, wage, rng.int(2, 5), role);
-      candidates.splice(i, 1);
+      candidates.splice(candidates.indexOf(p), 1);
       signed = true;
     }
   }
