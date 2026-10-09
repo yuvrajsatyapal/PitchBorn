@@ -63,7 +63,7 @@ export function FormPanel({ g, version }: { g: GameState; version: number }) {
         </div>
       }
     >
-      <RatingChart size="large" matches={series === "senior" ? data.picked.map((e) => toChart(e, g)) : devChart} average={series === "senior" ? avg : data.dev.average} label="Match ratings" />
+      <RatingChart size="large" variant="line" matches={series === "senior" ? data.picked.map((e) => toChart(e, g)) : devChart} average={series === "senior" ? avg : data.dev.average} label="Match ratings" />
       {series === "senior" && data.picked.length > 0 && (
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Stat label="Average" value={avg.toFixed(2)} tone="sun" sub={`${data.picked.length} rated game${data.picked.length === 1 ? "" : "s"}`} />

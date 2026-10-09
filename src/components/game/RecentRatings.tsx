@@ -49,7 +49,7 @@ export function RecentRatings({ g, count = 10 }: { g: GameState; count?: number 
           />
         )}
       </div>
-      <RatingChart matches={series === "senior" ? senior.map((e) => toChart(e, g)) : devChart} average={series === "senior" ? mean(senior.map((e) => e.rating)) : dev.average} label={series === "senior" ? "Senior match ratings" : "Development squad ratings"} />
+      <RatingChart variant="line" matches={series === "senior" ? senior.map((e) => toChart(e, g)) : devChart} average={series === "senior" ? mean(senior.map((e) => e.rating)) : dev.average} label={series === "senior" ? "Senior match ratings" : "Development squad ratings"} />
       {series === "senior" && senior.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
           <span>
