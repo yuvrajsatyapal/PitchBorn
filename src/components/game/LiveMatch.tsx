@@ -1,37 +1,35 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSuppressAds } from "@/ads/AdContext";
 import { Crest } from "@/components/art/Crest";
-import { ShirtNo } from "@/components/game/NumberPicker";
-import { Badge, Button, Card, Rating } from "@/components/ui";
-import type { MatchEvent } from "@/engine/match/engine";
+import { Commentary, SpeedControl } from "@/components/game/match/Commentary";
+import { DecisionCard } from "@/components/game/match/DecisionCard";
+import { MatchStats } from "@/components/game/match/MatchStats";
+import { tickInterval } from "@/components/game/match/speed";
+import { PostMatchCard } from "@/components/game/match/PostMatchCard";
+import { YouCard } from "@/components/game/match/YouCard";
+import { Button, Card, Tabs } from "@/components/ui";
 import type { PreparedMatch } from "@/engine/season/matchday";
 import { teamLabel } from "@/game/selectors";
 import { useGame } from "@/game/store";
 
-const SPEEDS = [
-  { id: 0, label: "❚❚", ms: 0 },
-  { id: 1, label: "1×", ms: 650 },
-  { id: 2, label: "3×", ms: 220 },
-  { id: 3, label: "10×", ms: 60 },
-];
-
-const ICON: Partial<Record<MatchEvent["type"], string>> = {
-  goal: "⚽", save: "🧤", miss: "↗", woodwork: "🥅", blocked: "🛡", yellow: "🟨", red: "🟥", injury: "🩹", sub: "🔁", halftime: "⏸", fulltime: "🏁", penalty: "🎯", decision: "⭐", tackle: "💪", extratime: "⏱", shootout: "🎯", kickoff: "🟢", info: "•", foul: "✋",
-};
+type Pane = "commentary" | "stats";
 
 export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDone: () => void }) {
   useSuppressAds(true);
   const eng = prepared.engine;
   const [, force] = useState(0);
+  // The speed the user chose. A key moment pauses play without touching it, so the match carries on at the same pace afterwards.
   const [speed, setSpeed] = useState(1);
   const [flash, setFlash] = useState(false);
-  const feedRef = useRef<HTMLOListElement>(null);
-  const uid = useGame((s) => s.game?.user.playerId);
-  const myNo = useGame((s) => (s.game && uid ? s.game.players[uid]?.squadNo : undefined));
-  const players = useGame((s) => s.game?.players);
-  const compKind = useGame((s) => s.game?.competitions[prepared.fixture.compId]?.kind);
+  const [pane, setPane] = useState<Pane>("commentary");
+  const game = useGame((s) => s.game);
+  const uid = game?.user.playerId;
+  const me = uid ? game?.players[uid] : undefined;
+  const players = game?.players;
+  const compKind = game?.competitions[prepared.fixture.compId]?.kind;
   const clubGame = compKind !== "international" && compKind !== "friendly";
+
   const tick = useCallback(() => {
     if (eng.finished || eng.pending) return;
     const evs = eng.step();
@@ -42,25 +40,19 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
     force((x) => x + 1);
   }, [eng]);
 
+  const paused = !!eng.pending;
   useEffect(() => {
-    const ms = SPEEDS[speed].ms;
-    if (!ms || eng.finished || eng.pending) return;
+    const ms = tickInterval(speed, eng.finished, paused);
+    if (!ms) return;
     const t = setInterval(tick, ms);
     return () => clearInterval(t);
-  }, [speed, tick, eng.finished, eng.pending]);
-
-  useEffect(() => {
-    feedRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  }, [speed, tick, eng.finished, paused]);
 
   const [h, a] = eng.score;
-  const stats = eng.liveStats;
-  const userLine = uid ? eng.lineFor(uid) : undefined;
-  const onPitch = uid ? eng.isOnPitch(uid) : false;
-  const events = [...eng.events].reverse();
   const home = eng.input.home;
   const away = eng.input.away;
   const minute = Math.min(eng.minute, 120);
+  const shirt = useCallback((id: string) => players?.[id]?.squadNo, [players]);
 
   return (
     <div className="grid gap-4">
@@ -86,121 +78,56 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
         </div>
       </Card>
 
-      {eng.pending && (
-        <Card tone="sun" className="anim-pop border-[3px]">
-          <div className="text-[11px] font-black uppercase tracking-widest">Key moment · {eng.pending.minute}&apos;</div>
-          <p className="my-2 font-display text-2xl leading-tight">{eng.pending.prompt}</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {eng.pending.options.map((o) => (
-              <button
-                key={o.id}
-                className="pb-btn flex-col items-start bg-card px-4 py-2 text-left"
-                onClick={() => {
-                  eng.resolve(o.id);
-                  force((x) => x + 1);
-                }}
-                data-testid="decision-option"
-              >
-                <span>{o.label}</span>
-                <span className="text-xs font-normal text-ink-2">
-                  {o.detail} · <b>{o.odds >= 0.65 ? "Good odds" : o.odds >= 0.4 ? "Even odds" : "Risky"}</b>
-                </span>
-              </button>
-            ))}
-          </div>
-        </Card>
-      )}
+      <DecisionCard
+        eng={eng}
+        onResolve={(id) => {
+          eng.resolve(id);
+          force((x) => x + 1);
+        }}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <Card title="Commentary" action={
-          <div className="flex gap-1" role="group" aria-label="Match speed">
-            {SPEEDS.map((s) => (
-              <button key={s.id} onClick={() => setSpeed(s.id)} aria-pressed={speed === s.id} className={`rounded-full border-2 border-line px-2.5 py-1 text-xs font-bold ${speed === s.id ? "bg-ink text-paper" : "bg-card"}`}>
-                {s.label}
-              </button>
-            ))}
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start">
+        <div className="lg:col-start-2 lg:row-start-1">
+          <YouCard eng={eng} uid={uid} squadNo={me?.squadNo} userInSquad={!!prepared.userSide} fitness={me ? Math.round(me.fitness) : undefined} />
+        </div>
+        <div className="grid gap-4 lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:grid-rows-[1fr] lg:self-stretch">
+          <Tabs<Pane> value={pane} onChange={setPane} className="lg:hidden" items={[{ id: "commentary", label: "Commentary" }, { id: "stats", label: "Stats" }]} />
+          <div className={`lg:relative lg:min-h-[480px] ${pane === "commentary" ? "" : "hidden lg:block"}`}>
+            <Commentary
+              events={eng.events}
+              uid={uid}
+              clubGame={clubGame}
+              shirt={shirt}
+              speedControl={<SpeedControl speed={speed} setSpeed={setSpeed} paused={paused} />}
+            />
           </div>
-        }>
-          <ol ref={feedRef} className="grid max-h-[420px] gap-1.5 overflow-y-auto pr-1" aria-live="polite">
-            {events.map((e, i) => (
-              <li key={events.length - i} className={`anim-slide flex gap-2 rounded-lg px-2 py-1.5 text-sm ${e.type === "goal" ? "border-2 border-line bg-pitch-2 font-bold" : e.user ? "bg-sun-2" : ""}`}>
-                <span className="scoreboard w-8 shrink-0 text-xs text-muted">{e.minute}&apos;</span>
-                <span aria-hidden>{ICON[e.type] ?? "•"}</span>
-                <span>
-                  {e.type === "goal" && e.playerId && players?.[e.playerId]?.squadNo !== undefined && players[e.playerId].clubId && clubGame ? <b className="mr-1 tabular-nums">#{players[e.playerId].squadNo}</b> : null}
-                  {e.text}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Card>
-        <div className="grid content-start gap-4">
-          <Card title="You">
-            {prepared.userSide ? (
-              <div className="grid gap-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">{myNo !== undefined && <ShirtNo no={myNo} size="sm" />}{prepared.userStarting ? "Starting XI" : onPitch ? "On from the bench" : userLine ? "Substituted" : "On the bench"}</span>
-                  <Rating v={userLine?.rating} />
-                </div>
-                {userLine && (
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge tone="pitch">⚽ {userLine.goals}</Badge>
-                    <Badge tone="sky">🅰 {userLine.assists}</Badge>
-                    <Badge>Shots {userLine.shots}</Badge>
-                    <Badge>Key passes {userLine.keyPasses}</Badge>
-                    <Badge>Tackles {userLine.tackles}</Badge>
-                    {userLine.saves > 0 && <Badge>Saves {userLine.saves}</Badge>}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-ink-2">You weren&apos;t selected for this match. Watch your teammates.</p>
-            )}
-          </Card>
-          <Card title="Stats">
-            {(
-              [
-                ["Possession", stats.possession, "%"],
-                ["Shots", stats.shots, ""],
-                ["On target", stats.onTarget, ""],
-                ["xG", stats.xg, ""],
-                ["Corners", stats.corners, ""],
-                ["Fouls", stats.fouls, ""],
-                ["Cards", [stats.yellows[0] + stats.reds[0], stats.yellows[1] + stats.reds[1]], ""],
-              ] as [string, [number, number], string][]
-            ).map(([label, [x, y], unit]) => (
-              <div key={label} className="mb-2">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="tabular-nums">{x}{unit}</span>
-                  <span className="text-muted">{label}</span>
-                  <span className="tabular-nums">{y}{unit}</span>
-                </div>
-                <div className="flex h-2 overflow-hidden rounded-full border-2 border-line">
-                  <div className="bg-pitch" style={{ width: `${(x / Math.max(0.01, x + y)) * 100}%` }} />
-                  <div className="flex-1 bg-coral" />
-                </div>
-              </div>
-            ))}
-          </Card>
-          <div className="flex flex-wrap gap-2">
-            {!eng.finished ? (
-              <Button
-                tone="paper"
-                onClick={() => {
-                  eng.runToEnd();
-                  force((x) => x + 1);
-                }}
-              >
-                Skip to full time ⏭
-              </Button>
-            ) : (
-              <Button tone="pitch" size="lg" onClick={onDone} data-testid="finish-match">
-                Finish match ▸
-              </Button>
-            )}
+          <div className={`lg:hidden ${pane === "stats" ? "" : "hidden"}`}>
+            <MatchStats eng={eng} uid={uid} canShowYou={!!prepared.userSide} />
           </div>
         </div>
+        <div className="hidden lg:col-start-2 lg:row-start-2 lg:block">
+          <MatchStats eng={eng} uid={uid} canShowYou={!!prepared.userSide} />
+        </div>
+        <div className="flex flex-wrap gap-2 lg:col-start-2 lg:row-start-3">
+          {!eng.finished ? (
+            <Button
+              tone="paper"
+              onClick={() => {
+                eng.runToEnd();
+                force((x) => x + 1);
+              }}
+            >
+              Skip to full time ⏭
+            </Button>
+          ) : (
+            <Button tone="pitch" size="lg" onClick={onDone} data-testid="finish-match">
+              Finish match ▸
+            </Button>
+          )}
+        </div>
       </div>
+
+      {eng.finished && game && uid && prepared.userSide && <PostMatchCard line={eng.lineFor(uid)} uid={uid} g={game} fixture={prepared.fixture} mySide={prepared.userSide} score={eng.score} />}
     </div>
   );
 }

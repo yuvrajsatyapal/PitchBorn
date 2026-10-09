@@ -17,6 +17,12 @@ import { footAttrMultipliers, type Foot } from "../players/foot";
 import type { MatchFx, SignalKey } from "../traits/types";
 import { clamp, type Rng } from "../rng";
 import type { Attributes, AttrKey, Position } from "../types";
+import { ATTR_LABEL } from "../players/model";
+import {
+  ATTACK_K, ATTACK_PROMPT, ATTACK_SET, BUILD_W, CARRY_W, CLEAR_WEIGHT, CROSSERS, DEFEND_K, DEFEND_PROMPT, DEFEND_SET, DRIB_MIX, DUEL_MIX, FINAL_W, FINISHERS,
+  MOMENT, NOTE_CHANCE, NOTE_TEXT, PASS_MIX, SIDE_OF, WIDE_MIX, WIDE_SLOTS, isAerial, isLongShot, isPlaymaker, isTrickster,
+  type ChanceType, type FlowContext, type Mix, type MomentOpt, type NoteKind, type PlayerState,
+} from "./moments";
 
 const M = BALANCE.match;
 
@@ -82,7 +88,40 @@ export interface MatchEvent {
   otherId?: string;
   user?: boolean;
   score?: [number, number];
+  /** `involve`: a small action by the user's player; `status`: a rolling-form summary of the user's match. */
+  tag?: "involve" | "status";
+  /** A chance big enough to count as a key moment even though it did not end in a goal. */
+  big?: boolean;
 }
+
+/** What a player did in the flow of play (not just the moments that decide a match). Only tracked in detailed matches. */
+export interface Involvement {
+  touches: number;
+  passes: number;
+  passesOk: number;
+  dribbles: number;
+  dribblesWon: number;
+  duels: number;
+  duelsWon: number;
+  aerials: number;
+  aerialsWon: number;
+  interceptions: number;
+  clearances: number;
+  recoveries: number;
+  possLost: number;
+  crosses: number;
+  crossesOk: number;
+  boxTouches: number;
+  claims: number;
+  /** Expected goals from the player's own shots. */
+  xg: number;
+  /** Chances the player had a clear sight of and wasted, or gave away through an error. */
+  errors: number;
+}
+
+export type RatingReason =
+  | "goal" | "assist" | "chance" | "shot" | "save" | "cleanSheet" | "defence" | "duel" | "dribble" | "pass" | "cross" | "aerial"
+  | "possession" | "missed" | "error" | "card" | "conceded" | "decision";
 
 export interface PlayerLine {
   id: string;
@@ -108,20 +147,32 @@ export interface PlayerLine {
   xgFaced?: number;
   /** Counts of trait-relevant actions (shots by type, chances created, interceptions…): evidence for trait development. */
   acts?: Partial<Record<SignalKey, number>>;
+  /** Flow-of-play counts (detailed matches only). */
+  inv?: Involvement;
+  /** Rating points earned or lost per kind of action, so a rating can be explained afterwards (detailed matches only). */
+  why?: Partial<Record<RatingReason, number>>;
+  /** Why the player left the pitch. */
+  offReason?: "sub" | "injury" | "red";
 }
 
 export interface DecisionOption {
   id: string;
   label: string;
   detail: string;
-  /** Rough success odds 0-1 shown to the player as a hint. */
+  /** Success odds 0-1. Used to auto-resolve and to bucket the risk label; never shown as a number. */
   odds: number;
+  /** The abilities this choice leans on, as the player knows them. */
+  skills?: string[];
+  /** One of the player's traits makes this the natural thing for him to try. */
+  suits?: boolean;
 }
 
 export interface PendingDecision {
   minute: number;
-  kind: "shoot" | "create" | "defend" | "keep" | "knock";
+  kind: "shoot" | "create" | "defend" | "keep" | "knock" | "progress" | "hold" | "claim";
   prompt: string;
+  /** A short label for what kind of moment this is (shown over the prompt). */
+  moment?: string;
   options: DecisionOption[];
 }
 
@@ -134,6 +185,9 @@ export interface MatchResult {
   lines: PlayerLine[];
   events: MatchEvent[];
   stats: {
+    /** Passes attempted and completed (detailed matches only). */
+    passes?: [number, number];
+    passesOk?: [number, number];
     possession: [number, number];
     shots: [number, number];
     onTarget: [number, number];
@@ -205,6 +259,11 @@ const MAX_LAPSE = 0.03;
 const MAX_COUNTER = 0.05;
 /** Minutes after coming on during which a Super Sub's fresh legs count. */
 const SUB_WINDOW = 30;
+/** Display names for the abilities a choice leans on. */
+const skillNames = (...keys: AttrKey[]) => keys.map((k) => ATTR_LABEL[k]);
+
+/** The most the user is asked in one match (about one choice every seven minutes). */
+export const MAX_DECISIONS = 14;
 
 interface LiveTeam {
   input: TeamInput;
@@ -222,6 +281,10 @@ interface LiveTeam {
   yellows: number;
   reds: number;
   possessionTicks: number;
+  /** Attacks by the way they went: [left, centre, right]. Only tracked in detailed matches. */
+  flank: [number, number, number];
+  passes: number;
+  passesOk: number;
   cache?: TeamCache;
 }
 
@@ -245,7 +308,6 @@ interface TeamCache {
   build: number;
 }
 
-type ChanceType = "open" | "header" | "long" | "oneonone" | "penalty" | "freekick";
 
 const XG_BASE: Record<ChanceType, number> = { open: 0.12, header: 0.095, long: 0.04, oneonone: 0.34, penalty: 0.76, freekick: 0.065 };
 
@@ -266,8 +328,6 @@ const MID_KEYS: AttrKey[] = ["passing", "vision", "firstTouch", "positioning", "
 const ATT_KEYS: AttrKey[] = ["finishing", "dribbling", "pace", "composure", "firstTouch", "offBall", "technique", "agility"];
 const DEF_KEYS: AttrKey[] = ["tackling", "positioning", "strength", "heading", "pace", "marking", "interceptions", "anticipation"];
 
-/** A weighted blend of attributes (weights sum to 1). Who gets involved in an action, and how well it goes, usually depends on several. */
-type Mix = readonly (readonly [AttrKey, number])[];
 const PICK_SHOOT: Mix = [["finishing", 0.7], ["offBall", 0.3]];
 const PICK_HEADER: Mix = [["heading", 0.55], ["jumping", 0.25], ["offBall", 0.2]];
 const PICK_LONG: Mix = [["longShots", 0.75], ["technique", 0.25]];
@@ -319,7 +379,11 @@ function zonesOfFx(eff: Record<AttrKey, number>, fx?: MatchFx): [number, number,
   return fx ? [z[0] * (fx.zoneMid ?? 1), z[1] * (fx.zoneAtt ?? 1), z[2] * (fx.zoneDef ?? 1)] : z;
 }
 
-function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm: number): LivePlayer {
+export function emptyInv(): Involvement {
+  return { touches: 0, passes: 0, passesOk: 0, dribbles: 0, dribblesWon: 0, duels: 0, duelsWon: 0, aerials: 0, aerialsWon: 0, interceptions: 0, clearances: 0, recoveries: 0, possLost: 0, crosses: 0, crossesOk: 0, boxTouches: 0, claims: 0, xg: 0, errors: 0 };
+}
+
+function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm: number, detail: boolean): LivePlayer {
   // A good or bad day: it changes how the player actually performs, so it shows in goals and ratings alike.
   const condition = conditionFactor(input) * (1 + dayForm);
   // Bench players get their effective attributes lazily when they come on.
@@ -339,6 +403,7 @@ function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm
     line: {
       id: input.id, side, slot: input.slot, started, minuteOn: started ? 0 : -1, minuteOff: null, rating: 6.0,
       goals: 0, assists: 0, shots: 0, onTarget: 0, keyPasses: 0, tackles: 0, saves: 0, fouls: 0, yellow: 0, red: 0, injured: false, conceded: 0, xgFaced: 0,
+      ...(detail ? { inv: emptyInv(), why: {} } : {}),
     },
   };
 }
@@ -361,18 +426,40 @@ export class MatchEngine {
   private goalsList: MatchResult["goals"] = [];
   private injuries: MatchResult["injuries"] = [];
   private phaseEnd = 90;
+  /**
+   * A separate stream for the flow of play (touches, passes, duels) and for choosing which moments the user is asked about. It
+   * exists only in detailed matches, so every other match in the world draws exactly the numbers it always did, and the
+   * football the user's player is part of is not nudged by being watched.
+   */
+  private irng?: Rng;
+  /** Wording and rationing of the user's commentary lines: kept off the flow stream so being the user never changes how a match plays. */
+  private crng?: Rng;
+  private userId: string | undefined;
+  private possHist: Side[] = [];
+  private touchHist: number[] = [];
+  private ratingHist: number[] = [];
+  private lastNoteMinute = -99;
+  private lastStatusMinute = -99;
+  private statusMade = 0;
+  private statusKinds: Record<string, number> = {};
+  private duelStreak = 0;
 
   constructor(input: MatchInput, rng: Rng) {
     this.input = input;
     this.rng = rng;
+    if (input.detail || input.interactive) {
+      this.irng = rng.fork("flow");
+      this.crng = rng.fork("notes");
+    }
+    this.userId = [...input.home.starters, ...input.home.bench, ...input.away.starters, ...input.away.bench].find((p) => p.isUser)?.id;
     const mk = (t: TeamInput, side: Side): LiveTeam => ({
       input: t,
       side,
-      players: t.starters.map((p) => makeLive(p, side, true, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)))),
-      bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)))),
+      players: t.starters.map((p) => makeLive(p, side, true, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)), input.detail)),
+      bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)), input.detail)),
       subsUsed: 0,
       subWindows: 0,
-      goals: 0, shots: 0, onTarget: 0, xg: 0, corners: 0, fouls: 0, yellows: 0, reds: 0, possessionTicks: 0,
+      goals: 0, shots: 0, onTarget: 0, xg: 0, corners: 0, fouls: 0, yellows: 0, reds: 0, possessionTicks: 0, flank: [0, 0, 0], passes: 0, passesOk: 0,
     });
     this.teams = { home: mk(input.home, "home"), away: mk(input.away, "away") };
     this.stoppage = [rng.int(1, 3), rng.int(2, 6)];
@@ -576,8 +663,15 @@ export class MatchEngine {
     return last;
   }
 
-  private bump(p: LivePlayer | undefined, delta: number) {
-    if (p) p.line.rating += delta;
+  private bump(p: LivePlayer | undefined, delta: number, why?: RatingReason) {
+    if (!p) return;
+    p.line.rating += delta;
+    if (why && p.line.why) p.line.why[why] = (p.line.why[why] ?? 0) + delta;
+  }
+
+  /** A small rating nudge for an action that could have gone either way: zero on average, so being involved neither pays nor costs. */
+  private dev(p: LivePlayer, k: number, got: boolean, prob: number, why: RatingReason) {
+    this.bump(p, k * ((got ? 1 : 0) - prob), why);
   }
 
   // ------------------------------------------------------------ public API
@@ -590,6 +684,7 @@ export class MatchEngine {
     if (this.minute % 6 === 0 || this.minute === 20) this.invalidate();
     this.playPhase();
     if (!this.pending) this.afterPhase();
+    if (this.irng) this.watch();
     return this.events.slice(before);
   }
 
@@ -649,7 +744,7 @@ export class MatchEngine {
     let best = opts[0];
     let bestV = -1;
     for (const o of opts) {
-      const v = o.odds + this.rng.normal(0, 0.08);
+      const v = (this.pendingCtx?.ev?.[o.id] ?? o.odds) + this.rng.normal(0, 0.08);
       if (v > bestV) {
         bestV = v;
         best = o;
@@ -687,8 +782,11 @@ export class MatchEngine {
     const att = this.teams[attSide];
     const def = this.teams[this.other(attSide)];
     att.possessionTicks++;
-    const sAtt = this.strength(att);
     const sDef = this.strength(def);
+    if (this.irng) {
+      this.possHist.push(attSide);
+      this.involve(att, def);
+    }
 
     // Foul in midfield / transition
     const sDef0 = this.strength(def);
@@ -704,19 +802,33 @@ export class MatchEngine {
     if (sDef.agg.lapse > 0 && this.rng.chance(sDef.agg.lapse)) {
       const culprit = this.lapseCulprit(def);
       if (culprit) {
-        this.bump(culprit, -0.3);
+        this.bump(culprit, -0.3, "error");
+        if (culprit.line.inv) culprit.line.inv.errors++;
         this.log({ minute: this.minute, side: def.side, type: "foul", text: `${this.name(culprit)} gifts the ball away!` });
       }
       this.createChance(att, def, this.rng.chance(0.45) ? "oneonone" : "open");
       return;
     }
 
+    // A moment for the user's player: the move runs through him, or the attack is coming at him.
+    if (this.maybeMoment(att, def)) return;
+    this.contest(att, def, 1);
+  }
+
+  /**
+   * The phase itself: does the attack turn into a chance, or does the defence win it back? `pMul` is how a decision has shifted the
+   * attack's odds (1 = the phase as it would have gone anyway); `credit` is who gets the shot or the pass when the move pays off.
+   */
+  private contest(att: LiveTeam, def: LiveTeam, pMul: number, credit?: { type?: ChanceType; shooter?: LivePlayer; creator?: LivePlayer | null; xgMul?: number }) {
+    const sAtt = this.strength(att);
+    const sDef = this.strength(def);
+    const foulMul = clamp(1 + (sDef.aggr - REF.aggr) / 180, 0.8, 1.25);
     // Soft-limit huge mismatches so cup ties stay believable.
     const gap = sAtt.att - sDef.def;
     const quality = Math.exp((15 * Math.tanh(gap / 15)) / 45);
     // A back line that reads the game cuts passes out before they become chances.
     const laneMul = 1 - clamp((sDef.lane - REF.lane) * 0.0035, -0.05, 0.07);
-    const pChance = clamp(M.chanceBase * 2.2 * quality * laneMul, 0.07, 0.55);
+    const pChance = clamp(M.chanceBase * 2.2 * quality * laneMul * pMul, 0.07, pMul > 1 ? 0.7 : 0.55);
     if (!this.rng.chance(pChance)) {
       // Defensive success — credit a defender occasionally.
       if (this.rng.chance(0.35)) {
@@ -726,7 +838,7 @@ export class MatchEngine {
         if (d) {
           d.line.tackles++;
           if (inter) this.act(d, "intercept");
-          this.bump(d, 0.06);
+          this.bump(d, 0.06, "defence");
           // Winning it back can turn straight into a break (Counter-Attack Threat, Transition Specialist…).
           // Reading where the ball will go next turns a won ball into a break a little more often.
           const counter = sDef.agg.counter + clamp((this.spec(d, [["anticipation", 0.7], ["acceleration", 0.3]]) - REF.anticipation) / 600, 0, 0.02);
@@ -734,7 +846,7 @@ export class MatchEngine {
             this.createChance(def, att, this.rng.chance(0.4) ? "oneonone" : "open");
             return;
           }
-          if (d.input.isUser && this.input.interactive && this.canAsk() && this.rng.chance(0.22)) {
+          if (d.input.isUser && this.input.interactive && this.canAsk(0.6) && this.rng.chance(0.22)) {
             this.askDefend(d, att, def);
             return;
           }
@@ -743,7 +855,7 @@ export class MatchEngine {
       if (this.rng.chance(0.12 * foulMul)) this.foul(def, att, true);
       return;
     }
-    this.createChance(att, def);
+    this.createChance(att, def, credit?.type, credit?.shooter, credit?.creator, credit?.xgMul ?? 1);
   }
 
   /** Who is to blame for a lapse: the player most prone to them, weighted by how prone. */
@@ -839,6 +951,7 @@ export class MatchEngine {
       if (creator && creator.input.isUser) return this.askCreate(att, def, creator, shooter, type);
       const keeper = this.onPitch(def).find((p) => p.input.slot === "GK");
       if (keeper?.input.isUser && (type === "oneonone" || type === "open") && this.rng.chance(0.5)) return this.askKeep(att, def, shooter, creator ?? null, type, keeper);
+      if (keeper?.input.isUser && type === "header" && this.rng.chance(0.5)) return this.askClaim(att, def, shooter, creator ?? null, keeper);
     }
     this.resolveShot(att, def, shooter, creator ?? null, type, xgMul);
   }
@@ -903,12 +1016,13 @@ export class MatchEngine {
     att.shots++;
     att.xg += xg;
     shooter.line.shots++;
+    if (shooter.line.inv) shooter.line.inv.xg += xg;
     const shotAct = SHOT_ACT[type];
     if (shotAct) this.act(shooter, shotAct);
     if (creator) {
       creator.line.keyPasses++;
       this.act(creator, type === "header" ? "chanceCross" : type === "oneonone" ? "chanceThrough" : "chanceOpen");
-      this.bump(creator, 0.1);
+      this.bump(creator, 0.1, "chance");
     }
     this.creditDistribution(att, type);
     const sideTag = att.side;
@@ -931,12 +1045,15 @@ export class MatchEngine {
         keeper.line.saves++;
         keeper.line.xgFaced = (keeper.line.xgFaced ?? 0) + Math.max(xg, 0.05);
         if (type === "oneonone") this.act(keeper, "save1v1");
-        else if (type === "header") this.act(keeper, "claim");
-        this.bump(keeper, 0.2);
+        else if (type === "header") {
+          this.act(keeper, "claim");
+          if (keeper.line.inv) keeper.line.inv.claims++;
+        }
+        this.bump(keeper, 0.2, "save");
       }
-      this.bump(shooter, 0.04);
+      this.bump(shooter, 0.04, "shot");
       if (this.rng.chance(0.3)) att.corners++;
-      this.log({ minute: this.minute, side: sideTag, type: "save", text: `${desc} — ${keeper ? this.name(keeper) : "the keeper"} saves!`, playerId: shooter.input.id, otherId: keeper?.input.id, user: shooter.input.isUser || keeper?.input.isUser });
+      this.log({ minute: this.minute, side: sideTag, type: "save", text: `${desc} — ${keeper ? this.name(keeper) : "the keeper"} saves!`, playerId: shooter.input.id, otherId: keeper?.input.id, user: shooter.input.isUser || keeper?.input.isUser, big: xg >= 0.15 });
       return;
     }
     const miss = this.rng.next();
@@ -947,13 +1064,16 @@ export class MatchEngine {
       if (blocker) {
         blocker.line.tackles++;
         this.act(blocker, "block");
-        this.bump(blocker, 0.08);
+        this.bump(blocker, 0.08, "defence");
       }
       att.corners += this.rng.chance(0.5) ? 1 : 0;
       this.log({ minute: this.minute, side: sideTag, type: "blocked", text: `${desc} — blocked by ${blocker ? this.name(blocker) : "a defender"}.`, playerId: shooter.input.id, otherId: blocker?.input.id, user: shooter.input.isUser || blocker?.input.isUser });
     } else {
-      if (xg > 0.25) this.bump(shooter, -0.18);
-      this.log({ minute: this.minute, side: sideTag, type: "miss", text: `${desc} — ${xg > 0.3 ? "a huge chance wasted!" : "wide of the target."}`, playerId: shooter.input.id, user: shooter.input.isUser });
+      if (xg > 0.25) {
+        this.bump(shooter, -0.18, "missed");
+        if (shooter.line.inv) shooter.line.inv.errors++;
+      }
+      this.log({ minute: this.minute, side: sideTag, type: "miss", text: `${desc} — ${xg > 0.3 ? "a huge chance wasted!" : "wide of the target."}`, playerId: shooter.input.id, user: shooter.input.isUser, big: xg > 0.25 });
     }
   }
 
@@ -977,15 +1097,15 @@ export class MatchEngine {
     const goalAct = GOAL_ACT[type];
     if (goalAct) this.act(shooter, goalAct);
     if (this.minute >= 75 && Math.abs(att.goals - def.goals) <= 1) this.act(shooter, "lateGoal");
-    this.bump(shooter, type === "penalty" ? 0.7 : 1.05);
+    this.bump(shooter, type === "penalty" ? 0.7 : 1.05, "goal");
     if (creator) {
       creator.line.assists++;
-      this.bump(creator, 0.6);
+      this.bump(creator, 0.6, "assist");
     }
     for (const p of this.onPitch(def)) {
       p.line.conceded++;
-      if (p.input.slot === "GK") this.bump(p, -0.3);
-      else if (["CB", "RB", "LB"].includes(p.input.slot)) this.bump(p, -0.12);
+      if (p.input.slot === "GK") this.bump(p, -0.3, "conceded");
+      else if (["CB", "RB", "LB"].includes(p.input.slot)) this.bump(p, -0.12, "conceded");
     }
     this.goalsList.push({ minute: this.minute, side: att.side, scorer: shooter.input.id, assist: creator?.input.id, penalty: type === "penalty" });
     this.invalidate();
@@ -1006,7 +1126,7 @@ export class MatchEngine {
     if (!fouler) return;
     def.fouls++;
     fouler.line.fouls++;
-    this.bump(fouler, -0.05);
+    this.bump(fouler, -0.05, "card");
     const card = this.rng.next();
     // Bookings go to the aggressive and the rash: a clear head (decisions) makes the same challenge a cleaner one.
     const temper = clamp(1 + (this.val(fouler, "aggression") - REF.aggr) / 140 - (this.spec(fouler, "decisions") - REF.decisions) / 200, 0.6, 1.5);
@@ -1016,7 +1136,7 @@ export class MatchEngine {
     else if (card < redP + M.yellowPerFoul * (dangerous ? 1.5 : 1) * cardMul) {
       fouler.line.yellow++;
       def.yellows++;
-      this.bump(fouler, -0.35);
+      this.bump(fouler, -0.35, "card");
       if (fouler.line.yellow >= 2) this.sendOff(def, fouler, "a second yellow card");
       else this.log({ minute: this.minute, side: def.side, type: "yellow", text: `Yellow card for ${this.name(fouler)}.`, playerId: fouler.input.id, user: fouler.input.isUser });
     } else if (this.input.detail && this.rng.chance(0.3)) {
@@ -1035,7 +1155,8 @@ export class MatchEngine {
     t.reds++;
     p.onPitch = false;
     p.line.minuteOff = this.minute;
-    this.bump(p, -1.4);
+    p.line.offReason = "red";
+    this.bump(p, -1.4, "card");
     this.invalidate();
     this.log({ minute: this.minute, side: t.side, type: "red", text: `RED CARD! ${this.name(p)} is sent off for ${why}.`, playerId: p.input.id, user: p.input.isUser });
   }
@@ -1089,6 +1210,7 @@ export class MatchEngine {
       if (forced) {
         off.onPitch = false;
         off.line.minuteOff = this.minute;
+        off.line.offReason = "injury";
         this.invalidate();
       }
       return false;
@@ -1099,6 +1221,7 @@ export class MatchEngine {
     const pick = candidates.sort((x, y) => this.subFit(y, slot) - this.subFit(x, slot))[0];
     off.onPitch = false;
     off.line.minuteOff = this.minute;
+    off.line.offReason = forced ? "injury" : "sub";
     pick.input = { ...pick.input, slot };
     pick.eff = effective(pick.input, pick.condition);
     pick.lvl = overallExact(pick.input.attrs, slot) * pick.condition;
@@ -1111,6 +1234,9 @@ export class MatchEngine {
     t.subsUsed++;
     this.invalidate();
     this.log({ minute: this.minute, side: t.side, type: "sub", text: `Substitution ${t.input.short}: ${this.name(pick)} on for ${this.name(off)}.`, playerId: pick.input.id, otherId: off.input.id, user: pick.input.isUser || off.input.isUser });
+    if (pick.input.isUser && this.input.detail) {
+      this.log({ minute: this.minute, side: t.side, type: "info", text: `YOU'RE COMING ON at ${slot}. ${this.subContext(t, off, pick)}`, playerId: pick.input.id, user: true, tag: "involve" });
+    }
     return true;
   }
 
@@ -1176,11 +1302,12 @@ export class MatchEngine {
         p.line.rating += clamp(quality, R.qualityCap[0], R.qualityCap[1]);
         if (gk) {
           // Keepers are judged on clean sheets and goals prevented (expected goals faced minus goals conceded).
-          if (opp.goals === 0 && mins >= 60) p.line.rating += R.keeperCleanSheet;
-          p.line.rating += clamp(((p.line.xgFaced ?? 0) - p.line.conceded) * R.keeperPrevented, -1, 1.3);
+          if (opp.goals === 0 && mins >= 60) this.bump(p, R.keeperCleanSheet, "cleanSheet");
+          const prevented = clamp(((p.line.xgFaced ?? 0) - p.line.conceded) * R.keeperPrevented, -1, 1.3);
+          this.bump(p, prevented, prevented >= 0 ? "save" : "conceded");
         } else {
           // Outfield players share in how well the team controlled the game.
-          if (["CB", "RB", "LB"].includes(p.line.slot) && opp.goals === 0 && mins >= 60) p.line.rating += 0.35;
+          if (["CB", "RB", "LB"].includes(p.line.slot) && opp.goals === 0 && mins >= 60) this.bump(p, 0.35, "cleanSheet");
           p.line.rating += clamp((t.xg - opp.xg) * R.dominance, -0.45, 0.6) * Math.min(1, mins / 60);
         }
         // Form on the day, plus consistency-scaled noise.
@@ -1201,7 +1328,6 @@ export class MatchEngine {
     const all = [...unique.values()];
     const winnerSide: Side | null = h.goals > a.goals ? "home" : a.goals > h.goals ? "away" : null;
     const motm = [...all].sort((x, y) => y.rating - x.rating || Number(y.side === winnerSide) - Number(x.side === winnerSide) || y.goals - x.goals)[0];
-    const total = h.possessionTicks + a.possessionTicks || 1;
     return {
       homeGoals: h.goals,
       awayGoals: a.goals,
@@ -1210,16 +1336,7 @@ export class MatchEngine {
       goals: this.goalsList,
       lines: all,
       events: this.events,
-      stats: {
-        possession: [Math.round((h.possessionTicks / total) * 100), 100 - Math.round((h.possessionTicks / total) * 100)],
-        shots: [h.shots, a.shots],
-        onTarget: [h.onTarget, a.onTarget],
-        xg: [Math.round(h.xg * 100) / 100, Math.round(a.xg * 100) / 100],
-        corners: [h.corners, a.corners],
-        fouls: [h.fouls, a.fouls],
-        yellows: [h.yellows, a.yellows],
-        reds: [h.reds, a.reds],
-      },
+      stats: this.statsNow(),
       motm: motm?.id ?? "",
       injuries: this.injuries,
     };
@@ -1231,7 +1348,25 @@ export class MatchEngine {
   }
 
   get liveStats() {
-    return this.result().stats;
+    return this.statsNow();
+  }
+
+  private statsNow(): MatchResult["stats"] {
+    const h = this.teams.home;
+    const a = this.teams.away;
+    const total = h.possessionTicks + a.possessionTicks || 1;
+    const hp = Math.round((h.possessionTicks / total) * 100);
+    return {
+      possession: [hp, 100 - hp],
+      shots: [h.shots, a.shots],
+      onTarget: [h.onTarget, a.onTarget],
+      xg: [Math.round(h.xg * 100) / 100, Math.round(a.xg * 100) / 100],
+      corners: [h.corners, a.corners],
+      fouls: [h.fouls, a.fouls],
+      yellows: [h.yellows, a.yellows],
+      reds: [h.reds, a.reds],
+      ...(this.irng ? { passes: [h.passes, a.passes] as [number, number], passesOk: [h.passesOk, a.passesOk] as [number, number] } : {}),
+    };
   }
 
   lineFor(id: string): PlayerLine | undefined {
@@ -1239,6 +1374,15 @@ export class MatchEngine {
       const t = this.teams[side];
       const p = [...t.players, ...t.bench].find((x) => x.input.id === id);
       if (p) return p.line;
+    }
+    return undefined;
+  }
+
+  /** A player's energy (0–100) as the match has worn it down. */
+  energyOf(id: string): number | undefined {
+    for (const side of ["home", "away"] as Side[]) {
+      const p = [...this.teams[side].players, ...this.teams[side].bench].find((x) => x.input.id === id);
+      if (p) return Math.round(p.energy);
     }
     return undefined;
   }
@@ -1256,9 +1400,563 @@ export class MatchEngine {
     this.invalidate();
   }
 
+  // ------------------------------------------------------------ the flow of play
+  private inv(p: LivePlayer): Involvement {
+    return (p.line.inv ??= emptyInv());
+  }
+
+  /** How much of the ball a player handles at this point of a move: build-up players early, forwards late, and whoever is on the flank the move is using. */
+  private flowWeight(p: LivePlayer, zone: number, flank: 0 | 1 | 2): number {
+    const slot = p.input.slot;
+    const base = BUILD_W[slot] * (1 - zone) + FINAL_W[slot] * zone;
+    const side = SIDE_OF[slot];
+    const lane = side === 1 ? (flank === 1 ? 1.25 : 0.8) : side === flank ? 2.4 : 0.45;
+    // Quality shows in how well a player does things far more than in how often he is on the ball.
+    return base * lane * Math.pow(this.rate(p, PASS_MIX) / 60, 0.35) * (zone > 0.5 ? this.pref(p, "create") : 1);
+  }
+
+  private pickFlow(t: LiveTeam, zone: number, flank: 0 | 1 | 2, exclude?: LivePlayer): LivePlayer | undefined {
+    const r = this.irng as Rng;
+    let total = 0;
+    for (const p of t.players) if (p.onPitch && p !== exclude) total += this.flowWeight(p, zone, flank);
+    if (total <= 0) return undefined;
+    let x = r.next() * total;
+    let last: LivePlayer | undefined;
+    for (const p of t.players) {
+      if (!p.onPitch || p === exclude) continue;
+      const w = this.flowWeight(p, zone, flank);
+      if (w <= 0) continue;
+      last = p;
+      x -= w;
+      if (x <= 0) return p;
+    }
+    return last;
+  }
+
+  /** A defender for a kind of defensive work: who reads passes, who wins ground duels, who wins in the air, who clears. */
+  private pickDefFlow(t: LiveTeam, kind: "lane" | "duel" | "air" | "clear"): LivePlayer | undefined {
+    const r = this.irng as Rng;
+    const mix = kind === "lane" ? PICK_INTERCEPT : kind === "duel" ? PICK_TACKLE : AIR_MIX;
+    const weights = kind === "clear" ? CLEAR_WEIGHT : DEFEND_WEIGHT;
+    let total = 0;
+    for (const p of t.players) if (p.onPitch) total += weights[p.input.slot] * (this.rate(p, mix) / 60);
+    if (total <= 0) return undefined;
+    let x = r.next() * total;
+    let last: LivePlayer | undefined;
+    for (const p of t.players) {
+      if (!p.onPitch) continue;
+      const w = weights[p.input.slot] * (this.rate(p, mix) / 60);
+      if (w <= 0) continue;
+      last = p;
+      x -= w;
+      if (x <= 0) return p;
+    }
+    return last;
+  }
+
+  /** The way a move goes: down the left, through the middle, or down the right, tilted by who is on each flank. */
+  private chooseFlank(t: LiveTeam): 0 | 1 | 2 {
+    const r = this.irng as Rng;
+    const lane = (side: 0 | 2) => {
+      let s = 0;
+      let n = 0;
+      for (const p of t.players) {
+        if (!p.onPitch || SIDE_OF[p.input.slot] !== side) continue;
+        s += this.rate(p, WIDE_MIX);
+        n++;
+      }
+      return n ? 0.29 * Math.exp((s / n - 64) / 90) : 0.1;
+    };
+    const wl = lane(0);
+    const wr = lane(2);
+    const x = r.next() * (wl + wr + 0.42);
+    return x < wl ? 0 : x < wl + wr ? 2 : 1;
+  }
+
+  /**
+   * One possession phase as the ball is actually moved: who passes to whom, who carries, who crosses, and who wins or loses each little
+   * contest. None of it decides the result of the phase (that stays with the chance model); it is the football around it, drawn from
+   * players' positions, the flank the move is on, and their attributes against the opposition's pressing.
+   */
+  private involve(att: LiveTeam, def: LiveTeam) {
+    const r = this.irng as Rng;
+    const sA = this.strength(att);
+    const sD = this.strength(def);
+    const press = clamp((sD.press - REF.press - (sA.resist - REF.resist)) * 0.004, -0.05, 0.08);
+    const flank = this.chooseFlank(att);
+    att.flank[flank]++;
+    const st = att.input.style;
+    const n = clamp(r.int(8, 13) + Math.round(((st?.tempo ?? 0.5) - 0.5) * 3), 6, 15);
+    let holder = this.pickFlow(att, 0, flank);
+    for (let i = 0; i < n && holder; i++) {
+      const zone = (i + 1) / n;
+      const slot = holder.input.slot;
+      if (zone >= 0.7 && flank !== 1 && CROSSERS.has(slot) && SIDE_OF[slot] === flank && r.chance(0.3)) {
+        this.flowCross(att, def, holder, press);
+        return;
+      }
+      if (zone > 0.2 && zone < 0.9 && r.chance(CARRY_W[slot] * (flank !== 1 ? 1.3 : 1))) {
+        if (!this.flowDribble(def, holder, press)) return;
+      }
+      const next = this.pickFlow(att, Math.min(1, zone + 1 / n), flank, holder);
+      if (!next) break;
+      const base = zone < 0.4 ? 0.9 : zone < 0.75 ? 0.82 : 0.7;
+      const pOk = clamp(base + (this.rate(holder, PASS_MIX) - 62) / 240 - press, 0.4, 0.97);
+      const ok = r.chance(pOk);
+      const iv = this.inv(holder);
+      iv.touches++;
+      iv.passes++;
+      att.passes++;
+      this.dev(holder, zone > 0.6 ? 0.035 : 0.018, ok, pOk, "pass");
+      if (!ok) {
+        iv.possLost++;
+        const d = this.pickDefFlow(def, "lane");
+        if (d) {
+          const di = this.inv(d);
+          di.recoveries++;
+          if (r.chance(0.6)) {
+            di.interceptions++;
+            this.bump(d, 0.015, "defence");
+            this.note(d, "interception");
+          } else this.note(d, "recovery");
+        }
+        this.note(holder, "passLost");
+        return;
+      }
+      iv.passesOk++;
+      att.passesOk++;
+      if (zone > 0.65 && FINISHERS.has(next.input.slot) && r.chance(0.55)) this.inv(next).boxTouches++;
+      holder = next;
+    }
+    if (holder) this.inv(holder).touches++;
+    // The danger passes: a back line clears what the move leaves loose.
+    if (r.chance(0.45)) {
+      const d = this.pickDefFlow(def, "clear");
+      if (d) {
+        this.inv(d).clearances++;
+        this.bump(d, 0.015, "defence");
+        this.note(d, "clearance");
+      }
+    }
+  }
+
+  /** A carry past a defender. Returns whether the carrier keeps the ball. */
+  private flowDribble(def: LiveTeam, carrier: LivePlayer, press: number): boolean {
+    const r = this.irng as Rng;
+    const d = this.pickDefFlow(def, "duel");
+    if (!d) return true;
+    const iv = this.inv(carrier);
+    const di = this.inv(d);
+    const p = clamp(0.54 + (this.rate(carrier, DRIB_MIX) - this.rate(d, DUEL_MIX)) / 150 - press * 0.5, 0.2, 0.85);
+    const ok = r.chance(p);
+    iv.touches++;
+    iv.dribbles++;
+    iv.duels++;
+    di.duels++;
+    this.dev(carrier, 0.07, ok, p, "dribble");
+    this.dev(d, 0.05, !ok, 1 - p, "duel");
+    if (ok) {
+      iv.dribblesWon++;
+      iv.duelsWon++;
+      this.note(carrier, "dribbleWon");
+      this.note(d, "beaten");
+      this.duelStreakFor(d, false);
+      return true;
+    }
+    di.duelsWon++;
+    di.recoveries++;
+    iv.possLost++;
+    this.note(carrier, "dribbleLost");
+    this.note(d, "duelWon");
+    this.duelStreakFor(d, true);
+    return false;
+  }
+
+  private flowCross(att: LiveTeam, def: LiveTeam, crosser: LivePlayer, press: number) {
+    const r = this.irng as Rng;
+    const iv = this.inv(crosser);
+    iv.touches++;
+    iv.crosses++;
+    const p = clamp(0.3 + (this.rate(crosser, PICK_CROSS) - 62) / 150 - press, 0.12, 0.55);
+    const ok = r.chance(p);
+    this.dev(crosser, 0.05, ok, p, "cross");
+    if (!ok) {
+      const d = this.pickDefFlow(def, "clear");
+      if (d) {
+        this.inv(d).clearances++;
+        this.bump(d, 0.015, "defence");
+        this.note(d, "clearance");
+      }
+      this.note(crosser, "crossBlocked");
+      return;
+    }
+    iv.crossesOk++;
+    this.note(crosser, "crossOk");
+    const target = this.pickFlow(att, 1, 1, crosser);
+    const d = this.pickDefFlow(def, "air");
+    if (!target || !d) return;
+    const ti = this.inv(target);
+    const di = this.inv(d);
+    ti.touches++;
+    ti.boxTouches++;
+    ti.aerials++;
+    di.aerials++;
+    const pa = clamp(0.5 + (this.rate(target, AIR_MIX) - this.rate(d, AIR_MIX)) / 120, 0.2, 0.8);
+    const won = r.chance(pa);
+    this.dev(target, 0.05, won, pa, "aerial");
+    this.dev(d, 0.05, !won, 1 - pa, "aerial");
+    if (won) {
+      ti.aerialsWon++;
+      this.note(target, "aerialWon");
+      this.note(d, "aerialLost");
+    } else {
+      di.aerialsWon++;
+      di.clearances++;
+      this.note(target, "aerialLost");
+      this.note(d, "aerialWon");
+    }
+  }
+
+  private duelStreakFor(d: LivePlayer, won: boolean) {
+    if (!d.input.isUser) return;
+    this.duelStreak = won ? this.duelStreak + 1 : 0;
+  }
+
+  /** A line of commentary about something small the user's player did. Rationed, and always a true description of a counted action. */
+  private note(p: LivePlayer, kind: NoteKind) {
+    if (!p.input.isUser || !this.input.detail || this.minute - this.lastNoteMinute < 3) return;
+    const r = this.crng as Rng;
+    if (!r.chance(NOTE_CHANCE[kind])) return;
+    this.lastNoteMinute = this.minute;
+    this.log({ minute: this.minute, side: p.line.side, type: "info", text: r.pick(NOTE_TEXT[kind]), playerId: p.input.id, user: true, tag: "involve" });
+  }
+
+  private userLive(): LivePlayer | undefined {
+    if (!this.userId) return undefined;
+    for (const side of ["home", "away"] as Side[]) {
+      for (const p of this.teams[side].players) if (p.onPitch && p.input.id === this.userId) return p;
+    }
+    return undefined;
+  }
+
+  /** Once a minute: remember what the user's player has done, and now and then say how his match is going. */
+  private watch() {
+    const u = this.userLive();
+    if (!u) return;
+    this.touchHist.push(u.line.inv?.touches ?? 0);
+    this.ratingHist.push(u.line.rating);
+    if (this.minute % 5 === 0 && this.input.detail) this.statusCheck(u);
+  }
+
+  private statusCheck(u: LivePlayer) {
+    const iv = this.inv(u);
+    const slot = u.input.slot;
+    if (this.minute - u.line.minuteOn < 12 || this.minute - this.lastStatusMinute < 12 || this.statusMade >= 6) return;
+    const say = (kind: string, text: string) => {
+      if (this.minute - (this.statusKinds[kind] ?? -99) < 30) return false;
+      this.statusKinds[kind] = this.minute;
+      this.lastStatusMinute = this.minute;
+      this.statusMade++;
+      this.log({ minute: this.minute, side: u.line.side, type: "info", text, playerId: u.input.id, user: true, tag: "status" });
+      return true;
+    };
+    const len = this.touchHist.length;
+    const touches10 = len > 10 ? this.touchHist[len - 1] - this.touchHist[len - 11] : 99;
+    const ctx = this.userContext();
+    if (slot !== "GK" && touches10 <= 3) {
+      if (ctx && ctx.recentPossession !== undefined && ctx.recentPossession < 40) return void say("quiet", "Your team is struggling to progress the ball to you.");
+      if (ctx && ctx.laneShare !== undefined && ctx.laneShare < 0.22 && ctx.attacks >= 10) return void say("quiet", "Play is going down the other side — you're not seeing much of the ball.");
+      return void say("quiet", "You're struggling to get involved.");
+    }
+    if (this.duelStreak >= 3 && say("duels", `You've won ${this.duelStreak} consecutive defensive duels.`)) {
+      this.duelStreak = 0;
+      return;
+    }
+    if (WIDE_SLOTS.has(slot) && iv.dribblesWon >= 2 && iv.dribblesWon / Math.max(1, iv.dribbles) >= 0.6) return void say("space", "You're beginning to find space behind the full-back.");
+    if (slot === "ST" && iv.boxTouches >= 3) return void say("space", "You're getting into good positions in the box.");
+    const rl = this.ratingHist.length;
+    if (rl > 10) {
+      const trend = this.ratingHist[rl - 1] - this.ratingHist[rl - 11];
+      if (trend >= 0.35) return void say("form", "You're growing into the game.");
+      if (trend <= -0.35) return void say("form", "It isn't going your way at the moment.");
+    }
+  }
+
+  /** What the user's player can see of the match's shape: used by the UI to explain a quiet night. Derived from counted attacks. */
+  userContext(): FlowContext | undefined {
+    if (!this.userId) return undefined;
+    let line: PlayerLine | undefined;
+    let side: Side | undefined;
+    for (const s of ["home", "away"] as Side[]) {
+      const p = [...this.teams[s].players, ...this.teams[s].bench].find((x) => x.input.id === this.userId);
+      if (p) {
+        line = p.line;
+        side = s;
+      }
+    }
+    if (!line || !side) return undefined;
+    const t = this.teams[side];
+    const slot = line.slot;
+    const total = this.teams.home.possessionTicks + this.teams.away.possessionTicks;
+    const recent = this.possHist.slice(-10);
+    const attacks = t.flank[0] + t.flank[1] + t.flank[2];
+    const mine = SIDE_OF[slot];
+    return {
+      side,
+      slot,
+      possession: total ? Math.round((t.possessionTicks / total) * 100) : 50,
+      recentPossession: recent.length >= 6 ? Math.round((recent.filter((x) => x === side).length / recent.length) * 100) : undefined,
+      attacks,
+      flanks: [...t.flank] as [number, number, number],
+      laneShare: attacks ? t.flank[mine] / attacks : undefined,
+      lane: mine === 0 ? "left" : mine === 2 ? "right" : "centre",
+      goalsFor: t.goals,
+      goalsAgainst: this.teams[this.other(side)].goals,
+      style: t.input.style,
+      ratingTrend: this.ratingHist.length > 10 ? this.ratingHist[this.ratingHist.length - 1] - this.ratingHist[this.ratingHist.length - 11] : undefined,
+    };
+  }
+
+  /** Where a player is in the match, for the "You" card. */
+  playerState(id: string): PlayerState {
+    for (const side of ["home", "away"] as Side[]) {
+      const t = this.teams[side];
+      const p = [...t.players, ...t.bench].find((x) => x.input.id === id);
+      if (!p) continue;
+      const l = p.line;
+      if (l.minuteOn < 0) {
+        if (this.finished) return { phase: "unused" };
+        return { phase: this.isWarmingUp(t, p) ? "warming" : "bench" };
+      }
+      if (p.onPitch) return this.finished ? { phase: "fulltime", minuteOn: l.minuteOn, started: l.started } : { phase: "playing", minuteOn: l.minuteOn, started: l.started };
+      return { phase: "off", minuteOn: l.minuteOn, minuteOff: l.minuteOff ?? this.minute, started: l.started, reason: l.offReason ?? "sub" };
+    }
+    return { phase: "none" };
+  }
+
+  /** The starters the manager would take off next: the same test the substitution window uses. */
+  private tiredOnes(t: LiveTeam): LivePlayer[] {
+    return this.onPitch(t)
+      .filter((p) => p.input.slot !== "GK" && (p.energy < 58 || p.line.rating < 5.6 || (this.minute > 70 && p.energy < 70)))
+      .sort((x, y) => x.energy - y.energy);
+  }
+
+  /** A bench player is warming up when, by the manager's own test, the next window would bring him on. */
+  private isWarmingUp(t: LiveTeam, p: LivePlayer): boolean {
+    if (this.half !== 2 || this.minute < 52 || t.subsUsed >= M.subsMax || t.subWindows >= 3) return false;
+    const first = this.tiredOnes(t)[0];
+    if (!first) return false;
+    const candidates = t.bench.filter((b) => !b.onPitch && b.line.minuteOn < 0);
+    const pick = [...candidates].sort((x, y) => this.subFit(y, first.input.slot) - this.subFit(x, first.input.slot))[0];
+    return pick === p;
+  }
+
+  /** Why the manager is sending a substitute on: only reasons the score, the clock and the legs actually support. */
+  private subContext(t: LiveTeam, off: LivePlayer, on: LivePlayer): string {
+    const opp = this.teams[this.other(t.side)];
+    const diff = t.goals - opp.goals;
+    const slot = on.input.slot;
+    const attacker = ["ST", "RW", "LW", "AM"].includes(slot);
+    const oppDef = this.onPitch(opp).filter((p) => ["CB", "RB", "LB"].includes(p.input.slot));
+    const tired = oppDef.length ? oppDef.reduce((s, p) => s + p.energy, 0) / oppDef.length < 62 : false;
+    if (diff > 0 && this.minute >= 70) return attacker ? "Hold the ball up and run the clock down." : slot === "GK" ? "Keep it tight." : "Protect the lead.";
+    if (diff < 0 && this.minute >= 60) return attacker ? "Find an equaliser." : "Help push the side forward.";
+    if (attacker && tired) return "Attack their tired defenders.";
+    if (slot === "RW" || slot === "LW") return "Add width and stretch them.";
+    if (slot === "RB" || slot === "LB") return "Support the flank.";
+    if (slot === "ST") return `Lead the line in place of ${off.input.name}.`;
+    return "Keep possession and tidy things up.";
+  }
+
+  // ------------------------------------------------------------ moments the user is asked about
+  private optionOdds(p: LivePlayer, o: MomentOpt, opp: LiveTeam): number {
+    const wide = clamp((this.strength(opp).def - 70) / 150, -0.1, 0.1);
+    const adj = o.defending ? 0 : -wide;
+    return clamp(o.base + (this.rate(p, o.mix) - 62) / o.scale + adj + (o.suits ? 0.04 : 0), 0.12, 0.92);
+  }
+
+  /** How likely the user's player is to be the one involved at this point of the match, relative to his team-mates. */
+  private momentShare(t: LiveTeam, u: LivePlayer, attacking: boolean): number {
+    let total = 0;
+    let mine = 0;
+    for (const p of t.players) {
+      if (!p.onPitch) continue;
+      const w = attacking ? this.flowWeight(p, 0.5, 1) : DEFEND_WEIGHT[p.input.slot] * (this.rate(p, PICK_TACKLE) / 60);
+      total += w;
+      if (p === u) mine = w;
+    }
+    return total ? mine / total : 0;
+  }
+
+  private maybeMoment(att: LiveTeam, def: LiveTeam): boolean {
+    if (!this.input.interactive || this.pending || !this.irng) return false;
+    const u = this.userLive();
+    if (!u) return false;
+    const attacking = u.line.side === att.side;
+    if (!this.canAsk(0.4)) return false;
+    const slot = u.input.slot;
+    const r = this.irng;
+    if (attacking) {
+      const p = clamp(this.momentShare(att, u, true) * 0.85 * ATTACK_K[slot], 0, 0.2);
+      if (!r.chance(p)) return false;
+      this.askProgress(att, def, u);
+      return true;
+    }
+    const p = clamp(this.momentShare(def, u, false) * 1.0 * DEFEND_K[slot], 0, 0.22);
+    if (!r.chance(p)) return false;
+    this.askHold(att, def, u);
+    return true;
+  }
+
+  private buildOptions(u: LivePlayer, group: MomentOpt[], opp: LiveTeam): { options: DecisionOption[]; opts: Record<string, MomentOpt>; ev: Record<string, number> } {
+    const fx = u.fx;
+    const chosen = [...group];
+    const has = (id: string) => chosen.some((o) => o.id === id);
+    if (fx && !group[0]?.defending) {
+      if (isLongShot(fx) && !has("distance") && u.input.slot !== "GK") chosen.splice(chosen.length - 1, 0, MOMENT.distance);
+      if (isPlaymaker(fx) && !has("through") && !has("split") && u.input.slot !== "GK" && u.input.slot !== "ST") chosen.splice(chosen.length - 1, 0, MOMENT.split);
+      if (isTrickster(fx) && !has("takeOn") && u.input.slot !== "GK" && u.input.slot !== "CB") chosen.splice(chosen.length - 1, 0, MOMENT.takeOn);
+      if (isAerial(fx) && u.input.slot === "ST" && !has("attackCross")) chosen.splice(chosen.length - 1, 0, MOMENT.attackCross);
+    }
+    const out: DecisionOption[] = [];
+    const opts: Record<string, MomentOpt> = {};
+    const ev: Record<string, number> = {};
+    for (const base of chosen.slice(0, 5)) {
+      const o: MomentOpt = { ...base };
+      if (fx && !o.defending) {
+        if (o.id === "distance") o.suits = isLongShot(fx);
+        else if (o.id === "through" || o.id === "split") o.suits = isPlaymaker(fx);
+        else if (o.id === "takeOn") o.suits = isTrickster(fx);
+        else if (o.id === "cross") o.suits = (fx.createCross ?? 1) >= 1.2;
+        else if (o.id === "attackCross") o.suits = isAerial(fx);
+      }
+      const odds = this.optionOdds(u, o, opp);
+      out.push({ id: o.id, label: o.label, detail: o.detail, odds, skills: o.mix.map(([k]) => ATTR_LABEL[k]), suits: o.suits });
+      opts[o.id] = o;
+      ev[o.id] = o.defending ? 1 - (odds * o.pMulOk + (1 - odds) * (o.pMulFail ?? 1.3)) : odds * o.pMulOk - (1 - odds) * (0.3 + o.counter);
+    }
+    return { options: out, opts, ev };
+  }
+
+  private askProgress(att: LiveTeam, def: LiveTeam, u: LivePlayer) {
+    const slot = u.input.slot;
+    const { options, opts, ev } = this.buildOptions(u, ATTACK_SET[slot], def);
+    this.ask(
+      { minute: this.minute, kind: "progress", moment: slot === "GK" ? "Goalkeeper" : ["ST", "RW", "LW", "AM"].includes(slot) ? "Final third" : "Build-up", prompt: ATTACK_PROMPT[slot], options },
+      { kind: "progress", team: att, opp: def, player: u, creator: null, type: "open", opts, ev },
+    );
+  }
+
+  private askHold(att: LiveTeam, def: LiveTeam, u: LivePlayer) {
+    const slot = u.input.slot;
+    const { options, opts, ev } = this.buildOptions(u, DEFEND_SET[slot] ?? DEFEND_SET.CM, att);
+    this.ask(
+      { minute: this.minute, kind: "hold", moment: "Defending", prompt: DEFEND_PROMPT[slot] ?? DEFEND_PROMPT.CM, options },
+      { kind: "hold", team: def, opp: att, player: u, creator: null, type: "open", opts, ev },
+    );
+  }
+
+  private resolveMoment(ctx: PendingContext, optionId: string) {
+    const o = ctx.opts?.[optionId];
+    if (!o) return;
+    const u = ctx.player;
+    const opp = ctx.opp as LiveTeam;
+    const team = ctx.team;
+    const r = this.rng;
+    const odds = this.optionOdds(u, o, opp);
+    const ok = r.chance(odds);
+    const iv = this.inv(u);
+    const say = (text: string) => this.log({ minute: this.minute, side: team.side, type: "info", text, playerId: u.input.id, user: true, tag: "involve" });
+    this.dev(u, o.defending ? 0.12 : 0.1, ok, odds, "decision");
+    if (o.defending) {
+      // Defending: the attack is theirs; what the user chose shifts how dangerous it becomes.
+      if (ok) {
+        say(o.okText);
+        if (o.stat === "duel") {
+          iv.duels++;
+          iv.duelsWon++;
+          iv.recoveries++;
+          u.line.tackles++;
+          this.duelStreakFor(u, true);
+        } else if (o.stat === "lane") {
+          iv.interceptions++;
+          iv.recoveries++;
+          this.act(u, "intercept");
+        }
+        if (o.counter > 0 && r.chance(o.counter)) return this.createChance(team, opp, "open", undefined, undefined, 0.9);
+        return this.contest(opp, team, o.pMulOk);
+      }
+      say(o.failText);
+      if (o.stat === "duel") {
+        iv.duels++;
+        this.duelStreakFor(u, false);
+      }
+      return this.contest(opp, team, o.pMulFail ?? 1.3);
+    }
+    if (ok) {
+      say(o.okText);
+      if (o.stat === "pass") {
+        iv.passes++;
+        iv.passesOk++;
+        iv.touches++;
+        team.passes++;
+        team.passesOk++;
+      } else if (o.stat === "dribble") {
+        iv.dribbles++;
+        iv.dribblesWon++;
+        iv.duels++;
+        iv.duelsWon++;
+        iv.touches++;
+      } else if (o.stat === "cross") {
+        iv.crosses++;
+        iv.crossesOk++;
+        iv.touches++;
+      } else if (o.stat === "aerial") {
+        iv.aerials++;
+        iv.aerialsWon++;
+        iv.boxTouches++;
+      } else if (o.stat === "run") iv.boxTouches++;
+      if (o.credit === "shot") {
+        this.resolveShot(team, opp, u, null, o.type ?? "long", 1);
+        return;
+      }
+      const credit: { type?: ChanceType; shooter?: LivePlayer; creator?: LivePlayer | null; xgMul?: number } = { type: o.type, xgMul: 1.05 };
+      if (o.credit === "shooter") {
+        credit.shooter = u;
+        credit.creator = null;
+      } else if (o.credit === "creator") {
+        const shooter = this.pickWeighted(team, SHOOT_WEIGHT, PICK_SHOOT, u);
+        if (shooter) {
+          credit.shooter = shooter;
+          credit.creator = u;
+        } else credit.type = undefined;
+      } else credit.type = undefined;
+      return this.contest(team, opp, o.pMulOk, credit);
+    }
+    say(o.failText);
+    iv.possLost++;
+    if (o.stat === "pass") {
+      iv.passes++;
+      iv.touches++;
+      team.passes++;
+    } else if (o.stat === "dribble") {
+      iv.dribbles++;
+      iv.duels++;
+      iv.touches++;
+    } else if (o.stat === "cross") {
+      iv.crosses++;
+      iv.touches++;
+    } else if (o.stat === "aerial") iv.aerials++;
+    if (r.chance(o.counter)) this.createChance(opp, team, "open", undefined, undefined, 0.85);
+  }
+
   // ------------------------------------------------------------ decisions
-  private canAsk(): boolean {
-    return this.decisionsMade < 7 && this.minute - this.lastDecisionMinute >= 4;
+  /**
+   * Whether the user can be asked something now. A moment's importance sets how soon after the last one it may come; the ceiling is a
+   * density the match can carry (a choice every eight minutes or so), not a number of "first come" slots.
+   */
+  private canAsk(importance = 1): boolean {
+    return this.decisionsMade < MAX_DECISIONS && this.minute - this.lastDecisionMinute >= (importance >= 0.8 ? 3 : 4);
   }
 
   private ask(d: PendingDecision, ctx: PendingContext) {
@@ -1312,13 +2010,16 @@ export class MatchEngine {
     const dribble = this.dribbleOdds(shooter, gk);
     const where = type === "header" ? "The cross is coming in — you're unmarked at the back post." : type === "long" ? "The ball sits up for you 25 yards out." : type === "oneonone" ? "You're clean through on goal!" : "The ball drops to you in the box.";
     const options: DecisionOption[] = [
-      { id: "shoot", label: type === "header" ? "Power header" : "Shoot first time", detail: "Quick strike before the defence recovers.", odds: clamp(XG_BASE[type] * Math.exp((this.shooterQuality(shooter, type) - (Q_CENTRE - 5)) / 20) * 2.2, 0.08, 0.9) },
+      {
+        id: "shoot", label: type === "header" ? "Power header" : "Shoot first time", detail: "Quick strike before the defence recovers.", odds: clamp(XG_BASE[type] * Math.exp((this.shooterQuality(shooter, type) - (Q_CENTRE - 5)) / 20) * 2.2, 0.08, 0.9),
+        skills: type === "header" ? skillNames("heading", "jumping", "strength") : type === "long" ? skillNames("longShots", "technique", "composure") : type === "oneonone" ? skillNames("finishing", "composure", "technique") : skillNames("finishing", "composure", "firstTouch"),
+      },
     ];
     if (type !== "header") {
-      options.push({ id: "touch", label: "Take a touch, pick your spot", detail: "Better angle if your touch is good — risk losing it.", odds: touch * 0.85 });
-      if (type !== "long") options.push({ id: "dribble", label: type === "oneonone" ? "Round the keeper" : "Beat your man", detail: "High risk, high reward.", odds: dribble });
+      options.push({ id: "touch", label: "Take a touch, pick your spot", detail: "Better angle if your touch is good — risk losing it.", odds: touch * 0.85, skills: skillNames("firstTouch", "composure", "technique") });
+      if (type !== "long") options.push({ id: "dribble", label: type === "oneonone" ? "Round the keeper" : "Beat your man", detail: "High risk, high reward.", odds: dribble, skills: skillNames("dribbling", "agility", "balance") });
     }
-    if (mate) options.push({ id: "pass", label: `Square it to ${this.name(mate)}`, detail: "Unselfish — set up a teammate.", odds: pass * 0.8 });
+    if (mate) options.push({ id: "pass", label: `Square it to ${this.name(mate)}`, detail: "Unselfish — set up a teammate.", odds: pass * 0.8, skills: skillNames("passing", "vision", "decisions") });
     this.ask({ minute: this.minute, kind: "shoot", prompt: where, options }, { kind: "shoot", team: att, opp: def, player: shooter, creator, type, mate });
   }
 
@@ -1326,10 +2027,10 @@ export class MatchEngine {
     const through = this.throughOdds(creator);
     const cross = this.crossOdds(creator);
     const options: DecisionOption[] = [
-      { id: "through", label: `Thread it through to ${this.name(shooter)}`, detail: "Split the defence for a one-on-one.", odds: through },
-      { id: "cross", label: "Whip in a cross", detail: "Find a head in the box.", odds: cross },
-      { id: "self", label: "Have a go yourself", detail: "Shoot from range.", odds: clamp(0.25 + (this.val(creator, "longShots") - 65) / 100, 0.05, 0.6) },
-      { id: "recycle", label: "Keep possession", detail: "Play it safe and recycle.", odds: 0.95 },
+      { id: "through", label: `Thread it through to ${this.name(shooter)}`, detail: "Split the defence for a one-on-one.", odds: through, skills: skillNames("vision", "passing", "creativity") },
+      { id: "cross", label: "Whip in a cross", detail: "Find a head in the box.", odds: cross, skills: skillNames("crossing", "technique") },
+      { id: "self", label: "Have a go yourself", detail: "Shoot from range.", odds: clamp(0.25 + (this.val(creator, "longShots") - 65) / 100, 0.05, 0.6), skills: skillNames("longShots", "technique", "composure") },
+      { id: "recycle", label: "Keep possession", detail: "Play it safe and recycle.", odds: 0.95, skills: skillNames("passing", "composure") },
     ];
     this.ask({ minute: this.minute, kind: "create", prompt: "You've got the ball in the final third with options ahead…", options }, { kind: "create", team: att, opp: def, player: creator, creator, type, mate: shooter });
   }
@@ -1340,9 +2041,9 @@ export class MatchEngine {
     const slide = this.slideOdds(d, attacker);
     const jockey = this.jockeyOdds(d, attacker);
     const options: DecisionOption[] = [
-      { id: "slide", label: "Slide tackle", detail: "Win it cleanly — or concede a foul.", odds: slide },
-      { id: "jockey", label: "Stay on your feet", detail: "Shepherd them wide and wait for help.", odds: jockey },
-      { id: "foul", label: "Take one for the team", detail: "Tactical foul — likely a booking.", odds: 0.9 },
+      { id: "slide", label: "Slide tackle", detail: "Win it cleanly — or concede a foul.", odds: slide, skills: skillNames("tackling", "anticipation", "aggression") },
+      { id: "jockey", label: "Stay on your feet", detail: "Shepherd them wide and wait for help.", odds: jockey, skills: skillNames("positioning", "agility", "anticipation") },
+      { id: "foul", label: "Take one for the team", detail: "Tactical foul — likely a booking.", odds: 0.9, skills: skillNames("decisions", "aggression") },
     ];
     this.ask({ minute: this.minute, kind: "defend", prompt: `${this.name(attacker)} is running at you on the counter!`, options }, { kind: "defend", team: def, opp: att, player: d, creator: null, type: "open", mate: attacker });
   }
@@ -1350,10 +2051,22 @@ export class MatchEngine {
   private askKeep(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType, keeper: LivePlayer) {
     const rush = this.rushOdds(keeper, shooter);
     const options: DecisionOption[] = [
-      { id: "rush", label: "Rush out and smother", detail: "Close the angle fast.", odds: rush },
-      { id: "stay", label: "Stay big on your line", detail: "React to the shot.", odds: clamp(0.5 + (this.rate(keeper, [["reflexes", 0.6], ["oneOnOnes", 0.4]]) - 65) / 100, 0.2, 0.9) },
+      { id: "rush", label: "Rush out and smother", detail: "Close the angle fast.", odds: rush, skills: skillNames("command", "oneOnOnes", "anticipation") },
+      { id: "stay", label: "Stay big on your line", detail: "React to the shot.", odds: clamp(0.5 + (this.rate(keeper, [["reflexes", 0.6], ["oneOnOnes", 0.4]]) - 65) / 100, 0.2, 0.9), skills: skillNames("reflexes", "oneOnOnes", "positioning") },
     ];
     this.ask({ minute: this.minute, kind: "keep", prompt: `${this.name(shooter)} is bearing down on your goal!`, options }, { kind: "keep", team: def, opp: att, player: keeper, creator, type, mate: shooter });
+  }
+
+  /** A cross is coming in and the user is in goal. */
+  private askClaim(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, keeper: LivePlayer) {
+    const claim = clamp(0.5 + (this.rate(keeper, [["command", 0.5], ["handling", 0.3], ["positioning", 0.2]]) - 62) / 90, 0.2, 0.9);
+    const punch = clamp(0.62 + (this.rate(keeper, [["handling", 0.4], ["command", 0.3], ["decisions", 0.3]]) - 62) / 160, 0.4, 0.92);
+    const options: DecisionOption[] = [
+      { id: "claim", label: "Come and claim it", detail: "Take it at its highest.", odds: claim, skills: [ATTR_LABEL.command, ATTR_LABEL.handling, ATTR_LABEL.positioning] },
+      { id: "punch", label: "Punch it clear", detail: "Safe, but you won't keep it.", odds: punch, skills: [ATTR_LABEL.handling, ATTR_LABEL.command, ATTR_LABEL.decisions] },
+      { id: "stay", label: "Stay on your line", detail: "Trust the defence and wait for the header.", odds: 0.55, skills: [ATTR_LABEL.positioning, ATTR_LABEL.reflexes] },
+    ];
+    this.ask({ minute: this.minute, kind: "claim", moment: "Goalkeeper", prompt: `${creator ? this.name(creator) : "A teammate"}'s cross is coming in and ${this.name(shooter)} is waiting at the back post.`, options }, { kind: "claim", team: def, opp: att, player: keeper, creator, type: "header", mate: shooter });
   }
 
   resolve(optionId: string): MatchEvent[] {
@@ -1366,6 +2079,25 @@ export class MatchEngine {
     const r = this.rng;
     const p = ctx.player;
     switch (ctx.kind) {
+      case "claim": {
+        const attTeam = ctx.opp as LiveTeam;
+        const shooter = ctx.mate as LivePlayer;
+        const claimOdds = optionId === "claim" ? clamp(0.5 + (this.rate(p, [["command", 0.5], ["handling", 0.3], ["positioning", 0.2]]) - 62) / 90, 0.2, 0.9) : optionId === "punch" ? clamp(0.62 + (this.rate(p, [["handling", 0.4], ["command", 0.3], ["decisions", 0.3]]) - 62) / 160, 0.4, 0.92) : 0.55;
+        const ok = r.chance(claimOdds);
+        this.dev(p, 0.12, ok, claimOdds, "decision");
+        if (optionId === "claim" && ok) {
+          if (p.line.inv) p.line.inv.claims++;
+          this.act(p, "claim");
+          this.log({ minute: this.minute, side: ctx.team.side, type: "save", text: "You come out and claim it confidently.", playerId: p.input.id, user: true, tag: "involve" });
+        } else if (optionId === "punch" && ok) {
+          this.log({ minute: this.minute, side: ctx.team.side, type: "save", text: "You punch it clear under pressure.", playerId: p.input.id, user: true, tag: "involve" });
+        } else this.resolveShot(attTeam, ctx.team, shooter, ctx.creator, "header", 1, optionId === "claim" ? 1.4 : optionId === "punch" ? 1.1 : 0.95);
+        break;
+      }
+      case "progress":
+      case "hold":
+        this.resolveMoment(ctx, optionId);
+        break;
       case "knock": {
         if (optionId === "play") {
           for (const k in p.eff) p.eff[k as AttrKey] *= 0.88;
@@ -1475,6 +2207,9 @@ interface PendingContext {
   creator: LivePlayer | null;
   type: ChanceType;
   mate?: LivePlayer;
+  /** Moments: the options as set up, and what each is worth to someone choosing for the user. */
+  opts?: Record<string, MomentOpt>;
+  ev?: Record<string, number>;
 }
 
 /** Convenience: simulate a whole match non-interactively. */

@@ -1,3 +1,4 @@
+import type { PlayerLine } from "./match/engine";
 import type { AppearanceKey } from "./appearance/options";
 import type { RngState } from "./rng";
 
@@ -295,7 +296,12 @@ export interface MatchDetailSummary {
   yellows: [number, number];
   reds: [number, number];
   xg: [number, number];
+  /** Passes attempted and completed (matches played in detail). */
+  passes?: [number, number];
+  passesOk?: [number, number];
   ratings: Record<PlayerId, number>;
+  /** The user's own match line, so the full-time summary can be shown again from the results screen. */
+  userLine?: PlayerLine;
 }
 
 export interface Fixture {

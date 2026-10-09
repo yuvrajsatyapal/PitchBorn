@@ -6,6 +6,7 @@ import { AMBIDEXTROUS } from "../players/foot";
 import { careerProfile, hasTrait, resolveMatchFx } from "../traits/effects";
 import { defeatSting } from "../traits/career";
 import { noteMatch } from "../career/rivalry/engine";
+import { instruction, instructionResult } from "../match/insight";
 import { detectInjuryComeback, detectMatchMemory, noteLastMatch, rememberMajorInjury } from "../memory/detect";
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
 import { country, stadium, staticClub, clubName } from "../data/world";
@@ -271,6 +272,9 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
           yellows: res.stats.yellows,
           reds: res.stats.reds,
           xg: res.stats.xg,
+          passes: res.stats.passes,
+          passesOk: res.stats.passesOk,
+          userLine: res.lines.find((l) => l.id === state.user.playerId),
           ratings: Object.fromEntries(res.lines.map((l) => [l.id, l.rating])),
         }
       : undefined,
@@ -432,6 +436,11 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
   const oppName = teamName(state, opp, true);
   const rated = `Rated ${line.rating.toFixed(1)} against ${oppName}`;
   adjustRel(state, "manager", (line.rating - 6.7) * 1.4, line.rating >= 6.7 ? `${rated}: you earned the manager's trust` : `${rated}: the manager was not impressed`);
+  // The manager's instruction is one piece of his verdict, never the whole of it: a small nudge either way on top of the performance.
+  const asked = instruction(line, line.minuteOff ?? 90);
+  const followed = instructionResult(line, line.minuteOff ?? 90);
+  if (asked && followed === "met") adjustRel(state, "manager", 0.6, `You did what the manager asked: ${asked.title.toLowerCase()}`);
+  else if (asked && followed === "missed") adjustRel(state, "manager", -0.5, `The manager wanted more on: ${asked.title.toLowerCase()}`);
   adjustRel(state, "supporters", (line.rating - 6.7) * 0.9 + line.goals * 1.2, line.goals ? `${line.goals} goal${line.goals > 1 ? "s" : ""} against ${oppName}` : rated);
   adjustRel(state, "teammates", line.assists * 0.8 + (line.rating - 6.6) * 0.4, line.assists ? `${line.assists} assist${line.assists > 1 ? "s" : ""} for a teammate against ${oppName}` : rated);
   // Milestones

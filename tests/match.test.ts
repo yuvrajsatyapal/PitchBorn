@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MatchEngine, type MatchPlayerInput, type TeamInput } from "../src/engine/match/engine";
+import { MAX_DECISIONS, MatchEngine, type MatchPlayerInput, type TeamInput } from "../src/engine/match/engine";
 import { FORMATIONS } from "../src/engine/match/lineup";
 import { generatePlayer } from "../src/engine/players/generate";
 import { Rng } from "../src/engine/rng";
@@ -75,6 +75,6 @@ describe("match engine", () => {
       } else eng.step();
     }
     expect(eng.finished).toBe(true);
-    expect(decisions).toBeLessThanOrEqual(8);
+    expect(decisions).toBeLessThanOrEqual(MAX_DECISIONS);
   });
 });

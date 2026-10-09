@@ -120,3 +120,11 @@ capped at a multiple of the reputation-driven base, and the owner stops paying o
 
 Check the economy with `npx tsx scripts/sim/ownership-economy.ts --seasons 15 --seeds 3` (add `--off` for the all-standard
 baseline). It reports per-type balances, spend, wages, owner injections, elite-player concentration and chronic debt.
+
+## Live match experience (flow of play, moments, "You" card)
+
+- **Separate streams.** In detailed matches (`detail` or `interactive`) the engine forks two extra RNG streams: `flow` (touches, passes, duels, which moments the user is asked about) and `notes` (wording/rationing of the user's commentary). Fast sims create neither, so world simulation is bit-identical to before (`npm run sim:match` unchanged), and being the user never changes how the football plays (tested).
+- **Flow of play** (`engine.ts › involve`): each possession phase moves the ball through a chain of passes. Who handles it depends on position (`BUILD_W`/`FINAL_W` in `moments.ts`), the flank the move uses, and the pass attributes (damped, exponent 0.35, so quality shows in success more than in volume). Counts live in `PlayerLine.inv`; rating nudges are centred (`dev`) so involvement is neutral on average; reasons are kept in `PlayerLine.why`.
+- **Moments** (`moments.ts`): contextual choices by position for attacking (`askProgress`) and defending (`askHold`) phases, plus GK claims. Choices reshape the same phase the sim would have played anyway (`contest(..., pMul)`), never add free chances. Ceiling `MAX_DECISIONS`, cooldown by importance; no guaranteed minimum.
+- **Reads for the UI** (`insight.ts`, `feed.ts`): position-aware stat cells, performance label, low-involvement explanation, manager instruction, rating reasons, post-match summary; ALL / YOU / KEY filters over one event stream.
+- **Calibration**: `npx tsx scripts/sim/involvement.ts [matches] [compareMatches]` prints involvement by position and quality and compares fast / detailed / interactive football.

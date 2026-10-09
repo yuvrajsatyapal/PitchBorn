@@ -151,13 +151,14 @@ function applyEvidence(state: GameState, p: Player, def: TraitDef, gain: number)
   if (prog[def.id] >= STAGE_XP.owned && p.career.minutes >= (def.minMinutes ?? 0)) gainTrait(state, p, def.id, STAGE_XP.owned + (prog[def.id] - STAGE_XP.owned));
 }
 
-/** Behaviour evidence from one match. Run for the user and for everyone who played in the user's matches. */
-export function recordMatchEvidence(state: GameState, p: Player, line: PlayerLine, ctx: MatchCtx): void {
+/** The traits one match gives evidence towards, and how much (shared by recording it and by showing it at full time). */
+function matchEvidence(state: GameState, p: Player, line: PlayerLine, ctx: MatchCtx): { def: TraitDef; gain: number }[] {
   const sig = signalValues(line, ctx);
   const ownedIds = p.traits?.map((t) => t.id) ?? [];
   // The aspiration only ever multiplies behaviour that actually happened: no signal, no progress.
   const aspiration = focusStrength(p, state.season);
   const seen = new Set<TraitId>();
+  const out: { def: TraitDef; gain: number }[] = [];
   const consider = (def: TraitDef, conflictMul: number) => {
     if (!def.signals || seen.has(def.id)) return;
     seen.add(def.id);
@@ -167,7 +168,7 @@ export function recordMatchEvidence(state: GameState, p: Player, line: PlayerLin
     const fit = coreFit(def, p.attrs) * (meetsRequirements(def, p.attrs) ? 1 : 0.5);
     const lift = aspiration > 0 && favours(p.focus, def.id) ? 1 + EVIDENCE_LIFT * aspiration : 1;
     const gain = (Math.min(ev, PER_MATCH_CAP) * (0.55 + 0.9 * fit) * conflictMul * lift) / (0.8 + 0.2 * def.rarity);
-    applyEvidence(state, p, def, gain);
+    out.push({ def, gain });
   };
   for (const id of ownedIds) {
     const def = TRAIT_BY_ID.get(id);
@@ -177,6 +178,22 @@ export function recordMatchEvidence(state: GameState, p: Player, line: PlayerLin
     const conflict = conflictWith(c.def, ownedIds);
     consider(c.def, conflict === "unlikely" ? 0.3 : 1);
   }
+  return out;
+}
+
+/** Behaviour evidence from one match. Run for the user and for everyone who played in the user's matches. */
+export function recordMatchEvidence(state: GameState, p: Player, line: PlayerLine, ctx: MatchCtx): void {
+  for (const { def, gain } of matchEvidence(state, p, line, ctx)) applyEvidence(state, p, def, gain);
+}
+
+/** What a match is about to add towards the player's traits (nothing is applied): the strongest few, with whether he already has them. */
+export function previewMatchEvidence(state: GameState, p: Player, line: PlayerLine, ctx: MatchCtx): { id: TraitId; name: string; owned: boolean; strength: "faint" | "clear" | "strong" }[] {
+  const owned = new Set(p.traits?.map((t) => t.id) ?? []);
+  return matchEvidence(state, p, line, ctx)
+    .filter((e) => e.gain >= 0.25)
+    .sort((a, b) => b.gain - a.gain)
+    .slice(0, 3)
+    .map(({ def, gain }) => ({ id: def.id, name: def.name, owned: owned.has(def.id), strength: gain >= 1.2 ? "strong" : gain >= 0.6 ? "clear" : "faint" }));
 }
 
 /** Weekly training: reinforces behaviour the player already shows, within a seasonal budget. */
