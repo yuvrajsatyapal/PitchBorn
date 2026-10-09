@@ -10,7 +10,7 @@ import { TRAIT_BY_ID } from "./registry";
 import { ADDITIVE_FX, EFFECT_FX, STAGE_XP, type CareerFx, type MatchFx, type TraitDef } from "./types";
 
 export const STAGE_STRENGTH: Record<TraitStage, number> = { emerging: 0.5, established: 0.85, signature: 1.15 };
-export const STAGE_LABEL: Record<TraitStage, string> = { emerging: "Emerging", established: "Established", signature: "Signature" };
+export const STAGE_LABEL: Record<TraitStage, string> = { emerging: "Taking shape", established: "Established", signature: "Signature" };
 
 export function stageOf(xp: number): TraitStage | null {
   return xp < STAGE_XP.owned ? null : xp < STAGE_XP.established ? "emerging" : xp < STAGE_XP.signature ? "established" : "signature";

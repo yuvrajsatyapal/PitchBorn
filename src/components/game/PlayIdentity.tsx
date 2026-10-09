@@ -5,6 +5,13 @@ import { STAGE_LABEL } from "@/engine/traits/effects";
 import { groupTraits, identityOf, positionTag, type TraitRow } from "@/engine/traits/identity";
 import type { GameState, Player, TraitStage } from "@/engine/types";
 
+/** What each tier means for the player, shown under its heading so "Taking shape" and "Established" are never a guess. */
+const STAGE_HINT: Record<TraitStage, string> = {
+  signature: "Defines your game, at full strength.",
+  established: "A dependable part of your game, fully active.",
+  emerging: "A new habit, active at half strength. Keep doing it to build it; neglect it and it fades.",
+};
+
 const STAGE_TONE: Record<TraitStage, "sun" | "pitch" | "paper"> = { signature: "sun", established: "pitch", emerging: "paper" };
 
 /** One trait as a chip; the native tooltip (and the optional description row) says what it does. */
@@ -19,11 +26,12 @@ export function TraitChip({ row, flaw = false }: { row: TraitRow; flaw?: boolean
   );
 }
 
-function Group({ label, rows, flaw, explain }: { label: string; rows: TraitRow[]; flaw?: boolean; explain: boolean }) {
+function Group({ label, hint, rows, flaw, explain }: { label: string; hint?: string; rows: TraitRow[]; flaw?: boolean; explain: boolean }) {
   if (!rows.length) return null;
   return (
     <div>
       <div className="mb-1 text-xs font-black uppercase tracking-wider text-muted">{label}</div>
+      {hint && <p className="mb-1.5 text-xs text-muted">{hint}</p>}
       {explain ? (
         <ul className="grid gap-1.5">
           {rows.map((r) => (
@@ -65,9 +73,9 @@ export function PlayIdentityCard({ g, p, title = "Play identity" }: { g: GameSta
         <p className="text-sm text-muted">No defining habits yet. How you play, train and behave will shape one.</p>
       ) : (
         <div className="grid gap-3">
-          <Group label="Signature" rows={signature} explain={explain} />
-          <Group label="Established" rows={[...established, ...groups.mindBody.filter((r) => r.stage !== "emerging")]} explain={explain} />
-          <Group label="Taking shape" rows={[...emerging, ...groups.mindBody.filter((r) => r.stage === "emerging")]} explain={explain} />
+          <Group label={STAGE_LABEL.signature} hint={STAGE_HINT.signature} rows={signature} explain={explain} />
+          <Group label={STAGE_LABEL.established} hint={STAGE_HINT.established} rows={[...established, ...groups.mindBody.filter((r) => r.stage !== "emerging")]} explain={explain} />
+          <Group label={STAGE_LABEL.emerging} hint={STAGE_HINT.emerging} rows={[...emerging, ...groups.mindBody.filter((r) => r.stage === "emerging")]} explain={explain} />
           <Group label="Personality" rows={groups.personality} explain={explain} />
           <Group label="Flaws" rows={groups.flaws} flaw explain={explain} />
         </div>

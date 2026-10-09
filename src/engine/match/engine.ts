@@ -713,6 +713,21 @@ export class MatchEngine {
     this.resolveShot(att, def, shooter, creator ?? null, type, xgMul);
   }
 
+  /**
+   * Attacks start with the keeper too. Credit is a deterministic share (no rng draw, so seeded matches are unchanged): through-balls
+   * over the top count as launches; open-play moves split between launching and building short by the keeper's own bent.
+   */
+  private creditDistribution(att: LiveTeam, type: ChanceType) {
+    if (type !== "open" && type !== "oneonone") return;
+    const gk = this.onPitch(att).find((p) => p.input.slot === "GK");
+    if (!gk) return;
+    const skill = clamp((this.val(gk, "kicking") - 40) / 50, 0.2, 1);
+    if (type === "oneonone") return this.act(gk, "launch", 0.5 * skill);
+    const longBias = clamp(0.5 + (this.val(gk, "kicking") - this.val(gk, "composure")) / 60, 0.2, 0.8);
+    this.act(gk, "launch", 0.25 * skill * longBias);
+    this.act(gk, "buildUp", 0.25 * skill * (1 - longBias));
+  }
+
   private shooterQuality(p: LivePlayer, type: ChanceType): number {
     switch (type) {
       case "header": return this.val(p, "heading") * 0.75 + this.val(p, "strength") * 0.25;
@@ -743,6 +758,7 @@ export class MatchEngine {
       this.act(creator, type === "header" ? "chanceCross" : type === "oneonone" ? "chanceThrough" : "chanceOpen");
       this.bump(creator, 0.1);
     }
+    this.creditDistribution(att, type);
     const sideTag = att.side;
     const keeper = this.onPitch(def).find((p) => p.input.slot === "GK");
     const desc = this.describeChance(type, shooter, creator);

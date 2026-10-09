@@ -984,3 +984,34 @@ describe("simulation sanity", () => {
     expect(avg).toBeLessThan(8.5);
   });
 });
+
+describe("goalkeeper distribution is earnable by the user's own keeper", () => {
+  function seasonOfEvidence(kicking: number, composure: number) {
+    const s = newCareer({ seed: `tx-gk-${kicking}-${composure}`, position: "GK" });
+    const u = userPlayer(s);
+    u.traits = [];
+    u.career.minutes = 4000;
+    Object.assign(u.attrs, { kicking, composure, command: 76, handling: 74, reflexes: 74 });
+    const rng = Rng.fromSeed(`gk-evidence-${kicking}`);
+    const keeper = { ...mate(rng, "GK", 76), id: "KEEP", attrs: { ...u.attrs } };
+    for (let i = 0; i < 38; i++) {
+      const home = team(rng, 76);
+      home.starters = home.starters.map((p) => (p.slot === "GK" ? keeper : p));
+      const r = new MatchEngine({ home, away: team(rng, 76), importance: 1, detail: false }, rng.fork(i)).runToEnd();
+      const l = r.lines.find((x) => x.id === "KEEP")!;
+      recordMatchEvidence(s, u, { ...l, id: u.id } as never, { importance: 1 });
+    }
+    return ids(u);
+  }
+
+  it("a long-kicking keeper earns Long Distributor within a season; a composed one builds short", () => {
+    expect(seasonOfEvidence(84, 60).has("long_distributor")).toBe(true);
+    expect(seasonOfEvidence(70, 88).has("build_up_keeper")).toBe(true);
+  });
+
+  it("a keeper below the kicking requirement earns neither", () => {
+    const got = seasonOfEvidence(45, 60);
+    expect(got.has("long_distributor")).toBe(false);
+    expect(got.has("build_up_keeper")).toBe(false);
+  });
+});

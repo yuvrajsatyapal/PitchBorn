@@ -15,6 +15,8 @@ export type SignalKey =
   // counted by the match engine
   | "shotOpen" | "goalOpen" | "shotHeader" | "goalHeader" | "shotLong" | "goalLong" | "shot1v1" | "goal1v1"
   | "chanceCross" | "chanceThrough" | "chanceOpen" | "intercept" | "block" | "save1v1" | "claim" | "lateGoal"
+  // a keeper starting his side's attacks: over the top, or short and patient
+  | "launch" | "buildUp"
   // counted from the whole match result (see develop.ts)
   | "comeback";
 

@@ -35,13 +35,13 @@ const CORE: TraitDef[] = [
   def("long_distributor", "Long Distributor", "playstyle", GK, "Launches quick, accurate long throws and kicks: more balls over the top for the forwards.", ["kicking", "command"], 2, {
     tactic: { directness: 0.5 },
     req: [{ attr: "kicking", min: 62 }], conflicts: [u("build_up_keeper")],
-    signals: { assists: 1.5, keyPasses: 0.8, chanceThrough: 1.0 }, trained: ["goalkeeping", "passing"],
+    signals: { launch: 1.4 }, trained: ["goalkeeping", "passing"],
     match: { freq1v1: 0.05, teamAtt: 0.006, create: 8 },
   }),
   def("build_up_keeper", "Ball-Playing Keeper", "playstyle", GK, "Plays short and calm under pressure, helping the side keep the ball and control midfield.", ["kicking", "composure", "handling"], 2, {
     tactic: { directness: -0.5 },
     req: [{ attr: "kicking", min: 60 }], conflicts: [u("long_distributor")],
-    signals: { full90: 0.3, cleanSheet: 0.3, keyPasses: 1.0 }, trained: ["goalkeeping", "passing"],
+    signals: { buildUp: 1.4, full90: 0.3, cleanSheet: 0.2 }, trained: ["goalkeeping", "passing"],
     match: { teamMid: 0.012, againstXgOpen: 1.02 },
   }),
   def("one_on_one_specialist", "One-on-One Keeper", "playstyle", GK, "Stands tall and spreads wide: one-on-ones against them are far less likely to end in goals.", ["reflexes", "composure", "positioning"], 3, {

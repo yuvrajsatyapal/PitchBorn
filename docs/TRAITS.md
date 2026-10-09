@@ -26,8 +26,8 @@ Every player has a dominant foot (`foot`: `"L"` or `"R"`, the only choices at cr
 - **Old saves** (schema v12): `"B"` becomes left or right (deterministic per player); the user's player keeps the trait, NPCs get a strong but not ambidextrous weak foot unless very technical. The load-time sanitiser also repairs a missing or invalid foot.
 
 ## Principles
-- **Style traits change behaviour** (which action is chosen: more long shots, crosses, tackles, headers) and nudge effectiveness a little; quality still comes from attributes. Effects scale by stage (Emerging 0.5 / Established 0.85 / Signature 1.15) and, for effectiveness, by how well the attributes back the trait (`coreFit`).
-- **Acquired, never clicked.** The user starts without playing style. Evidence from matches (shots by type, chances created, interceptions…), plus capped training, fills a per-trait progress counter; crossing 30 xp earns Emerging, 80 Established, 160 Signature (rare, at most 2).
+- **Style traits change behaviour** (which action is chosen: more long shots, crosses, tackles, headers) and nudge effectiveness a little; quality still comes from attributes. Effects scale by stage (Taking shape 0.5 / Established 0.85 / Signature 1.15; "Taking shape" is the internal `emerging` stage) and, for effectiveness, by how well the attributes back the trait (`coreFit`).
+- **Acquired, never clicked.** The user starts without playing style. Evidence from matches (shots by type, chances created, interceptions…), plus capped training, fills a per-trait progress counter; crossing 30 xp earns Taking shape, 80 Established, 160 Signature (rare, at most 2).
 - **Loss and evolution.** Requirements failing, age, disuse and replacement weaken traits; e.g. Speed Runner can evolve into Inside Threat / Inverted Creator.
 - **Limits.** Playing traits (style + mind/body together) 1–6 by overall (one fewer under 21), style 1–5, mind/body 3, personality 3, flaws 2, signature 0–2. Personality and flaws are counted separately from the playing identity.
 - **NPCs** get traits on creation; everyone gets a cheap annual review; only the user and players in the user's matches collect per-match evidence.

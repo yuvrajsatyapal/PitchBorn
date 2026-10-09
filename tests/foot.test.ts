@@ -8,7 +8,7 @@ import { AMBI_MIN, AMBIDEXTROUS, developWeakFoot, flankFitPenalty, footAttrMulti
 import { runTraining } from "../src/engine/players/development";
 import { generatePlayer } from "../src/engine/players/generate";
 import { Rng } from "../src/engine/rng";
-import { userPlayer } from "../src/engine/world/helpers";
+import { SCHEMA_VERSION, userPlayer } from "../src/engine/world/helpers";
 import { migrateState } from "../src/persistence/migrations";
 import { newCareer } from "./helpers";
 
@@ -188,6 +188,41 @@ describe("old saves", () => {
     // Most NPCs who were "both" do not all become ambidextrous.
     const formerBoth = ids.filter((_, i) => i % 2 === 0 && ids[i] !== s.user.playerId).map((id) => once.players[id]);
     expect(formerBoth.filter((p) => hasTrait(p, AMBIDEXTROUS)).length).toBeLessThan(formerBoth.length);
+  });
+
+  it("a v11 save passes through both v12 (foot) and v13 (traits) migrations and composes", () => {
+    const s = norm(newCareer({ seed: "mig-chain" }));
+    s.schemaVersion = 11;
+    const ids = Object.keys(s.players);
+    ids.forEach((id, i) => {
+      const p = s.players[id];
+      delete p.weakFoot;
+      delete p.clubSince;
+      if (i % 3 === 0) p.foot = "B";
+    });
+    const user = s.players[s.user.playerId];
+    user.foot = "B";
+    const userTraitsBefore = JSON.stringify(user.traits ?? []);
+    const once = migrateState(norm(s));
+    const twice = migrateState(norm(once));
+    expect(once.schemaVersion).toBe(SCHEMA_VERSION);
+    // Idempotent: loading a migrated save again changes nothing.
+    expect(JSON.stringify(twice.players)).toBe(JSON.stringify(once.players));
+    // Deterministic: the same old save always migrates to the same world.
+    expect(JSON.stringify(migrateState(norm(s)).players)).toBe(JSON.stringify(once.players));
+    for (const p of Object.values(once.players)) {
+      expect(isFoot(p.foot)).toBe(true);
+      expect(Number.isFinite(p.weakFoot)).toBe(true);
+      // The trait pass must leave no ambidextrous player with a weak weak foot, and vice versa.
+      if (hasTrait(p, AMBIDEXTROUS)) expect(p.weakFoot).toBeGreaterThanOrEqual(AMBI_MIN);
+      const ids = (p.traits ?? []).map((t) => t.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(ids.every((id) => TRAIT_BY_ID.has(id))).toBe(true);
+    }
+    // The user chose two-footed and nothing established was re-rolled by the trait step.
+    const mu = once.players[once.user.playerId];
+    expect(hasTrait(mu, AMBIDEXTROUS)).toBe(true);
+    for (const t of JSON.parse(userTraitsBefore) as { id: string }[]) expect(mu.traits?.some((x) => x.id === t.id)).toBe(true);
   });
 
   it("repairs a missing or invalid foot on every load", () => {
