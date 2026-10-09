@@ -28,6 +28,7 @@ export default function ClubPage() {
   const g = useGameState();
   const [sort, setSort] = useState<"pos" | "ovr" | "age" | "value">("pos");
   const [sel, setSel] = useState<Player | null>(null);
+  const [ownerTip, setOwnerTip] = useState(false);
   const p = g ? user(g) : null;
   const squad = g && p?.clubId ? squadOf(g, p.clubId) : [];
   if (!g || !p) return null;
@@ -58,19 +59,25 @@ export default function ClubPage() {
               <Kit clubId={club.id} size={64} />
               <Kit clubId={club.id} size={64} away />
             </div>
-            <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
-              <div className="col-span-2 sm:col-span-1"><dt className="text-xs text-muted">Stadium</dt><dd className="font-semibold">{stad?.name}</dd></div>
+            <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              <div><dt className="text-xs text-muted">Stadium</dt><dd className="font-semibold">{stad?.name}</dd></div>
+              <div data-testid="club-ownership">
+                <dt className="text-xs text-muted">Ownership</dt>
+                <dd className="relative mt-1.5 inline-block" onPointerEnter={(e) => e.pointerType === "mouse" && setOwnerTip(true)} onPointerLeave={(e) => e.pointerType === "mouse" && setOwnerTip(false)}>
+                  <button type="button" onClick={() => setOwnerTip((v) => !v)} onBlur={() => setOwnerTip(false)} aria-expanded={ownerTip} className="cursor-pointer">
+                    <Badge tone={OWNERSHIP_TONE[ownershipOf(club.id)]} className="font-black">{ownershipProfile(club.id).label}</Badge>
+                  </button>
+                  {ownerTip && (
+                    <span role="tooltip" className="absolute right-0 top-full z-20 mt-1.5 w-64 max-w-[80vw] rounded-xl border-2 border-line bg-card px-3 py-2 text-xs text-ink-2 shadow-lg">
+                      {ownershipProfile(club.id).blurb}
+                    </span>
+                  )}
+                </dd>
+              </div>
               <div><dt className="text-xs text-muted">Capacity</dt><dd className="font-semibold">{stad?.capacity.toLocaleString()}</dd></div>
               <div><dt className="text-xs text-muted">City</dt><dd className="font-semibold">{st.city}</dd></div>
               <div><dt className="text-xs text-muted">Founded</dt><dd className="font-semibold">{st.founded ?? "—"}</dd></div>
               <div><dt className="text-xs text-muted">Formation</dt><dd className="font-semibold">{club.formation}</dd></div>
-              <div className="col-span-2 sm:col-span-3" data-testid="club-ownership">
-                <dt className="text-xs text-muted">Ownership</dt>
-                <dd className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <Badge tone={OWNERSHIP_TONE[ownershipOf(club.id)]} className="font-black">{ownershipProfile(club.id).label}</Badge>
-                  <span className="text-xs text-ink-2">{ownershipProfile(club.id).blurb}</span>
-                </dd>
-              </div>
               <CurrentManager g={g} clubId={club.id} />
             </dl>
           </div>

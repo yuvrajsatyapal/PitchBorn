@@ -15,7 +15,7 @@ export function CurrentManager({ g, clubId }: { g: GameState; clubId: string }) 
   const club = g.clubs[clubId];
   const v = currentManagerView(g, clubId);
   return (
-    <div data-testid="current-manager" className="col-span-2 sm:col-span-3">
+    <div data-testid="current-manager" className="col-span-full">
       <dt className="text-xs text-muted">Manager</dt>
       <dd className="break-words font-semibold leading-snug">
         {club.manager.nationality && <Flag code={club.manager.nationality} className="mr-1.5" />}

@@ -52,23 +52,23 @@ const PROFILES: Record<OwnershipType, OwnershipProfile> = {
     creditShare: 0, cashWeight: 0.6, baseMul: 1, ceiling: 2.2, willingness: 1, wageMul: 1, topUpFloor: 0, topUpCap: 0, debtTolerance: 0.6, sellPressure: 1, retention: 0,
   },
   "fan-owned": {
-    label: "Fan-owned", blurb: "Spending is closely tied to the club's own finances.",
+    label: "Fan owned", blurb: "Spending is closely tied to the club's own finances.",
     creditShare: 0, cashWeight: 0.75, baseMul: 1, ceiling: 2.3, willingness: 0.95, wageMul: 1, topUpFloor: 0, topUpCap: 0, debtTolerance: 0.55, sellPressure: 1.3, retention: 0.2,
   },
   billionaire: {
-    label: "Billionaire-backed", blurb: "A wealthy owner covers losses and funds big signings.",
+    label: "Billionaire backed", blurb: "A wealthy owner covers losses and funds big signings.",
     creditShare: 0.3, cashWeight: 0.6, baseMul: 1.1, ceiling: 2.7, willingness: 1.35, wageMul: 1.12, topUpFloor: 0.05, topUpCap: 0.18, debtTolerance: 0.9, sellPressure: 0.45, retention: 0.35,
   },
   "state-backed": {
-    label: "State-backed", blurb: "Strong external financial backing.",
+    label: "State backed", blurb: "Strong external financial backing.",
     creditShare: 0.55, cashWeight: 0.6, baseMul: 1.2, ceiling: 3, willingness: 1.2, wageMul: 1.2, topUpFloor: 0.1, topUpCap: 0.3, debtTolerance: 1.3, sellPressure: 0.25, retention: 0.5,
   },
   corporate: {
-    label: "Corporate-owned", blurb: "Backed by a parent company, with steady, disciplined budgets.",
+    label: "Corporate owned", blurb: "Backed by a parent company, with steady, disciplined budgets.",
     creditShare: 0.12, cashWeight: 0.55, baseMul: 1, ceiling: 2.3, willingness: 0.9, wageMul: 1, topUpFloor: 0, topUpCap: 0.1, debtTolerance: 0.8, sellPressure: 0.8, retention: 0.15,
   },
   "private-equity": {
-    label: "Investment-owned", blurb: "Run for returns: careful spending and quick to sell when it pays.",
+    label: "Investment owned", blurb: "Run for returns: careful spending and quick to sell when it pays.",
     creditShare: 0.05, cashWeight: 0.45, baseMul: 0.9, ceiling: 1.9, willingness: 0.8, wageMul: 0.92, topUpFloor: 0, topUpCap: 0, debtTolerance: 0.7, sellPressure: 1.4, retention: 0,
   },
 };
