@@ -43,6 +43,8 @@ export default function NewCareer() {
   const [clubId, setClub] = useState<string>("");
   const [difficulty, setDiff] = useState<"relaxed" | "standard" | "hardcore">("standard");
   const [err, setErr] = useState<string | null>(null);
+  // Stays true from the click until /play takes over, so the form never flashes back between build and navigation.
+  const [starting, setStarting] = useState(false);
 
   const countries = useMemo(() => [...WORLD.countries].sort((a, b) => a.name.localeCompare(b.name)), []);
   const clubs = useMemo(
@@ -60,15 +62,17 @@ export default function NewCareer() {
 
   const start = async () => {
     setErr(null);
+    setStarting(true);
     try {
       await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty });
       router.push("/play");
     } catch (e) {
+      setStarting(false);
       setErr((e as Error).message);
     }
   };
 
-  if (busy) return <div className="grid min-h-dvh place-items-center"><LoadingScreen label={busy} /></div>;
+  if (busy || starting) return <div className="grid min-h-dvh place-items-center"><LoadingScreen label={busy ?? "Walking out of the tunnel…"} /></div>;
 
   const playingTimeHint = (prestige: number) => {
     const { outlook, level, start: you } = playingTimeOutlook(prestige, path, custom);
