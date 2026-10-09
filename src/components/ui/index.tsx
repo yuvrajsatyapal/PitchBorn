@@ -72,7 +72,7 @@ const STAGE_SHORT: Record<string, string> = { "Quarter-final": "QF", "Semi-final
 export function CompChip({ comp, stage, stacked, full, hideOnMobile, className = "" }: { comp: { kind: string; shortName: string; name: string }; stage?: string | null; stacked?: boolean; full?: boolean; hideOnMobile?: boolean; className?: string }) {
   const label = stage ? (stacked ? stage : (STAGE_SHORT[stage] ?? stage)) : null;
   return (
-    <span title={stage ? `${comp.name} · ${stage}` : comp.name} className={`${hideOnMobile ? "max-sm:hidden sm:inline-flex" : "inline-flex"} min-w-0 ${stacked ? "flex-row items-center gap-2 sm:flex-col sm:items-start sm:gap-0.5" : "items-center gap-1.5"} ${className}`}>
+    <span title={stage ? `${comp.name} · ${stage}` : comp.name} className={`${hideOnMobile ? "max-sm:hidden sm:inline-flex" : "inline-flex"} min-w-0 ${stacked ? "flex-row items-center gap-2" : "items-center gap-1.5"} ${className}`}>
       <span className={`max-w-full shrink-0 truncate rounded-md border-2 border-line px-1.5 text-[10px] font-black leading-4 tracking-wide sm:text-[11px] sm:leading-5 ${comp.kind === "league" || comp.kind === "friendly" ? "bg-paper-2 text-ink-2" : TONE_BG[COMP_TONE[comp.kind] ?? "paper"]}`}>{full ? comp.name : comp.shortName}</span>
       {label && <span className="truncate text-[11px] font-semibold leading-none text-muted">{label}</span>}
     </span>

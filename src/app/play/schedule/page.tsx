@@ -56,7 +56,7 @@ export default function Schedule() {
                       <li
                         key={f.id}
                         ref={isNext ? nextRef : undefined}
-                        className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-2 py-2 text-sm sm:grid-cols-[2.5rem_11rem_minmax(0,1fr)_auto] ${isNext ? "rounded-xl bg-sun-2 ring-2 ring-sun" : ""}`}
+                        className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-2 py-2 text-sm sm:grid-cols-[2.5rem_15rem_minmax(0,1fr)_auto] ${isNext ? "rounded-xl bg-sun-2 ring-2 ring-sun" : ""}`}
                       >
                         <span className={`num text-center text-base leading-none sm:row-span-1 row-span-2`}>{dayOf(formatTurnDate(g.season, f.turn))}</span>
                         <span className="col-start-2 row-start-1 flex min-w-0 items-center gap-2 sm:col-start-3">
