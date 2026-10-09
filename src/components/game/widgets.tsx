@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { clubKit } from "@/components/art/clubKit";
 import { Flag } from "@/components/art/Flag";
@@ -157,37 +158,77 @@ export function MiniTable({ table, highlight, around = 3, promo = 0, releg = 0 }
   );
 }
 
-export function PendingMatchCard({ g }: { g: GameState }) {
-  const sim = useGame((s) => s.simMatch);
-  const busy = useGame((s) => s.busy);
-  if (!g.pending.length) return null;
-  const pm = g.pending[0];
-  const comp = g.competitions[pm.compId];
-  const f = comp?.fixtures.find((x) => x.id === pm.fixtureId);
-  if (!comp || !f) return null;
+function SimResultCard({ g, fixtureId }: { g: GameState; fixtureId: string }) {
+  const f = Object.values(g.competitions).flatMap((c) => c.fixtures).find((x) => x.id === fixtureId);
+  if (!f?.result) return null;
+  const comp = g.competitions[f.compId];
+  const goals = f.result.goals ?? [];
   return (
-    <Card tone="coral" className="anim-slide">
-      <div className="text-[11px] font-black uppercase tracking-widest">Match day · {comp.name}{f.stage ? ` · ${f.stage}` : ""}</div>
+    <Card tone="coral" className="anim-slide" data-testid="sim-result">
+      <div className="text-[11px] font-black uppercase tracking-widest">Full time · {comp?.name}{f.stage ? ` · ${f.stage}` : ""}</div>
       <div className="my-3 flex items-center justify-center gap-4">
         <div className="flex flex-col items-center gap-1 text-center">
           <Crest clubId={f.home} size={54} />
           <span className="text-sm font-bold">{teamLabel(f.home, true)}</span>
         </div>
-        <span className="scoreboard text-2xl">VS</span>
+        <span className="scoreboard rounded-xl border-2 border-sun bg-black px-4 py-1 text-3xl text-sun">{scoreText(f)}</span>
         <div className="flex flex-col items-center gap-1 text-center">
           <Crest clubId={f.away} size={54} />
           <span className="text-sm font-bold">{teamLabel(f.away, true)}</span>
         </div>
       </div>
-      <div className="flex flex-wrap justify-center gap-2">
-        <Link href="/play/match" className="pb-btn bg-sun px-5 text-[#1b1712]" data-testid="play-live">
-          ▶ Play live
-        </Link>
-        <Button tone="paper" onClick={() => sim(f.id)} disabled={!!busy} data-testid="quick-sim">
-          Quick sim
-        </Button>
+      {goals.length > 0 && (
+        <ul className="mb-3 grid gap-0.5 text-xs">
+          {goals.map((gl, i) => (
+            <li key={i} className={gl.side === "home" ? "text-left" : "text-right"}>
+              ⚽ {g.players[gl.scorer] ? name(g.players[gl.scorer]) : "—"} {gl.minute}&apos;{gl.penalty ? " (pen)" : ""}
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex justify-center">
+        <Link href="/play/match" className="pb-btn bg-sun px-5 text-[#1b1712]">Full match report</Link>
       </div>
     </Card>
+  );
+}
+
+export function PendingMatchCard({ g }: { g: GameState }) {
+  const sim = useGame((s) => s.simMatch);
+  const busy = useGame((s) => s.busy);
+  const [simmed, setSimmed] = useState<{ id: string; turnIndex: number } | null>(null);
+  // The result belongs to the week it was played in; Continue moves on and clears it.
+  const result = simmed && simmed.turnIndex === g.turnIndex ? <SimResultCard g={g} fixtureId={simmed.id} /> : null;
+  const pm = g.pending[0];
+  const comp = pm ? g.competitions[pm.compId] : undefined;
+  const f = comp?.fixtures.find((x) => x.id === pm?.fixtureId);
+  if (!pm || !comp || !f) return result;
+  return (
+    <>
+      {result}
+      <Card tone="coral" className="anim-slide">
+        <div className="text-[11px] font-black uppercase tracking-widest">Match day · {comp.name}{f.stage ? ` · ${f.stage}` : ""}</div>
+        <div className="my-3 flex items-center justify-center gap-4">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <Crest clubId={f.home} size={54} />
+            <span className="text-sm font-bold">{teamLabel(f.home, true)}</span>
+          </div>
+          <span className="scoreboard text-2xl">VS</span>
+          <div className="flex flex-col items-center gap-1 text-center">
+            <Crest clubId={f.away} size={54} />
+            <span className="text-sm font-bold">{teamLabel(f.away, true)}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Link href="/play/match" className="pb-btn bg-sun px-5 text-[#1b1712]" data-testid="play-live">
+            ▶ Play live
+          </Link>
+          <Button tone="paper" onClick={async () => { await sim(f.id); setSimmed({ id: f.id, turnIndex: g.turnIndex }); }} disabled={!!busy} data-testid="quick-sim">
+            Quick sim
+          </Button>
+        </div>
+      </Card>
+    </>
   );
 }
 
