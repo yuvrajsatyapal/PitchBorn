@@ -77,7 +77,7 @@ export function stintRows(state: GameState): StintRow[] {
 export interface CurrentManagerView {
   name: string;
   /** "Previously worked together: 2028–2030 · Derby County" */
-  past: { span: string; clubs: string; relationship: RelLabel; apps: number; honoursText: string } | null;
+  past: { span: string; clubs: string; relationship: RelLabel; apps: number; goals: number; clubIds: ClubId[]; honoursText: string } | null;
   /** The current bar, which belongs to this manager. */
   activeRel: number;
   reunited: boolean;
@@ -99,6 +99,8 @@ export function currentManagerView(state: GameState, clubId: ClubId): CurrentMan
       clubs: [...new Set(prior.map((s) => clubName(s.clubId, true)))].join(" · "),
       relationship: relLabel(last.relEnd ?? w.rel),
       apps: prior.reduce((n, s) => n + s.apps, 0),
+      goals: prior.reduce((n, s) => n + s.goals, 0),
+      clubIds: [...new Set(prior.map((s) => s.clubId))],
       honoursText: honoursText(w.honours),
     },
     activeRel: state.user.relationships.manager,

@@ -23,13 +23,25 @@ export function CurrentManager({ g, clubId }: { g: GameState; clubId: string }) 
         {club.manager.born ? <span className="whitespace-nowrap font-normal text-muted"> ({g.season - club.manager.born})</span> : null}
       </dd>
       {v?.past && (
-        <dd className="mt-1.5 grid gap-0.5 rounded-lg border-2 border-line/20 bg-paper-2/60 px-3 py-2 text-xs sm:max-w-md" data-testid="manager-past">
-          <div className="font-bold">{v.reunited ? "Back together" : "Worked together before"}</div>
-          <div className="text-ink-2">{v.past.span} · {v.past.clubs}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            Then: <Badge tone={REL_TONE[v.past.relationship]}>{v.past.relationship}</Badge>
-            <span className="text-muted">{v.past.apps} apps{v.past.honoursText ? ` · ${v.past.honoursText}` : ""}</span>
+        <dd className="mt-1.5 grid gap-2 rounded-xl border-2 border-line/20 bg-paper-2/60 px-3 py-2.5 text-xs sm:max-w-md" data-testid="manager-past">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-sm font-bold">{v.reunited ? "Back together" : "Worked together before"}</div>
+              <div className="flex items-center gap-1.5 text-ink-2">
+                {v.past.clubIds.map((id) => <Crest key={id} clubId={id} size={14} />)}
+                <span className="truncate">{v.past.span} · {v.past.clubs}</span>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="text-muted">Then</span>
+              <Badge tone={REL_TONE[v.past.relationship]}>{v.past.relationship}</Badge>
+            </div>
           </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="rounded-lg bg-paper px-2 py-1"><div className="text-[10px] uppercase tracking-wide text-muted">Apps</div><div className="text-sm font-black tabular-nums">{v.past.apps}</div></div>
+            <div className="rounded-lg bg-paper px-2 py-1"><div className="text-[10px] uppercase tracking-wide text-muted">Goals</div><div className="text-sm font-black tabular-nums">{v.past.goals}</div></div>
+          </div>
+          {v.past.honoursText && <div className="font-semibold">🏆 {v.past.honoursText}</div>}
         </dd>
       )}
     </div>
