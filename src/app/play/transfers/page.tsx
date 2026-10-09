@@ -81,7 +81,7 @@ function ContractTimeline({ signed, expires, season }: { signed: number; expires
       </div>
       <Bar value={done} max={total} tone={left <= 1 ? "coral" : "pitch"} showValue={false} height={12} />
       <div className="mt-1 text-xs text-ink-2">
-        {left <= 1 ? "Final season: expect renewal talks, or free-agent interest." : `${left} seasons remaining of a ${total}-season deal.`}
+        {left <= 1 ? "Final season: expect renewal talks, or free-agent interest." : `${left} season${left === 1 ? "" : "s"} remaining of a ${total}-year deal.`}
       </div>
     </div>
   );
