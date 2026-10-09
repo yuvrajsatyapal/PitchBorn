@@ -504,6 +504,51 @@ export function checkUserContract(state: GameState, rng: Rng): void {
   }
 }
 
+/** Seasons left on the contract (1 = final season) from which the player may ask for a new deal. */
+const RENEWAL_REQUEST_SEASONS = 3;
+/** Turns the club needs before it will hear another request. */
+const RENEWAL_REQUEST_COOLDOWN = 8;
+
+/** Why the player can't ask for a new contract right now, or null when he can. */
+export function renewalRequestBlock(state: GameState): string | null {
+  const p = userPlayer(state);
+  if (!p.contract || !p.clubId) return "You have no contract to renew.";
+  if (p.loan) return "You are on loan; your parent club decides your future.";
+  if (p.contract.expires - state.season + 1 > RENEWAL_REQUEST_SEASONS) return `Your club won't talk until you're within ${RENEWAL_REQUEST_SEASONS} seasons of expiry.`;
+  if (state.user.offers.some((o) => o.kind === "renewal" && (o.status === "terms" || o.status === "club-pending"))) return "Renewal talks are already open.";
+  if (state.user.offers.some((o) => o.kind === "renewal" && state.turn - o.createdTurn < RENEWAL_REQUEST_COOLDOWN)) return "You asked recently. Give the club some time.";
+  return null;
+}
+
+/** The player asks his own club for a new contract. The club either opens talks or turns him down. */
+export function requestRenewal(state: GameState, rng: Rng): { ok: boolean; message: string } {
+  const blocked = renewalRequestBlock(state);
+  if (blocked) return { ok: false, message: blocked };
+  const p = userPlayer(state);
+  const club = state.clubs[p.contract?.clubId ?? ""];
+  if (!p.contract || !club) return { ok: false, message: "You have no contract to renew." };
+  const o = uOvr(p);
+  const level = clubLevel(club.reputation);
+  const age = ageOf(p, state.season);
+  const valued = o >= level - 8 || (age <= 21 && p.hidden.potential >= level - 3);
+  const wants = valued || rng.chance(0.2);
+  const name = clubName(club.id);
+  if (!wants) {
+    state.user.offers.unshift({
+      id: nextId(state, "o"), kind: "renewal", fromClubId: club.id, toPlayerClubId: club.id, fee: 0, terms: makeTerms(state, rng, club, p, "renewal").terms, maxWage: p.contract.wage, patience: 0,
+      status: "rejected", createdTurn: state.turn, expiresTurn: state.turn, season: state.season, history: [`${name} declined to open contract talks.`],
+    });
+    return { ok: false, message: `${name} aren't ready to offer you a new deal.` };
+  }
+  const { terms, maxWage } = makeTerms(state, rng, club, p, "renewal");
+  state.user.offers.unshift({
+    id: nextId(state, "o"), kind: "renewal", fromClubId: club.id, toPlayerClubId: club.id, fee: 0, terms, maxWage, patience: negotiationPatience(p, rng.int(2, 3)),
+    status: "terms", createdTurn: state.turn, expiresTurn: state.turn + 6, season: state.season, history: [`You asked for a new contract. ${name} agree to talk.`],
+  });
+  addNews(state, { kind: "contract", title: "Contract talks opened", body: `${name} will discuss a new deal.`, important: false });
+  return { ok: true, message: `${name} have opened contract talks.` };
+}
+
 /** Called at season rollover: expired user contracts end → free agency; loans return. */
 export function rolloverUserContract(state: GameState): void {
   const p = userPlayer(state);

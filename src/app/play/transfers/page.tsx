@@ -7,7 +7,7 @@ import { Negotiation } from "@/components/game/Negotiation";
 import { SagaCard } from "@/components/game/SagaCard";
 import { Badge, Bar, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
 import { isTransferWindow, windowName } from "@/engine/calendar";
-import { ROLE_LABEL } from "@/engine/career/offers";
+import { renewalRequestBlock, ROLE_LABEL } from "@/engine/career/offers";
 import { clubName, staticLeague } from "@/engine/data/world";
 import { formatMoney } from "@/engine/players/economy";
 import type { TransferOffer } from "@/engine/types";
@@ -90,6 +90,7 @@ function ContractTimeline({ signed, expires, season }: { signed: number; expires
 export default function CareerPage() {
   const g = useGameState();
   const transferRequest = useGame((s) => s.transferRequest);
+  const requestRenewal = useGame((s) => s.requestRenewal);
   const setWantsLoan = useGame((s) => s.setWantsLoan);
   const retire = useGame((s) => s.retire);
   const retireIntl = useGame((s) => s.retireInternational);
@@ -102,6 +103,7 @@ export default function CareerPage() {
   const open = offers.filter((o) => o.status === "terms" || o.status === "club-pending");
   const past = offers.filter((o) => !open.includes(o)).slice(0, 8);
   const win = windowName(g.turn);
+  const renewalBlock = renewalRequestBlock(g);
   const squadWages = p.contract ? (g.clubs[p.contract.clubId]?.squad ?? []).map((id) => g.players[id]?.contract?.wage ?? 0).filter((w) => w > 0) : [];
   const wageRank = p.contract && squadWages.length > 1 ? { rank: squadWages.filter((w) => w > p.contract!.wage).length + 1, total: squadWages.length } : null;
   return (
@@ -139,7 +141,14 @@ export default function CareerPage() {
         <AgentPanel g={g} />
       </div>
       <Card title="Career moves">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="rounded-xl border-2 border-line p-3">
+            <div className="font-bold">New contract</div>
+            <p className="mb-2 text-xs text-ink-2">{renewalBlock ?? "Ask your club to open renewal talks."}</p>
+            <Button size="sm" tone="sun" disabled={!!renewalBlock} onClick={requestRenewal}>
+              Request renewal
+            </Button>
+          </div>
           <div className="rounded-xl border-2 border-line p-3">
             <div className="font-bold">Transfer request</div>
             <p className="mb-2 text-xs text-ink-2">Tell clubs you&apos;re available. Fans and board won&apos;t like it.</p>

@@ -9,7 +9,7 @@ import { BALANCE } from "@/engine/balance";
 import { completeCeremony, setCeremonyStep, startCeremony } from "@/engine/awards/ceremony";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { resolveDecision } from "@/engine/career/events";
-import { negotiate, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
+import { negotiate, requestRenewal, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
 import { syncSagas } from "@/engine/career/saga/engine";
 import type { MatchResult } from "@/engine/match/engine";
 import { retireFromInternational } from "@/engine/national/national";
@@ -60,6 +60,7 @@ interface GameStore {
   ceremonyStep: (step: number) => void;
   ceremonyFinish: (how: "watched" | "skipped") => Promise<void>;
   transferRequest: (on: boolean) => void;
+  requestRenewal: () => void;
   setWantsLoan: (on: boolean) => void;
   askRest: () => void;
   preMatch: (fixtureId: string, kind: PreMatchKind) => void;
@@ -272,6 +273,15 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!g) return;
     get().notify(setTransferRequest(g, on));
     get().bump();
+  },
+
+  requestRenewal: () => {
+    const g = get().game;
+    if (!g) return;
+    const res = withRng(g, (rng) => requestRenewal(g, rng));
+    get().bump();
+    get().notify(res.message, res.ok ? "good" : "bad");
+    void get().save();
   },
 
   setWantsLoan: (on) => {
