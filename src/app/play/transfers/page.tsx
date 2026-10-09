@@ -8,6 +8,8 @@ import { SagaCard } from "@/components/game/SagaCard";
 import { Badge, Bar, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
 import { isTransferWindow, windowName } from "@/engine/calendar";
 import { renewalRequestBlock, ROLE_LABEL } from "@/engine/career/offers";
+import { nationKit } from "@/engine/national/colors";
+import { intlTeam } from "@/engine/national/identity";
 import { clubName, staticLeague } from "@/engine/data/world";
 import { formatMoney } from "@/engine/players/economy";
 import type { TransferOffer } from "@/engine/types";
@@ -104,6 +106,7 @@ export default function CareerPage() {
   const past = offers.filter((o) => !open.includes(o)).slice(0, 8);
   const win = windowName(g.turn);
   const renewalBlock = renewalRequestBlock(g);
+  const kit = nationKit(intlTeam(p));
   const squadWages = p.contract ? (g.clubs[p.contract.clubId]?.squad ?? []).map((id) => g.players[id]?.contract?.wage ?? 0).filter((w) => w > 0) : [];
   const wageRank = p.contract && squadWages.length > 1 ? { rank: squadWages.filter((w) => w > p.contract!.wage).length + 1, total: squadWages.length } : null;
   return (
@@ -166,7 +169,7 @@ export default function CareerPage() {
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
             <div className="font-bold">International duty</div>
             <p className="mb-3 text-xs text-ink-2">{p.intl.retired ? "You have retired from international football." : `${p.intl.caps} caps so far.`}</p>
-            <Button size="sm" className={`mt-auto ${p.intl.retired ? "bg-[#0d0b08]! text-muted!" : ""}`} tone="paper" disabled={p.intl.retired || a < 28} onClick={() => setConfirm("intl")}>
+            <Button size="sm" className={`mt-auto ${p.intl.retired ? "bg-[#0d0b08]! text-muted!" : ""}`} style={!p.intl.retired && kit ? { backgroundColor: kit.bg, color: kit.fg } : undefined} tone="paper" disabled={p.intl.retired || a < 28} onClick={() => setConfirm("intl")}>
               {p.intl.retired ? "Retired" : "Retire"}
             </Button>
           </div>
