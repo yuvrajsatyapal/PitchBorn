@@ -15,7 +15,7 @@ export function CurrentManager({ g, clubId }: { g: GameState; clubId: string }) 
   const club = g.clubs[clubId];
   const v = currentManagerView(g, clubId);
   return (
-    <div data-testid="current-manager" className={v?.past ? "col-span-2 sm:col-span-3" : ""}>
+    <div data-testid="current-manager" className="col-span-2 sm:col-span-3">
       <dt className="text-xs text-muted">Manager</dt>
       <dd className="break-words font-semibold leading-snug">
         {club.manager.nationality && <Flag code={club.manager.nationality} className="mr-1.5" />}
@@ -23,10 +23,10 @@ export function CurrentManager({ g, clubId }: { g: GameState; clubId: string }) 
         {club.manager.born ? <span className="whitespace-nowrap font-normal text-muted"> ({g.season - club.manager.born})</span> : null}
       </dd>
       {v?.past && (
-        <dd className="mt-1 rounded-lg border-2 border-line/20 bg-paper-2/60 px-2 py-1 text-xs" data-testid="manager-past">
+        <dd className="mt-1.5 grid gap-0.5 rounded-lg border-2 border-line/20 bg-paper-2/60 px-3 py-2 text-xs sm:max-w-md" data-testid="manager-past">
           <div className="font-bold">{v.reunited ? "Back together" : "Worked together before"}</div>
           <div className="text-ink-2">{v.past.span} · {v.past.clubs}</div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
             Then: <Badge tone={REL_TONE[v.past.relationship]}>{v.past.relationship}</Badge>
             <span className="text-muted">{v.past.apps} apps{v.past.honoursText ? ` · ${v.past.honoursText}` : ""}</span>
           </div>

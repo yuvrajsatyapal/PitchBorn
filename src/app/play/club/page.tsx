@@ -48,18 +48,18 @@ export default function ClubPage() {
       <PageTitle kicker={league?.name} title={<span className="flex items-center gap-3"><Crest clubId={club.id} size={48} /> {st.name}</span>} className="-mb-1" />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title="The club" className="lg:col-span-2">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex gap-1">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+            <div className="flex shrink-0 gap-1 sm:pt-1">
               <Kit clubId={club.id} size={64} />
               <Kit clubId={club.id} size={64} away />
             </div>
-            <dl className="grid min-w-0 flex-1 basis-[16rem] grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
-              <div><dt className="text-xs text-muted">Stadium</dt><dd className="font-semibold">{stad?.name}</dd></div>
+            <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+              <div className="col-span-2 sm:col-span-1"><dt className="text-xs text-muted">Stadium</dt><dd className="font-semibold">{stad?.name}</dd></div>
               <div><dt className="text-xs text-muted">Capacity</dt><dd className="font-semibold">{stad?.capacity.toLocaleString()}</dd></div>
               <div><dt className="text-xs text-muted">City</dt><dd className="font-semibold">{st.city}</dd></div>
               <div><dt className="text-xs text-muted">Founded</dt><dd className="font-semibold">{st.founded ?? "—"}</dd></div>
-              <CurrentManager g={g} clubId={club.id} />
               <div><dt className="text-xs text-muted">Formation</dt><dd className="font-semibold">{club.formation}</dd></div>
+              <CurrentManager g={g} clubId={club.id} />
             </dl>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
