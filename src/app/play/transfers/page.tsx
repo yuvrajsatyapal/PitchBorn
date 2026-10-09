@@ -83,7 +83,7 @@ function ContractTimeline({ signed, expires, season }: { signed: number; expires
       </div>
       <Bar value={done} max={total} tone={left <= 1 ? "coral" : "pitch"} showValue={false} height={12} />
       <div className="mt-1 text-xs text-ink-2">
-        {left <= 1 ? "Final season: expect renewal talks, or free-agent interest." : `${left} season${left === 1 ? "" : "s"} remaining of a ${total}-year deal.`}
+        {left <= 1 ? "Final season: expect renewal talks, or free-agent interest." : `${left} season${left === 1 ? "" : "s"} remaining of a ${total} year deal.`}
       </div>
     </div>
   );
@@ -111,7 +111,7 @@ export default function CareerPage() {
   const wageRank = p.contract && squadWages.length > 1 ? { rank: squadWages.filter((w) => w > p.contract!.wage).length + 1, total: squadWages.length } : null;
   return (
     <div className="grid gap-4">
-      <PageTitle kicker={win ? `${win === "summer" ? "Summer" : "January"} window open` : "Transfer window closed"} title="Career & Contract" />
+      <PageTitle kicker={win ? `${win === "summer" ? "Summer" : "January"} window open` : "Transfer window closed"} title="Career & Contract" className="-mb-1" />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title="Contract" className="lg:col-span-2">
           {p.contract ? (

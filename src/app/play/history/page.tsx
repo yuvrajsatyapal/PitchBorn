@@ -29,7 +29,7 @@ export default function History() {
   const topScorers = [...allTime].sort((a, b) => b.goals - a.goals).slice(0, 10);
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Your story so far" title="Career History" />
+      <PageTitle kicker="Your story so far" title="Career History" className="-mb-1" />
       <ManagerHistoryCard g={g} />
       <JerseyHistoryCard g={g} />
       <RivalryHistoryCard g={g} />

@@ -20,7 +20,7 @@ export default function World() {
   const transfers = [...g.transferLog].reverse().filter((t) => t.fee > 0).slice(0, 60);
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Around the game" title="World News" />
+      <PageTitle kicker="Around the game" title="World News" className="-mb-1" />
       <Tabs value={view} onChange={setView} items={[{ id: "news", label: "News feed" }, { id: "transfers", label: "Transfer log" }]} />
       {view === "news" ? (
         <>

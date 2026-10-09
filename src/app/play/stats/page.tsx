@@ -95,7 +95,7 @@ export default function Stats() {
   };
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Numbers don't lie" title="Statistics" />
+      <PageTitle kicker="Numbers don't lie" title="Statistics" className="-mb-1" />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label="Career apps" value={p.career.apps} />
         <Stat label="Career goals" value={p.career.goals} tone="pitch" />

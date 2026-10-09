@@ -45,7 +45,7 @@ export default function ClubPage() {
   );
   return (
     <div className="grid gap-4">
-      <PageTitle kicker={league?.name} title={<span className="flex items-center gap-3"><Crest clubId={club.id} size={48} /> {st.name}</span>} />
+      <PageTitle kicker={league?.name} title={<span className="flex items-center gap-3"><Crest clubId={club.id} size={48} /> {st.name}</span>} className="-mb-1" />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title="The club" className="lg:col-span-2">
           <div className="flex flex-wrap items-center gap-4">

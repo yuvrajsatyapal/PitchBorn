@@ -42,8 +42,8 @@ export function groupTraits(p: Pick<Player, "traits">): TraitGroups {
   return g;
 }
 
-const POSITION_TAG: Record<Position, string> = { GK: "GK", CB: "CB", RB: "FB", LB: "FB", DM: "DM", CM: "CM", AM: "AM", RW: "W", LW: "W", ST: "ST" };
-const TAG_ORDER = ["GK", "CB", "FB", "DM", "CM", "AM", "W", "ST"];
+const POSITION_TAG: Record<Position, string> = { GK: "GK", CB: "CB", RB: "FB", LB: "FB", DM: "DM", CM: "CM", AM: "AM", RW: "LW/RW", LW: "LW/RW", ST: "ST" };
+const TAG_ORDER = ["GK", "CB", "FB", "DM", "CM", "AM", "LW/RW", "ST"];
 
 /** Where a trait mostly belongs ("ST · W"), or nothing when it fits any outfield player (or any player). */
 export function positionTag(def: Pick<TraitDef, "positions">): string {

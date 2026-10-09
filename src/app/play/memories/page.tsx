@@ -21,7 +21,7 @@ export default function Memories() {
   const toggle = (id: string) => setOpen((o) => (o === id ? null : id));
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Football Memory" title="Iconic Moments" />
+      <PageTitle kicker="Football Memory" title="Iconic Moments" className="-mb-1" />
       {all.length === 0 ? (
         <Empty title="No memories yet" icon="🎞️">
           Debuts, derby winners, trophies, big moves and comebacks are remembered here, scored by how much they mattered. Go and make some.

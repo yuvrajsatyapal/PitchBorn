@@ -26,7 +26,7 @@ export default function Awards() {
   const worldWinners = g.archive.flatMap((a) => a.awards.filter((x) => x.id === "golden-pitch" || x.id === "rising-star").map((x) => ({ ...x })));
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Silverware" title="Trophies & Awards" />
+      <PageTitle kicker="Silverware" title="Trophies & Awards" className="-mb-1" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title={`Trophy cabinet (${g.user.trophies.length})`} tone="sun">
           {g.user.trophies.length ? (

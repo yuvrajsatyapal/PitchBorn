@@ -47,7 +47,7 @@ export default function Settings() {
   };
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Preferences" title="Settings & Saves" />
+      <PageTitle kicker="Preferences" title="Settings & Saves" className="-mb-1" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Save game">
           <p className="mb-3 text-sm text-ink-2">

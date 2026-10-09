@@ -27,7 +27,7 @@ function Detail() {
   if (!all.length) {
     return (
       <div className="grid gap-4">
-        <PageTitle kicker="Career" title="Rivalries" />
+        <PageTitle kicker="Career" title="Rivalries" className="-mb-1" />
         <Empty title="No rivals yet" icon="⚔️">
           Rivalries are not handed out. They grow from finals, derbies, a Golden Boot race, an award decided by a whisker, or a fight for the same shirt.
         </Empty>
@@ -45,7 +45,7 @@ function Detail() {
   const memories = g.user.memories.filter((m) => m.kind === "rivalry" && m.data?.rival === rv.playerId).sort((a, b) => b.importance - a.importance);
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Career rival" title={rv.name} />
+      <PageTitle kicker="Career rival" title={rv.name} className="-mb-1" />
       {all.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {all.map((r) => (

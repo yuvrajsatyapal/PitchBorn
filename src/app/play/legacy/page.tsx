@@ -31,7 +31,7 @@ export default function Legacy() {
   const max = Math.max(...LEGACY_TIERS.map((t) => t[0]), legacy.score) || 1;
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="End of an era" title="Career Legacy" />
+      <PageTitle kicker="End of an era" title="Career Legacy" className="-mb-1" />
       <section className="pb-card relative overflow-hidden bg-plum p-6 text-white sm:p-10">
         <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full border-[3px] border-line bg-sun opacity-90" aria-hidden />
         <div className="relative flex flex-wrap items-center gap-6">

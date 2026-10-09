@@ -23,7 +23,7 @@ export default function CeremonyPage() {
   if (!c) {
     return (
       <div className="grid gap-4">
-        <PageTitle kicker="Awards" title="Awards Night" />
+        <PageTitle kicker="Awards" title="Awards Night" className="-mb-1" />
         <Empty title="Not yet" icon="🏆">Awards Night comes when the season is over and the final table is set.</Empty>
       </div>
     );
@@ -34,7 +34,7 @@ export default function CeremonyPage() {
   if (c.status === "completed") {
     return (
       <div className="grid gap-4">
-        <PageTitle kicker={c.leagueName} title={`${title}: results`} />
+        <PageTitle kicker={c.leagueName} title={`${title}: results`} className="-mb-1" />
         <CeremonyResults g={g} c={c} />
         <div className="flex flex-wrap justify-center gap-2">
           <LinkButton href="/play" tone="sun">Back to the dashboard</LinkButton>
@@ -47,7 +47,7 @@ export default function CeremonyPage() {
   if (c.status === "ready") {
     return (
       <div className="grid gap-4">
-        <PageTitle kicker={c.leagueName} title={title} />
+        <PageTitle kicker={c.leagueName} title={title} className="-mb-1" />
         <Card tone="sun" className="mx-auto w-full max-w-xl text-center">
           <div className="text-5xl" aria-hidden>🏆</div>
           <h2 className="mt-2 font-display text-3xl">Awards Night is ready</h2>
@@ -68,7 +68,7 @@ export default function CeremonyPage() {
   const revealing = !!sceneAward && hasPodiumReveal(sceneAward) && doneStep !== at;
   return (
     <div className="grid gap-4" data-testid="ceremony">
-      <PageTitle kicker={c.leagueName} title={title} />
+      <PageTitle kicker={c.leagueName} title={title} className="-mb-1" />
       <div className="min-h-[22rem]">{sceneView(g, c, scene, () => setDoneStep(at))}</div>
       <CeremonyControls
         c={c}

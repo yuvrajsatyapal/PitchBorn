@@ -24,7 +24,7 @@ export default function Training() {
   const cd = (k: "training" | "recovery" | "morale", turns: number) => Math.max(0, turns - (g.turnIndex - (g.user.rewardCooldowns[k] ?? -999)));
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Weekly plan" title="Training" />
+      <PageTitle kicker="Weekly plan" title="Training" className="-mb-1" />
       {p.injury && (
         <Card tone="coral">
           🩹 You&apos;re in rehab ({p.injury.type}, {p.injury.weeksLeft} week{p.injury.weeksLeft === 1 ? "" : "s"} left). Training resumes when you&apos;re fit.
@@ -44,9 +44,9 @@ export default function Training() {
                 </div>
                 <div className="text-xs text-ink-2">{def.blurb}</div>
                 {def.attrs.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
+                  <div className="mt-3 grid gap-1.5">
                     {def.attrs.map((a) => (
-                      <span key={a} className="flex items-center gap-1 text-[11px]">
+                      <span key={a} className="flex items-center justify-between gap-2 text-xs">
                         {ATTR_LABEL[a]} <AttrValue v={p.attrs[a]} />
                       </span>
                     ))}

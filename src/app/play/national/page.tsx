@@ -31,7 +31,7 @@ export default function National() {
   const rank = [...Object.values(g.nationalTeams)].sort((a, b) => b.strength - a.strength).findIndex((n) => n.code === code) + 1;
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="International football" title={<span className="flex items-center gap-3"><Flag code={code} className="text-3xl" /> {country(code)?.name}</span>} />
+      <PageTitle kicker="International football" title={<span className="flex items-center gap-3"><Flag code={code} className="text-3xl" /> {country(code)?.name}</span>} className="-mb-1" />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Your caps" value={p.intl.caps} tone="sky" />
         <Stat label="Intl goals" value={p.intl.goals} tone="pitch" />
