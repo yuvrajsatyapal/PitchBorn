@@ -55,7 +55,7 @@ export function PlayIdentityCard({ g, p, title = "Play identity" }: { g: GameSta
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-sm font-bold capitalize">{identity.label}</div>
         {!empty && (
-          <button type="button" onClick={() => setExplain((v) => !v)} className="text-xs font-bold text-muted underline-offset-2 hover:underline">
+          <button type="button" onClick={() => setExplain((v) => !v)} className="pb-hit text-xs font-bold text-muted underline-offset-2 hover:underline">
             {explain ? "Hide details" : "What do these mean?"}
           </button>
         )}

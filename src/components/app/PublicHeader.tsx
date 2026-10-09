@@ -3,16 +3,16 @@ import { Logo } from "@/components/art/Logo";
 
 export function PublicHeader() {
   return (
-    <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <header className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-4">
       <Link href="/" className="flex items-center gap-2">
         <Logo size={40} />
-        <span className="font-display text-3xl">Pitchborn</span>
+        <span className="font-display text-2xl sm:text-3xl">Pitchborn</span>
       </Link>
       <nav className="flex items-center gap-2 text-sm font-bold">
-        <Link href="/saves" className="rounded-full border-2 border-line bg-card px-3 py-1.5">
+        <Link href="/saves" className="rounded-full border-2 border-line bg-card px-3 py-2.5">
           My saves
         </Link>
-        <Link href="/credits" className="hidden rounded-full px-3 py-1.5 hover:bg-paper-2 sm:inline">
+        <Link href="/credits" className="hidden rounded-full px-3 py-2.5 hover:bg-paper-2 sm:inline">
           Credits
         </Link>
       </nav>
@@ -28,10 +28,10 @@ export function PublicFooter() {
           <b className="font-display text-base text-ink">Pitchborn</b> — a free football career simulator. Players are fictional; club and league data from open sources.
         </span>
         <span className="flex gap-4">
-          <Link href="/credits" className="underline">
+          <Link href="/credits" className="pb-hit underline">
             Data sources
           </Link>
-          <Link href="/privacy" className="underline">
+          <Link href="/privacy" className="pb-hit underline">
             Privacy
           </Link>
         </span>

@@ -59,11 +59,11 @@ export function AllegianceCard({ g }: { g: GameState }) {
                 <Button size="sm" tone={o.id === "accept" ? "pitch" : o.id === "decline" ? "coral" : "paper"} onClick={() => decide(pending.id, o.id)} data-testid={`intl-${o.id}`}>
                   {o.label}
                 </Button>
-                {o.hint && <span className="mt-0.5 max-w-[14rem] text-[10px] text-muted">{o.hint}</span>}
+                {o.hint && <span className="mt-0.5 max-w-[14rem] text-[11px] text-muted">{o.hint}</span>}
               </div>
             ))}
           </div>
-          <p className="mt-2 text-[10px] text-muted">If you do nothing it lapses and you stay as you are. It can come back up to {MAX_DEFERRALS} times.</p>
+          <p className="mt-2 text-[11px] text-muted">If you do nothing it lapses and you stay as you are. It can come back up to {MAX_DEFERRALS} times.</p>
         </div>
       )}
       {inv && !pending && (

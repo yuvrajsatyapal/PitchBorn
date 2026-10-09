@@ -32,7 +32,7 @@ function Slider({ label, value, min, max, step, onChange, display, help, offered
       </span>
       <input type="range" min={min} max={max} step={step} value={Math.min(max, Math.max(min, value))} onChange={(e) => onChange(Number(e.target.value))} className="accent-[var(--pitch)]" aria-label={label} />
       {(help || offered) && (
-        <span className="flex justify-between gap-2 text-[10px] font-normal text-muted">
+        <span className="flex justify-between gap-2 text-[11px] font-normal text-muted">
           <span>{help}</span>
           {offered && <span>Their offer: {offered}</span>}
         </span>
@@ -87,7 +87,7 @@ export function Negotiation({ o, g }: { o: TransferOffer; g: GameState }) {
               <option key={r} value={r}>{ROLE_LABEL[r]}</option>
             ))}
           </select>
-          <span className="text-[10px] font-normal text-muted">A star or first-team role means you&apos;re expected to play.</span>
+          <span className="text-[11px] font-normal text-muted">A star or first-team role means you&apos;re expected to play.</span>
         </label>
         <label className="grid gap-1 text-xs font-bold">
           {o.kind === "renewal" ? "Extra years" : "Length"}
@@ -96,7 +96,7 @@ export function Negotiation({ o, g }: { o: TransferOffer; g: GameState }) {
               <option key={y} value={y}>{y} year{y > 1 ? "s" : ""}</option>
             ))}
           </select>
-          <span className="text-[10px] font-normal text-muted">Longer is secure but makes a move cost more.</span>
+          <span className="text-[11px] font-normal text-muted">Longer is secure but makes a move cost more.</span>
         </label>
       </div>
       {o.kind !== "loan" && (
@@ -110,7 +110,7 @@ export function Negotiation({ o, g }: { o: TransferOffer; g: GameState }) {
                   <option key={c} value={c}>{c ? formatMoney(c) : "None"}</option>
                 ))}
               </select>
-              <span className="text-[10px] font-normal text-muted">
+              <span className="text-[11px] font-normal text-muted">
                 Lower lets bigger clubs buy you more easily; higher suits this club. Their offer: {t0.releaseClause ? formatMoney(t0.releaseClause) : "None"}.
               </span>
             </label>
@@ -128,7 +128,7 @@ export function Negotiation({ o, g }: { o: TransferOffer; g: GameState }) {
           </div>
           <table className="mt-3 w-full text-xs" aria-label="Their offer against your request">
             <thead>
-              <tr className="text-left text-[10px] uppercase text-muted"><th>Term</th><th className="text-right">Their offer</th><th className="text-right">You ask</th></tr>
+              <tr className="text-left text-[11px] uppercase text-muted"><th>Term</th><th className="text-right">Their offer</th><th className="text-right">You ask</th></tr>
             </thead>
             <tbody>
               {row("Weekly wage", formatMoney(d.wage), formatMoney(t0.wage), d.wage !== t0.wage)}

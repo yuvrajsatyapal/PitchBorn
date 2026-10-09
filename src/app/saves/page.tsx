@@ -30,7 +30,7 @@ export default function SavesPage() {
     refresh();
   }, []);
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <PublicHeader />
       <main className="mx-auto max-w-4xl px-4">
         <PageTitle kicker="Save management" title="Your careers">

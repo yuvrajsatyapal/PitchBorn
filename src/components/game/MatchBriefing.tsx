@@ -44,7 +44,7 @@ export function MatchContextStrip({ g, fixture }: { g: GameState; fixture: Fixtu
     <div className="mb-3" data-testid="match-context">
       <div className="mb-2 grid grid-cols-[1fr_auto_1fr] items-start gap-3">
         <TeamStrip t={ctx.home} />
-        <span className="text-[10px] font-black uppercase tracking-wider text-muted">{ctx.homeAway === "neutral" ? "Neutral" : ctx.homeAway === "home" ? "Home" : "Away"}</span>
+        <span className="text-[11px] font-black uppercase tracking-wider text-muted">{ctx.homeAway === "neutral" ? "Neutral" : ctx.homeAway === "home" ? "Home" : "Away"}</span>
         <TeamStrip t={ctx.away} />
       </div>
       <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
@@ -94,7 +94,7 @@ export function SelectionBlock({ g, fixture, status }: { g: GameState; fixture: 
               <Button tone="paper" size="sm" disabled={!a.enabled} onClick={() => preMatch(fixture.id, a.kind)} title={a.hint} data-testid={`prematch-${a.kind}`}>
                 {a.label}
               </Button>
-              <span className="mt-0.5 max-w-[16rem] text-[10px] text-muted">{a.enabled ? a.hint : a.why}</span>
+              <span className="mt-0.5 max-w-[16rem] text-[11px] text-muted">{a.enabled ? a.hint : a.why}</span>
             </div>
           ))}
         </div>
@@ -112,17 +112,17 @@ function LineupSide({ title, side }: { title: string; side: NonNullable<ReturnTy
           <li key={r.id} className={`flex items-center gap-2 ${r.isUser ? "rounded-md bg-sun-2 font-bold" : ""}`}>
             <span className="w-8 text-right font-black tabular-nums text-muted">{r.no !== null ? `#${r.no}` : ""}</span>
             <span className="min-w-0 flex-1 truncate">{r.name}</span>
-            <span className="text-[10px] text-muted">{r.slot ?? r.position}</span>
+            <span className="text-[11px] text-muted">{r.slot ?? r.position}</span>
           </li>
         ))}
       </ul>
-      <div className="mt-2 text-[10px] font-black uppercase text-muted">Substitutes</div>
+      <div className="mt-2 text-[11px] font-black uppercase text-muted">Substitutes</div>
       <ul className="mt-0.5 grid gap-0.5 text-xs">
         {side.bench.map((r) => (
           <li key={r.id} className={`flex items-center gap-2 ${r.isUser ? "rounded-md bg-sun-2 font-bold" : ""}`}>
             <span className="w-8 text-right font-black tabular-nums text-muted">{r.no !== null ? `#${r.no}` : ""}</span>
             <span className="min-w-0 flex-1 truncate">{r.name}</span>
-            <span className="text-[10px] text-muted">{r.position}</span>
+            <span className="text-[11px] text-muted">{r.position}</span>
           </li>
         ))}
       </ul>
@@ -185,7 +185,7 @@ function PreviewBody({ g, fixture, tab, setTab }: { g: GameState; fixture: Fixtu
                       {t.departments.map((d) => (
                         <div key={d.key} title={`${d.label}: ${d.rank}${["th", "st", "nd", "rd"][d.rank % 100 > 10 && d.rank % 100 < 14 ? 0 : Math.min(d.rank % 10, 4) % 4] ?? "th"} of ${d.of}`}>
                           <div className="font-black tabular-nums">{d.value}</div>
-                          <div className="text-[9px] uppercase text-muted">{d.label.slice(0, 3)}</div>
+                          <div className="text-[10px] uppercase text-muted">{d.label.slice(0, 3)}</div>
                         </div>
                       ))}
                     </div>
@@ -233,7 +233,7 @@ function PreviewBody({ g, fixture, tab, setTab }: { g: GameState; fixture: Fixtu
                 <ul className="grid gap-1 text-xs">
                   {h2h.meetings.map((m, i) => (
                     <li key={i} className="flex items-center gap-2">
-                      <span className={`grid h-5 w-5 place-items-center rounded-md border-2 border-line text-[10px] font-black ${m.result === "W" ? "bg-pitch text-white" : m.result === "D" ? "bg-sun" : "bg-coral"}`}>{m.result}</span>
+                      <span className={`grid h-5 w-5 place-items-center rounded-md border-2 border-line text-[11px] font-black ${m.result === "W" ? "bg-pitch text-white" : m.result === "D" ? "bg-sun" : "bg-coral"}`}>{m.result}</span>
                       <span className="scoreboard">{m.score[0]}–{m.score[1]}</span>
                       <span className="text-muted">{m.comp} · {formatTurnDate(m.season, m.turn).replace(/ \d{4}$/, "")}</span>
                       <span>rated {m.rating.toFixed(1)}{m.goals ? ` · ${m.goals} ⚽` : ""}</span>

@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Data sources & credits" };
 
 export default function Credits() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <PublicHeader />
       <main className="mx-auto max-w-4xl px-4">
         <h1 className="mb-2 font-display text-4xl">Data sources & credits</h1>

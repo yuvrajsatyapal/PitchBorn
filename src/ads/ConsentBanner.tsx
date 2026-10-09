@@ -15,7 +15,7 @@ export function ConsentBanner() {
   const show = provider.real && consentRequired() && consent.status === "unknown";
   if (!show) return null;
   return (
-    <div className="fixed inset-x-3 bottom-20 z-40 mx-auto max-w-xl md:bottom-4" role="dialog" aria-label="Ad and sponsor preferences">
+    <div className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto max-h-[70dvh] max-w-xl overflow-y-auto lg:bottom-4" role="dialog" aria-label="Ad and sponsor preferences">
       <div className="pb-card p-4 text-sm">
         <p className="mb-3">
           Pitchborn is free and supported by ads and sponsors. Choose whether ads may be personalised. The game works fully either way.

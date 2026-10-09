@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Privacy" };
 
 export default function Privacy() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <PublicHeader />
       <main className="prose-sm mx-auto max-w-3xl px-4">
         <h1 className="mb-4 font-display text-4xl">Privacy</h1>

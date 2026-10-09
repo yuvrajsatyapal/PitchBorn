@@ -68,7 +68,7 @@ export default function NewCareer() {
     }
   };
 
-  if (busy) return <div className="grid min-h-screen place-items-center"><LoadingScreen label={busy} /></div>;
+  if (busy) return <div className="grid min-h-dvh place-items-center"><LoadingScreen label={busy} /></div>;
 
   const playingTimeHint = (prestige: number) => {
     const { outlook, level, start: you } = playingTimeOutlook(prestige, path, custom);
@@ -77,7 +77,7 @@ export default function NewCareer() {
   };
 
   return (
-    <div className="min-h-screen pb-16">
+    <div className="min-h-dvh pb-16">
       <PublicHeader />
       <main className="mx-auto max-w-4xl px-4">
         <ol className="mb-5 flex flex-wrap gap-2" aria-label="Steps">
@@ -258,7 +258,7 @@ export default function NewCareer() {
           </Card>
         )}
 
-        <div className="sticky bottom-0 z-20 -mx-4 mt-5 flex justify-between border-t-2 border-line/20 bg-paper/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+        <div className="sticky bottom-0 z-20 -mx-4 mt-5 flex justify-between border-t-2 border-line/20 bg-paper/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
           <Button tone="paper" onClick={() => (step === 0 ? router.push("/") : setStep(step - 1))}>
             ‹ Back
           </Button>

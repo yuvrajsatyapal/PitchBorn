@@ -80,7 +80,7 @@ export default function Dashboard() {
               </div>
             </Card>
           )}
-          <Card title="This season" action={<Link href="/play/stats" className="text-sm font-bold underline">All stats</Link>}>
+          <Card title="This season" action={<Link href="/play/stats" className="pb-hit text-sm font-bold underline">All stats</Link>}>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
               <Stat label="Apps" value={tot.apps} />
               {p.position === "GK" ? (
@@ -117,7 +117,7 @@ export default function Dashboard() {
         </div>
         <div className="grid content-start gap-4">
           {league?.table ? (
-            <Card title={league.name} action={<Link href="/play/league" className="text-sm font-bold underline">Full table</Link>}>
+            <Card title={league.name} action={<Link href="/play/league" className="pb-hit text-sm font-bold underline">Full table</Link>}>
               <MiniTable table={league.table} highlight={p.clubId ?? undefined} promo={league.tier && league.tier > 1 ? 3 : 4} releg={league.tier === 3 ? 0 : 3} />
               {club && (
                 <div className="mt-3 flex items-center justify-between text-sm">
@@ -134,7 +134,7 @@ export default function Dashboard() {
             </Card>
           )}
           <InlineAdSlot placementId="dashboard-break" />
-          <Card title="Fixtures" action={<Link href="/play/schedule" className="text-sm font-bold underline">Schedule</Link>}>
+          <Card title="Fixtures" action={<Link href="/play/schedule" className="pb-hit text-sm font-bold underline">Schedule</Link>}>
             {upcoming.length || recent.length ? (
               <>
                 <ul className="divide-y divide-line/10">
@@ -159,7 +159,7 @@ export default function Dashboard() {
               </Empty>
             )}
           </Card>
-          <Card title="Latest news" action={<Link href="/play/world" className="text-sm font-bold underline">All news</Link>}>
+          <Card title="Latest news" action={<Link href="/play/world" className="pb-hit text-sm font-bold underline">All news</Link>}>
             {g.news.length ? (
               <ul className="grid gap-2">
                 {g.news.slice(0, 7).map((n) => (

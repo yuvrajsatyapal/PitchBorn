@@ -40,7 +40,7 @@ export function NumberGrid({ options, onPick, label, from = 1, to = 99 }: { opti
             }`}
           >
             {o.no}
-            {!o.free && !o.mine && <span className="block truncate text-[8px] font-normal no-underline">{o.retired ? "retired" : o.ownerName}</span>}
+            {!o.free && !o.mine && <span className="block truncate text-[10px] font-normal no-underline">{o.retired ? "retired" : o.ownerName}</span>}
           </button>
         ))}
     </div>

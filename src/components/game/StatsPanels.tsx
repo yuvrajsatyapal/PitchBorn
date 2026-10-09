@@ -191,11 +191,11 @@ export function RecordsPanel({ g }: { g: GameState }) {
               <li key={b.id} className="flex items-center justify-between gap-2 rounded-lg border-2 border-line/15 px-2.5 py-1.5">
                 <span>
                   {b.label}
-                  {b.note && <span className="block text-[10px] text-muted">{b.note}</span>}
+                  {b.note && <span className="block text-[11px] text-muted">{b.note}</span>}
                 </span>
                 <span className="text-right">
                   <b className="tabular-nums">{b.display}</b>
-                  <span className="block text-[10px] text-muted">{sl(b.season)}{b.current ? " · in progress" : ""}</span>
+                  <span className="block text-[11px] text-muted">{sl(b.season)}{b.current ? " · in progress" : ""}</span>
                 </span>
               </li>
             ))}
@@ -234,11 +234,11 @@ export function RankingPanel({ g, version }: { g: GameState; version: number }) 
               <li key={r.id} className="flex items-center justify-between gap-2 rounded-lg border-2 border-line/15 px-2.5 py-1.5">
                 <span>
                   {r.label}
-                  {r.reason && <span className="block text-[10px] text-muted">{r.reason}</span>}
+                  {r.reason && <span className="block text-[11px] text-muted">{r.reason}</span>}
                 </span>
                 <span className="text-right">
                   <b className="tabular-nums">{r.value}</b>
-                  <span className="block text-[10px] text-muted">{r.rank ? `#${r.rank} of ${r.of}` : "unranked"}</span>
+                  <span className="block text-[11px] text-muted">{r.rank ? `#${r.rank} of ${r.of}` : "unranked"}</span>
                 </span>
               </li>
             ))}

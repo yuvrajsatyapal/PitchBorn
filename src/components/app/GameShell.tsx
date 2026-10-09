@@ -111,9 +111,9 @@ function TopBar() {
   const phase = phaseOf(game.turn);
   const win = windowName(game.turn);
   return (
-    <header className="sticky top-0 z-30 border-b-2 border-line bg-paper/95 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b-2 border-line bg-paper/95 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex max-w-[1800px] items-center gap-3 px-3 py-2 sm:px-5">
-        <Link href="/play" className="flex items-center gap-2 lg:hidden" aria-label="Dashboard">
+        <Link href="/play" className="flex items-center gap-2 max-[379px]:hidden lg:hidden" aria-label="Dashboard">
           <Logo size={32} />
         </Link>
         <div className="flex min-w-0 items-center gap-2">
@@ -176,7 +176,7 @@ function SideNav() {
         )}
       </ul>
       <div className="mt-2 px-2 text-[11px] text-muted">
-        <Link href="/credits" className="underline">
+        <Link href="/credits" className="pb-hit underline">
           Data sources & credits
         </Link>
       </div>
@@ -191,13 +191,13 @@ function BottomNav() {
   const items = NAV.filter((n) => n.mobile);
   return (
     <>
-      <nav aria-label="Game" className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-line bg-paper pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <nav aria-label="Game" className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-line bg-paper pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] lg:hidden">
         <ul className="grid grid-cols-5">
           {items.map((n) => {
             const active = n.href === "/play" ? pathname === "/play/" || pathname === "/play" : pathname.startsWith(n.href);
             return (
               <li key={n.href}>
-                <Link href={n.href} aria-current={active ? "page" : undefined} className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-bold ${active ? "text-ink" : "text-muted"}`}>
+                <Link href={n.href} aria-current={active ? "page" : undefined} className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-bold [@media(max-height:480px)]:min-h-[46px] ${active ? "text-ink" : "text-muted"}`}>
                   <span className={`text-lg ${active ? "scale-110" : ""}`} aria-hidden>
                     {n.icon}
                   </span>
@@ -207,7 +207,7 @@ function BottomNav() {
             );
           })}
           <li>
-            <button onClick={() => setMore(true)} className="flex min-h-[56px] w-full flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-muted">
+            <button onClick={() => setMore(true)} className="flex min-h-[56px] w-full flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-muted [@media(max-height:480px)]:min-h-[46px]">
               <span className="text-lg" aria-hidden>
                 ☰
               </span>
@@ -244,7 +244,7 @@ export function GameShell({ children }: { children: ReactNode }) {
 
   if (!game) {
     return (
-      <div className="grid min-h-screen place-items-center p-6">
+      <div className="grid min-h-dvh place-items-center p-6">
         {!checked || busy ? (
           <LoadingScreen label={busy ?? "Loading…"} />
         ) : (
@@ -263,11 +263,11 @@ export function GameShell({ children }: { children: ReactNode }) {
     );
   }
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-dvh">
       <SideNav />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <div className="mx-auto flex w-full max-w-[1800px] flex-1 gap-6 px-3 pb-28 pt-4 sm:px-5 lg:pb-10">
+        <div className="mx-auto flex w-full max-w-[1800px] flex-1 gap-6 px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-5 lg:pb-10 [@media(max-height:480px)]:pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <main id="main" className="min-w-0 flex-1">
             {error && <div className="pb-card mb-4 bg-coral-2 p-3 text-sm">Something went wrong: {error}</div>}
             {children}
@@ -285,7 +285,7 @@ export function GameShell({ children }: { children: ReactNode }) {
 
 function BusyOverlay({ label }: { label: string }) {
   return (
-    <div className="pointer-events-none fixed bottom-24 left-1/2 z-40 -translate-x-1/2 lg:bottom-6" role="status" aria-live="polite">
+    <div className="pointer-events-none fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-40 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 lg:bottom-6" role="status" aria-live="polite">
       <div className="pb-card flex items-center gap-2 px-4 py-2 text-sm font-bold">
         <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-line border-t-transparent" />
         {label}

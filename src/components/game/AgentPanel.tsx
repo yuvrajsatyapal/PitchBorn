@@ -65,7 +65,7 @@ export function AgentPanel({ g }: { g: GameState }) {
         <p className="mb-3 text-xs text-ink-2">
           Fees come out of your bank every week, plus a commission on each new contract. You can change agent once a season. Top agents only take players with enough reputation (or rare potential).
         </p>
-        <ul className="grid max-h-[60vh] gap-2 overflow-y-auto pr-1">
+        <ul className="grid max-h-[60dvh] gap-2 overflow-y-auto pr-1">
           {[...market].reverse().map((a) => {
             const check = canHireAgent(g, a);
             const current = me.id === a.id;

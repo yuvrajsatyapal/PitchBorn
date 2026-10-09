@@ -23,7 +23,7 @@ export default function Landing() {
   }, []);
   const ticker = WORLD.clubs.filter((c) => c.prestige > 70).slice(0, 40);
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <PublicHeader />
       <main className="mx-auto max-w-6xl px-4">
         <section className="pb-card relative mt-2 overflow-hidden bg-sun-2 px-5 py-10 sm:px-10 sm:py-16">

@@ -30,7 +30,7 @@ export function Button({
   children,
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & { tone?: Tone; size?: "sm" | "md" | "lg" }) {
-  const sz = size === "sm" ? "px-3 text-sm min-h-[36px]" : size === "lg" ? "px-7 text-lg py-3" : "px-5 text-[15px]";
+  const sz = size === "sm" ? "px-3 text-sm min-h-[40px]" : size === "lg" ? "px-7 text-lg py-3" : "px-5 text-[15px]";
   return (
     <button className={`pb-btn ${TONE_BG[tone]} ${sz} ${className}`} {...rest}>
       {children}
@@ -39,7 +39,7 @@ export function Button({
 }
 
 export function LinkButton({ href, tone = "sun", size = "md", className = "", children }: { href: string; tone?: Tone; size?: "sm" | "md" | "lg"; className?: string; children: ReactNode }) {
-  const sz = size === "sm" ? "px-3 text-sm min-h-[36px]" : size === "lg" ? "px-7 text-lg py-3" : "px-5 text-[15px]";
+  const sz = size === "sm" ? "px-3 text-sm min-h-[40px]" : size === "lg" ? "px-7 text-lg py-3" : "px-5 text-[15px]";
   return (
     <Link href={href} className={`pb-btn ${TONE_BG[tone]} ${sz} ${className}`}>
       {children}
@@ -113,7 +113,7 @@ export function Tabs<T extends string>({ value, onChange, items, className = "" 
           role="tab"
           aria-selected={value === it.id}
           onClick={() => onChange(it.id)}
-          className={`shrink-0 rounded-full border-2 border-line px-3.5 py-1.5 text-sm font-bold transition ${value === it.id ? "bg-ink text-paper" : "bg-card hover:bg-paper-2"}`}
+          className={`shrink-0 rounded-full border-2 border-line px-3.5 py-2 text-sm font-bold transition ${value === it.id ? "bg-ink text-paper" : "bg-card hover:bg-paper-2"}`}
         >
           {it.label}
         </button>
@@ -159,19 +159,19 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   // Rendered into <body>: inside a parent with backdrop-filter (the sticky top bar) `position: fixed` is relative to
   // that parent, not the viewport, which clips the dialog.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] sm:items-center sm:p-4" onClick={onClose}>
       <div
         ref={ref}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`pb-card anim-pop max-h-[92vh] w-full overflow-y-auto rounded-b-none p-5 sm:rounded-b-[1.1rem] ${wide ? "sm:max-w-3xl" : "sm:max-w-lg"}`}
+        className={`pb-card anim-pop max-h-[92dvh] w-full overflow-y-auto rounded-b-none overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:rounded-b-[1.1rem] sm:p-5 ${wide ? "sm:max-w-3xl" : "sm:max-w-lg"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2 className="font-display text-2xl leading-none">{title}</h2>
-          <button onClick={onClose} className="rounded-full border-2 border-line bg-paper-2 px-2.5 text-lg font-bold leading-7" aria-label="Close">
+          <button onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-line bg-paper-2 text-lg font-bold leading-none" aria-label="Close">
             ×
           </button>
         </div>
@@ -202,7 +202,7 @@ export function FormDots({ form }: { form: ("W" | "D" | "L")[] }) {
   return (
     <span className="inline-flex gap-1" aria-label={`Form ${form.join(" ")}`}>
       {form.map((f, i) => (
-        <span key={i} className={`grid h-5 w-5 place-items-center rounded-md border-2 border-line text-[10px] font-black ${f === "W" ? "bg-pitch text-white" : f === "D" ? "bg-sun" : "bg-coral"}`}>
+        <span key={i} className={`grid h-5 w-5 place-items-center rounded-md border-2 border-line text-[11px] font-black ${f === "W" ? "bg-pitch text-white" : f === "D" ? "bg-sun" : "bg-coral"}`}>
           {f}
         </span>
       ))}

@@ -25,7 +25,7 @@ function Side({ f, side, mine }: { f: Fixture; side: "home" | "away"; mine: bool
       <Crest clubId={id} size={16} />
       <span className={`min-w-0 flex-1 truncate text-[12px] ${won ? "font-black" : ""}`}>{teamLabel(id, true)}</span>
       <span className="scoreboard w-5 text-right text-[12px] tabular-nums">{goals ?? ""}</span>
-      {pen !== null && <span className="w-5 text-right text-[10px] font-bold text-muted tabular-nums">({pen})</span>}
+      {pen !== null && <span className="w-5 text-right text-[11px] font-bold text-muted tabular-nums">({pen})</span>}
     </div>
   );
 }
@@ -39,7 +39,7 @@ export function TieCard({ tie, highlight, compact }: { tie: Tie; highlight: stri
       <Side f={f} side="home" mine={mine(f.home)} />
       <div className="border-t border-line/15" />
       <Side f={f} side="away" mine={mine(f.away)} />
-      {!compact && note.text && <div className="border-t border-line/15 bg-paper-2/60 px-1.5 py-0.5 text-[10px] font-semibold text-ink-2">{note.text}</div>}
+      {!compact && note.text && <div className="border-t border-line/15 bg-paper-2/60 px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">{note.text}</div>}
     </div>
   );
 }
@@ -87,7 +87,7 @@ export function BracketView({ bracket, highlight }: { bracket: BracketData; high
     <div className="no-scrollbar overflow-x-auto pb-2" data-testid="bracket">
       <div className="relative" style={{ width, height: height + 24, minWidth: width }}>
         {rounds.map((r, i) => (
-          <div key={r.round + r.stage} className="absolute top-0 text-[10px] font-black uppercase tracking-wider text-muted" style={{ left: colX(i), width: COL_W }}>
+          <div key={r.round + r.stage} className="absolute top-0 text-[11px] font-black uppercase tracking-wider text-muted" style={{ left: colX(i), width: COL_W }}>
             {r.stage}
           </div>
         ))}

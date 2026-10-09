@@ -209,7 +209,7 @@ function TeamCard({ g, t, user }: { g: GameState; t: TeamOfSeasonSlot; user: boo
       <Face g={g} id={t.playerId} size={44} />
       <span className="w-full truncate text-xs font-bold sm:text-sm">{nameOf(g, t.playerId)}</span>
       <span className="flex w-full min-w-0 justify-center"><ClubLine clubId={t.clubId} /></span>
-      <span className="w-full truncate text-[10px] font-black uppercase tracking-wide text-muted sm:text-[11px]">{POSITION_LABEL[t.position]}</span>
+      <span className="w-full truncate text-[11px] font-black uppercase tracking-wide text-muted sm:text-[11px]">{POSITION_LABEL[t.position]}</span>
       {user && <Badge tone="sun">You</Badge>}
     </li>
   );

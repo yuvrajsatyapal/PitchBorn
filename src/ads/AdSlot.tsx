@@ -57,7 +57,7 @@ export function AdSlot({ placementId, variant = "inline", className = "" }: { pl
       className={`relative my-2 w-full ${variant === "rail" ? "sticky top-24" : ""} ${className}`}
       style={{ minHeight: placement.minHeight, maxWidth: placement.maxWidth }}
     >
-      <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Ad / Sponsor</div>
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Ad / Sponsor</div>
       <div
         ref={ref}
         className="relative w-full overflow-hidden rounded-lg"

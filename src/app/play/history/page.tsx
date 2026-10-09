@@ -48,7 +48,7 @@ export default function History() {
                         <b>{e.title}</b>
                         {e.detail && <span className="text-ink-2"> — {e.detail}</span>}
                         {g.user.memories.some((m) => m.season === e.season && m.turn === e.turn && m.importance >= 55) && (
-                          <span className="ml-1.5 rounded-full border-2 border-line bg-sun-2 px-1.5 text-[10px] font-bold" title="Remembered as a major moment">⭐ Iconic</span>
+                          <span className="ml-1.5 rounded-full border-2 border-line bg-sun-2 px-1.5 text-[11px] font-bold" title="Remembered as a major moment">⭐ Iconic</span>
                         )}
                       </span>
                     </li>

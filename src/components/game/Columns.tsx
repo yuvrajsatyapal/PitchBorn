@@ -38,7 +38,7 @@ export function Columns({ items, max, height = 120, label, empty = "Nothing to c
                 onClick={() => setActive(active === i ? null : i)}
                 aria-label={it.detail}
               >
-                {it.top && <span className="pointer-events-none mb-0.5 text-center text-[9px] font-bold leading-none text-ink-2">{it.top}</span>}
+                {it.top && <span className="pointer-events-none mb-0.5 text-center text-[10px] font-bold leading-none text-ink-2">{it.top}</span>}
                 <span className={`flex w-full flex-col-reverse overflow-hidden rounded-t-md border-2 border-line ${active === i ? "ring-2 ring-sky" : ""}`} style={{ height: `${(total / top) * (height - 18)}px`, minHeight: total > 0 ? 4 : 0 }}>
                   {it.segments.map((s, k) => (
                     <span key={k} className={s.className} style={{ height: total ? `${(s.value / total) * 100}%` : 0 }} />
@@ -48,7 +48,7 @@ export function Columns({ items, max, height = 120, label, empty = "Nothing to c
             );
           })}
         </div>
-        <div className="flex gap-1 sm:gap-1.5 pt-1 text-[9px] text-muted" style={{ minWidth: Math.min(items.length * 28, 1200) }} aria-hidden>
+        <div className="flex gap-1 sm:gap-1.5 pt-1 text-[10px] text-muted" style={{ minWidth: Math.min(items.length * 28, 1200) }} aria-hidden>
           {items.map((it) => (
             <span key={it.key} className="min-w-[20px] flex-1 truncate text-center">
               {it.label}

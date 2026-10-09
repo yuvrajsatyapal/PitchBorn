@@ -18,7 +18,7 @@ function ToastItem({ text, tone: t }: { text: string; tone?: "good" | "bad" | "i
   const toast = { text, tone: t };
   const tone = toast.tone === "good" ? "bg-pitch-2" : toast.tone === "bad" ? "bg-coral-2" : "bg-sun-2";
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-3 z-[60] flex justify-center px-3" role="status" aria-live="polite">
+    <div className="pointer-events-none fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex justify-center px-3" role="status" aria-live="polite">
       <div className={`pb-card anim-pop pointer-events-auto max-w-md px-4 py-2.5 text-sm font-semibold ${tone}`}>{toast.text}</div>
     </div>
   );

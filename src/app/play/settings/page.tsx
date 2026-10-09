@@ -107,7 +107,7 @@ export default function Settings() {
                       {b.label} · {new Date(b.createdAt).toLocaleString()}
                     </span>
                     <button
-                      className="rounded-full border-2 border-line px-2 text-xs font-bold"
+                      className="pb-hit justify-center rounded-full border-2 border-line px-3 text-xs font-bold"
                       onClick={async () => {
                         await restoreBackup(b.id);
                         await load(g.id);

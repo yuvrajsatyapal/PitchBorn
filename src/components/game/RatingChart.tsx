@@ -55,7 +55,7 @@ export function RatingChart({ matches, size = "compact", average, label = "Match
         {/* Reference lines: the average display (6.6) and a good one (8). */}
         {[6, 7, 8].map((r) => (
           <div key={r} className="pointer-events-none absolute inset-x-0 flex items-center" style={{ bottom: `${pct(r)}%` }}>
-            <span className="w-5 text-[9px] font-bold text-muted">{r}</span>
+            <span className="w-5 text-[10px] font-bold text-muted">{r}</span>
             <span className={`h-px flex-1 ${r === 7 ? "border-t border-dashed border-muted/70" : "border-t border-dotted border-muted/40"}`} />
           </div>
         ))}
@@ -82,7 +82,7 @@ export function RatingChart({ matches, size = "compact", average, label = "Match
                   style={{ height: `${pct(m.rating)}%` }}
                 />
                 {(m.goals > 0 || m.assists > 0) && size === "large" && (
-                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[10px] leading-none" style={{ bottom: `calc(${pct(m.rating)}% + 2px)` }} aria-hidden>
+                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[11px] leading-none" style={{ bottom: `calc(${pct(m.rating)}% + 2px)` }} aria-hidden>
                     {"⚽".repeat(Math.min(m.goals, 3))}
                     {m.assists > 0 ? "🅰" : ""}
                   </span>
@@ -112,7 +112,7 @@ export function RatingChart({ matches, size = "compact", average, label = "Match
           <span className="text-muted">Tap or hover a bar for the match. Scale {LO}–{HI}; dashed line = average.</span>
         )}
       </div>
-      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted" aria-hidden>
+      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted" aria-hidden>
         {(Object.keys(BAND_STYLE) as RatingBand[]).map((b) => (
           <span key={b} className="inline-flex items-center gap-1">
             <span className={`inline-block h-2.5 w-2.5 rounded-sm border border-line ${BAND_STYLE[b].fill}`} />
