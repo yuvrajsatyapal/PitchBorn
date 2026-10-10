@@ -52,7 +52,7 @@ export function Card({ children, className = "", tone, title, action, flat }: { 
   return (
     <section className={`${flat ? "pb-card-flat" : "pb-card"} ${tone ? TONE_SOFT[tone] : ""} p-4 sm:p-5 ${className}`}>
       {(title || action) && (
-        <header className="mb-3 flex items-center justify-between gap-3">
+        <header className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           {title && <h2 className="font-display text-xl leading-none">{title}</h2>}
           {action}
         </header>
@@ -119,16 +119,16 @@ export function Rating({ v, size = "md" }: { v: number | undefined; size?: "sm" 
   return <span className={`inline-block rounded-md border-2 border-line text-center font-bold tabular-nums ${cls} ${size === "sm" ? "min-w-[2.4rem] text-xs" : "min-w-[2.8rem] px-1 text-sm"}`}>{v.toFixed(1)}</span>;
 }
 
-export function Tabs<T extends string>({ value, onChange, items, className = "" }: { value: T; onChange: (v: T) => void; items: { id: T; label: ReactNode }[]; className?: string }) {
+export function Tabs<T extends string>({ value, onChange, items, className = "", compact }: { value: T; onChange: (v: T) => void; items: { id: T; label: ReactNode }[]; className?: string; compact?: boolean }) {
   return (
-    <div role="tablist" className={`no-scrollbar flex gap-2 overflow-x-auto pb-1 ${className}`}>
+    <div role="tablist" className={`no-scrollbar flex ${compact ? "gap-1.5 sm:gap-2" : "gap-2"} overflow-x-auto pb-1 ${className}`}>
       {items.map((it) => (
         <button
           key={it.id}
           role="tab"
           aria-selected={value === it.id}
           onClick={() => onChange(it.id)}
-          className={`shrink-0 rounded-full border-2 border-line px-3.5 py-2 text-sm font-bold transition ${value === it.id ? "bg-ink text-paper" : "bg-card hover:bg-paper-2"}`}
+          className={`shrink-0 rounded-full border-2 border-line ${compact ? "px-2.5 py-1 text-xs sm:px-3.5 sm:py-2 sm:text-sm" : "px-3.5 py-2 text-sm"} font-bold transition ${value === it.id ? "bg-ink text-paper" : "bg-card hover:bg-paper-2"}`}
         >
           {it.label}
         </button>
