@@ -1,5 +1,4 @@
 "use client";
-import { InlineAdSlot } from "@/ads/AdSlot";
 import { Flag } from "@/components/art/Flag";
 import { ManagerHistoryCard } from "@/components/game/ManagerPanels";
 import { JerseyHistoryCard } from "@/components/game/NumberPicker";
@@ -36,7 +35,7 @@ export default function History() {
       <Card title="Timeline">
         {seasons.length ? (
           <ol className="relative grid gap-5 border-l-[3px] border-line pl-5">
-            {seasons.map((s, si) => (
+            {seasons.map((s) => (
               <li key={s}>
                 <div className="absolute -left-[11px] mt-1 h-5 w-5 rounded-full border-[3px] border-line bg-sun" aria-hidden />
                 <div className="font-display text-2xl">{seasonLabel(s)}</div>
@@ -54,7 +53,6 @@ export default function History() {
                     </li>
                   ))}
                 </ul>
-                {si === 1 && <InlineAdSlot placementId="history-break" className="mt-4" />}
               </li>
             ))}
           </ol>

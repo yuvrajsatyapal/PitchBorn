@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { Badge, Card, Empty, PageTitle, Table, Tabs } from "@/components/ui";
 import { formatTurnDate } from "@/engine/calendar";
@@ -28,7 +27,7 @@ export default function World() {
           <Card>
             {news.length ? (
               <ul className="grid gap-2">
-                {news.slice(0, 80).map((n, i) => (
+                {news.slice(0, 80).map((n) => (
                   <li key={n.id}>
                     <div className={`rounded-xl border-2 px-3 py-2 ${n.important ? "border-line bg-sun-2" : "border-line/20"}`}>
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -37,7 +36,6 @@ export default function World() {
                       <div className="mt-1 font-semibold">{n.title}</div>
                       {n.body && <div className="text-sm text-ink-2">{n.body}</div>}
                     </div>
-                    {i === 9 && <InlineAdSlot placementId="feed-break" className="mt-2" />}
                   </li>
                 ))}
               </ul>

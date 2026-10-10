@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { SponsorSlot } from "@/ads/SponsorSections";
 
 type Tone = "sun" | "pitch" | "plum" | "coral" | "sky" | "paper" | "ink";
 const TONE_BG: Record<Tone, string> = {
@@ -150,13 +151,16 @@ export function Empty({ title, children, icon = "⚽" }: { title: string; childr
 
 export function PageTitle({ kicker, title, children, className = "mb-5" }: { kicker?: string; title: ReactNode; children?: ReactNode; className?: string }) {
   return (
-    <div className={`${className} flex flex-wrap items-end justify-between gap-3`}>
-      <div>
-        {kicker && <div className="text-xs font-bold uppercase tracking-[0.18em] text-muted">{kicker}</div>}
-        <h1 className="font-display text-3xl leading-none sm:text-4xl">{title}</h1>
+    <>
+      <div className={`${className} flex flex-wrap items-end justify-between gap-3`}>
+        <div>
+          {kicker && <div className="text-xs font-bold uppercase tracking-[0.18em] text-muted">{kicker}</div>}
+          <h1 className="font-display text-3xl leading-none sm:text-4xl">{title}</h1>
+        </div>
+        {children && <div className="flex flex-wrap gap-2">{children}</div>}
       </div>
-      {children && <div className="flex flex-wrap gap-2">{children}</div>}
-    </div>
+      <SponsorSlot className="mb-5" />
+    </>
   );
 }
 

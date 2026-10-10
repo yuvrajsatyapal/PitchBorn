@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { PublicFooter, PublicHeader } from "@/components/app/PublicHeader";
-import { InlineAdSlot } from "@/ads/AdSlot";
 import { WORLD } from "@/engine/data/world";
 import assets from "@/data/assets.json";
 
@@ -54,7 +53,6 @@ export default function Credits() {
             {assets.notBundled.map((a) => <li key={a.id}><b>{a.name}</b> — {a.reason}</li>)}
           </ul>
         </section>
-        <InlineAdSlot placementId="footer" />
       </main>
       <PublicFooter />
     </div>

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { RivalStatsCard } from "@/components/game/RivalCards";
-import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { Card, PageTitle, Stat, Table, Tabs } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
@@ -132,7 +131,6 @@ export default function Stats() {
       <ClarityNote g={g} />
       <FormPanel g={g} version={version} />
       <Per90Panel g={g} />
-      <InlineAdSlot placementId="history-break" />
       <TimelinePanel g={g} version={version} />
       <ProgressionPanel g={g} />
       <RankingPanel g={g} version={version} />

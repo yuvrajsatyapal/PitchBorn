@@ -1,5 +1,4 @@
 "use client";
-import { MobileAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import Link from "next/link";
 import { Badge, Card, Empty, PageTitle, Table } from "@/components/ui";
@@ -74,7 +73,6 @@ export default function Awards() {
           <Link href="/play/ceremony" className="pb-btn bg-card px-4 text-sm">{g.ceremony.status === "completed" ? "View the results" : "Open Awards Night"}</Link>
         </Card>
       )}
-      <MobileAdSlot placementId="mobile-inline" />
       <Card title="World honours roll">
         {worldWinners.length ? (
           <Table>

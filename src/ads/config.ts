@@ -27,15 +27,13 @@ export interface AdPlacement {
   priority: number;
 }
 
+export const SPONSOR_EMAIL = "yuvrajsatyapal21@gmail.com";
+export const SPONSOR_SECTIONS = [1, 2, 3, 4] as const;
+/** How often small-screen slots swap which section they show. */
+export const SPONSOR_ROTATE_MS = 25_000;
+
 export const AD_PLACEMENTS: AdPlacement[] = [
-  { id: "rail-right", description: "Right rail beside dashboards/stats on wide screens", format: "rail", device: "desktop", pages: ["/play", "/play/stats", "/play/league", "/play/history", "/play/world", "/play/club", "/play/awards"], enabled: true, minHeight: 600, maxWidth: 300, priority: 1 },
-  { id: "dashboard-break", description: "Between dashboard sections", format: "inline", device: "all", pages: ["/play"], enabled: true, minHeight: 100, priority: 3 },
-  { id: "below-table", description: "Below league tables", format: "inline", device: "all", pages: ["/play/league"], enabled: true, minHeight: 100, priority: 2 },
-  { id: "after-result", description: "After a completed match result", format: "inline", device: "all", pages: ["/play/match"], enabled: true, minHeight: 100, priority: 2 },
-  { id: "history-break", description: "Between career-history groups", format: "inline", device: "all", pages: ["/play/history", "/play/stats"], enabled: true, minHeight: 100, priority: 3 },
-  { id: "feed-break", description: "News/transfer feed boundary", format: "inline", device: "all", pages: ["/play/world"], enabled: true, minHeight: 100, priority: 3 },
-  { id: "mobile-inline", description: "Mobile inline between major sections", format: "inline", device: "mobile", pages: ["/play/club", "/play/awards"], enabled: true, minHeight: 100, priority: 4 },
-  { id: "footer", description: "Footer banner on public pages", format: "banner", device: "all", pages: ["/credits", "/privacy"], enabled: true, minHeight: 90, priority: 5 },
+
 ];
 
 export const AD_RULES = {

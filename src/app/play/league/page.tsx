@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { KnockoutView } from "@/components/game/KnockoutView";
@@ -95,7 +94,6 @@ export default function Competitions() {
           ) : (
             <Empty title="No table this season" />
           )}
-          <InlineAdSlot placementId="below-table" />
           <Card title="Top scorers">
             {scorers.length ? (
               <Table>

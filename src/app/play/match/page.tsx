@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { LiveMatch } from "@/components/game/LiveMatch";
 import { TeamStatBars } from "@/components/game/match/MatchStats";
@@ -164,7 +163,6 @@ function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
           </div>
         </div>
       )}
-      <InlineAdSlot placementId="after-result" />
     </div>
   );
 }

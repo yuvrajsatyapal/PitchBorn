@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { MobileAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { Kit } from "@/components/art/Kit";
@@ -93,7 +92,9 @@ export default function ClubPage() {
           </div>
           <SeasonContext g={g} clubId={club.id} />
         </Card>
-        <RelationshipsCard g={g} />
+        <div className="grid content-start gap-4">
+          <RelationshipsCard g={g} />
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <IdentityCard g={g} clubId={club.id} />
@@ -104,7 +105,6 @@ export default function ClubPage() {
       <MovesAndFinances g={g} clubId={club.id} />
       <HistoryCard g={g} clubId={club.id} />
       <RivalryCard g={g} clubId={club.id} />
-      <MobileAdSlot placementId="mobile-inline" />
       <Card title={`Squad (${squad.length})`} action={<Tabs value={sort} onChange={setSort} items={[{ id: "pos", label: "Position" }, { id: "ovr", label: "OVR" }, { id: "age", label: "Age" }, { id: "value", label: "Value" }]} />}>
         <Table>
           <thead>

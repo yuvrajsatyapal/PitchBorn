@@ -1,7 +1,7 @@
 "use client";
+import { SponsorSlot } from "@/ads/SponsorSections";
 import { intlTeam } from "@/engine/national/identity";
 import Link from "next/link";
-import { InlineAdSlot } from "@/ads/AdSlot";
 import { Crest } from "@/components/art/Crest";
 import { JerseyChoiceCard } from "@/components/game/NumberPicker";
 import { RecentRatings } from "@/components/game/RecentRatings";
@@ -48,6 +48,7 @@ export default function Dashboard() {
   return (
     <div className="grid gap-4">
       <PlayerHero g={g} p={p} />
+      <SponsorSlot />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-4">
           <PendingMatchCard g={g} />
@@ -133,7 +134,6 @@ export default function Dashboard() {
               </Empty>
             </Card>
           )}
-          <InlineAdSlot placementId="dashboard-break" />
           <Card title="Fixtures" action={<Link href="/play/schedule" className="pb-hit text-sm font-bold underline">Schedule</Link>}>
             {upcoming.length || recent.length ? (
               <>
