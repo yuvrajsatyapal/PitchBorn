@@ -138,13 +138,13 @@ export default function Dashboard() {
             {upcoming.length || recent.length ? (
               <>
                 <ul className="divide-y divide-line/10">
-                  {upcoming.map(({ comp, f }) => (
-                    <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
+                  {upcoming.map(({ comp, f }, i) => (
+                    <FixtureRow key={f.id} next={i === 0} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
                   ))}
                 </ul>
                 {recent.length > 0 && (
                   <>
-                    <div className="mt-3 text-xs font-bold uppercase text-muted">Recent</div>
+                    <div className="mb-1 mt-4 px-2 text-[11px] font-black uppercase tracking-wider text-muted">Recent</div>
                     <ul className="divide-y divide-line/10">
                       {recent.map(({ comp, f }) => (
                         <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
