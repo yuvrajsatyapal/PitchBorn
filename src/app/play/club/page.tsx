@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { Kit } from "@/components/art/Kit";
-import { AmbitionsCard, HistoryCard, IdentityCard, MovesAndFinances, RelationshipsCard, RoleCard, SeasonContext, StrengthCard } from "@/components/game/ClubPanels";
+import { AmbitionsCard, ClubLeadersCard, HistoryCard, IdentityCard, MovesAndFinances, RelationshipsCard, RoleCard, SeasonContext, StadiumMoodCard, StrengthCard } from "@/components/game/ClubPanels";
 import { CurrentManager } from "@/components/game/ManagerPanels";
 import { PlayerModal } from "@/components/game/PlayerModal";
 import { RivalryCard } from "@/components/game/RivalryCard";
@@ -52,7 +52,8 @@ export default function ClubPage() {
     <div className="grid gap-4">
       <PageTitle kicker={league?.name} title={<span className="flex items-center gap-3"><Crest clubId={club.id} size={48} /> {st.name}</span>} className="-mb-1" />
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card title="The club" className="lg:col-span-2">
+        <div className="grid content-start gap-4 lg:col-span-2">
+        <Card title="The club">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
             <div className="flex shrink-0 gap-1 sm:pt-1">
               <Kit clubId={club.id} size={64} />
@@ -92,8 +93,11 @@ export default function ClubPage() {
           </div>
           <SeasonContext g={g} clubId={club.id} />
         </Card>
+        <StadiumMoodCard g={g} clubId={club.id} />
+        </div>
         <div className="grid content-start gap-4">
           <RelationshipsCard g={g} />
+          <ClubLeadersCard g={g} clubId={club.id} />
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">

@@ -7,11 +7,14 @@ import { ROLE_LABEL } from "@/engine/career/offers";
 import { currentObjectives, progressOf } from "@/engine/club/objectives";
 import { clubHistory, clubIdentity, clubMoments, ord, competitionRuns, departments, finances, recentMoves, relationshipInsights, userTacticalFit } from "@/engine/club/overview";
 import { roleView } from "@/engine/club/role";
-import { standingOf } from "@/engine/club/standing";
+import { standingOf, type Zone } from "@/engine/club/standing";
+import { staticClub, stadium } from "@/engine/data/world";
 import { seasonLabel } from "@/engine/calendar";
 import { formatMoney } from "@/engine/players/economy";
 import type { GameState } from "@/engine/types";
-import { teamLabel } from "@/game/selectors";
+import { fmtRating, name, seasonTotal, teamLabel } from "@/game/selectors";
+import { avgRating } from "@/engine/players/generate";
+import { squadOf } from "@/engine/world/helpers";
 
 const ZONE_TONE = { title: "sun", continental: "sky", promotion: "pitch", safe: "paper", relegation: "coral", preseason: "paper" } as const;
 
@@ -337,5 +340,69 @@ export function HistoryCard({ g, clubId }: { g: GameState; clubId: string }) {
         )}
       </div>
     </Disclosure>
+  );
+}
+
+const MIN_APPS_FOR_RATING = 3;
+
+export function ClubLeadersCard({ g, clubId }: { g: GameState; clubId: string }) {
+  const rows = squadOf(g, clubId).map((p) => ({ p, s: seasonTotal(p) })).filter((r) => r.s.apps > 0);
+  if (rows.length === 0) return null;
+  const top = (pick: (s: (typeof rows)[number]["s"]) => number, eligible: (s: (typeof rows)[number]["s"]) => boolean = () => true) =>
+    rows.filter((r) => eligible(r.s)).reduce<(typeof rows)[number] | null>((best, r) => (!best || pick(r.s) > pick(best.s) ? r : best), null);
+  const leaders = [
+    { label: "Top scorer", row: top((s) => s.goals), value: (s: (typeof rows)[number]["s"]) => `${s.goals} goals` },
+    { label: "Most assists", row: top((s) => s.assists), value: (s: (typeof rows)[number]["s"]) => `${s.assists} assists` },
+    { label: "Best rated", row: top((s) => avgRating(s), (s) => s.apps >= MIN_APPS_FOR_RATING), value: (s: (typeof rows)[number]["s"]) => fmtRating(s) },
+    { label: "Most appearances", row: top((s) => s.apps), value: (s: (typeof rows)[number]["s"]) => `${s.apps} apps` },
+  ].filter((l) => l.row && (l.label === "Best rated" || l.label === "Most appearances" || l.value(l.row.s).split(" ")[0] !== "0"));
+  if (leaders.length === 0) return null;
+  return (
+    <Card title="Club leaders" data-testid="club-leaders">
+      <ul className="grid gap-2">
+        {leaders.map(({ label, row, value }) => row && (
+          <li key={label} className="flex items-center justify-between gap-3 rounded-lg border-2 border-line/20 px-2.5 py-1.5 text-sm">
+            <span className="min-w-0">
+              <span className="block text-[11px] font-black uppercase tracking-wider text-muted">{label}</span>
+              <b className="block truncate">{name(row.p)}</b>
+            </span>
+            <span className="shrink-0 font-black tabular-nums">{value(row.s)}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[11px] text-muted">This season, all competitions.</p>
+    </Card>
+  );
+}
+
+const MOOD_BASE = 50;
+const MOOD_FORM_POINTS = { W: 7, D: -1, L: -7 } as const;
+const MOOD_ZONE_POINTS: Record<Zone, number> = { title: 22, continental: 12, promotion: 12, safe: 0, relegation: -22, preseason: 0 };
+
+function moodWord(v: number): { word: string; tone: "pitch" | "sun" | "coral" } {
+  if (v >= 75) return { word: "Buzzing", tone: "pitch" };
+  if (v >= 58) return { word: "Upbeat", tone: "pitch" };
+  if (v >= 42) return { word: "Restless", tone: "sun" };
+  return { word: "Angry", tone: "coral" };
+}
+
+/** Terrace mood from recent results and where the club sits in the table; derived, never stored. */
+export function StadiumMoodCard({ g, clubId }: { g: GameState; clubId: string }) {
+  const stad = stadium(staticClub(clubId)?.stadiumId ?? "");
+  const st = standingOf(g, clubId);
+  if (!stad || !st) return null;
+  const mood = Math.max(0, Math.min(100, MOOD_BASE + st.form.reduce((a, r) => a + MOOD_FORM_POINTS[r], 0) + MOOD_ZONE_POINTS[st.zone]));
+  const { word, tone } = moodWord(mood);
+  return (
+    <Card title="Stadium & fan mood" data-testid="stadium-mood">
+      <div className="flex items-baseline justify-between gap-3">
+        <b>{stad.name}</b>
+        <span className="text-sm text-muted">{stad.capacity.toLocaleString()} seats</span>
+      </div>
+      <div className="mt-3">
+        <Bar label={`Fan mood · ${word}`} value={mood} tone={tone} />
+      </div>
+      <p className="mt-2 text-xs text-ink-2">Shaped by recent results and league position.</p>
+    </Card>
   );
 }
