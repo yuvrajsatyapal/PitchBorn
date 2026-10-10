@@ -80,7 +80,7 @@ export default function History() {
             <p className="text-sm text-muted">Records are tallied at the end of each season.</p>
           )}
         </Card>
-        <Card title={stat === "goals" ? "All-time top scorers (Pitchborn era)" : "All-time top assists (Pitchborn era)"} action={<Tabs value={stat} onChange={setStat} items={[{ id: "goals", label: "Goals" }, { id: "assists", label: "Assists" }]} />} className="lg:flex lg:flex-col">
+        <Card title="All-time top assists or scorers" action={<Tabs value={stat} onChange={setStat} items={[{ id: "goals", label: "Goals" }, { id: "assists", label: "Assists" }]} />} className="lg:flex lg:flex-col">
           <Table className="lg:flex-1 lg:[&>table]:h-full">
             <tbody>
               {topScorers.map((x, i) => (
