@@ -11,7 +11,7 @@ import { standingOf, type Zone } from "@/engine/club/standing";
 import { staticClub, stadium } from "@/engine/data/world";
 import { seasonLabel } from "@/engine/calendar";
 import { formatMoney } from "@/engine/players/economy";
-import type { GameState } from "@/engine/types";
+import type { GameState, Player, StatLine } from "@/engine/types";
 import { fmtRating, name, seasonTotal, teamLabel } from "@/game/selectors";
 import { avgRating } from "@/engine/players/generate";
 import { squadOf } from "@/engine/world/helpers";
@@ -343,11 +343,42 @@ export function HistoryCard({ g, clubId }: { g: GameState; clubId: string }) {
   );
 }
 
-const MIN_APPS_FOR_RATING = 3;
+const MIN_APPS_FOR_RATING = 10;
+const PLACEHOLDER_LEADERS = ["Top scorer", "Most assists", "Best rated", "Most appearances"];
+
+/** A player's club-only totals here: this season plus every earlier season recorded at the club (international games excluded). */
+function clubTotal(p: Player, clubId: string): StatLine {
+  const total = seasonTotal(p);
+  for (const h of p.history) {
+    if (h.clubId !== clubId) continue;
+    total.apps += h.stats.apps - (h.intl?.caps ?? 0);
+    total.goals += h.stats.goals - (h.intl?.goals ?? 0);
+    total.assists += h.stats.assists;
+    total.ratingSum += h.stats.ratingSum;
+  }
+  return total;
+}
 
 export function ClubLeadersCard({ g, clubId }: { g: GameState; clubId: string }) {
-  const rows = squadOf(g, clubId).map((p) => ({ p, s: seasonTotal(p) })).filter((r) => r.s.apps > 0);
-  if (rows.length === 0) return null;
+  const rows = squadOf(g, clubId).map((p) => ({ p, s: clubTotal(p, clubId) })).filter((r) => r.s.apps > 0);
+  if (rows.length === 0) {
+    return (
+      <Card title="Club leaders" data-testid="club-leaders">
+        <ul className="grid gap-3">
+          {PLACEHOLDER_LEADERS.map((label) => (
+            <li key={label} className="flex items-center justify-between gap-3 rounded-lg border-2 border-line/20 px-2.5 py-1.5 text-sm">
+              <span className="min-w-0">
+                <span className="block text-[11px] font-black uppercase tracking-wider text-muted">{label}</span>
+                <b className="block truncate text-muted">Not decided yet</b>
+              </span>
+              <span className="shrink-0 font-black tabular-nums text-muted">-</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-[11px] text-muted">All time at the club, current squad.</p>
+      </Card>
+    );
+  }
   const top = (pick: (s: (typeof rows)[number]["s"]) => number, eligible: (s: (typeof rows)[number]["s"]) => boolean = () => true) =>
     rows.filter((r) => eligible(r.s)).reduce<(typeof rows)[number] | null>((best, r) => (!best || pick(r.s) > pick(best.s) ? r : best), null);
   const leaders = [
@@ -356,10 +387,9 @@ export function ClubLeadersCard({ g, clubId }: { g: GameState; clubId: string })
     { label: "Best rated", row: top((s) => avgRating(s), (s) => s.apps >= MIN_APPS_FOR_RATING), value: (s: (typeof rows)[number]["s"]) => fmtRating(s) },
     { label: "Most appearances", row: top((s) => s.apps), value: (s: (typeof rows)[number]["s"]) => `${s.apps} apps` },
   ].filter((l) => l.row && (l.label === "Best rated" || l.label === "Most appearances" || l.value(l.row.s).split(" ")[0] !== "0"));
-  if (leaders.length === 0) return null;
   return (
     <Card title="Club leaders" data-testid="club-leaders">
-      <ul className="grid gap-2">
+      <ul className="grid gap-3">
         {leaders.map(({ label, row, value }) => row && (
           <li key={label} className="flex items-center justify-between gap-3 rounded-lg border-2 border-line/20 px-2.5 py-1.5 text-sm">
             <span className="min-w-0">
@@ -370,7 +400,7 @@ export function ClubLeadersCard({ g, clubId }: { g: GameState; clubId: string })
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-[11px] text-muted">This season, all competitions.</p>
+      <p className="mt-3 text-[11px] text-muted">All time at the club, current squad.</p>
     </Card>
   );
 }
