@@ -3,7 +3,7 @@ import { FormDots, Table } from "@/components/ui";
 import type { TableRow } from "@/engine/types";
 import { teamLabel } from "@/game/selectors";
 
-export function LeagueTable({ rows, highlight, promo = 0, releg = 0, continental = 0, showForm = true }: { rows: TableRow[]; highlight?: string | null; promo?: number; releg?: number; continental?: number; showForm?: boolean }) {
+export function LeagueTable({ rows, highlight, promo = 0, releg = 0, continental = 0, showForm = true, prevPos }: { rows: TableRow[]; highlight?: string | null; promo?: number; releg?: number; continental?: number; showForm?: boolean; prevPos?: Record<string, number> }) {
   return (
     <Table>
       <thead>
@@ -24,13 +24,18 @@ export function LeagueTable({ rows, highlight, promo = 0, releg = 0, continental
       <tbody>
         {rows.map((r, i) => {
           const pos = i + 1;
-          const zone = pos <= continental ? "border-l-4 border-l-sky" : pos <= promo ? "border-l-4 border-l-pitch" : pos > rows.length - releg ? "border-l-4 border-l-coral" : "";
+          const zone = pos <= continental ? "border-l-4 border-l-sky!" : pos <= promo ? "border-l-4 border-l-pitch!" : pos > rows.length - releg ? "border-l-4 border-l-coral!" : "";
+          const prev = prevPos?.[r.team];
+          const move = prev ? prev - pos : 0;
           return (
             <tr key={r.team} className={`${r.team === highlight ? "bg-sun-2 font-bold" : ""}`}>
               <td className={zone}>{pos}</td>
               <td>
                 <span className="flex items-center gap-2">
                   <Crest clubId={r.team} size={20} /> {teamLabel(r.team)}
+                  {move > 0 && <span className="text-[11px] font-black text-pitch" title={`Up ${move} from last round`}>▲{move}</span>}
+                  {move < 0 && <span className="text-[11px] font-black text-coral" title={`Down ${-move} from last round`}>▼{-move}</span>}
+                  {prev !== undefined && move === 0 && <span className="text-[11px] text-muted">–</span>}
                 </span>
               </td>
               <td className="text-right tabular-nums">{r.played}</td>

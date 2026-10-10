@@ -45,3 +45,12 @@ export function buildTable(teams: string[], fixtures: Fixture[]): TableRow[] {
 export function positionOf(table: TableRow[], team: string): number {
   return table.findIndex((r) => r.team === team) + 1;
 }
+
+/** Table position of each team before the latest played round, for movement arrows. Empty until two rounds are played. */
+export function previousPositions(teams: string[], fixtures: Fixture[]): Record<string, number> {
+  const played = fixtures.filter((f) => f.result);
+  const lastRound = played.reduce((m, f) => Math.max(m, f.round), 0);
+  if (lastRound < 2) return {};
+  const before = buildTable(teams, played.filter((f) => f.round < lastRound));
+  return Object.fromEntries(before.map((r, i) => [r.team, i + 1]));
+}

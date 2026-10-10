@@ -7,6 +7,7 @@ import { LeagueTable } from "@/components/game/LeagueTable";
 import { Badge, Card, Empty, PageTitle, Table, Tabs } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import { leagueCompId } from "@/engine/competitions/setup";
+import { previousPositions } from "@/engine/competitions/table";
 import { WORLD, country, leaguesInPlay } from "@/engine/data/world";
 import type { Competition } from "@/engine/types";
 import { name, teamLabel, user } from "@/game/selectors";
@@ -34,6 +35,7 @@ export default function Competitions() {
   const myLeague = p?.clubId && g ? g.clubs[p.clubId]?.leagueId : undefined;
   const [view, setView] = useState<View>("league");
   const [leagueId, setLeagueId] = useState<string>(myLeague ?? "eng-1");
+  const [leaderStat, setLeaderStat] = useState<"goals" | "assists">("goals");
   const [histKey, setHistKey] = useState<string>("");
   const leagues = g ? leaguesInPlay(g) : [];
   if (!g || !p) return null;
@@ -45,10 +47,10 @@ export default function Competitions() {
   const intl = Object.values(g.competitions).filter((c) => c.kind === "international" && c.groups);
   const realHistory = WORLD.history.filter((h) => h.leagueId === leagueId);
   const archive = [...g.archive].reverse();
-  const scorers = comp
+  const leaders = comp
     ? Object.values(g.players)
-        .filter((x) => (x.season[comp.id]?.goals ?? 0) > 0)
-        .sort((a, b) => (b.season[comp.id]?.goals ?? 0) - (a.season[comp.id]?.goals ?? 0))
+        .filter((x) => (x.season[comp.id]?.[leaderStat] ?? 0) > 0)
+        .sort((a, b) => (b.season[comp.id]?.[leaderStat] ?? 0) - (a.season[comp.id]?.[leaderStat] ?? 0))
         .slice(0, 10)
     : [];
   return (
@@ -84,7 +86,7 @@ export default function Competitions() {
           </div>
           {comp?.table ? (
             <Card title={<span className="flex items-center gap-2"><Flag code={lg?.countryCode} /> {comp.name}</span>} action={lg?.abstraction ? <Badge>single-table abstraction</Badge> : undefined}>
-              <LeagueTable rows={comp.table} highlight={p.clubId} promo={lg && lg.tier > 1 ? 3 : 0} continental={lg?.tier === 1 ? 3 : 0} releg={lg && lg.tier < 3 ? 3 : 0} />
+              <LeagueTable rows={comp.table} prevPos={previousPositions(comp.teams, comp.fixtures)} highlight={p.clubId} promo={lg && lg.tier > 1 ? 3 : 0} continental={lg?.tier === 1 ? 3 : 0} releg={lg && lg.tier < 3 ? 3 : 0} />
               <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
                 {lg?.tier === 1 && <span><span className="inline-block h-2 w-2 bg-sky" /> Champions Cup</span>}
                 {lg && lg.tier > 1 && <span><span className="inline-block h-2 w-2 bg-pitch" /> Promotion</span>}
@@ -94,24 +96,27 @@ export default function Competitions() {
           ) : (
             <Empty title="No table this season" />
           )}
-          <Card title="Top scorers">
-            {scorers.length ? (
+          <Card
+            title={leaderStat === "goals" ? "Top scorers" : "Top assists"}
+            action={<Tabs value={leaderStat} onChange={setLeaderStat} items={[{ id: "goals", label: "Goals" }, { id: "assists", label: "Assists" }]} />}
+          >
+            {leaders.length ? (
               <Table>
                 <tbody>
-                  {scorers.map((x, i) => (
+                  {leaders.map((x, i) => (
                     <tr key={x.id} className={x.isUser ? "bg-sun-2 font-bold" : ""}>
                       <td className="w-6">{i + 1}</td>
                       <td>
                         <span className="flex items-center gap-1.5"><Flag code={x.nationality} /> {name(x)}</span>
                       </td>
                       <td><span className="flex items-center gap-1.5"><Crest clubId={x.clubId} size={16} /> {teamLabel(x.clubId ?? "", true)}</span></td>
-                      <td className="text-right font-black">{x.season[comp!.id]?.goals}</td>
+                      <td className="text-right font-black">{x.season[comp!.id]?.[leaderStat]}</td>
                     </tr>
                   ))}
                 </tbody>
               </Table>
             ) : (
-              <p className="text-sm text-muted">No goals yet.</p>
+              <p className="text-sm text-muted">{leaderStat === "goals" ? "No goals yet." : "No assists yet."}</p>
             )}
           </Card>
         </div>
