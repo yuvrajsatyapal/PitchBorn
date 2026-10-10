@@ -139,25 +139,29 @@ export default function Stats() {
       <EarningsPanel g={g} />
       <RivalStatsCard g={g} />
       <Card title="Detailed this season">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {p.position === "GK" ? (
-            <>
-              <Stat label="Clean sheets" value={cur.cleanSheets} sub={cur.apps ? `${Math.round(keeperMetrics(cur).cleanSheetRate * 100)}% of games` : undefined} />
-              <Stat label="Save %" value={cur.saves + cur.conceded ? `${Math.round(keeperMetrics(cur).savePct * 100)}%` : "–"} sub={`${cur.saves} saves`} />
-              <Stat label="Conceded / 90" value={cur.minutes ? keeperMetrics(cur).concededPer90.toFixed(2) : "–"} sub={`${cur.conceded} conceded`} />
-              <Stat label="Saves / game" value={cur.apps ? keeperMetrics(cur).savesPerGame.toFixed(1) : "–"} />
-            </>
-          ) : (
-            <>
-              <Stat label="Shots" value={cur.shots} sub={`${cur.shotsOnTarget} on target`} />
-              <Stat label="Conversion" value={cur.shots ? `${Math.round((cur.goals / cur.shots) * 100)}%` : "–"} />
-              <Stat label="Key passes" value={cur.keyPasses} />
-              <Stat label="Tackles" value={cur.tackles} />
-              <Stat label="Mins / goal" value={cur.goals ? Math.round(cur.minutes / cur.goals) : "–"} />
-            </>
-          )}
-          <Stat label="Earnings" value={`€${(g.user.earnings / 1e6).toFixed(2)}M`} />
-        </div>
+        {cur.apps === 0 ? (
+          <p className="text-sm text-muted">Nothing to show yet. These fill in after your first appearance of the season.</p>
+        ) : (
+          <div className={`grid grid-cols-2 gap-2 ${p.position === "GK" ? "lg:grid-cols-4" : "sm:grid-cols-3 lg:grid-cols-6"}`}>
+            {p.position === "GK" ? (
+              <>
+                <Stat tone="pitch" label="Clean sheets" value={cur.cleanSheets} sub={`${Math.round(keeperMetrics(cur).cleanSheetRate * 100)}% of games`} />
+                <Stat tone="sky" label="Save %" value={cur.saves + cur.conceded ? `${Math.round(keeperMetrics(cur).savePct * 100)}%` : "–"} sub={`${cur.saves} saves, ${cur.conceded} conceded`} />
+                <Stat label="Conceded / 90" value={cur.minutes ? keeperMetrics(cur).concededPer90.toFixed(2) : "–"} sub="lower is better" />
+                <Stat label="Saves / game" value={keeperMetrics(cur).savesPerGame.toFixed(1)} sub={`over ${cur.apps} ${cur.apps === 1 ? "game" : "games"}`} />
+              </>
+            ) : (
+              <>
+                <Stat tone="pitch" label="Goal involvements" value={cur.goals + cur.assists} sub={`${cur.goals} goals, ${cur.assists} assists`} />
+                <Stat label="Shots" value={cur.shots} sub={cur.shots ? `${cur.shotsOnTarget} on target (${Math.round((cur.shotsOnTarget / cur.shots) * 100)}%)` : "none yet"} />
+                <Stat tone="sun" label="Conversion" value={cur.shots ? `${Math.round((cur.goals / cur.shots) * 100)}%` : "–"} sub={cur.shots ? `${cur.goals} from ${cur.shots} shots` : "needs a shot"} />
+                <Stat label="Mins / goal" value={cur.goals ? Math.round(cur.minutes / cur.goals) : "–"} sub={cur.goals ? `${cur.minutes.toLocaleString()} mins played` : "no goals yet"} />
+                <Stat tone="sky" label="Key passes" value={cur.keyPasses} sub={`${(cur.keyPasses / cur.apps).toFixed(1)} per game`} />
+                <Stat label="Tackles" value={cur.tackles} sub={`${(cur.tackles / cur.apps).toFixed(1)} per game`} />
+              </>
+            )}
+          </div>
+        )}
       </Card>
     </div>
   );

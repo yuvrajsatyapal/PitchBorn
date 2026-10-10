@@ -97,6 +97,7 @@ export function Per90Panel({ g }: { g: GameState }) {
       {stat.apps === 0 ? (
         <p className="text-sm text-muted">No appearances in this period.</p>
       ) : (
+        <>
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <div>
             <Table>
@@ -113,18 +114,19 @@ export function Per90Panel({ g }: { g: GameState }) {
                 ))}
               </tbody>
             </Table>
-            <p className="mt-2 text-[11px] text-muted">
-              Rate = total ÷ minutes × 90 ({stat.minutes.toLocaleString()} minutes).{" "}
-              {enough ? "" : `Under ${PER90_MIN_MINUTES} minutes is a small sample: treat these rates with care and don't compare them with a regular starter's.`}
-            </p>
           </div>
-          <div className="grid grid-cols-2 content-start gap-2">
+          <div className="grid grid-cols-2 grid-rows-2 gap-2">
             <Stat label="Starts" value={split.starts} sub={`${Math.round(split.startPct * 100)}% of apps`} tone="pitch" />
             <Stat label="From the bench" value={split.subs} sub="substitute appearances" />
             <Stat label="Avg minutes" value={Math.round(split.minPerApp)} sub="per appearance" />
             <Stat label="Avg rating" value={stat.apps ? avgRating(stat).toFixed(2) : "–"} tone="sun" sub={`${stat.apps} apps`} />
           </div>
         </div>
+        <p className="mt-2 text-[11px] text-muted">
+          Rate = total ÷ minutes × 90 ({stat.minutes.toLocaleString()} minutes).{" "}
+          {enough ? "" : `Under ${PER90_MIN_MINUTES} minutes is a small sample: treat these rates with care and don't compare them with a regular starter's.`}
+        </p>
+        </>
       )}
     </Card>
   );
