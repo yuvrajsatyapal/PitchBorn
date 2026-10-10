@@ -1,7 +1,6 @@
 import { Kit } from "@/components/art/Kit";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { generateAppearance } from "@/engine/appearance/generate";
-import { StadiumArt } from "./art";
 
 const SAMPLE_LOOK = generateAppearance("pitchborn-home");
 
@@ -31,7 +30,19 @@ export function CareerArc({ kitClubId }: { kitClubId?: string }) {
           </h2>
           <p className="mt-1 text-sm text-ink-2">From academy prospect to retired legend — every career finds its own route.</p>
         </div>
-        <StadiumArt className="hidden h-24 w-auto shrink-0 lg:block xl:h-28" />
+        <picture className="hidden shrink-0 lg:block">
+          <source type="image/avif" srcSet="/images/career/arc-stadium.avif" />
+          <img
+            src="/images/career/arc-stadium.webp"
+            width={480}
+            height={270}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="h-24 w-auto rounded-xl border-2 border-line shadow-[2px_2px_0_var(--shadow)] xl:h-28"
+          />
+        </picture>
       </div>
 
       <ol className="mt-6 grid grid-cols-3 gap-x-2 gap-y-5 lg:grid-cols-9 lg:gap-x-0">

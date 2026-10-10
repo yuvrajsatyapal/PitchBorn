@@ -198,7 +198,6 @@ body::before {
 @keyframes pb-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .pb-scene { opacity: 0; visibility: hidden; transition: opacity 1.1s ease-in-out, visibility 0s linear 1.1s; }
 .pb-scene.is-active { opacity: 1; visibility: visible; transition: opacity 1.1s ease-in-out; }
-.pb-parallax { transform: translate3d(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -6px), 0); transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); will-change: transform; }
 .pb-push { transform-origin: var(--origin, 50% 50%); will-change: transform; }
 .pb-scene.is-live .pb-push { animation: pb-push 4.6s cubic-bezier(0.33, 0.1, 0.4, 1) both paused; }
 .pb-scene.is-live[data-running="true"] .pb-push { animation-play-state: running; }

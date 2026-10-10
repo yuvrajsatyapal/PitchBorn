@@ -73,27 +73,6 @@ function Reel() {
     return () => window.clearTimeout(t);
   }, [running, active, go]);
 
-  // Pointer parallax writes CSS variables straight to the element: no re-render per mouse move.
-  const frame = useRef(0);
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const el = stage.current;
-    if (!el || reduced || e.pointerType !== "mouse") return;
-    const r = el.getBoundingClientRect();
-    const px = ((e.clientX - r.left) / r.width - 0.5) * 2;
-    const py = ((e.clientY - r.top) / r.height - 0.5) * 2;
-    cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(() => {
-      el.style.setProperty("--px", px.toFixed(3));
-      el.style.setProperty("--py", py.toFixed(3));
-    });
-  };
-  const onPointerLeave = () => {
-    cancelAnimationFrame(frame.current);
-    stage.current?.style.setProperty("--px", "0");
-    stage.current?.style.setProperty("--py", "0");
-  };
-  useEffect(() => () => cancelAnimationFrame(frame.current), []);
-
   const toggle = useCallback(() => setUserChoice(!wantsPlay), [wantsPlay]);
   const current = STAGES[active];
 
@@ -107,9 +86,7 @@ function Reel() {
     >
       <div
         ref={stage}
-        onPointerMove={onPointerMove}
-        onPointerLeave={onPointerLeave}
-        className="relative aspect-[7/5] overflow-hidden rounded-[1.2rem] border-2 border-[#1b1712] bg-[#0b1a13] [--px:0] [--py:0]"
+        className="relative aspect-[7/5] overflow-hidden rounded-[1.2rem] border-2 border-[#1b1712] bg-[#0b1a13]"
       >
         {STAGES.map((s, i) => {
           const live = i === active || leaving.includes(i);
@@ -140,7 +117,7 @@ function Reel() {
           onClick={toggle}
           aria-pressed={!wantsPlay}
           aria-label={wantsPlay ? "Pause career animation" : "Play career animation"}
-          className="absolute bottom-3 left-3 grid h-10 w-10 place-items-center rounded-full border-2 border-[#1b1712] bg-[#fff5e6] text-[#1b1712] shadow-[2px_2px_0_#1b1712] transition-transform hover:-translate-y-px focus-visible:outline-offset-2"
+          className="absolute bottom-3 left-3 grid h-10 w-10 place-items-center rounded-full border-2 border-[#1b1712] bg-[#fff5e6] text-[#1b1712] shadow-[2px_2px_0_#1b1712] transition-opacity hover:opacity-90 focus-visible:outline-offset-2"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden>
             {wantsPlay ? <path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z" fill="currentColor" /> : <path d="M4 2l10 6-10 6z" fill="currentColor" />}
@@ -156,7 +133,7 @@ function Reel() {
               onClick={() => go(i)}
               aria-label={`${s.label}: show this career moment`}
               aria-current={i === active ? "true" : undefined}
-              className={`relative block aspect-[16/10] w-full overflow-hidden rounded-lg border-2 bg-[#0b1a13] transition-[transform,box-shadow,opacity] motion-safe:hover:-translate-y-px ${
+              className={`relative block aspect-[16/10] w-full overflow-hidden rounded-lg border-2 bg-[#0b1a13] transition-opacity ${
                 i === active ? "border-[#e8b93f] shadow-[0_0_0_2px_#e8b93f]" : "border-[#1b1712] opacity-75 hover:opacity-100"
               }`}
             >

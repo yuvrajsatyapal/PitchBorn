@@ -1,32 +1,32 @@
 {
   "academy": {
-    "width": 836,
-    "height": 470,
+    "width": 820,
+    "height": 454,
     "thumbWidth": 240,
-    "thumbHeight": 135
+    "thumbHeight": 133
   },
   "debut": {
-    "width": 836,
-    "height": 470,
+    "width": 820,
+    "height": 454,
     "thumbWidth": 240,
-    "thumbHeight": 135
+    "thumbHeight": 133
   },
   "legend": {
-    "width": 558,
-    "height": 471,
+    "width": 542,
+    "height": 455,
     "thumbWidth": 240,
-    "thumbHeight": 203
+    "thumbHeight": 201
   },
   "transfer": {
-    "width": 557,
-    "height": 471,
+    "width": 541,
+    "height": 455,
     "thumbWidth": 240,
-    "thumbHeight": 203
+    "thumbHeight": 202
   },
   "trophies": {
-    "width": 557,
-    "height": 471,
+    "width": 541,
+    "height": 455,
     "thumbWidth": 240,
-    "thumbHeight": 203
+    "thumbHeight": 202
   }
 }
