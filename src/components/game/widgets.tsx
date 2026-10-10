@@ -45,6 +45,27 @@ export function Stars({ value, className = "text-base" }: { value: number; class
   );
 }
 
+/** 0-100 rating on a 1-5 half-star scale. */
+const ratingStars = (v: number) => Math.max(0.5, Math.min(5, Math.round((v / 20) * 2) / 2));
+
+export function SkillStarsGroup({ p, className = "" }: { p: Player; className?: string }) {
+  return (
+    <div className={`mb-4 break-inside-avoid ${className}`}>
+      <h3 className="mb-1 text-xs font-black uppercase tracking-wider text-muted">Skills</h3>
+      <ul className="grid gap-1">
+        <li className="flex items-center justify-between text-sm">
+          <span>Weak foot</span>
+          <Stars value={ratingStars(p.weakFoot)} />
+        </li>
+        <li className="flex items-center justify-between text-sm">
+          <span>Work rate</span>
+          <Stars value={ratingStars(p.attrs.workRate)} />
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 export function PlayerHero({ g, p }: { g: GameState; p: Player }) {
   const kit = clubKit(p.clubId, g.season);
   return (

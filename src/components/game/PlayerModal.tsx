@@ -1,9 +1,11 @@
 "use client";
+import { Fragment } from "react";
 import { Crest } from "@/components/art/Crest";
 import { clubKit } from "@/components/art/clubKit";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { TraitStrip } from "@/components/game/PlayIdentity";
+import { SkillStarsGroup } from "@/components/game/widgets";
 import { AttrValue, Badge, Modal } from "@/components/ui";
 import { clubName } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
@@ -41,7 +43,8 @@ export function PlayerModal({ g, p, onClose }: { g: GameState; p: Player | null;
       </div>
       <div className="mt-4 gap-x-6 sm:columns-2">
         {groups.map((gr) => (
-          <div key={gr.label} className="mb-4 break-inside-avoid">
+          <Fragment key={gr.label}>
+          <div className="mb-4 break-inside-avoid">
             <h3 className="mb-1 text-xs font-black uppercase text-muted">{gr.label}</h3>
             {gr.keys.map((k) => (
               <div key={k} className="flex justify-between py-0.5 text-sm">
@@ -50,6 +53,8 @@ export function PlayerModal({ g, p, onClose }: { g: GameState; p: Player | null;
               </div>
             ))}
           </div>
+          {gr.label === "Technical" && <SkillStarsGroup p={p} />}
+          </Fragment>
         ))}
       </div>
       {Object.keys(p.season).length > 0 && (
