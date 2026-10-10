@@ -78,8 +78,8 @@ export default function History() {
             <p className="text-sm text-muted">Records are tallied at the end of each season.</p>
           )}
         </Card>
-        <Card title="All-time top scorers (Pitchborn era)">
-          <Table>
+        <Card title="All-time top scorers (Pitchborn era)" className="lg:flex lg:flex-col">
+          <Table className="lg:flex-1 lg:[&>table]:h-full">
             <tbody>
               {topScorers.map((x, i) => (
                 <tr key={x.id} className={x.user ? "bg-sun-2 font-bold" : ""}>
