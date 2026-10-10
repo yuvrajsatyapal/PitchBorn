@@ -158,7 +158,7 @@ export const BALANCE = {
     monthLength: 4,
   },
   rewards: {
-    trainingBoost: { amount: 0.12, durationTurns: 2, cooldownTurns: 6 },
+    trainingBoost: { amount: 0.12, durationTurns: 6, cooldownTurns: 6 },
     recoveryBoost: { amount: 12, durationTurns: 1, cooldownTurns: 4 },
     moraleBoost: { amount: 6, durationTurns: 1, cooldownTurns: 6 },
   },

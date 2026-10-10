@@ -86,7 +86,7 @@ export default function Training() {
       <Card title="Optional boosts">
         <p className="mb-3 text-sm text-ink-2">Small, temporary bonuses. Never required — the game is fully playable without them.</p>
         <div className="flex flex-wrap gap-4">
-          <RewardedButton label="Focused session (+12% training, 2 wks)" hint={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) ? `Available in ${cd("training", BALANCE.rewards.trainingBoost.cooldownTurns)} weeks` : undefined} disabled={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) > 0} onReward={() => { const ok = grant("training"); if (ok) notify("Training boost active.", "good"); return ok; }} />
+          <RewardedButton label="Focused session (+12% training, 6 wks)" hint={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) ? `Available in ${cd("training", BALANCE.rewards.trainingBoost.cooldownTurns)} weeks` : undefined} disabled={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) > 0} onReward={() => { const ok = grant("training"); if (ok) notify("Training boost active.", "good"); return ok; }} />
           <RewardedButton label="Physio session (+12 fitness)" disabled={cd("recovery", BALANCE.rewards.recoveryBoost.cooldownTurns) > 0} onReward={() => { const ok = grant("recovery"); if (ok) notify("Recovery boost active.", "good"); return ok; }} />
         </div>
         {boosts.length > 0 && (

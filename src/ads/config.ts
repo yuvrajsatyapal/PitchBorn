@@ -27,6 +27,7 @@ export interface AdPlacement {
   priority: number;
 }
 
+export const PORTFOLIO_URL = "https://yuvraj-satyapal.vercel.app/";
 export const SPONSOR_EMAIL = "yuvrajsatyapal21@gmail.com";
 export const SPONSOR_SECTIONS = [1, 2, 3, 4] as const;
 /** How often small-screen slots swap which section they show. */
