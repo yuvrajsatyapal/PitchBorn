@@ -1,5 +1,6 @@
 "use client";
 import { Badge, Button, Card } from "@/components/ui";
+import { Stars } from "@/components/game/widgets";
 import { APPEAL_LEVELS, CATEGORY_LABEL, appealDrivers, appealLabel, brandOf, commercialAppeal, sponsorState, weeksLeft } from "@/engine/career/sponsors";
 import { formatMoney } from "@/engine/players/economy";
 import type { GameState } from "@/engine/types";
@@ -25,7 +26,7 @@ export function SponsorPanel({ g }: { g: GameState }) {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-testid="sponsor-appeal">
         <span className="text-xs font-bold uppercase tracking-wide text-muted">Commercial appeal</span>
         <span className="font-bold">{appealLabel(appeal)}</span>
-        <span aria-label={`${stars} of 5`} className="text-sun-2">{"★".repeat(stars)}{"☆".repeat(5 - stars)}</span>
+        <Stars value={stars} />
       </div>
       {drivers.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{drivers.map((d) => <Badge key={d}>{d}</Badge>)}</div>}
 
