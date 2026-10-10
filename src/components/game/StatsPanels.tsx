@@ -57,7 +57,7 @@ export function FormPanel({ g, version }: { g: GameState; version: number }) {
     <Card
       title="Form & match ratings"
       action={
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 max-sm:w-full">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-end max-sm:w-full">
           <Tabs compact value={n} onChange={setN} items={[{ id: "5", label: "Last 5" }, { id: "10", label: "Last 10" }, { id: "season", label: "Season" }]} />
           {data.dev.entries.length > 0 && <Tabs compact value={series} onChange={setSeries} items={[{ id: "senior", label: "Senior" }, { id: "dev", label: "Development" }]} />}
         </div>
