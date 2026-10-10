@@ -12,8 +12,8 @@ export default function Credits() {
       <main className="mx-auto max-w-4xl px-4">
         <h1 className="mb-2 font-display text-4xl">Data sources & credits</h1>
         <p className="mb-6 text-ink-2">
-          Pitchborn uses open football facts so the world feels real, and creates everything else itself. All players are fictional. All ratings, potentials,
-          market values and development curves are Pitchborn&apos;s own — nothing is copied from commercial games or proprietary databases.
+          PitchBorn uses open football facts so the world feels real, and creates everything else itself. All players are fictional. All ratings, potentials,
+          market values and development curves are PitchBorn&apos;s own — nothing is copied from commercial games or proprietary databases.
         </p>
         <section className="pb-card mb-5 p-5">
           <h2 className="mb-3 font-display text-2xl">Football data</h2>
@@ -30,13 +30,13 @@ export default function Credits() {
             ))}
           </ul>
           <p className="mt-3 text-xs text-muted">
-            Club and league names are used factually to identify real organisations; Pitchborn is not affiliated with or endorsed by any club, league or federation. League
+            Club and league names are used factually to identify real organisations; PitchBorn is not affiliated with or endorsed by any club, league or federation. League
             membership reflects the best available open data for the 2026/27 season; lower divisions marked as abstractions are simplified to one table.
           </p>
         </section>
         <section className="pb-card mb-5 p-5">
           <h2 className="mb-3 font-display text-2xl">Visual assets</h2>
-          <h3 className="font-bold">Original Pitchborn assets</h3>
+          <h3 className="font-bold">Original PitchBorn assets</h3>
           <ul className="mb-3 list-disc pl-5 text-sm">
             {assets.original.map((a) => <li key={a.id}><b>{a.name}</b> — {a.description}</li>)}
           </ul>

@@ -203,7 +203,7 @@ export default function CareerPage() {
         )}
       </section>
       <Modal open={confirm === "retire"} onClose={() => setConfirm(null)} title="Retire from football?">
-        <p className="mb-4 text-sm">This ends your playing career permanently and calculates your Pitchborn legacy. Your save remains viewable.</p>
+        <p className="mb-4 text-sm">This ends your playing career permanently and calculates your PitchBorn legacy. Your save remains viewable.</p>
         <div className="flex justify-end gap-2">
           <Button tone="paper" onClick={() => setConfirm(null)}>Not yet</Button>
           <Button tone="plum" onClick={async () => { setConfirm(null); await retire(); router.push("/play/legacy"); }}>Retire</Button>

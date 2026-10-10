@@ -163,10 +163,10 @@ export function parseImport(text: string): GameState {
   try {
     json = JSON.parse(text);
   } catch {
-    throw new LoadError("That file is not a Pitchborn save.");
+    throw new LoadError("That file is not a PitchBorn save.");
   }
   const env = ExportEnvelope.safeParse(json);
-  if (!env.success) throw new LoadError("That file is not a Pitchborn save (missing header).");
+  if (!env.success) throw new LoadError("That file is not a PitchBorn save (missing header).");
   return hydrate(env.data.data as EncodedState);
 }
 

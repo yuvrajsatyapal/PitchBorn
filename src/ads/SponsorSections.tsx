@@ -4,8 +4,8 @@ import { SPONSOR_EMAIL, SPONSOR_ROTATE_MS, SPONSOR_SECTIONS } from "./config";
 import { useAds } from "./AdContext";
 
 function sponsorHref(n: number) {
-  const subject = encodeURIComponent(`Sponsor Pitchborn - Section ${n}`);
-  const body = encodeURIComponent(`Hi,\n\nI'd like to sponsor Section ${n} on Pitchborn.\n\nCompany / brand:\nWebsite:\nBudget & dates:\n`);
+  const subject = encodeURIComponent(`Sponsor PitchBorn - Section ${n}`);
+  const body = encodeURIComponent(`Hi,\n\nI'd like to sponsor Section ${n} on PitchBorn.\n\nCompany / brand:\nWebsite:\nBudget & dates:\n`);
   return `mailto:${SPONSOR_EMAIL}?subject=${subject}&body=${body}`;
 }
 

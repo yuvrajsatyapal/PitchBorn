@@ -122,7 +122,7 @@ export default function National() {
             {nt?.titles.length ? (
               <ul className="text-sm">{nt.titles.map((t) => <li key={t.compId}>🏆 {t.name} {t.season + 1}</li>)}</ul>
             ) : (
-              <p className="text-sm text-muted">No major titles in the Pitchborn era yet.</p>
+              <p className="text-sm text-muted">No major titles in the PitchBorn era yet.</p>
             )}
           </Card>
         </div>

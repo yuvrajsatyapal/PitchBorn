@@ -79,7 +79,7 @@ test.describe("core career flow", () => {
       await st.getState().retire();
     });
     await page.goto("/play/legacy/");
-    await expect(page.getByText("Pitchborn legacy")).toBeVisible();
+    await expect(page.getByText("PitchBorn legacy")).toBeVisible();
     await expect(page.getByText("Legacy breakdown")).toBeVisible();
   });
 });

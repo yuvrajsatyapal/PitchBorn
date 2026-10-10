@@ -37,7 +37,7 @@ export default function Legacy() {
         <div className="relative flex flex-wrap items-center gap-6">
           <PlayerPortrait appearance={p.look} age={g.season - p.birthYear} size="large" kit="#ffc62b" />
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.25em] opacity-80">Pitchborn legacy</div>
+            <div className="text-xs font-black uppercase tracking-[0.25em] opacity-80">PitchBorn legacy</div>
             <h2 className="font-display text-4xl leading-none sm:text-6xl">{name(p)}</h2>
             <div className="mt-2 flex items-center gap-2 text-sm">
               <Flag code={p.nationality} /> {p.position} · {seasonLabel(g.user.startSeason)} – {seasonLabel(g.user.retiredSeason ?? g.season)}

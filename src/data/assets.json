@@ -1,10 +1,10 @@
 {
-  "_note": "Provenance registry for every visual/third-party asset shipped with Pitchborn. Third-party entries are kept separate from original Pitchborn assets.",
+  "_note": "Provenance registry for every visual/third-party asset shipped with PitchBorn. Third-party entries are kept separate from original PitchBorn assets.",
   "original": [
     { "id": "club-emblems", "name": "Club emblems", "kind": "generated", "description": "Procedurally generated SVG emblems from each club's real colours and initials (src/components/art/Crest.tsx). Not official crests." },
     { "id": "kits", "name": "Kits", "kind": "generated", "description": "Generated shirt illustrations from club colours (src/components/art/Kit.tsx). No licensed kit artwork." },
     { "id": "portraits", "name": "Player portraits", "kind": "generated", "description": "Flat illustrated portraits generated from appearance values (src/components/art/Portrait.tsx)." },
-    { "id": "logo-icons", "name": "Pitchborn logo and app icons", "kind": "original", "description": "Original Pitchborn artwork (public/icon.svg and PNG renders)." }
+    { "id": "logo-icons", "name": "PitchBorn logo and app icons", "kind": "original", "description": "Original PitchBorn artwork (public/icon.svg and PNG renders)." }
   ],
   "thirdParty": [
     { "id": "flag-icons", "name": "flag-icons", "author": "Panayiotis Lipiridis & contributors", "license": "MIT", "url": "https://github.com/lipis/flag-icons", "redistributable": true, "usage": "Country flag SVGs, bundled via npm." },
@@ -14,7 +14,7 @@
   ],
   "notBundled": [
     { "id": "club-crests", "name": "Official club crests", "reason": "Trademarked; redistribution and endorsement implications. Architecture supports a per-club asset override once licensed (see docs/DATA_SOURCES.md)." },
-    { "id": "competition-logos", "name": "League and competition logos", "reason": "Trademarked. Original Pitchborn names are used for continental/international competitions and awards." },
+    { "id": "competition-logos", "name": "League and competition logos", "reason": "Trademarked. Original PitchBorn names are used for continental/international competitions and awards." },
     { "id": "player-photos", "name": "Player photographs", "reason": "All players are fictional; no photographs are used." },
     { "id": "stadium-photos", "name": "Stadium photographs", "reason": "Not needed for the current UI; Wikimedia Commons images could be added with per-file licence records." }
   ]

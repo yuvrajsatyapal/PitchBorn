@@ -152,7 +152,7 @@ export default function Competitions() {
       )}
       {view === "history" && (
         <div className="grid gap-4">
-          <Card title="Pitchborn seasons">
+          <Card title="PitchBorn seasons">
             {archive.length ? (
               <Table>
                 <thead><tr><th>Season</th><th>Competition</th><th>Winner</th><th>Runner-up</th></tr></thead>

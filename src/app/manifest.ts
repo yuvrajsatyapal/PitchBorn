@@ -4,8 +4,8 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Pitchborn — Football Career Simulator",
-    short_name: "Pitchborn",
+    name: "PitchBorn — Football Career Simulator",
+    short_name: "PitchBorn",
     description: "Live an entire footballer's career in your browser. Free, offline-capable, no account.",
     start_url: "/play/",
     scope: "/",

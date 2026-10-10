@@ -148,7 +148,7 @@ function SideNav() {
     <nav aria-label="Game" className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r-2 border-line bg-paper-2/60 p-3 lg:flex">
       <Link href="/" className="mb-4 flex items-center gap-2 px-2 pt-1">
         <Logo size={34} />
-        <span className="font-display text-2xl">Pitchborn</span>
+        <span className="font-display text-2xl">PitchBorn</span>
       </Link>
       <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
         {NAV.map((n) => {

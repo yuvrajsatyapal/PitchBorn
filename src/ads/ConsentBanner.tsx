@@ -18,7 +18,7 @@ export function ConsentBanner() {
     <div className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto max-h-[70dvh] max-w-xl overflow-y-auto lg:bottom-4" role="dialog" aria-label="Ad and sponsor preferences">
       <div className="pb-card p-4 text-sm">
         <p className="mb-3">
-          Pitchborn is free and supported by ads and sponsors. Choose whether ads may be personalised. The game works fully either way.
+          PitchBorn is free and supported by ads and sponsors. Choose whether ads may be personalised. The game works fully either way.
         </p>
         <div className="flex flex-wrap gap-2">
           <button className="pb-btn bg-card px-4" onClick={() => writeConsent({ status: "denied", personalised: false })}>

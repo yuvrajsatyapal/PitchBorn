@@ -203,7 +203,7 @@ export class MigrationError extends Error {}
 export function migrateState(raw: RawState): GameState {
   let s = raw;
   let v = typeof s.schemaVersion === "number" ? s.schemaVersion : 1;
-  if (v > SCHEMA_VERSION) throw new MigrationError(`Save is from a newer version of Pitchborn (schema ${v}).`);
+  if (v > SCHEMA_VERSION) throw new MigrationError(`Save is from a newer version of PitchBorn (schema ${v}).`);
   while (v < SCHEMA_VERSION) {
     const step = MIGRATIONS[v];
     if (!step) throw new MigrationError(`No migration from schema ${v}.`);

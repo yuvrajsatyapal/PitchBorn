@@ -8,10 +8,10 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: 
 const chakra = Chakra_Petch({ weight: ["600", "700"], subsets: ["latin"], variable: "--font-chakra", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Pitchborn — Football Career Simulator", template: "%s · Pitchborn" },
+  title: { default: "PitchBorn — Football Career Simulator", template: "%s · PitchBorn" },
   description: "Live an entire footballer's career — from academy prospect to retirement legend — in a deep, free browser simulation built on real clubs and leagues.",
-  applicationName: "Pitchborn",
-  appleWebApp: { capable: true, title: "Pitchborn", statusBarStyle: "default" },
+  applicationName: "PitchBorn",
+  appleWebApp: { capable: true, title: "PitchBorn", statusBarStyle: "default" },
   icons: { icon: "/icon.svg", apple: "/icon-192.png" },
 };
 
