@@ -4,18 +4,20 @@
     { "id": "club-emblems", "name": "Club emblems", "kind": "generated", "description": "Procedurally generated SVG emblems from each club's real colours and initials (src/components/art/Crest.tsx). Not official crests." },
     { "id": "kits", "name": "Kits", "kind": "generated", "description": "Generated shirt illustrations from club colours (src/components/art/Kit.tsx). No licensed kit artwork." },
     { "id": "portraits", "name": "Player portraits", "kind": "generated", "description": "Flat illustrated portraits generated from appearance values (src/components/art/Portrait.tsx)." },
+    { "id": "landing-art", "name": "Landing page artwork", "kind": "original", "description": "Illustrated career scenes, captain portrait and stadium backdrop on the home page (public/images/career, public/images/landing). Fictional scenes; no real players or clubs depicted." },
     { "id": "logo-icons", "name": "PitchBorn logo and app icons", "kind": "original", "description": "Original PitchBorn artwork (public/icon.png and PNG renders)." }
   ],
   "thirdParty": [
     { "id": "flag-icons", "name": "flag-icons", "author": "Panayiotis Lipiridis & contributors", "license": "MIT", "url": "https://github.com/lipis/flag-icons", "redistributable": true, "usage": "Country flag SVGs, bundled via npm." },
     { "id": "font-lilita", "name": "Lilita One", "author": "Juan Montoreano", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Lilita+One", "redistributable": true, "usage": "Display typeface (self-hosted by next/font at build time)." },
     { "id": "font-outfit", "name": "Outfit", "author": "Smartsheet / On Brand Investments", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Outfit", "redistributable": true, "usage": "Body typeface." },
+    { "id": "font-caveat", "name": "Caveat", "author": "Impallari Type", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Caveat", "redistributable": true, "usage": "Handwritten accents on the landing page." },
     { "id": "font-chakra-petch", "name": "Chakra Petch", "author": "Cadson Demak", "license": "SIL Open Font License 1.1", "url": "https://fonts.google.com/specimen/Chakra+Petch", "redistributable": true, "usage": "Numerals: ratings, scores, dates, money and shirt numbers." }
   ],
   "notBundled": [
     { "id": "club-crests", "name": "Official club crests", "reason": "Trademarked; redistribution and endorsement implications. Architecture supports a per-club asset override once licensed (see docs/DATA_SOURCES.md)." },
     { "id": "competition-logos", "name": "League and competition logos", "reason": "Trademarked. Original PitchBorn names are used for continental/international competitions and awards." },
     { "id": "player-photos", "name": "Player photographs", "reason": "All players are fictional; no photographs are used." },
-    { "id": "stadium-photos", "name": "Stadium photographs", "reason": "Not needed for the current UI; Wikimedia Commons images could be added with per-file licence records." }
+    { "id": "stadium-photos", "name": "Stadium photographs", "reason": "No photographs of real stadiums are used; the landing page backdrop is illustration. Real photos would need per-file licence records." }
   ]
 }

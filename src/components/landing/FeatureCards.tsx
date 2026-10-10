@@ -4,7 +4,7 @@ import { ContractIcon, GlobeIcon, PadIcon } from "./icons";
 const FEATURES: { title: string; body: string; tone: string; Icon: ComponentType<{ className?: string }> }[] = [
   {
     title: "A living football world",
-    body: "Five real football pyramids, cups, continental nights and summer tournaments. Thousands of players age, develop, transfer and retire around you.",
+    body: "Five football pyramids, cups, continental nights and summer tournaments. Thousands of players age, develop, transfer and retire around you.",
     tone: "bg-pitch-2",
     Icon: GlobeIcon,
   },

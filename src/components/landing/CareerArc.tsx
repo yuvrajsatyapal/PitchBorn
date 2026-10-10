@@ -66,8 +66,8 @@ export function CareerArc({ kitClubId }: { kitClubId?: string }) {
                   aria-hidden
                   className={`absolute top-[17px] items-center ${
                     reversed
-                      ? "right-[calc(50%+26px)] left-[calc(-50%+26px)] flex-row-reverse max-lg:flex lg:left-[calc(50%+26px)] lg:right-[calc(-50%+26px)] lg:flex lg:flex-row"
-                      : "left-[calc(50%+26px)] right-[calc(-50%+26px)] flex"
+                      ? "right-[calc(50%+26px)] left-[calc(-50%+18px)] flex-row-reverse max-lg:flex lg:left-[calc(50%+26px)] lg:right-[calc(-50%+26px)] lg:flex lg:flex-row"
+                      : "left-[calc(50%+26px)] right-[calc(-50%+18px)] flex lg:right-[calc(-50%+26px)]"
                   }`}
                 >
                   <span className="h-0.5 flex-1 bg-line" />
@@ -82,7 +82,7 @@ export function CareerArc({ kitClubId }: { kitClubId?: string }) {
               )}
               {!last && rowEnd && (
                 <>
-                  <span aria-hidden className="absolute left-1/2 top-full flex h-6 -translate-x-1/2 flex-col items-center lg:hidden">
+                  <span aria-hidden className="absolute left-1/2 top-[calc(100%+6px)] flex h-[18px] -translate-x-1/2 flex-col items-center lg:hidden">
                     <span className="w-0.5 flex-1 bg-line" />
                     <span className="-mt-px border-x-[5px] border-t-[7px] border-x-transparent border-t-[var(--line)]" />
                   </span>

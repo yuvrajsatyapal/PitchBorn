@@ -116,21 +116,78 @@ export function PublicHeader({ wide = false }: { wide?: boolean }) {
   );
 }
 
+const CONNECT_LINKS = [
+  {
+    label: "GitHub",
+    href: "https://github.com/yuvrajsatyapal",
+    path: "M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z",
+  },
+  {
+    label: "Email",
+    href: "mailto:yuvrajsatyapal21@gmail.com",
+    path: "M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1.6 2L12 12.6 19.4 7H4.6ZM20 8.7l-8 6-8-6V17h16V8.7Z",
+  },
+  {
+    label: "Portfolio",
+    href: "https://github.com/yuvrajsatyapal",
+    path: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 9h-3.1a15.7 15.7 0 0 0-1.3-5.5A8 8 0 0 1 18.9 11ZM12 4.1c.8 1 1.6 3 1.8 6.9h-3.6c.2-3.9 1-5.9 1.8-6.9ZM9.5 5.5A15.7 15.7 0 0 0 8.2 11H5.1a8 8 0 0 1 4.4-5.5ZM5.1 13h3.1c.1 2.2.6 4.1 1.3 5.5A8 8 0 0 1 5.1 13Zm6.9 6.9c-.8-1-1.6-3-1.8-6.9h3.6c-.2 3.9-1 5.9-1.8 6.9Zm2.5-1.4c.7-1.4 1.2-3.3 1.3-5.5h3.1a8 8 0 0 1-4.4 5.5Z",
+  },
+];
+
 export function PublicFooter({ wide = false }: { wide?: boolean }) {
   return (
-    <footer className={`${container(wide)} mt-16 border-t-2 border-line py-8 text-sm text-ink-2`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span>
-          <b className="font-display text-base text-ink">PitchBorn</b> — a free football career simulator. Players are fictional; club and league data from open sources.
-        </span>
-        <span className="flex gap-4">
-          <Link href="/credits" className="pb-hit underline">
-            Data sources &amp; licences
-          </Link>
-          <Link href="/privacy" className="pb-hit underline">
-            Privacy
-          </Link>
-        </span>
+    <footer
+      className={`${container(wide)} mt-10 border-t-2 border-line py-4 text-sm text-ink-2`}
+    >
+      <div className="flex items-center justify-between gap-x-4">
+        <div>
+          <div
+            className="group flex flex-wrap items-baseline gap-x-3"
+            tabIndex={0}
+          >
+            <b className="font-display text-xl leading-tight text-ink">
+              PitchBorn
+            </b>
+            <p className="hidden w-full text-xs transition-opacity group-hover:block group-focus:block sm:block sm:w-auto sm:text-sm sm:opacity-0 duration-200 group-hover:opacity-100 group-focus:opacity-100">
+              A free football career simulator. Players are fictional; club and
+              league data from open sources.
+            </p>
+          </div>
+          <p className="mt-2 flex flex-wrap gap-x-4 sm:mt-0">
+            <Link href="/credits" className="pb-hit underline">
+              Data sources &amp; licences
+            </Link>
+            <Link href="/privacy" className="pb-hit underline">
+              Privacy
+            </Link>
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+          <span className="text-xs font-bold uppercase tracking-widest text-muted">
+            Connect
+          </span>
+          <div className="flex items-center gap-3">
+            {CONNECT_LINKS.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                aria-label={l.label}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pb-hit grid place-items-center text-ink-2 hover:text-ink"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-6 w-6"
+                  fill="currentColor"
+                  aria-hidden
+                >
+                  <path d={l.path} />
+                </svg>
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </footer>
   );
