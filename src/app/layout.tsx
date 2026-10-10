@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Caveat, Chakra_Petch, Lilita_One, Outfit } from "next/font/google";
 import { Providers } from "@/components/app/Providers";
 import "./globals.css";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="relative min-h-full">
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );

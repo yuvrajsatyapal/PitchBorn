@@ -27,6 +27,7 @@
     "sim:attributes-world": "tsx scripts/sim/attributes-world.ts"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "dexie": "^4.4.6",
     "flag-icons": "^7.5.0",
     "next": "16.3.8",
