@@ -75,13 +75,11 @@ function ActiveSaga({ g, s }: { g: GameState; s: TransferSaga }) {
         <div className="mt-3 rounded-xl border-2 border-line bg-card p-3" data-testid="saga-decision">
           <div className="font-bold">{decision.title}</div>
           <p className="mb-2 text-sm">{decision.body}</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
             {decision.options.map((o) => (
-              <button key={o.id} onClick={() => decide(decision.id, o.id)} className="pb-btn bg-card px-3 text-left text-sm">
-                <span>
-                  {o.label}
-                  {o.hint && <span className="block text-[11px] font-normal text-muted">{o.hint}</span>}
-                </span>
+              <button key={o.id} onClick={() => decide(decision.id, o.id)} className="pb-btn pb-choice bg-card text-sm">
+                <span>{o.label}</span>
+                {o.hint && <span className="pb-choice-hint text-muted">{o.hint}</span>}
               </button>
             ))}
           </div>

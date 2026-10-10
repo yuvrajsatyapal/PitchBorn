@@ -267,13 +267,11 @@ export function DecisionCards({ g }: { g: GameState }) {
       {g.user.decisions.map((d) => (
         <Card key={d.id} tone="plum" title={d.title}>
           <p className="mb-3 whitespace-pre-line text-sm">{d.body}</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
             {d.options.map((o) => (
-              <button key={o.id} onClick={() => decide(d.id, o.id)} className="pb-btn bg-card px-3 text-left text-sm">
-                <span>
-                  {o.label}
-                  {o.hint && <span className="block text-[11px] font-normal text-muted">{o.hint}</span>}
-                </span>
+              <button key={o.id} onClick={() => decide(d.id, o.id)} className="pb-btn pb-choice bg-card text-sm">
+                <span>{o.label}</span>
+                {o.hint && <span className="pb-choice-hint text-muted">{o.hint}</span>}
               </button>
             ))}
           </div>
