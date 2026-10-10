@@ -61,7 +61,7 @@ const valueOf = (r: AwardResult): string => {
   }
 };
 
-const toRecord = (state: GameState, r: AwardResult): AwardRecord => ({ season: state.season, id: r.id, name: r.name, scope: r.scope, playerId: r.winnerId, clubId: r.nominees[0].clubId, value: valueOf(r), age: r.nominees[0].age });
+const toRecord = (state: GameState, r: AwardResult): AwardRecord => ({ season: state.season, id: r.id, name: r.name, scope: r.scope, playerId: r.winnerId, playerName: state.players[r.winnerId] ? fullName(state.players[r.winnerId]) : undefined, clubId: r.nominees[0].clubId, value: valueOf(r), age: r.nominees[0].age });
 
 /**
  * Called once, when the season's league tables are final. Calculates the awards for every league, keeps the full

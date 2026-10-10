@@ -82,7 +82,7 @@ export default function Awards() {
                 <tr key={i} className={w.playerId === p.id ? "bg-sun-2 font-bold" : ""}>
                   <td>{seasonLabel(w.season)}</td>
                   <td>{w.name}</td>
-                  <td>{g.players[w.playerId] ? `${g.players[w.playerId].firstName} ${g.players[w.playerId].lastName}` : g.legends.find((l) => l.id === w.playerId)?.name ?? "Retired player"}</td>
+                  <td>{g.players[w.playerId] ? `${g.players[w.playerId].firstName} ${g.players[w.playerId].lastName}` : g.legends.find((l) => l.id === w.playerId)?.name ?? w.playerName ?? "Former player"}</td>
                   <td><span className="flex items-center gap-1.5"><Crest clubId={w.clubId ?? null} size={16} /> {clubName(w.clubId ?? null, true)}</span></td>
                 </tr>
               ))}

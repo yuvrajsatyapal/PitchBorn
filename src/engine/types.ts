@@ -472,6 +472,8 @@ export interface AwardRecord {
   name: string;
   scope: string; // league / world / club
   playerId: PlayerId;
+  /** Winner's name when awarded, so records survive the player's retirement. Optional for old saves. */
+  playerName?: string;
   clubId?: ClubId | null;
   value?: string;
   /** Winner's age when awarded (for youngest/oldest winner records). */

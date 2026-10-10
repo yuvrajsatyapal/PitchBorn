@@ -22,7 +22,8 @@ function leader(awards: AwardRecord[], id: string): { playerId: string; count: n
 export function updateAwardRecords(state: GameState): void {
   const awards = state.archive.flatMap((a) => a.awards);
   const out: WorldRecord[] = [];
-  const nameOf = (id: string) => (state.players[id] ? fullName(state.players[id]) : state.legends.find((l) => l.id === id)?.name ?? "Retired player");
+  const nameOf = (id: string) =>
+    state.players[id] ? fullName(state.players[id]) : state.legends.find((l) => l.id === id)?.name ?? awards.find((a) => a.playerId === id && a.playerName)?.playerName ?? "Former player";
   const pots = leader(awards, "pots");
   if (pots) out.push({ id: `${AWARD_RECORD_PREFIX}pots-wins`, label: "Most Player of the Season awards", value: pots.count, playerId: pots.playerId, name: nameOf(pots.playerId) });
   const boots = leader(awards, "topscorer");
