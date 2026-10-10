@@ -106,7 +106,7 @@ export function FixtureRow({ comp, f, teamId, next }: { comp: Competition; f: Fi
   const opp = home ? f.away : f.home;
   const res = resultFor(f, teamId);
   return (
-    <li className={`grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-2 py-2 text-sm sm:grid-cols-[3rem_minmax(0,1fr)_auto_auto] ${next ? "rounded-xl bg-sun-2 ring-2 ring-sun" : ""}`}>
+    <li className={`grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-2 py-2 text-sm sm:col-span-4 sm:grid-cols-subgrid ${next ? "rounded-xl bg-sun-2 ring-2 ring-sun" : ""}`}>
       <span className="num row-span-2 text-xs leading-tight text-muted sm:row-span-1">{g ? formatTurnDate(g.season, f.turn).replace(/ \d{4}$/, "") : `W${f.turn}`}</span>
       <span className="flex min-w-0 items-center gap-2">
         <Crest clubId={opp} size={24} />
@@ -114,7 +114,7 @@ export function FixtureRow({ comp, f, teamId, next }: { comp: Competition; f: Fi
         <span className="text-xs font-bold text-muted">{f.neutral ? "N" : home ? "H" : "A"}</span>
       </span>
       <CompChip comp={comp} stage={f.stage} className="col-start-2 row-start-2 pl-8 sm:col-start-3 sm:row-start-1 sm:pl-0" />
-      <span className="col-start-3 row-span-2 row-start-1 flex items-center justify-end gap-1.5 sm:col-start-4 sm:row-span-1 sm:min-w-[4.5rem]">
+      <span className="col-start-3 row-span-2 row-start-1 flex items-center justify-end gap-1.5 sm:col-start-4 sm:row-span-1 sm:min-w-[4.5rem] sm:pl-2">
         {f.result ? (
           <>
             <span className={`grid size-5 place-items-center rounded-full border-2 border-line text-[10px] font-black ${res === "W" ? "bg-pitch text-white" : res === "L" ? "bg-coral" : "bg-sun"}`}>{res}</span>

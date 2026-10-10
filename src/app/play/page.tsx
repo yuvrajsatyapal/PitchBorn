@@ -137,21 +137,17 @@ export default function Dashboard() {
           <Card title="Fixtures" action={<Link href="/play/schedule" className="pb-hit text-sm font-bold underline">Schedule</Link>}>
             {upcoming.length || recent.length ? (
               <>
-                <ul className="divide-y divide-line/10">
+                <ul className="divide-y divide-line/10 sm:grid sm:grid-cols-[3rem_minmax(0,1fr)_auto_auto]">
                   {upcoming.map(({ comp, f }, i) => (
                     <FixtureRow key={f.id} next={i === 0} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
                   ))}
+                  {recent.length > 0 && (
+                    <li className="mb-1 mt-4 border-t-0 px-2 text-[11px] font-black uppercase tracking-wider text-muted sm:col-span-4">Recent</li>
+                  )}
+                  {recent.map(({ comp, f }) => (
+                    <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
+                  ))}
                 </ul>
-                {recent.length > 0 && (
-                  <>
-                    <div className="mb-1 mt-4 px-2 text-[11px] font-black uppercase tracking-wider text-muted">Recent</div>
-                    <ul className="divide-y divide-line/10">
-                      {recent.map(({ comp, f }) => (
-                        <FixtureRow key={f.id} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
-                      ))}
-                    </ul>
-                  </>
-                )}
               </>
             ) : (
               <Empty title={g.turn > BALANCE.calendar.endOfSeasonTurn ? "Summer break" : "Pre-season"} icon="🌞">
