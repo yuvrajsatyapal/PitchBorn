@@ -179,7 +179,7 @@ function LineChart({ matches, size, average, label, h, active, setActive, cur, s
   const delta = latest.rating - prev.rating;
   return (
     <div data-testid="rating-chart">
-      <div className="mb-3 mt-1 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-ink-2">
+      <div className="mb-5 mt-1 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-ink-2">
         <span>Latest <b className="tabular-nums text-ink">{latest.rating.toFixed(1)}</b>{" "}
           <span className={delta > 0.05 ? "font-bold text-pitch" : delta < -0.05 ? "font-bold text-coral" : "text-muted"}>{delta > 0.05 ? "▲" : delta < -0.05 ? "▼" : "▬"} {Math.abs(delta).toFixed(1)}</span>
         </span>
