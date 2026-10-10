@@ -127,8 +127,8 @@ export function FixtureRow({ comp, f, teamId, next }: { comp: Competition; f: Fi
   const opp = home ? f.away : f.home;
   const res = resultFor(f, teamId);
   return (
-    <li className={`grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-2 py-2 text-sm sm:col-span-4 sm:grid-cols-subgrid ${next ? "rounded-xl bg-sun-2 ring-2 ring-sun" : ""}`}>
-      <span className="num row-span-2 text-xs leading-tight text-muted sm:row-span-1">{g ? formatTurnDate(g.season, f.turn).replace(/ \d{4}$/, "") : `W${f.turn}`}</span>
+    <li className={`grid grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-2 py-2 text-sm sm:col-span-4 sm:grid-cols-subgrid ${next ? "rounded-xl bg-sun-2 ring-2 ring-sun" : ""}`}>
+      <span className="num row-span-2 whitespace-nowrap text-xs leading-tight text-muted sm:row-span-1">{g ? formatTurnDate(g.season, f.turn).replace(/ \d{4}$/, "") : `W${f.turn}`}</span>
       <span className="flex min-w-0 items-center gap-2">
         <Crest clubId={opp} size={24} />
         <span className="truncate font-semibold">{teamLabel(opp)}</span>

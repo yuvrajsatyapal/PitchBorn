@@ -137,7 +137,7 @@ export default function Dashboard() {
           <Card title="Fixtures" action={<Link href="/play/schedule" className="pb-hit text-sm font-bold underline">Schedule</Link>}>
             {upcoming.length || recent.length ? (
               <>
-                <ul className="divide-y divide-line/10 sm:grid sm:grid-cols-[3rem_minmax(0,1fr)_auto_auto]">
+                <ul className="divide-y divide-line/10 sm:grid sm:grid-cols-[3.75rem_minmax(0,1fr)_auto_auto]">
                   {upcoming.map(({ comp, f }, i) => (
                     <FixtureRow key={f.id} next={i === 0} comp={comp} f={f} teamId={f.home === p.clubId || f.away === p.clubId ? p.clubId! : intlTeam(p)} />
                   ))}
