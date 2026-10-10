@@ -1,0 +1,32 @@
+{
+  "academy": {
+    "width": 836,
+    "height": 470,
+    "thumbWidth": 240,
+    "thumbHeight": 135
+  },
+  "debut": {
+    "width": 836,
+    "height": 470,
+    "thumbWidth": 240,
+    "thumbHeight": 135
+  },
+  "legend": {
+    "width": 558,
+    "height": 471,
+    "thumbWidth": 240,
+    "thumbHeight": 203
+  },
+  "transfer": {
+    "width": 557,
+    "height": 471,
+    "thumbWidth": 240,
+    "thumbHeight": 203
+  },
+  "trophies": {
+    "width": 557,
+    "height": 471,
+    "thumbWidth": 240,
+    "thumbHeight": 203
+  }
+}

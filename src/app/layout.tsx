@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Chakra_Petch, Lilita_One, Outfit } from "next/font/google";
+import { Caveat, Chakra_Petch, Lilita_One, Outfit } from "next/font/google";
 import { Providers } from "@/components/app/Providers";
 import "./globals.css";
 
 const lilita = Lilita_One({ weight: "400", subsets: ["latin"], variable: "--font-lilita", display: "swap" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
 const chakra = Chakra_Petch({ weight: ["600", "700"], subsets: ["latin"], variable: "--font-chakra", display: "swap" });
+const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "PitchBorn — Football Career Simulator", template: "%s · PitchBorn" },
@@ -27,7 +28,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${lilita.variable} ${outfit.variable} ${chakra.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${lilita.variable} ${outfit.variable} ${chakra.variable} ${caveat.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

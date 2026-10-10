@@ -22,6 +22,8 @@ for (const f of files) {
   if (rel === "/sw.js" || rel.endsWith(".map") || (rel.endsWith(".txt") && !rel.includes("_next"))) continue;
   // Flag SVGs (500+) are cached at runtime when first shown rather than precached.
   if (rel.startsWith("/_next/static/media/") && rel.endsWith(".svg")) continue;
+  // Landing-page career art is desktop-only: phones must never download it, so it is cached when first shown instead.
+  if (rel.startsWith("/images/career/")) continue;
   hash.update(rel).update(readFileSync(f));
   urls.push(rel.endsWith("/index.html") ? rel.slice(0, -"index.html".length) : rel);
 }
@@ -75,7 +77,7 @@ self.addEventListener("fetch", (event) => {
     if (hit) return hit;
     try {
       const res = await fetch(req);
-      if (res.ok && (url.pathname.startsWith("/_next/") || /\\.(png|svg|woff2?|css|js)$/.test(url.pathname))) cache.put(req, res.clone());
+      if (res.ok && (url.pathname.startsWith("/_next/") || /\\.(png|svg|avif|webp|woff2?|css|js)$/.test(url.pathname))) cache.put(req, res.clone());
       return res;
     } catch {
       return hit || Response.error();
