@@ -208,11 +208,7 @@ export default function MatchDay() {
             {comp.name}{fixture.stage ? ` · ${fixture.stage}` : ""}{fixture.neutral ? " · neutral venue" : ""}
             {derbyLevel(g, fixture) >= 0.5 && <span className="ml-2 rounded-full border-2 border-line bg-sun px-2 py-0.5 text-ink" data-testid="derby-badge">🔥 Derby</span>}
           </div>
-          <div className="my-4 flex items-center justify-center gap-6">
-            <div className="flex flex-col items-center gap-1"><Crest clubId={fixture.home} size={70} /><b>{teamLabel(fixture.home)}</b></div>
-            <span className="scoreboard text-3xl">VS</span>
-            <div className="flex flex-col items-center gap-1"><Crest clubId={fixture.away} size={70} /><b>{teamLabel(fixture.away)}</b></div>
-          </div>
+          <MatchContextStrip g={g} fixture={fixture} />
           {(() => {
             const preview = matchPreview(g, fixture, comp);
             return preview ? (
@@ -222,7 +218,6 @@ export default function MatchDay() {
               </Link>
             ) : null;
           })()}
-          <MatchContextStrip g={g} fixture={fixture} />
           <FormerManagerBlock g={g} fixture={fixture} />
           <MemoryLane g={g} fixtureId={fixture.id} />
           {(() => {
@@ -230,7 +225,7 @@ export default function MatchDay() {
             return (
               <>
                 <SelectionBlock g={g} fixture={fixture} status={status} />
-                <div className="flex flex-wrap justify-center gap-2">
+                <div className="mt-1 flex flex-wrap justify-center gap-3">
                   {status.actions.playLive && (
                     <Button size="lg" onClick={() => startLive(fixture.id)} data-testid="start-live">▶ {status.actions.liveLabel}</Button>
                   )}

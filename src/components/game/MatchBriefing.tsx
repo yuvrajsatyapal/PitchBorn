@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { Crest } from "@/components/art/Crest";
 import { Badge, Button, FormDots, Tabs } from "@/components/ui";
 import { formatTurnDate } from "@/engine/calendar";
 import { ShirtNo } from "@/components/game/NumberPicker";
@@ -21,14 +22,18 @@ const STATUS_TEXT: Record<Availability, { label: string; tone: "pitch" | "sky" |
   "not-called-up": { label: "Not called up", tone: "sun", line: "You're not in this international squad." },
 };
 
-function TeamStrip({ t }: { t: TeamLine }) {
+const ordinal = (n: number) => `${n}${["th", "st", "nd", "rd"][n % 100 > 10 && n % 100 < 14 ? 0 : Math.min(n % 10, 4) % 4] ?? "th"}`;
+
+function TeamSide({ clubId, t }: { clubId: Fixture["home"]; t: TeamLine }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 text-center text-[11px]">
+    <div className="flex min-w-0 flex-col items-center gap-1.5 text-center">
+      <Crest clubId={clubId} size={72} />
+      <b className="text-base leading-tight sm:text-lg">{teamLabel(clubId)}</b>
       {t.position !== null && (
-        <span className="font-bold">
+        <span className="text-xs font-bold">
           {t.position}
           {["th", "st", "nd", "rd"][t.position % 100 > 10 && t.position % 100 < 14 ? 0 : Math.min(t.position % 10, 4) % 4] ?? "th"}
-          {t.points !== null && <span className="text-muted"> · {t.points} pts</span>}
+          {t.points !== null && <span className="font-semibold text-muted"> · {t.points} pts</span>}
         </span>
       )}
       {t.form.length > 0 && <FormDots form={t.form} />}
@@ -36,26 +41,31 @@ function TeamStrip({ t }: { t: TeamLine }) {
   );
 }
 
-/** Matchup extras shown inside the main card: where each side stands and what the match means. */
+/** The matchup: each club's crest, standing and form together, then venue and what the match means. */
 export function MatchContextStrip({ g, fixture }: { g: GameState; fixture: Fixture }) {
   const ctx = useMemo(() => matchContext(g, fixture), [g, fixture.id, g.turnIndex]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!ctx) return null;
+  const venue = ctx.homeAway === "neutral" ? "Neutral" : ctx.homeAway === "home" ? "Home" : "Away";
   return (
-    <div className="mb-3" data-testid="match-context">
-      <div className="mb-2 grid grid-cols-[1fr_auto_1fr] items-start gap-3">
-        <TeamStrip t={ctx.home} />
-        <span className="text-[11px] font-black uppercase tracking-wider text-muted">{ctx.homeAway === "neutral" ? "Neutral" : ctx.homeAway === "home" ? "Home" : "Away"}</span>
-        <TeamStrip t={ctx.away} />
+    <div className="mb-4" data-testid="match-context">
+      <div className="my-4 grid grid-cols-[1fr_auto_1fr] items-start gap-3 sm:gap-6">
+        <TeamSide clubId={fixture.home} t={ctx.home} />
+        <div className="flex flex-col items-center gap-1 pt-6">
+          <span className="scoreboard text-3xl">VS</span>
+          <span className="text-[11px] font-black uppercase tracking-wider text-muted">{venue}</span>
+        </div>
+        <TeamSide clubId={fixture.away} t={ctx.away} />
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
-        {ctx.stadium && <Badge>🏟️ {ctx.stadium}</Badge>}
-        {ctx.tags.map((t) => (
-          <Badge key={t} tone={ctx.level === "major" ? "sun" : "sky"} className="font-black">
-            {IMPORTANCE_LABEL[t]}
-          </Badge>
-        ))}
-        {!ctx.tags.length && <span className="text-muted">An ordinary fixture: no extra stakes.</span>}
-      </div>
+      {(ctx.stadium || ctx.tags.length > 0) && (
+        <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
+          {ctx.stadium && <Badge>🏟️ {ctx.stadium}</Badge>}
+          {ctx.tags.map((t) => (
+            <Badge key={t} tone={ctx.level === "major" ? "sun" : "sky"} className="font-black">
+              {IMPORTANCE_LABEL[t]}
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -88,13 +98,13 @@ export function SelectionBlock({ g, fixture, status }: { g: GameState; fixture: 
         </ul>
       )}
       {actions.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2" data-testid="prematch-actions">
+        <div className="mt-3 grid gap-3 border-t-2 border-line/20 pt-3 sm:grid-cols-2" data-testid="prematch-actions">
           {actions.map((a) => (
-            <div key={a.kind} className="flex flex-col items-start">
-              <Button tone="paper" size="sm" disabled={!a.enabled} onClick={() => preMatch(fixture.id, a.kind)} title={a.hint} data-testid={`prematch-${a.kind}`}>
+            <div key={a.kind} className="flex flex-col items-start gap-1">
+              <Button tone="paper" size="sm" className="w-full sm:w-auto" disabled={!a.enabled} onClick={() => preMatch(fixture.id, a.kind)} title={a.hint} data-testid={`prematch-${a.kind}`}>
                 {a.label}
               </Button>
-              <span className="mt-0.5 max-w-[16rem] text-[11px] text-muted">{a.enabled ? a.hint : a.why}</span>
+              <span className="text-[11px] leading-snug text-muted">{a.enabled ? a.hint : a.why}</span>
             </div>
           ))}
         </div>
@@ -166,42 +176,69 @@ function PreviewBody({ g, fixture, tab, setTab }: { g: GameState; fixture: Fixtu
       {tab === "tactics" &&
         (tp ? (
           <div className="grid gap-3">
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {[
-                { who: "Your side", t: tp.mine },
-                { who: "Opposition", t: tp.theirs },
-              ].map(({ who, t }) =>
+                { who: "Your side", t: tp.mine, tint: "bg-pitch-2" },
+                { who: "Opposition", t: tp.theirs, tint: "bg-coral-2" },
+              ].map(({ who, t, tint }) =>
                 t ? (
-                  <div key={who} className="rounded-lg border-2 border-line/20 p-2">
-                    <div className="text-[11px] font-black uppercase text-muted">{who}</div>
-                    <div className="font-bold">{t.formation} <span className="font-normal text-ink-2">· {t.identity.lean}</span></div>
-                    <div className="mt-1 flex flex-wrap gap-1 text-[11px]">
-                      <Badge>{t.identity.pressing}</Badge>
-                      <Badge>{t.identity.tempo}</Badge>
-                      <Badge>{t.identity.directness}</Badge>
-                      <Badge tone="plum">{t.identity.approach}</Badge>
+                  <div key={who} className="overflow-hidden rounded-xl border-2 border-line/30">
+                    <div className={`flex items-baseline justify-between gap-2 px-3 py-2 text-ink ${tint}`}>
+                      <span className="text-xs font-black">{who}</span>
+                      <span className="text-right">
+                        <span className="scoreboard text-lg">{t.formation}</span>
+                        <span className="ml-1.5 text-xs font-semibold text-ink-2">{t.identity.lean}</span>
+                      </span>
                     </div>
-                    <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[11px]">
-                      {t.departments.map((d) => (
-                        <div key={d.key} title={`${d.label}: ${d.rank}${["th", "st", "nd", "rd"][d.rank % 100 > 10 && d.rank % 100 < 14 ? 0 : Math.min(d.rank % 10, 4) % 4] ?? "th"} of ${d.of}`}>
-                          <div className="font-black tabular-nums">{d.value}</div>
-                          <div className="text-[10px] uppercase text-muted">{d.label.slice(0, 3)}</div>
-                        </div>
-                      ))}
+                    <div className="grid gap-3 p-3">
+                      <div className="flex flex-wrap gap-1 text-[11px]">
+                        <Badge>{t.identity.pressing}</Badge>
+                        <Badge>{t.identity.tempo}</Badge>
+                        <Badge>{t.identity.directness}</Badge>
+                        <Badge tone="plum">{t.identity.approach}</Badge>
+                      </div>
+                      <div className="grid gap-1.5">
+                        {t.departments.map((d) => (
+                          <div key={d.key} className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-2 text-[11px]" title={`${d.label}: ${ordinal(d.rank)} of ${d.of}`}>
+                            <span className="font-black uppercase text-muted">{d.label.toLowerCase().startsWith("goal") ? "GK" : d.label.slice(0, 3)}</span>
+                            <span className="h-2 overflow-hidden rounded-full border border-line/40 bg-paper-2">
+                              <span className={`block h-full rounded-full ${d.rank <= d.of / 3 ? "bg-pitch" : d.rank > (d.of * 2) / 3 ? "bg-coral" : "bg-sun"}`} style={{ width: `${Math.min(100, Math.max(4, d.value))}%` }} />
+                            </span>
+                            <span className="w-14 text-right">
+                              <b className="tabular-nums text-sm">{d.value}</b> <span className="text-muted">{ordinal(d.rank)}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : null,
               )}
             </div>
-            <ul className="grid gap-0.5 text-xs">
-              {tp.strengths.map((s) => <li key={s}>💪 {s}</li>)}
-              {tp.weaknesses.map((s) => <li key={s}>⚠️ {s}</li>)}
-              {tp.fit && <li>🧩 Your fit with the manager&apos;s style: <b>{tp.fit.label}</b> ({tp.fit.score}/100). {tp.fit.note}</li>}
+            <ul className="grid gap-1.5 text-xs">
+              {tp.strengths.map((s) => <li key={s} className="flex gap-2 rounded-lg bg-pitch-2 px-2.5 py-1.5 text-ink"><span aria-hidden>💪</span>{s}</li>)}
+              {tp.weaknesses.map((s) => <li key={s} className="flex gap-2 rounded-lg bg-coral-2 px-2.5 py-1.5 text-ink"><span aria-hidden>⚠️</span>{s}</li>)}
+              {tp.fit && (
+                <li className="flex gap-2 rounded-lg bg-sun-2 px-2.5 py-1.5 text-ink">
+                  <span aria-hidden>🧩</span>
+                  <span>Your fit with the manager&apos;s style: <b>{tp.fit.label}</b> ({tp.fit.score}/100). {tp.fit.note}</span>
+                </li>
+              )}
             </ul>
             {tp.duel && (
-              <div className="rounded-lg border-2 border-line/20 p-2 text-xs" data-testid="duel">
-                <b>Your direct opponent:</b> {tp.duel.theirs.name} ({tp.duel.theirs.position}, {tp.duel.theirs.ovr} OVR) against your {tp.duel.yours.ovr}.
-                {tp.duel.edges.length > 0 && <span className="text-ink-2"> Biggest differences (you minus them): {tp.duel.edges.join(", ")}.</span>}
+              <div className="rounded-xl border-2 border-line/30 p-3" data-testid="duel">
+                <div className="text-xs font-black text-muted">Your direct opponent</div>
+                <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
+                  <div><div className="scoreboard text-2xl">{tp.duel.yours.ovr}</div><div className="text-[11px] text-muted">You · OVR</div></div>
+                  <span className="text-xs font-black text-muted">VS</span>
+                  <div><div className="scoreboard text-2xl">{tp.duel.theirs.ovr}</div><div className="truncate text-[11px] text-muted">{tp.duel.theirs.name} · {tp.duel.theirs.position}</div></div>
+                </div>
+                {tp.duel.edges.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="text-muted">Biggest differences (you minus them)</span>
+                    {tp.duel.edges.map((e) => <Badge key={e} tone={e.includes("-") ? "coral" : "pitch"}>{e}</Badge>)}
+                  </div>
+                )}
               </div>
             )}
             <p className="text-[11px] text-muted">{tp.note}</p>
