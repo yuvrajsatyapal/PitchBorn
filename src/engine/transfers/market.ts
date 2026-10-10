@@ -302,7 +302,7 @@ function retire(state: GameState, p: Player) {
   for (const nt of Object.values(state.nationalTeams)) nt.squad = nt.squad.filter((id) => id !== p.id);
   if (p.career.goals >= 120 || p.career.apps >= 450 || p.intl.caps >= 70 || p.trophies >= 5) {
     state.legends.push({
-      id: p.id, name: fullName(p), nationality: p.nationality, goals: p.career.goals, apps: p.career.apps, caps: p.intl.caps,
+      id: p.id, name: fullName(p), nationality: p.nationality, goals: p.career.goals, assists: p.career.assists, apps: p.career.apps, caps: p.intl.caps,
       peak: Math.round(ovr(p)), retiredSeason: state.season,
     });
     if (state.legends.length > 300) state.legends.splice(0, state.legends.length - 300);

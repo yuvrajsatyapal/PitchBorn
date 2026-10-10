@@ -1235,7 +1235,7 @@ export interface GameState {
   /** Every manager's career, by stable id. */
   managers?: Record<ManagerId, ManagerRecord>;
   /** Hall of fame of retired notable NPCs (name + totals) to keep records after removal. */
-  legends: { id: PlayerId; name: string; nationality: CountryCode; goals: number; apps: number; caps: number; peak: number; retiredSeason: number }[];
+  legends: { id: PlayerId; name: string; nationality: CountryCode; goals: number; assists?: number; apps: number; caps: number; peak: number; retiredSeason: number }[];
   transferLog: { season: number; turn: number; playerId: PlayerId; name: string; from: ClubId | null; to: ClubId; fee: number }[];
   settings: { difficulty: "relaxed" | "standard" | "hardcore"; autoSave: boolean; countries?: string[] };
   /** Match the user must play this turn before the world advances. */

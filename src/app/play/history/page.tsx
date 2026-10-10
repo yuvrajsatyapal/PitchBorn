@@ -3,7 +3,8 @@ import { Flag } from "@/components/art/Flag";
 import { ManagerHistoryCard } from "@/components/game/ManagerPanels";
 import { JerseyHistoryCard } from "@/components/game/NumberPicker";
 import { RivalryHistoryCard } from "@/components/game/RivalCards";
-import { Card, Empty, PageTitle, Table } from "@/components/ui";
+import { useState } from "react";
+import { Card, Empty, PageTitle, Table, Tabs } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import type { TimelineKind } from "@/engine/types";
 import { name, ovr } from "@/game/selectors";
@@ -16,16 +17,17 @@ const ICON: Record<TimelineKind, string> = {
 
 export default function History() {
   const g = useGameState();
+  const [stat, setStat] = useState<"goals" | "assists">("goals");
   if (!g) return null;
   const tl = g.user.timeline;
   const bySeason = new Map<number, typeof tl>();
   for (const e of tl) bySeason.set(e.season, [...(bySeason.get(e.season) ?? []), e]);
   const seasons = [...bySeason.keys()].sort((a, b) => b - a);
   const allTime = [
-    ...Object.values(g.players).filter((p) => !p.virtual).map((p) => ({ id: p.id, name: name(p), nat: p.nationality, goals: p.career.goals, apps: p.career.apps, caps: p.intl.caps, active: true, user: !!p.isUser, peak: ovr(p) })),
-    ...g.legends.map((l) => ({ id: l.id, name: l.name, nat: l.nationality, goals: l.goals, apps: l.apps, caps: l.caps, active: false, user: false, peak: l.peak })),
+    ...Object.values(g.players).filter((p) => !p.virtual).map((p) => ({ id: p.id, name: name(p), nat: p.nationality, goals: p.career.goals, assists: p.career.assists, apps: p.career.apps, caps: p.intl.caps, active: true, user: !!p.isUser, peak: ovr(p) })),
+    ...g.legends.map((l) => ({ id: l.id, name: l.name, nat: l.nationality, goals: l.goals, assists: l.assists ?? 0, apps: l.apps, caps: l.caps, active: false, user: false, peak: l.peak })),
   ];
-  const topScorers = [...allTime].sort((a, b) => b.goals - a.goals).slice(0, 10);
+  const topScorers = [...allTime].sort((a, b) => b[stat] - a[stat]).slice(0, 10);
   return (
     <div className="grid gap-4">
       <PageTitle kicker="Your story so far" title="Career History" className="-mb-1" />
@@ -78,7 +80,7 @@ export default function History() {
             <p className="text-sm text-muted">Records are tallied at the end of each season.</p>
           )}
         </Card>
-        <Card title="All-time top scorers (Pitchborn era)" className="lg:flex lg:flex-col">
+        <Card title={stat === "goals" ? "All-time top scorers (Pitchborn era)" : "All-time top assists (Pitchborn era)"} action={<Tabs value={stat} onChange={setStat} items={[{ id: "goals", label: "Goals" }, { id: "assists", label: "Assists" }]} />} className="lg:flex lg:flex-col">
           <Table className="lg:flex-1 lg:[&>table]:h-full">
             <tbody>
               {topScorers.map((x, i) => (
@@ -86,12 +88,12 @@ export default function History() {
                   <td className="w-6">{i + 1}</td>
                   <td><span className="flex items-center gap-1.5"><Flag code={x.nat} /> {x.name} {!x.active && <span className="text-xs text-muted">(retired)</span>}</span></td>
                   <td className="text-right text-xs">{x.apps} apps</td>
-                  <td className="text-right font-black">{x.goals}</td>
+                  <td className="text-right font-black">{x[stat]}</td>
                 </tr>
               ))}
             </tbody>
           </Table>
-          <p className="mt-2 text-xs text-muted">Career totals for fictional players include goals before 2026.</p>
+          <p className="mt-2 text-xs text-muted">Career totals for fictional players include {stat} before 2026.</p>
         </Card>
       </div>
     </div>
