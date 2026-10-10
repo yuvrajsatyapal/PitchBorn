@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SCENES, SceneSprites } from "./art";
+import { LAYERS, SCENES, SceneSprites } from "./art";
 
 const SLIDE_MS = 4200;
+const FADE_MS = 1100;
 const DESKTOP_QUERY = "(min-width: 1024px)";
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
 const HERO_INDEX = 1;
@@ -27,6 +28,9 @@ export function HeroShowcase({ playerName }: { playerName?: string }) {
   const name = (playerName?.trim().split(/\s+/).slice(-1)[0] ?? "").toUpperCase().slice(0, 12) || "PITCHBORN";
   const root = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(HERO_INDEX);
+  const activeRef = useRef(HERO_INDEX);
+  // The scene we just left keeps drifting while it fades out, so its layers never snap back mid-dissolve.
+  const [leaving, setLeaving] = useState<number[]>([]);
   const [userChoice, setUserChoice] = useState<boolean | null>(null);
   const [inView, setInView] = useState(false);
   const [tabVisible, setTabVisible] = useState(true);
@@ -51,12 +55,21 @@ export function HeroShowcase({ playerName }: { playerName?: string }) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
+  const go = useCallback((next: number) => {
+    const prev = activeRef.current;
+    if (prev === next) return;
+    activeRef.current = next;
+    setActive(next);
+    setLeaving((l) => [...l.filter((i) => i !== next && i !== prev), prev]);
+    window.setTimeout(() => setLeaving((l) => l.filter((i) => i !== prev)), FADE_MS + 100);
+  }, []);
+
   // Re-armed whenever `active` changes, so picking a panel restarts the countdown instead of racing the old one.
   useEffect(() => {
     if (!running) return;
-    const t = window.setTimeout(() => setActive((i) => (i + 1) % SCENES.length), SLIDE_MS);
+    const t = window.setTimeout(() => go((active + 1) % SCENES.length), SLIDE_MS);
     return () => window.clearTimeout(t);
-  }, [running, active]);
+  }, [running, active, go]);
 
   const toggle = useCallback(() => setUserChoice(!wantsPlay), [wantsPlay]);
 
@@ -70,19 +83,31 @@ export function HeroShowcase({ playerName }: { playerName?: string }) {
       <SceneSprites name={name} />
 
       <div className="relative min-h-0 overflow-hidden rounded-[1.2rem] border-2 border-[#1b1712] bg-[#0f2119]">
-        {SCENES.map((sc, i) => (
-          <svg
-            key={sc.key}
-            viewBox="0 0 400 300"
-            preserveAspectRatio="xMidYMid slice"
-            aria-hidden
-            focusable="false"
-            className={`pb-stage-scene absolute inset-0 h-full w-full ${i === active ? "is-active" : ""}`}
-            data-running={running && i === active ? "true" : "false"}
-          >
-            <use href={`#pbs-${sc.key}`} />
-          </svg>
-        ))}
+        {SCENES.map((sc, i) => {
+          const live = i === active || leaving.includes(i);
+          return (
+            <div
+              key={sc.key}
+              aria-hidden
+              className={`pb-stage-scene absolute inset-0 ${i === active ? "is-active" : ""} ${live ? "is-live" : ""}`}
+              data-running={running && live ? "true" : "false"}
+              style={
+                {
+                  "--fs": sc.figScale,
+                  "--fy": `${sc.figRise}px`,
+                  "--fo": `${sc.pivot[0]}% ${sc.pivot[1]}%`,
+                } as React.CSSProperties
+              }
+            >
+              {LAYERS.map((l) => (
+                <svg key={l} viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" focusable="false" className={`pb-layer pb-layer-${l} absolute inset-0 h-full w-full`}>
+                  <use href={`#pbs-${sc.key}-${l}`} />
+                </svg>
+              ))}
+            </div>
+          );
+        })}
+        <span className="pb-grain" aria-hidden />
         <p className="sr-only">{SCENES[active].caption}</p>
         <button
           type="button"
@@ -111,7 +136,7 @@ export function HeroShowcase({ playerName }: { playerName?: string }) {
           <li key={sc.key} className="min-h-0">
             <button
               type="button"
-              onClick={() => setActive(i)}
+              onClick={() => go(i)}
               aria-label={`${sc.label}: show this career moment`}
               aria-current={i === active ? "true" : undefined}
               className={`group relative block h-full w-full overflow-hidden rounded-xl border-2 bg-[#0f2119] transition-[transform,box-shadow] motion-safe:hover:-translate-y-px ${
@@ -119,8 +144,11 @@ export function HeroShowcase({ playerName }: { playerName?: string }) {
               }`}
             >
               <svg viewBox={sc.thumb} preserveAspectRatio="xMidYMid slice" aria-hidden focusable="false" className="absolute inset-0 h-full w-full">
-                <use href={`#pbs-${sc.key}`} />
+                {LAYERS.map((l) => (
+                  <use key={l} href={`#pbs-${sc.key}-${l}`} />
+                ))}
               </svg>
+              <span className="pb-grain" aria-hidden />
               <span className="absolute left-1.5 top-1.5 -rotate-2 rounded-md border-2 border-[#1b1712] bg-[#fff5e6] px-1.5 py-0.5 font-display text-[11px] uppercase leading-none tracking-wide text-[#1b1712]">
                 {sc.label}
               </span>
