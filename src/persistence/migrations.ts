@@ -181,6 +181,11 @@ MIGRATIONS[14] = (s) => {
   return s;
 };
 
+MIGRATIONS[15] = (s) => {
+  // v15 → v16: sponsorship deals. Starts empty; the engine creates the state on first use.
+  return s;
+};
+
 /** Every player has a left or right foot and a weak-foot rating; old "both" players are converted (and given the trait if earned). */
 function sanitizeFootedness(state: GameState): void {
   for (const p of Object.values(state.players ?? {})) {

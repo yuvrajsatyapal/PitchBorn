@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
 import { AgentPanel } from "@/components/game/AgentPanel";
+import { SponsorPanel } from "@/components/game/SponsorPanel";
 import { Negotiation } from "@/components/game/Negotiation";
 import { SagaCard } from "@/components/game/SagaCard";
 import { Badge, Bar, Button, Card, Empty, Modal, PageTitle, Stat } from "@/components/ui";
@@ -143,6 +144,7 @@ export default function CareerPage() {
         </Card>
         <AgentPanel g={g} />
       </div>
+      <SponsorPanel g={g} />
       <Card title="Career moves">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">

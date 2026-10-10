@@ -39,6 +39,7 @@ import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
 import { careerProfile } from "../traits/effects";
 import { rememberManagerConflict, rememberPromotionOrRelegation, rememberRecord, rememberRetirement } from "../memory/detect";
 import { receiveIncome } from "../career/money";
+import { endSponsorshipsOnRetirement, sponsorWeekly } from "../career/sponsors";
 import { applyWageRise, payPromotionBonus } from "../career/bonuses";
 import { adjustRel } from "../career/relationships";
 import { canRestFor } from "./selection";
@@ -249,6 +250,7 @@ function userWeekly(state: GameState, rng: Rng): void {
     receiveIncome(state, p.contract.wage, "wage");
   }
   payAgent(state);
+  sponsorWeekly(state);
   weeklyPersonality(state);
   if (u.relationships.manager < 18 && p.clubId && state.turn >= C.seasonStart + 4) rememberManagerConflict(state);
   // A good agent keeps spirits up.
@@ -598,6 +600,7 @@ export function retireUser(state: GameState, reason = "You announce your retirem
   }
   u.retired = true;
   u.retiredSeason = state.season;
+  endSponsorshipsOnRetirement(state);
   closeStint(state, "player-left");
   endNumberTenure(state);
   settleCeremony(state);

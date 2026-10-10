@@ -8,6 +8,7 @@ import { create } from "zustand";
 import { BALANCE } from "@/engine/balance";
 import { completeCeremony, setCeremonyStep, startCeremony } from "@/engine/awards/ceremony";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
+import { acceptSponsorOffer, declineSponsorOffer } from "@/engine/career/sponsors";
 import { resolveDecision } from "@/engine/career/events";
 import { negotiate, requestRenewal, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
 import { syncSagas } from "@/engine/career/saga/engine";
@@ -68,6 +69,8 @@ interface GameStore {
   chooseIntlNumber: (no: number) => void;
   hireAgent: (agentId: string) => void;
   releaseAgent: () => void;
+  acceptSponsor: (offerId: string) => void;
+  declineSponsor: (offerId: string) => void;
   retire: () => Promise<void>;
   retireInternational: () => void;
   grantReward: (kind: RewardKind) => boolean;
@@ -305,6 +308,21 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!g) return;
     releaseAgent(g);
     get().notify("You now represent yourself.");
+    get().bump();
+  },
+
+  acceptSponsor: (offerId) => {
+    const g = get().game;
+    if (!g) return;
+    const msg = acceptSponsorOffer(g, offerId);
+    get().notify(msg, msg.startsWith("Signed") ? "good" : "bad");
+    get().bump();
+  },
+
+  declineSponsor: (offerId) => {
+    const g = get().game;
+    if (!g) return;
+    declineSponsorOffer(g, offerId);
     get().bump();
   },
 

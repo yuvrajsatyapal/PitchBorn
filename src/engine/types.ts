@@ -819,7 +819,41 @@ export interface ReserveLogEntry {
   assists: number;
 }
 
-export type PayKind = "wage" | "signing" | "appearance" | "goal" | "assist" | "cleanSheet" | "trophy" | "promotion" | "other" | "earlier";
+export interface SponsorDeal {
+  id: string;
+  brandId: string;
+  /** Yearly value in euros, paid weekly. */
+  annual: number;
+  /** Turn indexes: the deal runs from `startIndex` up to (not including) `endIndex`. */
+  startIndex: number;
+  endIndex: number;
+  /** Last turn index already paid, so a repeated week can never pay twice. */
+  paidThrough: number;
+  /** A renewal offer has already been made (or declined by the brand) for this deal. */
+  renewalHandled?: boolean;
+}
+
+export interface SponsorOffer {
+  id: string;
+  brandId: string;
+  annual: number;
+  years: number;
+  expiresIndex: number;
+  /** Renewal of the deal with this id (replaces it when accepted). */
+  renewsDealId?: string;
+}
+
+export interface SponsorState {
+  deals: SponsorDeal[];
+  offers: SponsorOffer[];
+  /** Brand id → turn index before which it will not approach again (after a declined offer or an ended deal). */
+  cooldown: Record<string, number>;
+  /** Turn index of the last new offer, to keep them spaced out. */
+  lastOfferIndex: number;
+  seq: number;
+}
+
+export type PayKind = "wage" | "signing" | "appearance" | "goal" | "assist" | "cleanSheet" | "trophy" | "promotion" | "sponsor" | "other" | "earlier";
 
 /**
  * Where the user's income came from. `paid` holds the keys of one-off payments already made, so a bonus can never be
@@ -1096,6 +1130,8 @@ export interface UserCareer {
   reserveLog?: ReserveLogEntry[];
   /** Itemised income and the one-off payments already made. */
   pay?: PayLedger;
+  /** Sponsorship deals and offers. Optional for old saves. */
+  sponsor?: SponsorState;
   /** International allegiance: invitations from other eligible nations and what was decided. */
   intl?: IntlState;
   /** This season's club objectives. */

@@ -374,7 +374,7 @@ export function ProgressionPanel({ g }: { g: GameState }) {
 export function EarningsPanel({ g }: { g: GameState }) {
   const ledger = g.user.pay;
   if (!ledger) return null;
-  const order: PayKind[] = ["wage", "signing", "appearance", "goal", "assist", "cleanSheet", "trophy", "promotion", "other", "earlier"];
+  const order: PayKind[] = ["wage", "signing", "appearance", "goal", "assist", "cleanSheet", "trophy", "promotion", "sponsor", "other", "earlier"];
   const season = ledger.season.season === g.season ? ledger.season.amounts : {};
   const rows = order.filter((k) => (ledger.career[k] ?? 0) > 0);
   const seasonTotal = Object.values(season).reduce((s, v) => s + (v ?? 0), 0);

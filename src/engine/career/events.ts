@@ -15,7 +15,6 @@ import { adjustRel } from "./relationships";
 import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
 
 const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
-const sponsorValue = (s: GameState, p: Player) => Math.round(p.reputation * p.reputation * 120 * (0.8 + agentSkill(s, "media") / 150) * careerProfile(p).media);
 
 interface Effect {
   morale?: number;
@@ -93,17 +92,6 @@ const EVENTS: CareerEventDef[] = [
       { id: "decline", label: "Politely decline", effect: () => ({}) },
     ],
     fallback: "decline",
-  },
-  {
-    id: "sponsor", weight: 1.2, cooldown: 30,
-    when: (s, p) => p.reputation > 40,
-    title: () => "Boot sponsor wants you",
-    body: (s, p) => `A sportswear brand offers ${formatMoney(sponsorValue(s, p))} for a two-year endorsement.`,
-    options: [
-      { id: "sign", label: "Sign the deal", hint: "Money, extra media duties", effect: (s, p) => ({ earnings: sponsorValue(s, p), morale: 2, sharpness: -3 }) },
-      { id: "refuse", label: "Focus on football", hint: "Manager approves", effect: () => ({ rel: { manager: 3 } }) },
-    ],
-    fallback: "refuse",
   },
   {
     id: "night-out", weight: 0.6, cooldown: 40,

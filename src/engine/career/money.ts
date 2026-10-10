@@ -42,6 +42,7 @@ export const PAY_LABEL: Record<PayKind, string> = {
   cleanSheet: "Clean-sheet bonuses",
   trophy: "Trophy bonuses",
   promotion: "Promotion bonuses",
-  other: "Sponsors & other",
+  sponsor: "Sponsorships",
+  other: "Events & other",
   earlier: "Earlier income (not itemised)",
 };
