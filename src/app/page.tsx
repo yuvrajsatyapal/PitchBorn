@@ -30,13 +30,15 @@ export default function Landing() {
               Free · No account · Plays offline
             </span>
             <h1 id="hero-title" className="mt-5 font-display text-[2.9rem] leading-[0.95] sm:text-7xl lg:text-[4.4rem] xl:text-[5.4rem]">
-              One player.
+              Your Career.
               <br />
-              One whole <span className="text-pitch">football life.</span>
+              Your Choices.
+              <br />
+              <span className="text-pitch">Your Legacy.</span>
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-2 sm:text-lg">
               From a 17-year-old academy hopeful to a retired legend. Train, play, negotiate, move clubs, win trophies, pull on your country&apos;s shirt — then
-              watch the body slow down. Every career writes its own story across {WORLD.clubs.length} real clubs in {WORLD.leagues.length} leagues.
+              watch the body slow down. Every career writes its own story across {WORLD.clubs.length} clubs in {WORLD.leagues.length} leagues.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <LinkButton href="/new" size="lg" className="w-full sm:w-auto">

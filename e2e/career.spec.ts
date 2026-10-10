@@ -4,7 +4,7 @@ import { advanceWeeks, createCareer, fastForward, gameInfo } from "./helpers";
 test.describe("core career flow", () => {
   test("landing → new career → dashboard", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /One player/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Your Career/ })).toBeVisible();
     await page.getByRole("link", { name: /Start a career/ }).click();
     await expect(page).toHaveURL(/\/new\/?$/);
     await createCareer(page);

@@ -14,10 +14,16 @@ export function GlobeIcon({ className = "" }: { className?: string }) {
 export function PadIcon({ className = "" }: { className?: string }) {
   return (
     <svg {...common} className={className}>
-      <path d="M14 14h20q8 0 10 10l1.5 8q.8 6-4 6-3.2 0-5-3l-2.5-4h-16l-2.5 4q-1.8 3-5 3-4.8 0-4-6L4 24q2-10 10-10z" fill="var(--sun)" />
-      <path d="M15 21v8M11 25h8" />
-      <circle cx="32" cy="22.5" r="1.8" fill="currentColor" />
-      <circle cx="36.5" cy="26.5" r="1.8" fill="currentColor" />
+      <g transform="translate(24 24.5) scale(.172) translate(-128 -139)" strokeWidth="15">
+        <path d="M76 70H180C212 70 230 92 236 128L244 170C248 194 234 208 216 208C200 208 192 200 182 184L174 172H82L74 184C64 200 56 208 40 208C22 208 8 194 12 170L20 128C26 92 44 70 76 70Z" fill="var(--sun)" />
+        <path d="M55 108v32M39 124h32" />
+        <circle cx="128" cy="124" r="25" fill="var(--card)" strokeWidth="10" />
+        <path d="M128 112L138 119L134 131H122L118 119Z" fill="currentColor" stroke="none" />
+        <circle cx="199" cy="108" r="6" fill="currentColor" stroke="none" />
+        <circle cx="199" cy="142" r="6" fill="currentColor" stroke="none" />
+        <circle cx="182" cy="125" r="6" fill="currentColor" stroke="none" />
+        <circle cx="216" cy="125" r="6" fill="currentColor" stroke="none" />
+      </g>
     </svg>
   );
 }

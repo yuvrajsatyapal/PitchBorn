@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="PitchBorn">
+  <g transform="translate(128 118) scale(.92) translate(-128 -128)" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M76 70H180C212 70 230 92 236 128L244 170C248 194 234 208 216 208C200 208 192 200 182 184L174 172H82L74 184C64 200 56 208 40 208C22 208 8 194 12 170L20 128C26 92 44 70 76 70Z" fill="#1b1712" transform="translate(7 8)"/>
+    <path d="M76 70H180C212 70 230 92 236 128L244 170C248 194 234 208 216 208C200 208 192 200 182 184L174 172H82L74 184C64 200 56 208 40 208C22 208 8 194 12 170L20 128C26 92 44 70 76 70Z" fill="#ffc62b" stroke="#1b1712" stroke-width="10"/>
+    <path d="M50 96C60 88 70 85 80 85H176" fill="none" stroke="#fff5e6" stroke-width="6" opacity=".9"/>
+    <path d="M55 112h12v12h12v12H67v12H55v-12H43v-12h12Z" fill="#1b1712"/>
+    <g stroke="#1b1712" stroke-width="4.5">
+      <circle cx="199" cy="107" r="8.5" fill="#4d7fe8"/>
+      <circle cx="199" cy="141" r="8.5" fill="#2e8b57"/>
+      <circle cx="182" cy="124" r="8.5" fill="#913a7f"/>
+      <circle cx="216" cy="124" r="8.5" fill="#ff6b57"/>
+    </g>
+    <circle cx="128" cy="124" r="23" fill="#fffdf8" stroke="#1b1712" stroke-width="5"/>
+    <path d="M128 111L139 119L135 132H121L117 119Z" fill="#1b1712"/>
+    <path d="M128 111V103M139 119L147 116M135 132L140 139M121 132L116 139M117 119L109 116" stroke="#1b1712" stroke-width="4.5" fill="none"/>
+  </g>
+</svg>

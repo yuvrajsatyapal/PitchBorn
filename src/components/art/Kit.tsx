@@ -2,11 +2,11 @@ import { staticClub } from "@/engine/data/world";
 import { hashString, readableOn } from "./hash";
 
 /** Generated shirt from real club colours (no licensed kit artwork). */
-export function Kit({ clubId, number, size = 48, away = false }: { clubId: string | null | undefined; number?: number; size?: number; away?: boolean }) {
+export function Kit({ clubId, number, size = 48, away = false, color }: { clubId: string | null | undefined; number?: number; size?: number; away?: boolean; color?: string }) {
   const club = clubId ? staticClub(clubId) : undefined;
-  const p = club ? (away ? club.colors.secondary : club.colors.primary) : "#cfc5b4";
-  const s = club ? (away ? club.colors.primary : club.colors.secondary) : "#8d826f";
-  const style = club ? hashString(club.id + (away ? "a" : "h")) % 4 : 0;
+  const p = color ?? (club ? (away ? club.colors.secondary : club.colors.primary) : "#cfc5b4");
+  const s = color ?? (club ? (away ? club.colors.primary : club.colors.secondary) : "#8d826f");
+  const style = club && !color ? hashString(club.id + (away ? "a" : "h")) % 4 : 0;
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden>
       <defs>

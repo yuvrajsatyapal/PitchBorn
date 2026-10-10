@@ -4,7 +4,7 @@
     { "id": "club-emblems", "name": "Club emblems", "kind": "generated", "description": "Procedurally generated SVG emblems from each club's real colours and initials (src/components/art/Crest.tsx). Not official crests." },
     { "id": "kits", "name": "Kits", "kind": "generated", "description": "Generated shirt illustrations from club colours (src/components/art/Kit.tsx). No licensed kit artwork." },
     { "id": "portraits", "name": "Player portraits", "kind": "generated", "description": "Flat illustrated portraits generated from appearance values (src/components/art/Portrait.tsx)." },
-    { "id": "logo-icons", "name": "PitchBorn logo and app icons", "kind": "original", "description": "Original PitchBorn artwork (public/icon.svg and PNG renders)." }
+    { "id": "logo-icons", "name": "PitchBorn logo and app icons", "kind": "original", "description": "Original PitchBorn artwork (public/icon.png and PNG renders)." }
   ],
   "thirdParty": [
     { "id": "flag-icons", "name": "flag-icons", "author": "Panayiotis Lipiridis & contributors", "license": "MIT", "url": "https://github.com/lipis/flag-icons", "redistributable": true, "usage": "Country flag SVGs, bundled via npm." },

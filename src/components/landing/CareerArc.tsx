@@ -1,8 +1,4 @@
 import { Kit } from "@/components/art/Kit";
-import { PlayerPortrait } from "@/components/art/PlayerPortrait";
-import { generateAppearance } from "@/engine/appearance/generate";
-
-const SAMPLE_LOOK = generateAppearance("pitchborn-home");
 
 const STEPS: { label: string; note: string }[] = [
   { label: "Academy", note: "Learn and develop" },
@@ -20,9 +16,17 @@ export function CareerArc({ kitClubId }: { kitClubId?: string }) {
   return (
     <section id="career" aria-labelledby="arc-title" className="pb-card scroll-mt-24 overflow-hidden p-4 sm:p-6 lg:p-7">
       <div className="flex flex-col items-start gap-3 min-[420px]:flex-row min-[420px]:items-center min-[420px]:gap-4 sm:gap-6">
-        <div className="flex shrink-0 gap-2">
-          <PlayerPortrait appearance={SAMPLE_LOOK} size={72} kit="#c8102e" />
-          <Kit clubId={kitClubId} number={10} size={64} />
+        <div className="flex shrink-0 items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/landing/captain-portrait.png"
+            width={61}
+            height={72}
+            alt=""
+            draggable={false}
+            className="h-[72px] w-auto rounded-lg border-2 border-line shadow-[2px_2px_0_var(--shadow)]"
+          />
+          <Kit clubId={kitClubId} number={10} size={72} color="#3f9d5a" />
         </div>
         <div className="min-w-0 flex-1">
           <h2 id="arc-title" className="font-display text-2xl leading-tight sm:text-3xl">

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: "Live an entire footballer's career — from academy prospect to retirement legend — in a deep, free browser simulation built on real clubs and leagues.",
   applicationName: "PitchBorn",
   appleWebApp: { capable: true, title: "PitchBorn", statusBarStyle: "default" },
-  icons: { icon: "/icon.svg", apple: "/icon-192.png" },
+  icons: { icon: "/icon.png", apple: "/icon-192.png" },
 };
 
 export const viewport: Viewport = {
