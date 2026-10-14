@@ -25,7 +25,7 @@ export function DecisionCard({ eng, onResolve }: { eng: MatchEngine; onResolve: 
         {d.options.map((o, i) => {
           const label = riskOf(o.odds);
           return (
-            <button key={o.id} ref={i === 0 ? first : undefined} className="pb-btn flex-col items-start gap-1 bg-card px-4 py-2.5 text-left" onClick={() => onResolve(o.id)} data-testid="decision-option">
+            <button key={o.id} ref={i === 0 ? first : undefined} className="pb-btn flex-col items-start gap-1 whitespace-normal rounded-2xl bg-card px-4 py-3 text-left sm:px-5" onClick={() => onResolve(o.id)} data-testid="decision-option">
               <span className="flex w-full items-start justify-between gap-2">
                 <span className="font-bold">{o.label}</span>
                 <span className={`shrink-0 rounded-full border-2 border-line px-2 py-0.5 text-[11px] font-black ${RISK_CLASS[label]}`} data-testid="risk">{label}</span>

@@ -54,6 +54,24 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
   const minute = Math.min(eng.minute, 120);
   const shirt = useCallback((id: string) => players?.[id]?.squadNo, [players]);
 
+  const matchAction = (compact: boolean) => !eng.finished ? (
+    <Button
+      tone="paper"
+      size={compact ? "sm" : "md"}
+      className={compact ? "shrink-0 whitespace-nowrap !px-3 !text-xs" : ""}
+      onClick={() => {
+        eng.runToEnd();
+        force((x) => x + 1);
+      }}
+    >
+      Skip to full time ⏭
+    </Button>
+  ) : (
+    <Button tone="pitch" size={compact ? "sm" : "lg"} className={compact ? "shrink-0 whitespace-nowrap !px-3 !text-xs" : ""} onClick={onDone} data-testid="finish-match">
+      Finish match ▸
+    </Button>
+  );
+
   return (
     <div className="grid gap-4">
       <Card className="!bg-[#1b1712] !text-[#fff5e6]" flat>
@@ -91,7 +109,10 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
           <YouCard eng={eng} uid={uid} squadNo={me?.squadNo} userInSquad={!!prepared.userSide} fitness={me ? Math.round(me.fitness) : undefined} />
         </div>
         <div className="grid gap-4 lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:grid-rows-[1fr] lg:self-stretch">
-          <Tabs<Pane> value={pane} onChange={setPane} className="lg:hidden" items={[{ id: "commentary", label: "Commentary" }, { id: "stats", label: "Stats" }]} />
+          <div className="flex items-center justify-between gap-2 lg:hidden">
+            <Tabs<Pane> value={pane} onChange={setPane} className="min-w-0" items={[{ id: "commentary", label: "Commentary" }, { id: "stats", label: "Stats" }]} />
+            {matchAction(true)}
+          </div>
           <div className={`lg:relative lg:min-h-[480px] ${pane === "commentary" ? "" : "hidden lg:block"}`}>
             <Commentary
               events={eng.events}
@@ -108,22 +129,8 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
         <div className="hidden lg:col-start-2 lg:row-start-2 lg:block">
           <MatchStats eng={eng} uid={uid} canShowYou={!!prepared.userSide} />
         </div>
-        <div className="flex flex-wrap gap-2 lg:col-start-2 lg:row-start-3">
-          {!eng.finished ? (
-            <Button
-              tone="paper"
-              onClick={() => {
-                eng.runToEnd();
-                force((x) => x + 1);
-              }}
-            >
-              Skip to full time ⏭
-            </Button>
-          ) : (
-            <Button tone="pitch" size="lg" onClick={onDone} data-testid="finish-match">
-              Finish match ▸
-            </Button>
-          )}
+        <div className="hidden flex-wrap gap-2 lg:col-start-2 lg:row-start-3 lg:flex">
+          {matchAction(false)}
         </div>
       </div>
 
