@@ -260,6 +260,23 @@ const MAX_LAPSE = 0.03;
 const MAX_COUNTER = 0.05;
 /** Minutes after coming on during which a Super Sub's fresh legs count. */
 const SUB_WINDOW = 30;
+/** How much of a player's "off" pressure becomes the chance he is changed in a given four-minute window, and the most it can ever be. */
+const SUB_HAZARD = 0.5;
+const SUB_HAZARD_MAX = 0.5;
+/** Minutes a window stays open for another look when the first one changed nobody. */
+const SUB_RETRY = 3;
+/** How long before a window opens the bench starts warming up. */
+const SUB_WARMUP = 5;
+const SUB_RETRY_FOR = 9;
+/** No change is made after this minute: nobody is sent on for stoppage time. */
+const SUB_LAST = 89;
+/** The window chance at which the next change is worth showing as a bench player warming up. */
+const SUB_WARM = 0.12;
+/** Tired legs weigh differently by role: the runners cover more ground than a centre-back or a holding midfielder. */
+const SUB_WORKLOAD: Record<Position, number> = { ST: 1, RW: 1.1, LW: 1.1, AM: 0.95, CM: 1.05, DM: 0.95, RB: 1, LB: 1, CB: 0.8, GK: 0 };
+/** Roles that win or protect a match from the front, for the manager's reading of the scoreline. */
+const SUB_FORWARD: Position[] = ["ST", "RW", "LW", "AM"];
+const SUB_BACK: Position[] = ["CB", "RB", "LB", "DM"];
 /** Display names for the abilities a choice leans on. */
 const skillNames = (...keys: AttrKey[]) => keys.map((k) => ATTR_LABEL[k]);
 
@@ -272,7 +289,9 @@ interface LiveTeam {
   players: LivePlayer[];
   bench: LivePlayer[];
   subsUsed: number;
+  /** Windows already used, and the minute each of the manager's three windows opens. */
   subWindows: number;
+  subPlan: number[];
   goals: number;
   shots: number;
   onTarget: number;
@@ -441,6 +460,8 @@ export class MatchEngine {
   private irng?: Rng;
   /** Wording and rationing of the user's commentary lines: kept off the flow stream so being the user never changes how a match plays. */
   private crng?: Rng;
+  /** The manager's own stream: substitution choices never draw from, or shift, the football's. */
+  private srng: Rng;
   private userId: string | undefined;
   private possHist: Side[] = [];
   private touchHist: number[] = [];
@@ -454,6 +475,7 @@ export class MatchEngine {
   constructor(input: MatchInput, rng: Rng) {
     this.input = input;
     this.rng = rng;
+    this.srng = rng.fork("subs");
     if (input.detail || input.interactive) {
       this.irng = rng.fork("flow");
       this.crng = rng.fork("notes");
@@ -466,6 +488,7 @@ export class MatchEngine {
       bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)), input.detail)),
       subsUsed: 0,
       subWindows: 0,
+      subPlan: this.planWindows(),
       goals: 0, shots: 0, onTarget: 0, xg: 0, corners: 0, fouls: 0, yellows: 0, reds: 0, possessionTicks: 0, flank: [0, 0, 0], passes: 0, passesOk: 0,
     });
     this.teams = { home: mk(input.home, "home"), away: mk(input.away, "away") };
@@ -1189,27 +1212,73 @@ export class MatchEngine {
     this.substitute(t, p, true);
   }
 
+  /**
+   * How badly the manager wants a player off right now, from what is on the pitch: tired legs (the energy the engine already drains),
+   * how his match is going (the one match rating), what the scoreline asks of his role and whether the bench has anyone to put on.
+   * No randomness and no player level as a trigger: a high rating only matters through the bench comparison, as a manager's expectation.
+   */
+  private subPressure(t: LiveTeam, p: LivePlayer): number {
+    const slot = p.input.slot;
+    if (slot === "GK" || !p.onPitch) return 0;
+    // A change is made once: a substitute is not taken off again for his legs or his form (injury and red cards still are).
+    if (!p.line.started) return 0;
+    const pick = this.benchPick(t, slot);
+    if (!pick) return 0;
+    const late = clamp((this.minute - 52) / 30, 0, 1);
+    const tired = clamp((88 - p.energy) / 22, 0, 1.3);
+    const fatigue = tired * (0.35 + 0.65 * late) * SUB_WORKLOAD[slot];
+    const form = clamp((6 - p.line.rating) / 0.8, -0.35, 1) * 0.8 * (0.5 + 0.5 * late);
+    const opp = this.teams[this.other(t.side)];
+    const lead = clamp(t.goals - opp.goals, -2, 2) / 2;
+    const scoreline = SUB_FORWARD.includes(slot) ? lead * 0.25 * late : SUB_BACK.includes(slot) ? -lead * 0.15 * late : 0;
+    const bench = clamp((overallExact(pick.input.attrs, slot) * pick.condition - p.lvl) / 60, -0.08, 0.08);
+    return fatigue + form + scoreline + bench;
+  }
+
+  private subHazard(t: LiveTeam, p: LivePlayer): number {
+    return clamp(this.subPressure(t, p) * SUB_HAZARD * (0.5 + clamp((this.minute - 52) / 30, 0, 1)), 0, SUB_HAZARD_MAX);
+  }
+
+  /** The bench player the manager would send on for this slot. */
+  private benchPick(t: LiveTeam, slot: Position): LivePlayer | undefined {
+    const candidates = t.bench.filter((b) => !b.onPitch && b.line.minuteOn < 0);
+    return candidates.sort((x, y) => this.subFit(y, slot) - this.subFit(x, slot))[0];
+  }
+
   private maybeSubs() {
-    if (this.minute < 56 || this.minute % 4 !== 0) return;
     for (const side of ["home", "away"] as Side[]) {
       const t = this.teams[side];
-      if (t.subsUsed >= M.subsMax || t.subWindows >= 3) continue;
-      const tired = this.onPitch(t)
-        .filter((p) => p.input.slot !== "GK" && (p.energy < 58 || p.line.rating < 5.6 || (this.minute > 70 && p.energy < 70)))
-        .sort((x, y) => x.energy - y.energy);
-      if (!tired.length) continue;
-      const n = Math.min(tired.length, this.rng.int(1, 3), M.subsMax - t.subsUsed);
+      if (t.subsUsed >= M.subsMax || t.subWindows >= t.subPlan.length || this.minute > SUB_LAST) continue;
+      const opens = t.subPlan[t.subWindows];
+      if (this.minute < opens || (this.minute - opens) % SUB_RETRY !== 0) continue;
+      const cap = Math.min(this.srng.int(1, 3), M.subsMax - t.subsUsed);
       let made = 0;
-      for (const p of tired.slice(0, n)) if (this.substitute(t, p, false)) made++;
-      if (made) t.subWindows++;
+      for (const { p, h } of this.subRanking(t)) {
+        if (made >= cap) break;
+        if (this.srng.chance(h) && this.substitute(t, p, false)) made++;
+      }
+      if (made || this.minute - opens >= SUB_RETRY_FOR) t.subWindows++;
     }
   }
 
+  /** The minutes the manager's three windows open: staggered through the second half, never in the last few minutes. */
+  private planWindows(): number[] {
+    const first = this.srng.int(57, 68);
+    const second = first + this.srng.int(8, 13);
+    return [first, second, Math.min(87, second + this.srng.int(6, 11))];
+  }
+
+  /** The players the manager is weighing up, most wanted-off first. */
+  private subRanking(t: LiveTeam): { p: LivePlayer; h: number }[] {
+    return this.onPitch(t)
+      .map((p) => ({ p, h: this.subHazard(t, p) }))
+      .filter((x) => x.h > 0)
+      .sort((x, y) => y.h - x.h);
+  }
+
   private halfTimeSubs(t: LiveTeam) {
-    const bad = this.onPitch(t).find((p) => p.line.rating < 5.2 && p.input.slot !== "GK");
-    if (bad && this.rng.chance(0.5)) {
-      if (this.substitute(t, bad, false)) t.subWindows++;
-    }
+    const worst = this.subRanking(t)[0];
+    if (worst && this.srng.chance(clamp(worst.h * 1.5, 0, 0.35))) this.substitute(t, worst.p, false);
   }
 
   private substitute(t: LiveTeam, off: LivePlayer, forced: boolean): boolean {
@@ -1223,9 +1292,8 @@ export class MatchEngine {
       return false;
     }
     const slot = off.input.slot;
-    const candidates = t.bench.filter((b) => !b.onPitch && b.line.minuteOn < 0);
-    if (!candidates.length) return false;
-    const pick = candidates.sort((x, y) => this.subFit(y, slot) - this.subFit(x, slot))[0];
+    const pick = this.benchPick(t, slot);
+    if (!pick) return false;
     off.onPitch = false;
     off.line.minuteOff = this.minute;
     off.line.offReason = forced ? "injury" : "sub";
@@ -1742,21 +1810,11 @@ export class MatchEngine {
     return { phase: "none" };
   }
 
-  /** The starters the manager would take off next: the same test the substitution window uses. */
-  private tiredOnes(t: LiveTeam): LivePlayer[] {
-    return this.onPitch(t)
-      .filter((p) => p.input.slot !== "GK" && (p.energy < 58 || p.line.rating < 5.6 || (this.minute > 70 && p.energy < 70)))
-      .sort((x, y) => x.energy - y.energy);
-  }
-
   /** A bench player is warming up when, by the manager's own test, the next window would bring him on. */
   private isWarmingUp(t: LiveTeam, p: LivePlayer): boolean {
-    if (this.half !== 2 || this.minute < 52 || t.subsUsed >= M.subsMax || t.subWindows >= 3) return false;
-    const first = this.tiredOnes(t)[0];
-    if (!first) return false;
-    const candidates = t.bench.filter((b) => !b.onPitch && b.line.minuteOn < 0);
-    const pick = [...candidates].sort((x, y) => this.subFit(y, first.input.slot) - this.subFit(x, first.input.slot))[0];
-    return pick === p;
+    if (this.half !== 2 || t.subsUsed >= M.subsMax || t.subWindows >= t.subPlan.length || this.minute < t.subPlan[t.subWindows] - SUB_WARMUP) return false;
+    const first = this.subRanking(t).find((x) => x.h >= SUB_WARM)?.p;
+    return !!first && this.benchPick(t, first.input.slot) === p;
   }
 
   /** Why the manager is sending a substitute on: only reasons the score, the clock and the legs actually support. */
