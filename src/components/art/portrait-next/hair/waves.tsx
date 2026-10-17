@@ -185,7 +185,7 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     <g key={l.k}>
       {d === 2 && withContact && idx > 0 && <path d={ring(offset(outline(l), l.s * 1.3, 1.6))} fill={T.deep} opacity={0.4} />}
       <path d={ring(outline(l))} fill={tone(l)} />
-      {d > 0 && <path d={ring(outline(l, l.s * l.w * (lit(l.s) ? 0.3 : 0.2) * -1, 0.55))} fill={T.shade} opacity={lit(l.s) ? 0.5 : 0.7} />}
+      {d > 0 && <path d={ring(outline(l, l.s * l.w * (lit(l.s) ? 0.3 : 0.2) * -1, 0.55))} fill={T.shade} opacity={lit(l.s) ? 0.3 : 0.45} />}
     </g>
   );
   const sideArt = (ls: Lock[]) => ls.slice().reverse().map((l, idx) => drawLock(l, idx, true));
@@ -193,11 +193,10 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
   const lights: string[] = [];
   if (d > 0) {
     for (const l of [...L, ...R]) {
-      if (!lit(l.s) && l.k % 2) continue;
-      lights.push(hairStroke(l.path, { from: 0.14 + noise1(seed + l.k, 3) * 0.04, to: 0.4, w: lit(l.s) ? 3.8 : 2.8, seed: seed + l.k }));
-      if (lit(l.s) && l.v < 1) lights.push(hairStroke(l.path, { from: 0.58, to: 0.86, w: 2.4, seed: seed + l.k + 5 }));
+      if (!lit(l.s) || l.v === 0) continue;
+      lights.push(hairStroke(l.path, { from: 0.16 + noise1(seed + l.k, 3) * 0.04, to: 0.34, w: 2.6, seed: seed + l.k }));
     }
-    for (const l of fringe) lights.push(hairStroke(l.path, { from: 0.3, to: 0.72, w: 2.6, seed: seed + l.k }));
+    for (const l of fringe.slice(0, 2)) lights.push(hairStroke(l.path, { from: 0.35, to: 0.6, w: 2.2, seed: seed + l.k }));
   }
   const fringeOrder = fringe.slice().sort((a, b) => b.path[2][1] - a.path[2][1]);
 
@@ -212,12 +211,10 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     mid: (
       <g>
         <path d={base} fill={mixHex(T.base, T.shade, 0.55)} />
-        {/* The crown reads as one lit mass: a broad light on the side facing the light, following the dome. */}
-        {d > 0 && <path d={hairStroke(sh.slice(2, ip).map((p) => P(p[0] + 4, p[1] + 5.5)), { from: 0.1, to: 0.9, w: 5, seed: seed + 2, start: 0.3, end: 0.15 })} fill={T.light} opacity={0.5} />}
         {sideArt(L)}
         {sideArt(R)}
         {fringeOrder.map((l, idx) => drawLock(l, idx, false))}
-        {lights.length > 0 && <path d={lights.join("")} fill={T.light} opacity={0.6} />}
+        {lights.length > 0 && <path d={lights.join("")} fill={T.light} opacity={0.4} />}
         <path d={silhouetteInk(outer, d, seed + 5, [[0, 1]], 2)} fill={INK} />
         {d > 0 && <path d={hairStroke([P(partX, hl.y + 0.5), P(lerp(partX, crownPart[0], 0.5), lerp(hl.y, crownPart[1], 0.5)), P(crownPart[0], crownPart[1] + 2)], { from: 0, to: 1, w: 1.1, seed, start: 0.6, end: 0.2 })} fill={T.deep} opacity={0.8} />}
       </g>
