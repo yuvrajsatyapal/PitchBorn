@@ -9,6 +9,7 @@ import type { HairArt, HairInput } from "./core";
 import { flowHair, type FlowDesign } from "./flow";
 import { dutchHair } from "./dutch";
 import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
+import { knotHair, type KnotDesign } from "./knot";
 import { locsHair, type LocsDesign } from "./locs";
 import { wavesHair, type WavesDesign } from "./waves";
 import { highTopHair, type HighTopDesign } from "./hightop";
@@ -220,7 +221,12 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "slickback-flow", name: "Slickback Flow", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.5, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => slickHair(i, SLICKBACK_FLOW) },
   { ...meta({ id: "nordic-sweep", name: "Nordic Sweep", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 0.5, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => nordicHair(i, NORDIC_SWEEP, NORDIC_REAR) },
   { ...meta({ id: "crown-taper", name: "Crown Taper", category: "iconic", hairType: "curly", length: "short", rarity: "legendary", minimumAge: 16, maximumAge: 36, eraWeight: { retro: 0.4, modern: 1 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "visible" }), draw: (i) => crownHair(i, CROWN_TAPER) },
+  { ...meta({ id: "warrior-knot", name: "Warrior Knot", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 0.5, modern: 1 }, ears: "visible" }), draw: (i) => knotHair(i, WARRIOR_SWEEP, WARRIOR_KNOT) },
 ];
+
+// Long hair combed tight off the forehead and ears, all of it gathered into one compact knot on the crown. No tail.
+const WARRIOR_SWEEP: SlickDesign = { top: 4, lift: 1.5, side: [0.5, 0.8], sections: 5, reach: 80, fade: false };
+const WARRIOR_KNOT: KnotDesign = { size: 0.3, lift: 0.45, shift: 0.15, coils: 4 };
 
 // A compact crown of overlapping tight-curl clusters (low-to-medium, irregular edge) over a stepped taper: a clear weight
 // line over the temples, a shorter band below it thinning to the ear, a natural hairline with no hanging curls.
@@ -297,6 +303,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   50: "slickback-flow",
   51: "nordic-sweep",
   52: "crown-taper",
+  53: "warrior-knot",
 };
 
 /**

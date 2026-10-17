@@ -31,7 +31,8 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 | 7 | Slickback Flow | **approved, committed** | see below |
 | 8 | Nordic Sweep | **approved, committed** | see below |
 | 9 | Crown Taper | **implemented** | see below; compared with Curly Fade, kept because the crown is built from overlapping clusters with a stepped taper and a clean hairline, not a fringe of curl groups |
-| 10-11 | Pitch Cornrows, Warrior Knot | in progress | |
+| 10 | Pitch Cornrows | in progress | |
+| 11 | Warrior Knot | **implemented** | see below |
 
 ## Golden Buzz
 
@@ -183,3 +184,11 @@ ear. Natural hairline, no hanging curls. New helper `crownHair` (`hair/crown.tsx
 
 **Fit.** Crown width, height and cluster spread follow the head anchors; the flanks are held to the skull edge so the hair ends
 where the head ends, and only the dome stands off. **Review sheet:** `docs/hairstyles/crown-taper-review.png`.
+
+## Warrior Knot
+
+**Structure.** Long hair combed tight off the forehead and ears (Slickback Flow's sections, flatter, no front lift), all gathered into
+one compact knot on the crown wound in arcs and tied at its base. The knot sits behind the head so the skull hides its lower part;
+there is no tail and nothing behind the neck. New helper `knotHair` (`hair/knot.tsx`). **Review sheet:** `docs/hairstyles/warrior-knot-review.png`.
+
+**Limitation.** The tie is mostly hidden by the skull from the front.
