@@ -19,10 +19,11 @@ import { clamp, type Rng } from "../rng";
 import type { Attributes, AttrKey, Position } from "../types";
 import { ATTR_LABEL } from "../players/model";
 import {
-  ATTACK_K, ATTACK_PROMPT, ATTACK_SET, BUILD_W, CARRY_W, CLEAR_WEIGHT, CROSSERS, DEFEND_K, DEFEND_PROMPT, DEFEND_SET, DRIB_MIX, DUEL_MIX, FINAL_W, FINISHERS,
+  ATTACK_K, BUILD_W, CARRY_W, CLEAR_WEIGHT, CROSSERS, DEFEND_K, DRIB_MIX, DUEL_MIX, FINAL_W, FINISHERS,
   MOMENT, NOTE_CHANCE, NOTE_TEXT, PASS_MIX, SIDE_OF, WIDE_MIX, WIDE_SLOTS, isAerial, isLongShot, isPlaymaker, isTrickster,
   type ChanceType, type FlowContext, type Mix, type MomentOpt, type NoteKind, type PlayerState,
 } from "./moments";
+import { type Scenario, ATTACK_SCENES, CLAIM_SCENES, CREATE_SCENES, DEFEND_SCENES, DUEL_SCENES, KEEP_SCENES, SHOOT_SCENES, pickLine, pickScenario } from "./scenarios";
 
 const M = BALANCE.match;
 
@@ -421,6 +422,8 @@ export class MatchEngine {
   private pendingCtx: PendingContext | null = null;
   private lastDecisionMinute = -99;
   private decisionsMade = 0;
+  /** The scenarios and wordings already dealt to the user this match, so the same situation does not come round twice. */
+  private usedScenes = new Set<string>();
   private extraTime = false;
   private penalties?: [number, number];
   private goalsList: MatchResult["goals"] = [];
@@ -1838,20 +1841,35 @@ export class MatchEngine {
     return { options: out, opts, ev };
   }
 
+  /** The next situation for the user: drawn on the wording stream, so being asked never changes how the match plays. */
+  private dealScene(pool: Scenario[], mine: LiveTeam, theirs: LiveTeam): Scenario {
+    const scene = pickScenario(pool, { minute: this.minute, diff: mine.goals - theirs.goals }, this.usedScenes, (this.crng as Rng).next());
+    this.usedScenes.add(scene.prompt);
+    return scene;
+  }
+
+  private dealLine(lines: readonly string[]): string {
+    const line = pickLine(lines, this.usedScenes, (this.crng as Rng).next());
+    this.usedScenes.add(line);
+    return line;
+  }
+
   private askProgress(att: LiveTeam, def: LiveTeam, u: LivePlayer) {
     const slot = u.input.slot;
-    const { options, opts, ev } = this.buildOptions(u, ATTACK_SET[slot], def);
+    const scene = this.dealScene(ATTACK_SCENES[slot], att, def);
+    const { options, opts, ev } = this.buildOptions(u, scene.options, def);
     this.ask(
-      { minute: this.minute, kind: "progress", moment: slot === "GK" ? "Goalkeeper" : ["ST", "RW", "LW", "AM"].includes(slot) ? "Final third" : "Build-up", prompt: ATTACK_PROMPT[slot], options },
+      { minute: this.minute, kind: "progress", moment: slot === "GK" ? "Goalkeeper" : ["ST", "RW", "LW", "AM"].includes(slot) ? "Final third" : "Build-up", prompt: scene.prompt, options },
       { kind: "progress", team: att, opp: def, player: u, creator: null, type: "open", opts, ev },
     );
   }
 
   private askHold(att: LiveTeam, def: LiveTeam, u: LivePlayer) {
     const slot = u.input.slot;
-    const { options, opts, ev } = this.buildOptions(u, DEFEND_SET[slot] ?? DEFEND_SET.CM, att);
+    const scene = this.dealScene(DEFEND_SCENES[slot].length ? DEFEND_SCENES[slot] : DEFEND_SCENES.CM, def, att);
+    const { options, opts, ev } = this.buildOptions(u, scene.options, att);
     this.ask(
-      { minute: this.minute, kind: "hold", moment: "Defending", prompt: DEFEND_PROMPT[slot] ?? DEFEND_PROMPT.CM, options },
+      { minute: this.minute, kind: "hold", moment: "Defending", prompt: scene.prompt, options },
       { kind: "hold", team: def, opp: att, player: u, creator: null, type: "open", opts, ev },
     );
   }
@@ -2008,7 +2026,7 @@ export class MatchEngine {
     const mate = this.pickWeighted(att, SHOOT_WEIGHT, PICK_SHOOT, shooter);
     const pass = this.passOdds(shooter);
     const dribble = this.dribbleOdds(shooter, gk);
-    const where = type === "header" ? "The cross is coming in — you're unmarked at the back post." : type === "long" ? "The ball sits up for you 25 yards out." : type === "oneonone" ? "You're clean through on goal!" : "The ball drops to you in the box.";
+    const where = this.dealLine(SHOOT_SCENES[type === "header" || type === "long" || type === "oneonone" ? type : "open"]);
     const options: DecisionOption[] = [
       {
         id: "shoot", label: type === "header" ? "Power header" : "Shoot first time", detail: "Quick strike before the defence recovers.", odds: clamp(XG_BASE[type] * Math.exp((this.shooterQuality(shooter, type) - (Q_CENTRE - 5)) / 20) * 2.2, 0.08, 0.9),
@@ -2032,7 +2050,7 @@ export class MatchEngine {
       { id: "self", label: "Have a go yourself", detail: "Shoot from range.", odds: clamp(0.25 + (this.val(creator, "longShots") - 65) / 100, 0.05, 0.6), skills: skillNames("longShots", "technique", "composure") },
       { id: "recycle", label: "Keep possession", detail: "Play it safe and recycle.", odds: 0.95, skills: skillNames("passing", "composure") },
     ];
-    this.ask({ minute: this.minute, kind: "create", prompt: "You've got the ball in the final third with options ahead…", options }, { kind: "create", team: att, opp: def, player: creator, creator, type, mate: shooter });
+    this.ask({ minute: this.minute, kind: "create", prompt: this.dealLine(CREATE_SCENES).replace("{s}", this.name(shooter)), options }, { kind: "create", team: att, opp: def, player: creator, creator, type, mate: shooter });
   }
 
   private askDefend(d: LivePlayer, att: LiveTeam, def: LiveTeam) {
@@ -2045,7 +2063,7 @@ export class MatchEngine {
       { id: "jockey", label: "Stay on your feet", detail: "Shepherd them wide and wait for help.", odds: jockey, skills: skillNames("positioning", "agility", "anticipation") },
       { id: "foul", label: "Take one for the team", detail: "Tactical foul — likely a booking.", odds: 0.9, skills: skillNames("decisions", "aggression") },
     ];
-    this.ask({ minute: this.minute, kind: "defend", prompt: `${this.name(attacker)} is running at you on the counter!`, options }, { kind: "defend", team: def, opp: att, player: d, creator: null, type: "open", mate: attacker });
+    this.ask({ minute: this.minute, kind: "defend", prompt: this.dealLine(DUEL_SCENES).replace("{a}", this.name(attacker)), options }, { kind: "defend", team: def, opp: att, player: d, creator: null, type: "open", mate: attacker });
   }
 
   private askKeep(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType, keeper: LivePlayer) {
@@ -2054,7 +2072,7 @@ export class MatchEngine {
       { id: "rush", label: "Rush out and smother", detail: "Close the angle fast.", odds: rush, skills: skillNames("command", "oneOnOnes", "anticipation") },
       { id: "stay", label: "Stay big on your line", detail: "React to the shot.", odds: clamp(0.5 + (this.rate(keeper, [["reflexes", 0.6], ["oneOnOnes", 0.4]]) - 65) / 100, 0.2, 0.9), skills: skillNames("reflexes", "oneOnOnes", "positioning") },
     ];
-    this.ask({ minute: this.minute, kind: "keep", prompt: `${this.name(shooter)} is bearing down on your goal!`, options }, { kind: "keep", team: def, opp: att, player: keeper, creator, type, mate: shooter });
+    this.ask({ minute: this.minute, kind: "keep", prompt: this.dealLine(KEEP_SCENES).replace("{a}", this.name(shooter)), options }, { kind: "keep", team: def, opp: att, player: keeper, creator, type, mate: shooter });
   }
 
   /** A cross is coming in and the user is in goal. */
@@ -2066,7 +2084,7 @@ export class MatchEngine {
       { id: "punch", label: "Punch it clear", detail: "Safe, but you won't keep it.", odds: punch, skills: [ATTR_LABEL.handling, ATTR_LABEL.command, ATTR_LABEL.decisions] },
       { id: "stay", label: "Stay on your line", detail: "Trust the defence and wait for the header.", odds: 0.55, skills: [ATTR_LABEL.positioning, ATTR_LABEL.reflexes] },
     ];
-    this.ask({ minute: this.minute, kind: "claim", moment: "Goalkeeper", prompt: `${creator ? this.name(creator) : "A teammate"}'s cross is coming in and ${this.name(shooter)} is waiting at the back post.`, options }, { kind: "claim", team: def, opp: att, player: keeper, creator, type: "header", mate: shooter });
+    this.ask({ minute: this.minute, kind: "claim", moment: "Goalkeeper", prompt: this.dealLine(CLAIM_SCENES).replace("{c}", creator ? this.name(creator) : "A teammate").replace("{s}", this.name(shooter)), options }, { kind: "claim", team: def, opp: att, player: keeper, creator, type: "header", mate: shooter });
   }
 
   resolve(optionId: string): MatchEvent[] {

@@ -171,56 +171,10 @@ const recoverShape: MomentOpt = { ...trackRunner, id: "track", label: "Recover y
 
 export const MOMENT = { distance, split, takeOn, attackCross };
 
-export const ATTACK_SET: Record<Position, MomentOpt[]> = {
-  GK: [short, long],
-  CB: [forward, stepOut, recycle],
-  RB: [overlap, insidePass, recycle],
-  LB: [overlap, insidePass, recycle],
-  DM: [forward, switchPlay, recycle],
-  CM: [through, carry, recycle],
-  AM: [through, takeOn, distance, recycle],
-  RW: [takeOn, cross, cutIn, { ...recycle, label: "Pass it back", detail: "Keep it and look again." }],
-  LW: [takeOn, cross, cutIn, { ...recycle, label: "Pass it back", detail: "Keep it and look again." }],
-  ST: [runBehind, holdUp, layOff],
-};
-
-export const DEFEND_SET: Record<Position, MomentOpt[]> = {
-  GK: [hold],
-  CB: [hold, trackRunner, challenge],
-  RB: [recoverShape, pressWinger, hold],
-  LB: [recoverShape, pressWinger, hold],
-  DM: [cutPass, stepIn, dropScreen],
-  CM: [stepIn, cutPass, hold],
-  AM: [stepIn, hold],
-  RW: [recoverShape, stepIn],
-  LW: [recoverShape, stepIn],
-  ST: [stepIn, hold],
-};
-
-export const ATTACK_PROMPT: Record<Position, string> = {
-  GK: "The press is on as you collect the ball. How do you start the attack?",
-  CB: "Space opens up in front of you with the ball at your feet.",
-  RB: "You have room on the flank to push on.",
-  LB: "You have room on the flank to push on.",
-  DM: "You pick the ball up in front of the back four.",
-  CM: "You receive the ball between the lines.",
-  AM: "You find a pocket of space behind their midfield.",
-  RW: "You're isolated against the full-back.",
-  LW: "You're isolated against the full-back.",
-  ST: "The ball comes up to you with the defence stepping up.",
-};
-
-export const DEFEND_PROMPT: Record<Position, string> = {
-  GK: "They're pushing forward.",
-  CB: "Their move is building towards your box. How do you deal with it?",
-  RB: "Their winger is coming at you.",
-  LB: "Their winger is coming at you.",
-  DM: "They break through midfield and you're the screen.",
-  CM: "The attack is coming through the middle.",
-  AM: "They're building from the back.",
-  RW: "Their full-back is overlapping.",
-  LW: "Their full-back is overlapping.",
-  ST: "Their centre-backs have the ball.",
+/** The base options the scenario library derives its variants from. */
+export const BASE = {
+  through, forward, insidePass, carry, stepOut, recycle, switchPlay, takeOn, cross, overlap, cutIn, distance, split, runBehind, holdUp, layOff,
+  attackCross, short, long, hold, dropScreen, stepIn, trackRunner, cutPass, challenge, pressWinger, recoverShape,
 };
 
 /** How much of a say each position has in the build-up (scales how often a moment comes), and in defending. */

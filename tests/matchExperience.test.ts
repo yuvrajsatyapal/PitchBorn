@@ -5,6 +5,7 @@ import { filterEvents, isKey, isYou } from "../src/engine/match/feed";
 import { instruction, instructionResult, lowInvolvementReason, performance, postMatch, ratingReasons, ratingVisible, statCells } from "../src/engine/match/insight";
 import { FORMATIONS } from "../src/engine/match/lineup";
 import { riskOf } from "../src/engine/match/moments";
+import { ATTACK_SCENES, DEFEND_SCENES, pickScenario } from "../src/engine/match/scenarios";
 import { generatePlayer } from "../src/engine/players/generate";
 import { Rng } from "../src/engine/rng";
 import type { MatchFx } from "../src/engine/traits/types";
@@ -219,16 +220,60 @@ describe("key moments", () => {
     return null;
   }
 
+  const idsOf = (pool: { options: { id: string }[] }[]) => pool.flatMap((sc) => sc.options.map((o) => o.id));
+
   it("offers choices that fit the position, with the abilities they lean on", () => {
-    const cm = firstMoment("CM", "progress");
-    expect(cm?.options.map((o) => o.id)).toEqual(expect.arrayContaining(["through", "carry", "recycle"]));
-    const rw = firstMoment("RW", "progress");
-    expect(rw?.options.map((o) => o.id)).toEqual(expect.arrayContaining(["takeOn", "cross"]));
-    const gk = firstMoment("GK", "progress");
-    expect(gk?.options.map((o) => o.id)).toEqual(expect.arrayContaining(["short", "long"]));
+    expect(idsOf(ATTACK_SCENES.CM)).toEqual(expect.arrayContaining(["through", "carry", "recycle"]));
+    expect(idsOf(ATTACK_SCENES.RW)).toEqual(expect.arrayContaining(["takeOn", "cross"]));
+    expect(idsOf(ATTACK_SCENES.GK)).toEqual(expect.arrayContaining(["short", "long"]));
+    expect(idsOf(DEFEND_SCENES.CB)).toEqual(expect.arrayContaining(["hold", "track"]));
+    for (const slot of ["CM", "RW", "GK"] as const) {
+      const m = firstMoment(slot, "progress");
+      expect(m).not.toBeNull();
+      for (const o of m?.options ?? []) expect(o.skills && o.skills.length).toBeGreaterThan(0);
+    }
     const cb = firstMoment("CB", "hold");
-    expect(cb?.options.map((o) => o.id)).toEqual(expect.arrayContaining(["hold", "track"]));
-    for (const m of [cm, rw, gk, cb]) for (const o of m?.options ?? []) expect(o.skills && o.skills.length).toBeGreaterThan(0);
+    for (const o of cb?.options ?? []) expect(o.skills && o.skills.length).toBeGreaterThan(0);
+  });
+
+  it("has a deep pool of situations for every position, and deals them without repeats", () => {
+    for (const slot of Object.keys(ATTACK_SCENES) as Position[]) {
+      expect(ATTACK_SCENES[slot].length, `${slot} attack`).toBeGreaterThanOrEqual(15);
+      for (const sc of ATTACK_SCENES[slot]) {
+        expect(sc.options.length).toBeGreaterThanOrEqual(3);
+        expect(new Set(sc.options.map((o) => o.id)).size).toBe(sc.options.length);
+      }
+      if (slot !== "GK") expect(DEFEND_SCENES[slot].length, `${slot} defend`).toBeGreaterThanOrEqual(15);
+    }
+    const used = new Set<string>();
+    const pool = ATTACK_SCENES.ST;
+    const x = { minute: 30, diff: 0 };
+    const seen = new Set<string>();
+    for (let i = 0; i < 10; i++) {
+      const sc = pickScenario(pool, x, used, (i * 0.37) % 1);
+      expect(seen.has(sc.prompt)).toBe(false);
+      seen.add(sc.prompt);
+      used.add(sc.prompt);
+    }
+    // Situations tied to the state of the match only come up when it holds.
+    const level = pickScenario(pool, x, new Set(), 0.99);
+    expect(level.cond).toBeUndefined();
+  });
+
+  it("deals different situations through a match", () => {
+    const eng = run(team("H", 72, { slot: "ST", ovr: 72 }), team("A", 72), "var-1", true);
+    const prompts = new Set<string>();
+    let n = 0;
+    let guard = 0;
+    while (!eng.finished && guard++ < 600) {
+      if (eng.pending) {
+        prompts.add(eng.pending.prompt);
+        n++;
+        eng.resolve(eng.pending.options[0].id);
+      } else eng.step();
+    }
+    expect(n).toBeGreaterThan(3);
+    expect(prompts.size).toBe(n);
   });
 
   it("never shows a probability: only a risk word", () => {
@@ -247,7 +292,7 @@ describe("key moments", () => {
     expect(d).toBeDefined();
     expect(d?.suits).toBe(true);
     const play2 = firstMoment("RW", "progress", { createThrough: 1.3, create: 1.3 });
-    expect(play2?.options.some((o) => o.id === "split" && o.suits)).toBe(true);
+    expect(play2?.options.some((o) => (o.id === "split" || o.id === "through") && o.suits)).toBe(true);
   });
 
   it("attributes decide how a choice goes: a better dribbler wins more of the duels he picks", () => {
