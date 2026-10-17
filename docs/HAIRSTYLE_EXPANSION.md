@@ -30,7 +30,8 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 | 6 | Patterned High Top | **approved, committed** | see below |
 | 7 | Slickback Flow | **approved, committed** | see below |
 | 8 | Nordic Sweep | **approved, committed** | see below |
-| 9-11 | Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crown Taper must be compared with Curly Fade |
+| 9 | Crown Taper | **implemented** | see below; compared with Curly Fade, kept because the crown is built from overlapping clusters with a stepped taper and a clean hairline, not a fringe of curl groups |
+| 10-11 | Pitch Cornrows, Warrior Knot | in progress | |
 
 ## Golden Buzz
 
@@ -172,3 +173,13 @@ portrait and black silhouette, four face silhouettes and colour portraits, six m
 
 **Limitations.** The shirt hides the lowest part of the longest masses, so visible ends are the shoulder line and the tapered tips of the
 shorter masses. The rear length is read from the masses beside the neck.
+
+## Crown Taper
+
+**Structure.** Short tight curls: one compact crown whose outline is itself made of curl clusters (one side fuller, the other
+flatter), three rings of overlapping clusters inside it (rim, middle, centre) with a small shade under each and light on the upper
+left, joined by same-colour strokes so they read as one mass. A weight line over the temples, then a shorter band thinning to the
+ear. Natural hairline, no hanging curls. New helper `crownHair` (`hair/crown.tsx`).
+
+**Fit.** Crown width, height and cluster spread follow the head anchors; the flanks are held to the skull edge so the hair ends
+where the head ends, and only the dome stands off. **Review sheet:** `docs/hairstyles/crown-taper-review.png`.

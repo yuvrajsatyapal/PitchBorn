@@ -3,6 +3,7 @@
  * shape; the metadata follows the long-term library format (only the proof-of-concept styles are defined so far).
  */
 import { buzzHair, type BuzzDesign } from "./buzz";
+import { crownHair, type CrownDesign } from "./crown";
 import { coilyHair, type CoilyDesign } from "./coily";
 import type { HairArt, HairInput } from "./core";
 import { flowHair, type FlowDesign } from "./flow";
@@ -218,7 +219,12 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "patterned-high-top", name: "Patterned High Top", category: "iconic", hairType: "coily", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 0.4, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => highTopHair(i, PATTERNED_HIGH_TOP) },
   { ...meta({ id: "slickback-flow", name: "Slickback Flow", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.5, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => slickHair(i, SLICKBACK_FLOW) },
   { ...meta({ id: "nordic-sweep", name: "Nordic Sweep", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 0.5, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => nordicHair(i, NORDIC_SWEEP, NORDIC_REAR) },
+  { ...meta({ id: "crown-taper", name: "Crown Taper", category: "iconic", hairType: "curly", length: "short", rarity: "legendary", minimumAge: 16, maximumAge: 36, eraWeight: { retro: 0.4, modern: 1 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "visible" }), draw: (i) => crownHair(i, CROWN_TAPER) },
 ];
+
+// A compact crown of overlapping tight-curl clusters (low-to-medium, irregular edge) over a stepped taper: a clear weight
+// line over the temples, a shorter band below it thinning to the ear, a natural hairline with no hanging curls.
+const CROWN_TAPER: CrownDesign = { top: 13, side: 2, clusters: [8, 5, 2], size: [5, 8] };
 
 // Long straight hair swept back off the forehead: a flat crown, the swept top reaching down to the ear, and three flowing
 // masses behind the head ending on the shoulders. No tie and no parting; the ears stay clear.
@@ -290,6 +296,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   49: "patterned-high-top",
   50: "slickback-flow",
   51: "nordic-sweep",
+  52: "crown-taper",
 };
 
 /**

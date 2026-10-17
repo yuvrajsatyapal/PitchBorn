@@ -128,6 +128,7 @@ export const HAIR_STYLES: readonly HairStyle[] = [
   hs("Patterned High Top", "coily", { top: 28, side: 3, edge: "scallop", fade: 3, line: 62, end: 100, flat: true, iconic: true }),
   hs("Slickback Flow", "straight", { top: 16, side: 3, end: 104, back: 1, fade: 1, line: 62, sheen: true, fringe: "none", part: 0, iconic: true }),
   hs("Nordic Sweep", "straight", { top: 9, side: 4, end: 130, back: 3, line: 62, sheen: true, fringe: "none", part: 0, iconic: true }),
+  hs("Crown Taper", "curly", { top: 15, side: 4, edge: "scallop", end: 100, fade: 2, line: 66, fringe: "none", iconic: true }),
 ];
 
 // ------------------------------------------------------------------ facial features
