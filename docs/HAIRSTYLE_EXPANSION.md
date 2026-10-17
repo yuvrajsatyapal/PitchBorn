@@ -27,8 +27,8 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 | 3 | Rocket Spikes | **approved, committed** | see below |
 | 4 | Samba Mohawk | **approved, committed** | see below |
 | 5 | Crescent Patch | **excluded: duplicate** | Brazilian Crescent already is a small isolated frontal half-moon patch on an almost shaved scalp (`crescentHair`), the exact brief. A second style would be a recolour; the existing one is preserved unchanged. |
-| 6 | Patterned High Top | **implemented, awaiting approval** | see below |
-| 7-11 | Crescent Patch, Patterned High Top, Slickback Flow, Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crescent Patch must be compared with Brazilian Crescent first; Crown Taper with Curly Fade |
+| 6 | Patterned High Top | **approved, committed** | see below |
+| 7-11 | Slickback Flow, Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crown Taper must be compared with Curly Fade |
 
 ## Golden Buzz
 
@@ -95,3 +95,23 @@ cropped. New helper `mohawkHair` (`hair/mohawk.tsx`), built from existing primit
 
 **Limitations.** "Forward motion" and the rear continuation cannot show in a front view, so the front reads through the hung tips and
 the shade band under the crest's lower edge. The cropped sides read as a soft skull cap in tone rather than individual hair.
+
+## Patterned High Top
+
+**Structural analysis.** Silhouette: a flat-topped rounded box, 26 units above the skull, standing 0.8 units past the head at the fade (flush with the head edge)
+line. Length: block medium-tall, sides short. Parting: none. Fringe: none; the lower edge is the hairline, slightly uneven. Temples
+and sides: a close fade of tone thinning to the top of the ear; clean boundary line to the block. Rear: not visible. Hair type: coily/
+textured (compact clumps). Flow: vertical. Masses: one block with a slightly tilted flat top and five compact edge clumps. Pattern:
+one of none / line / step / double shaved lines on the fade, chosen by the seed, full size only. Recognisable: boxy, flat, tall.
+
+**Closest existing:** Lion Afro and Medium Afro (round clouds of lobed curls). The high top is a flat box with straight walls and a
+flat top, short faded sides and no curl lobes, so the silhouettes share nothing. New helper `highTopHair` (`hair/hightop.tsx`), built
+from existing primitives (`bumped`, `shell`, `fadeRegion`, `organicMass`, `strokeLine`). No global pattern architecture was added:
+the patterns are four small constants inside the style.
+
+**Bug fixed on the way:** a clip id collided with the skin halftone pattern id (`<uid>ht`); the style now uses `<uid>hk`.
+
+**Review sheet:** `docs/hairstyles/patterned-high-top-review.png`. **Tests:** `tests/portraitHighTop.test.ts` plus existing suites.
+
+**Limitations.** Shaved lines are thin by design and vanish below 140px. The block shows no individual curls at any size, only
+compact value clumps.

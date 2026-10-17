@@ -10,6 +10,7 @@ import { dutchHair } from "./dutch";
 import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
 import { locsHair, type LocsDesign } from "./locs";
 import { wavesHair, type WavesDesign } from "./waves";
+import { highTopHair, type HighTopDesign } from "./hightop";
 import { mohawkHair, type MohawkDesign } from "./mohawk";
 import { spikesHair, type SpikeDesign } from "./spikes";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
@@ -212,7 +213,12 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "golden-buzz", name: "Golden Buzz", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 38, eraWeight: { retro: 1, modern: 0.5 }, ears: "visible" }), draw: (i) => buzzHair(i, GOLDEN_BUZZ) },
   { ...meta({ id: "rocket-spikes", name: "Rocket Spikes", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 1, modern: 0.4 }, supportsHeadband: true, ears: "visible" }), draw: (i) => spikesHair(i, ROCKET_SPIKES) },
   { ...meta({ id: "samba-mohawk", name: "Samba Mohawk", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 32, eraWeight: { retro: 0.6, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => mohawkHair(i, SAMBA_MOHAWK) },
+  { ...meta({ id: "patterned-high-top", name: "Patterned High Top", category: "iconic", hairType: "coily", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 0.4, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => highTopHair(i, PATTERNED_HIGH_TOP) },
 ];
+
+// A flat-topped, rounded-box block 26 units above the skull over a close fade, with a thin shaved line (or step, or two
+// lines) on the sides at full size. Boxy and flat where Lion Afro and Medium Afro are round clouds.
+const PATTERNED_HIGH_TOP: HighTopDesign = { height: 26, flare: 0.8, clumps: { count: 5, size: [0.8, 1.6] } };
 
 // A tall, narrow central crest (far narrower and taller than the Frosted Faux Hawk's) over close faded sides. The edges
 // are broken by a few small clumps and the top leans slightly, both seeded.
@@ -268,6 +274,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   46: "golden-buzz",
   47: "rocket-spikes",
   48: "samba-mohawk",
+  49: "patterned-high-top",
 };
 
 /**

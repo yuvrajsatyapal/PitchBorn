@@ -125,6 +125,7 @@ export const HAIR_STYLES: readonly HairStyle[] = [
   hs("Golden Buzz", "straight", { top: 3, side: 0.5, density: 0.75, end: 98, line: 66, iconic: true }),
   hs("Rocket Spikes", "straight", { top: 20, side: 1, edge: "spiky", end: 100, fade: 2, fringe: "messy", line: 66, iconic: true }),
   hs("Samba Mohawk", "straight", { top: 26, side: 0, edge: "tuft", end: 100, fade: 3, fringe: "quiff", line: 62, iconic: true }),
+  hs("Patterned High Top", "coily", { top: 28, side: 3, edge: "scallop", fade: 3, line: 62, end: 100, flat: true, iconic: true }),
 ];
 
 // ------------------------------------------------------------------ facial features
