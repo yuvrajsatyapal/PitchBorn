@@ -22,7 +22,7 @@ import { newCareer } from "./helpers";
 const KIT = "#7a1f2b";
 const TRIM = "#f1ead8";
 const base: Appearance = { ...generateAppearance("compat"), hair: 0, facial: 0, accessory: 0, scar: 0, mark: 0, freckles: 0, hairTip: 0, band: 0 };
-const ICONIC_NAMES = ["Brazilian Crescent", "Frosted Faux Hawk", "Long Headband Curls", "Lion Afro", "Divine Ponytail", "Dutch Dreads", "Playmaker Waves", "Golden Buzz", "Rocket Spikes"];
+const ICONIC_NAMES = ["Brazilian Crescent", "Frosted Faux Hawk", "Long Headband Curls", "Lion Afro", "Divine Ponytail", "Dutch Dreads", "Playmaker Waves", "Golden Buzz", "Rocket Spikes", "Samba Mohawk"];
 const iconicIndex = (name: string) => HAIR_STYLES.findIndex((h) => h.name === name);
 
 const render = (a: Partial<Appearance>, d: 0 | 1 | 2, age = 26, uid = "c") =>
@@ -172,7 +172,7 @@ describe("portrait compatibility: hair metadata", () => {
     for (const h of HAIR_LIBRARY) expect(ids.has(h.id)).toBe(true);
   });
 
-  it("the iconic styles are exactly the nine generic designs, flagged in both the options and the library", () => {
+  it("the iconic styles are exactly the ten generic designs, flagged in both the options and the library", () => {
     expect(HAIR_STYLES.filter((h) => h.iconic).map((h) => h.name)).toEqual(ICONIC_NAMES);
     for (const name of ICONIC_NAMES) {
       const meta = hairMeta(POC_IDS[iconicIndex(name)]!);
@@ -271,10 +271,17 @@ describe("portrait compatibility: generation", () => {
     }
     expect(iconic).toBeGreaterThan(0);
     expect(otherIconic).toBeGreaterThan(0);
+    // Which iconic style a fixed seed rolls changes whenever one is added, so golden Lion Afros are checked over many seeds.
+    if (goldenLions === 0) {
+      for (let i = 0; i < 6000 && goldenLions === 0; i++) {
+        const a = generateAppearance(`lion-${i}`);
+        if (HAIR_STYLES[a.hair].name === "Lion Afro" && a.hairColor === HAIR_COLORS.indexOf("#d6a645")) goldenLions++;
+      }
+    }
     expect(goldenLions).toBeGreaterThan(0);
   });
 
-  it("iconic styles are rare overall, all nine occur, and squads rarely carry more than one", () => {
+  it("iconic styles are rare overall, all ten occur, and squads rarely carry more than one", () => {
     const N = 20_000;
     const seen = new Map<string, number>();
     let total = 0;

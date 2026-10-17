@@ -24,8 +24,11 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 |---|---|---|---|
 | 1 | Playmaker Waves | already implemented (before this task) | not recreated |
 | 2 | Golden Buzz | **approved, committed** | see below |
-| 3 | Rocket Spikes | **implemented, awaiting approval** | see below |
-| 4-11 | Samba Mohawk, Crescent Patch, Patterned High Top, Slickback Flow, Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crescent Patch must be compared with Brazilian Crescent first; Crown Taper with Curly Fade |
+| 3 | Rocket Spikes | **approved, committed** | see below |
+| 4 | Samba Mohawk | **approved, committed** | see below |
+| 5 | Crescent Patch | **excluded: duplicate** | Brazilian Crescent already is a small isolated frontal half-moon patch on an almost shaved scalp (`crescentHair`), the exact brief. A second style would be a recolour; the existing one is preserved unchanged. |
+| 6 | Patterned High Top | **implemented, awaiting approval** | see below |
+| 7-11 | Crescent Patch, Patterned High Top, Slickback Flow, Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crescent Patch must be compared with Brazilian Crescent first; Crown Taper with Curly Fade |
 
 ## Golden Buzz
 
@@ -75,3 +78,20 @@ fields) and the existing compat / next / beard / appearance suites: 70 passing. 
 
 **Limitations.** Spike tilt cannot show "forward" in a front view, so the front reads through the short angular fringe and a
 band of shade under the hairline. Very dark hair on the darkest skin is carried by the outline and highlights.
+
+## Samba Mohawk
+
+**Structural analysis.** Silhouette: one tall, narrow crest (38 units above the skull, base half-width about half the temple
+half-width, narrowing 50% into a crisp point) over cropped sides. Length: crest medium, sides short. Parting: none. Fringe: three
+short tips hung over the forehead from the crest's lower edge. Temples/sides: a faint cap in tone fading to nothing at the ear.
+Rear: continues behind the crest, not visible from the front. Hairline: the crest's own lower edge. Flow: straight up, centred, symmetric peak (per review feedback: no lean or shift); only the height varies slightly by seed. Masses: one connected crest; six small edge clumps, none near the peak.
+Recognisable feature: tall sculptural central strip with clearly shorter sides.
+
+**Closest existing:** Frosted Faux Hawk (a wider crest of spikes that merges with its fade); Rocket Spikes (spikes across the whole top).
+The Samba Mohawk crest is much narrower and taller, has smooth clumped edges instead of spikes, and the rest of the head is visibly
+cropped. New helper `mohawkHair` (`hair/mohawk.tsx`), built from existing primitives (`bumped`, `hanging`, `shell`, `fadeRegion`).
+
+**Tests:** `tests/portraitMohawk.test.ts` plus the existing suites. **Review sheet:** `docs/hairstyles/samba-mohawk-review.png`.
+
+**Limitations.** "Forward motion" and the rear continuation cannot show in a front view, so the front reads through the hung tips and
+the shade band under the crest's lower edge. The cropped sides read as a soft skull cap in tone rather than individual hair.

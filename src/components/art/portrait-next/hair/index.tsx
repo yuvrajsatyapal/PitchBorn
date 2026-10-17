@@ -10,6 +10,7 @@ import { dutchHair } from "./dutch";
 import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
 import { locsHair, type LocsDesign } from "./locs";
 import { wavesHair, type WavesDesign } from "./waves";
+import { mohawkHair, type MohawkDesign } from "./mohawk";
 import { spikesHair, type SpikeDesign } from "./spikes";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
 
@@ -210,7 +211,12 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "playmaker-waves", name: "Playmaker Waves", category: "iconic", hairType: "wavy", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 0.8, modern: 0.8 }, supportsHeadband: true, ears: "partial" }), draw: (i) => wavesHair(i, PLAYMAKER_WAVES) },
   { ...meta({ id: "golden-buzz", name: "Golden Buzz", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 38, eraWeight: { retro: 1, modern: 0.5 }, ears: "visible" }), draw: (i) => buzzHair(i, GOLDEN_BUZZ) },
   { ...meta({ id: "rocket-spikes", name: "Rocket Spikes", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 1, modern: 0.4 }, supportsHeadband: true, ears: "visible" }), draw: (i) => spikesHair(i, ROCKET_SPIKES) },
+  { ...meta({ id: "samba-mohawk", name: "Samba Mohawk", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 32, eraWeight: { retro: 0.6, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => mohawkHair(i, SAMBA_MOHAWK) },
 ];
+
+// A tall, narrow central crest (far narrower and taller than the Frosted Faux Hawk's) over close faded sides. The edges
+// are broken by a few small clumps and the top leans slightly, both seeded.
+const SAMBA_MOHAWK: MohawkDesign = { width: 0.5, taper: 0.5, height: 38, lean: 0, shift: 0, clumps: { count: 6, size: [0.9, 1.8] }, fringe: 3 };
 
 // Short athletic hair: five equal broad spikes in an even row across the whole top, over close sides, with a
 // short angular fringe. Not a central crest (Frosted Faux Hawk) and not a fringe of locks (Short Textured).
@@ -261,6 +267,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   45: "playmaker-waves",
   46: "golden-buzz",
   47: "rocket-spikes",
+  48: "samba-mohawk",
 };
 
 /**
