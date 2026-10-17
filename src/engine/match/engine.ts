@@ -424,6 +424,8 @@ export class MatchEngine {
   private decisionsMade = 0;
   /** The scenarios and wordings already dealt to the user this match, so the same situation does not come round twice. */
   private usedScenes = new Set<string>();
+  /** How many decisions the user's player is expected to get this match, and how much faster moments come to him than to an average player. */
+  private budget?: { cap: number; mul: number };
   private extraTime = false;
   private penalties?: [number, number];
   private goalsList: MatchResult["goals"] = [];
@@ -1791,6 +1793,34 @@ export class MatchEngine {
     return total ? mine / total : 0;
   }
 
+  /**
+   * A soft target for how involved the user's player is, from his level in the slot and how well he reads the game (positioning and
+   * movement): a 90 is in the thick of it, a 62 sees less of the ball. It is a pace and a ceiling, never a promise: the match still
+   * decides what comes, and the number wobbles from match to match. Drawn on the wording stream so it never changes the football.
+   */
+  private momentBudget(): { cap: number; mul: number } | undefined {
+    if (this.budget) return this.budget;
+    const u = this.userLive();
+    if (!u || !this.crng) return undefined;
+    const defender = u.input.slot === "GK" || u.input.slot === "CB" || u.input.slot === "RB" || u.input.slot === "LB";
+    const sense = this.rate(u, defender ? [["positioning", 0.5], ["anticipation", 0.5]] : [["positioning", 0.4], ["offBall", 0.3], ["vision", 0.3]]);
+    const q = u.lvl * 0.7 + sense * 0.3;
+    // [quality, expected decisions]: 55 -> 3.5, 65 -> 4.5, 75 -> 6.5, 85 -> 8.5, 92 -> 10.5.
+    const knots: [number, number][] = [[45, 2.5], [55, 3.5], [65, 4.5], [75, 6.5], [85, 8.5], [92, 10.5], [99, 12]];
+    let target = knots[knots.length - 1][1];
+    for (let i = 1; i < knots.length; i++) {
+      if (q <= knots[i][0]) {
+        const [x0, y0] = knots[i - 1];
+        const [x1, y1] = knots[i];
+        target = y0 + ((Math.max(q, x0) - x0) / (x1 - x0)) * (y1 - y0);
+        break;
+      }
+    }
+    target = clamp(target + this.crng.normal(0, 1.1), 2, MAX_DECISIONS - 1);
+    this.budget = { cap: Math.min(MAX_DECISIONS, Math.round(target + 1)), mul: clamp(target / 7, 0.55, 1.7) };
+    return this.budget;
+  }
+
   private maybeMoment(att: LiveTeam, def: LiveTeam): boolean {
     if (!this.input.interactive || this.pending || !this.irng) return false;
     const u = this.userLive();
@@ -1800,12 +1830,12 @@ export class MatchEngine {
     const slot = u.input.slot;
     const r = this.irng;
     if (attacking) {
-      const p = clamp(this.momentShare(att, u, true) * 0.85 * ATTACK_K[slot], 0, 0.2);
+      const p = clamp(this.momentShare(att, u, true) * 0.85 * ATTACK_K[slot] * (this.momentBudget()?.mul ?? 1), 0, 0.3);
       if (!r.chance(p)) return false;
       this.askProgress(att, def, u);
       return true;
     }
-    const p = clamp(this.momentShare(def, u, false) * 1.0 * DEFEND_K[slot], 0, 0.22);
+    const p = clamp(this.momentShare(def, u, false) * 1.0 * DEFEND_K[slot] * (this.momentBudget()?.mul ?? 1), 0, 0.33);
     if (!r.chance(p)) return false;
     this.askHold(att, def, u);
     return true;
@@ -1974,7 +2004,7 @@ export class MatchEngine {
    * density the match can carry (a choice every eight minutes or so), not a number of "first come" slots.
    */
   private canAsk(importance = 1): boolean {
-    return this.decisionsMade < MAX_DECISIONS && this.minute - this.lastDecisionMinute >= (importance >= 0.8 ? 3 : 4);
+    return this.decisionsMade < (this.momentBudget()?.cap ?? MAX_DECISIONS) && this.minute - this.lastDecisionMinute >= (importance >= 0.8 ? 3 : 4);
   }
 
   private ask(d: PendingDecision, ctx: PendingContext) {

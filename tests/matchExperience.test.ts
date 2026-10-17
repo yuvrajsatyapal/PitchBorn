@@ -260,6 +260,35 @@ describe("key moments", () => {
     expect(level.cond).toBeUndefined();
   });
 
+  it("involves a better player more: decisions per match rise with his level, inside the cap", () => {
+    const avgDecisions = (slot: Position, ovr: number) => {
+      const counts: number[] = [];
+      for (let i = 0; i < 24; i++) {
+        const eng = run(team("H", 72, { slot, ovr }), team("A", 72), `budget-${slot}-${ovr}-${i}`, true);
+        let n = 0;
+        let guard = 0;
+        while (!eng.finished && guard++ < 800) {
+          if (eng.pending) {
+            n++;
+            eng.resolve(eng.pending.options[0].id);
+          } else eng.step();
+        }
+        expect(n).toBeLessThanOrEqual(MAX_DECISIONS);
+        counts.push(n);
+      }
+      return avg(counts);
+    };
+    for (const slot of ["ST", "CM", "CB"] as const) {
+      const lo = avgDecisions(slot, 62);
+      const mid = avgDecisions(slot, 76);
+      const hi = avgDecisions(slot, 91);
+      console.log(slot, lo.toFixed(1), mid.toFixed(1), hi.toFixed(1));
+      expect(hi).toBeGreaterThan(mid);
+      expect(mid).toBeGreaterThan(lo);
+      expect(hi - lo).toBeGreaterThan(2);
+    }
+  });
+
   it("deals different situations through a match", () => {
     const eng = run(team("H", 72, { slot: "ST", ovr: 72 }), team("A", 72), "var-1", true);
     const prompts = new Set<string>();
