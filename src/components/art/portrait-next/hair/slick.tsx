@@ -29,6 +29,10 @@ export interface SlickDesign {
   /** Thickness at the sides, left and right (they differ), and the number of sections. */
   side: readonly [number, number];
   sections: number;
+  /** How far below the hairline corners the swept mass reaches at the sides (default 11; long cuts reach the ear). */
+  reach?: number;
+  /** A short fade below the mass (default true); long cuts that reach the ear have none. */
+  fade?: boolean;
 }
 
 /**
@@ -48,7 +52,7 @@ export function slickHair(i: HairInput, o: SlickDesign): HairArt {
   const yS = f.ear.top - 2;
   const cornerR = last(hl.front);
   const cornerL = hl.front[0];
-  const yM = Math.max(cornerR[1], cornerL[1]) + 11;
+  const yM = Math.min(Math.max(cornerR[1], cornerL[1]) + (o.reach ?? 11), yS);
 
   // Silhouette: a high front lift off centre, a long lower shoulder on the other side, and a gentle dip behind it.
   const base = shell(f, head, yM, o.side[0], o.top, o.side[1]);
@@ -120,7 +124,7 @@ export function slickHair(i: HairInput, o: SlickDesign): HairArt {
     onSkin: <path d={castBelow(edge, 1.2, 2.6, f.top)} fill={skin.shade} opacity={0.5} />,
     mid: (
       <g>
-        {fadeRegion(`${uid}skc`, ring(cap), sideTone, d === 2 ? 1 : d, { y0: yM - 22, y1: yS, o0: 0.9, mid: [0.35, 0.8], o1: 0.06 })}
+        {o.fade !== false && fadeRegion(`${uid}skc`, ring(cap), sideTone, d === 2 ? 1 : d, { y0: yM - 22, y1: yS, o0: 0.9, mid: [0.35, 0.8], o1: 0.06 })}
         <ClipDefs id={clip} shapes={[regionD]} />
         <path d={regionD} fill={mixHex(T.base, T.shade, 0.45)} />
         <g clipPath={`url(#${clip})`}>
@@ -154,3 +158,4 @@ export function slickHair(i: HairInput, o: SlickDesign): HairArt {
     ears: "visible",
   };
 }
+

@@ -12,6 +12,7 @@ import { locsHair, type LocsDesign } from "./locs";
 import { wavesHair, type WavesDesign } from "./waves";
 import { highTopHair, type HighTopDesign } from "./hightop";
 import { mohawkHair, type MohawkDesign } from "./mohawk";
+import { nordicHair, type RearDesign } from "./nordic";
 import { slickHair, type SlickDesign } from "./slick";
 import { spikesHair, type SpikeDesign } from "./spikes";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
@@ -216,7 +217,13 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "samba-mohawk", name: "Samba Mohawk", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 32, eraWeight: { retro: 0.6, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => mohawkHair(i, SAMBA_MOHAWK) },
   { ...meta({ id: "patterned-high-top", name: "Patterned High Top", category: "iconic", hairType: "coily", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 0.4, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => highTopHair(i, PATTERNED_HIGH_TOP) },
   { ...meta({ id: "slickback-flow", name: "Slickback Flow", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.5, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => slickHair(i, SLICKBACK_FLOW) },
+  { ...meta({ id: "nordic-sweep", name: "Nordic Sweep", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 0.5, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => nordicHair(i, NORDIC_SWEEP, NORDIC_REAR) },
 ];
+
+// Long straight hair swept back off the forehead: a flat crown, the swept top reaching down to the ear, and three flowing
+// masses behind the head ending on the shoulders. No tie and no parting; the ears stay clear.
+const NORDIC_SWEEP: SlickDesign = { top: 5, lift: 3, side: [0.4, 0.8], sections: 5, reach: 80, fade: false };
+const NORDIC_REAR: RearDesign = { ends: [10, -2, -14], pad: [9, 5, 1.5], spread: [30, 20, 12], width: [26, 24, 22] };
 
 // Medium top swept straight back: lifted at the front, five overlapping sections sweeping over the dome, tapering sides, a
 // clean hairline and nothing hanging over the forehead.
@@ -282,6 +289,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   48: "samba-mohawk",
   49: "patterned-high-top",
   50: "slickback-flow",
+  51: "nordic-sweep",
 };
 
 /**

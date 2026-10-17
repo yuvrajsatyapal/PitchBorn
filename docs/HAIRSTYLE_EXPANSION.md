@@ -28,8 +28,9 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 | 4 | Samba Mohawk | **approved, committed** | see below |
 | 5 | Crescent Patch | **excluded: duplicate** | Brazilian Crescent already is a small isolated frontal half-moon patch on an almost shaved scalp (`crescentHair`), the exact brief. A second style would be a recolour; the existing one is preserved unchanged. |
 | 6 | Patterned High Top | **approved, committed** | see below |
-| 7 | Slickback Flow | **implemented, awaiting approval** | see below |
-| 8-11 | Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crown Taper must be compared with Curly Fade |
+| 7 | Slickback Flow | **approved, committed** | see below |
+| 8 | Nordic Sweep | **approved, committed** | see below |
+| 9-11 | Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crown Taper must be compared with Curly Fade |
 
 ## Golden Buzz
 
@@ -137,3 +138,37 @@ at the sides. New helper `slickHair` (`hair/slick.tsx`) from existing primitives
 
 **Limitations.** Rear length and the back-sweep in depth are not visible from the front; the flow reads through section direction and
 silhouette. At 48px only three sections and the silhouette remain.
+
+## Nordic Sweep
+
+**Structural analysis.** Silhouette: a flat, narrow crown over long straight hair that reaches the shoulders. Length: long. Parting: none.
+Fringe: none; forehead and ears fully clear. Temples: covered by the swept mass down to the top of the ear (no fade below it). Rear: three
+flowing masses per side behind the ear, each ending in a different tapered tip. Flow: front hairline -> crown (Slickback Flow's tiling
+sections) -> upper side -> behind the ear -> long rear hair. No tie, so no ponytail.
+
+**Root cause of the earlier disconnected silhouette (found in the code).**
+1. The rear hair reused `backHair` from `flow.tsx`, written for Long Flow. Its masses sit at `fallHalf(head, ...) + side + spread`, where
+   `fallHalf` is the widest half-width of the head over the whole range (cheek and jaw included), plus constants. So every head got the same
+   straight column, wider than the neck-to-jaw area on narrow and angular heads (gaps) and the same on all of them.
+2. Each mass starts with a full-width flat top at its first row, standing 9+ units off the head, while the swept top ends at the ear with
+   under a unit of thickness: that step is the "rectangle" at both temples.
+3. The short skin-tone fade under the swept mass rendered as grey gradient strips at the temples in the pure-black review (the strips
+   you asked to remove).
+Layer order (back behind the head and ears, mid over them), clipping and anchors were not the cause, and nothing was uniformly scaled.
+
+**Repair.** New `hair/nordic.tsx`: contours are built from this head's own lines. Each starts exactly on the head edge at the top of the
+ear (so the top and the rear read as one flow), eases outward to a pad measured from the widest point of the skull, then in towards the
+neck as it falls, never inside the head or neck lines. Width comes from the room between head and neck (narrow heads sit closer, wide
+ones broader), crown and side volume follow the skull width and a round face compresses the crown. Three masses per side overlap with
+different pads, lengths and sway, and taper to points; the hair between the sides is one deep tone so no gap opens beside the jaw. The fade
+is switched off for this style (`fade: false`).
+
+**Checks in `tests/portraitNordic.test.ts`** (all twelve face shapes at head-width and head-length extremes): every contour starts on the
+head edge, never cuts into head or neck, never jumps sideways between points, tapers towards its tip, never leaves a large gap beside the jaw,
+is wider on a broad head than a narrow one, differs left to right; no skin-tone fade; element budget; colours; determinism.
+
+**Review sheet:** `docs/hairstyles/nordic-sweep-review.png`. **Before/after:** `docs/hairstyles/nordic-sweep-before-after.png` (default
+portrait and black silhouette, four face silhouettes and colour portraits, six more head shapes, small sizes).
+
+**Limitations.** The shirt hides the lowest part of the longest masses, so visible ends are the shoulder line and the tapered tips of the
+shorter masses. The rear length is read from the masses beside the neck.
