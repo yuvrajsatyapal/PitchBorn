@@ -22,7 +22,7 @@ import { newCareer } from "./helpers";
 const KIT = "#7a1f2b";
 const TRIM = "#f1ead8";
 const base: Appearance = { ...generateAppearance("compat"), hair: 0, facial: 0, accessory: 0, scar: 0, mark: 0, freckles: 0, hairTip: 0, band: 0 };
-const ICONIC_NAMES = ["Brazilian Crescent", "Frosted Faux Hawk", "Long Headband Curls", "Lion Afro", "Divine Ponytail", "Dutch Dreads", "Playmaker Waves", "Golden Buzz", "Rocket Spikes", "Samba Mohawk", "Patterned High Top"];
+const ICONIC_NAMES = ["Brazilian Crescent", "Frosted Faux Hawk", "Long Headband Curls", "Lion Afro", "Divine Ponytail", "Dutch Dreads", "Playmaker Waves", "Golden Buzz", "Rocket Spikes", "Samba Mohawk", "Patterned High Top", "Slickback Flow"];
 const iconicIndex = (name: string) => HAIR_STYLES.findIndex((h) => h.name === name);
 
 const render = (a: Partial<Appearance>, d: 0 | 1 | 2, age = 26, uid = "c") =>
@@ -172,7 +172,7 @@ describe("portrait compatibility: hair metadata", () => {
     for (const h of HAIR_LIBRARY) expect(ids.has(h.id)).toBe(true);
   });
 
-  it("the iconic styles are exactly the eleven generic designs, flagged in both the options and the library", () => {
+  it("the iconic styles are exactly the twelve generic designs, flagged in both the options and the library", () => {
     expect(HAIR_STYLES.filter((h) => h.iconic).map((h) => h.name)).toEqual(ICONIC_NAMES);
     for (const name of ICONIC_NAMES) {
       const meta = hairMeta(POC_IDS[iconicIndex(name)]!);
@@ -281,7 +281,7 @@ describe("portrait compatibility: generation", () => {
     expect(goldenLions).toBeGreaterThan(0);
   });
 
-  it("iconic styles are rare overall, all eleven occur, and squads rarely carry more than one", () => {
+  it("iconic styles are rare overall, all twelve occur, and squads rarely carry more than one", () => {
     const N = 20_000;
     const seen = new Map<string, number>();
     let total = 0;

@@ -12,6 +12,7 @@ import { locsHair, type LocsDesign } from "./locs";
 import { wavesHair, type WavesDesign } from "./waves";
 import { highTopHair, type HighTopDesign } from "./hightop";
 import { mohawkHair, type MohawkDesign } from "./mohawk";
+import { slickHair, type SlickDesign } from "./slick";
 import { spikesHair, type SpikeDesign } from "./spikes";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
 
@@ -214,7 +215,12 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "rocket-spikes", name: "Rocket Spikes", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 1, modern: 0.4 }, supportsHeadband: true, ears: "visible" }), draw: (i) => spikesHair(i, ROCKET_SPIKES) },
   { ...meta({ id: "samba-mohawk", name: "Samba Mohawk", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 32, eraWeight: { retro: 0.6, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => mohawkHair(i, SAMBA_MOHAWK) },
   { ...meta({ id: "patterned-high-top", name: "Patterned High Top", category: "iconic", hairType: "coily", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 0.4, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => highTopHair(i, PATTERNED_HIGH_TOP) },
+  { ...meta({ id: "slickback-flow", name: "Slickback Flow", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.5, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => slickHair(i, SLICKBACK_FLOW) },
 ];
+
+// Medium top swept straight back: lifted at the front, five overlapping sections sweeping over the dome, tapering sides, a
+// clean hairline and nothing hanging over the forehead.
+const SLICKBACK_FLOW: SlickDesign = { top: 9, lift: 12, side: [0.3, 0.7], sections: 5 };
 
 // A flat-topped, rounded-box block 26 units above the skull over a close fade, with a thin shaved line (or step, or two
 // lines) on the sides at full size. Boxy and flat where Lion Afro and Medium Afro are round clouds.
@@ -275,6 +281,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   47: "rocket-spikes",
   48: "samba-mohawk",
   49: "patterned-high-top",
+  50: "slickback-flow",
 };
 
 /**

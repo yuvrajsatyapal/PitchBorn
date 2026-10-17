@@ -28,7 +28,8 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 | 4 | Samba Mohawk | **approved, committed** | see below |
 | 5 | Crescent Patch | **excluded: duplicate** | Brazilian Crescent already is a small isolated frontal half-moon patch on an almost shaved scalp (`crescentHair`), the exact brief. A second style would be a recolour; the existing one is preserved unchanged. |
 | 6 | Patterned High Top | **approved, committed** | see below |
-| 7-11 | Slickback Flow, Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crown Taper must be compared with Curly Fade |
+| 7 | Slickback Flow | **implemented, awaiting approval** | see below |
+| 8-11 | Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crown Taper must be compared with Curly Fade |
 
 ## Golden Buzz
 
@@ -115,3 +116,24 @@ the patterns are four small constants inside the style.
 
 **Limitations.** Shaved lines are thin by design and vanish below 140px. The block shows no individual curls at any size, only
 compact value clumps.
+
+## Slickback Flow
+
+**Structural analysis.** Silhouette: low crown, a high front lift off centre that eases down on the other side, thin sides that end flush
+with the head edge. Length: medium top, short sides. Parting: none. Fringe: none. Temples: tapered into a short fade. Rear: swept back,
+hidden in a front view. Flow: five broad sections, each rooted on the hairline and running in one long smooth curve to the outline;
+all bow the same way (combed, not fanned), outer ones a little more. Masses: tiled sections told apart by value, a soft
+left-to-right tone gradient and restrained contact shadows; one thin curved highlight on the left sections at full size.
+Asymmetry: lift position and side, section spacing, widths, end points.
+
+**Review iterations (this style was reworked three times):** v1 a dome with a few strokes (read as a helmet); v2 overlapping
+floating sections (tangled curls at the front); v3 (current) sections that tile the whole mass, parallel-ish flow, curved
+highlights, tapering sides. Comparison: `docs/hairstyles/slickback-flow-before-after.png` (default, black silhouette, 48/96px).
+
+**Closest existing:** Long Flow, Classic Curtains. Neither has a lifted front or hair swept back off the face, and neither is short
+at the sides. New helper `slickHair` (`hair/slick.tsx`) from existing primitives (`shell`, `bumped`, `taperedLock`, `hairStroke`, `fadeRegion`).
+
+**Review sheet:** `docs/hairstyles/slickback-flow-review.png`. **Tests:** `tests/portraitSlick.test.ts` plus existing suites.
+
+**Limitations.** Rear length and the back-sweep in depth are not visible from the front; the flow reads through section direction and
+silhouette. At 48px only three sections and the silhouette remain.
