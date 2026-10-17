@@ -22,7 +22,7 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 
 | # | Style | Status | Notes |
 |---|---|---|---|
-| 1 | Playmaker Waves | already implemented (before this task) | not recreated |
+| 1 | Playmaker Waves | **retired** | removed from the game at the owner's request: never rolled or offered, option slot kept so stored indices do not move, old saves draw as Short Textured |
 | 2 | Golden Buzz | **approved, committed** | see below |
 | 3 | Rocket Spikes | **approved, committed** | see below |
 | 4 | Samba Mohawk | **approved, committed** | see below |
@@ -31,7 +31,7 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 | 7 | Slickback Flow | **approved, committed** | see below |
 | 8 | Nordic Sweep | **approved, committed** | see below |
 | 9 | Crown Taper | **implemented** | see below; compared with Curly Fade, kept because the crown is built from overlapping clusters with a stepped taper and a clean hairline, not a fringe of curl groups |
-| 10 | Pitch Cornrows | in progress | |
+| 10 | Pitch Cornrows | **dropped** | not liked; removed before commit |
 | 11 | Warrior Knot | **implemented** | see below |
 
 ## Golden Buzz

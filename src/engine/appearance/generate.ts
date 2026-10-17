@@ -38,7 +38,7 @@ const HAIR_ODDS: Record<string, number> = {
 
 /** Everyday styles keep their original indices; iconic styles are appended after them. */
 const CORE_HAIR = HAIR_STYLES.filter((h) => !h.iconic);
-const ICONIC_HAIR = HAIR_STYLES.map((h, i) => [h, i] as const).filter(([h]) => h.iconic);
+const ICONIC_HAIR = HAIR_STYLES.map((h, i) => [h, i] as const).filter(([h]) => h.iconic && !h.retired);
 /** Iconic styles together: about one player in seventy. */
 export const ICONIC_CHANCE = 0.014;
 /** Styles whose tips can take a second colour, and how often generated players have frosted tips with them. */

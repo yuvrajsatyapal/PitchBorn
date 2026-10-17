@@ -11,7 +11,6 @@ import { dutchHair } from "./dutch";
 import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
 import { knotHair, type KnotDesign } from "./knot";
 import { locsHair, type LocsDesign } from "./locs";
-import { wavesHair, type WavesDesign } from "./waves";
 import { highTopHair, type HighTopDesign } from "./hightop";
 import { mohawkHair, type MohawkDesign } from "./mohawk";
 import { nordicHair, type RearDesign } from "./nordic";
@@ -213,7 +212,6 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "lion-afro", name: "Lion Afro", category: "iconic", hairType: "coily", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.7 }, ears: "covered" }), draw: (i) => coilyHair(i, LION_AFRO) },
   { ...meta({ id: "divine-ponytail", name: "Divine Ponytail", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.8, modern: 0.8 }, supportsRecedingHairline: true }), draw: (i) => ponytailHair(i) },
   { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => dutchHair(i) },
-  { ...meta({ id: "playmaker-waves", name: "Playmaker Waves", category: "iconic", hairType: "wavy", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 0.8, modern: 0.8 }, supportsHeadband: true, ears: "partial" }), draw: (i) => wavesHair(i, PLAYMAKER_WAVES) },
   { ...meta({ id: "golden-buzz", name: "Golden Buzz", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 38, eraWeight: { retro: 1, modern: 0.5 }, ears: "visible" }), draw: (i) => buzzHair(i, GOLDEN_BUZZ) },
   { ...meta({ id: "rocket-spikes", name: "Rocket Spikes", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 1, modern: 0.4 }, supportsHeadband: true, ears: "visible" }), draw: (i) => spikesHair(i, ROCKET_SPIKES) },
   { ...meta({ id: "samba-mohawk", name: "Samba Mohawk", category: "iconic", hairType: "straight", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 32, eraWeight: { retro: 0.6, modern: 1 }, supportsHeadband: true, ears: "visible" }), draw: (i) => mohawkHair(i, SAMBA_MOHAWK) },
@@ -257,18 +255,6 @@ const ROCKET_SPIKES: SpikeDesign = { count: [5, 5], height: 22, crown: 8, span: 
 // with a natural hairline. No locks, fringe or tufts; the hair colour is whatever the player has.
 const GOLDEN_BUZZ: BuzzDesign = { kind: "straight", top: [2.6, 3.6], side: 1, density: 0.74 };
 
-// Medium football cut with soft natural waves: fuller crown, loose off-centre parting, a fringe of several locks of
-// different length, side locks that curve out and in on their way to the ears, and no hair behind the neck.
-const PLAYMAKER_WAVES: WavesDesign = {
-  part: 8,
-  top: 19,
-  side: 3.5,
-  reach: [0.6, 1],
-  wave: 7,
-  locks: 3,
-  fringe: 6,
-};
-
 const BY_ID = new Map(HAIR_LIBRARY.map((h) => [h.id, h]));
 
 /** A design's metadata (undefined for ids without a new design). */
@@ -295,7 +281,6 @@ export const POC_IDS: Partial<Record<number, string>> = {
   42: "lion-afro",
   43: "divine-ponytail",
   44: "dutch-dreads",
-  45: "playmaker-waves",
   46: "golden-buzz",
   47: "rocket-spikes",
   48: "samba-mohawk",
@@ -312,7 +297,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
  */
 const NEW_FOR_OLD: Record<number, number> = {
   1: 0, 2: 7, 3: 7, 4: 7, 5: 7, 6: 7, 9: 10, 11: 10, 12: 8, 13: 10, 14: 10, 15: 17, 16: 17, 18: 17, 19: 8, 20: 8, 21: 7, 22: 24,
-  25: 7, 26: 7, 27: 7, 28: 7, 30: 0, 31: 0, 32: 0, 33: 24, 34: 24, 35: 7, 36: 7, 37: 7, 38: 24,
+  25: 7, 45: 7, 26: 7, 27: 7, 28: 7, 30: 0, 31: 0, 32: 0, 33: 24, 34: 24, 35: 7, 36: 7, 37: 7, 38: 24,
 };
 
 export const newHairIndex = (hair: number): number => (POC_IDS[hair] ? hair : NEW_FOR_OLD[hair] ?? 7);

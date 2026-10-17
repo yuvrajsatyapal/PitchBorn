@@ -26,7 +26,7 @@ const CATS: { id: Cat; label: string }[] = [
 ];
 
 /** Only the hairstyles drawn by the improved portrait renderer are offered; the older designs stay valid in saves. */
-const NEW_HAIR = HAIR_STYLES.flatMap((h, i) => (h.iconic || POC_IDS[i] ? [i] : []));
+const NEW_HAIR = HAIR_STYLES.flatMap((h, i) => (!h.retired && (h.iconic || POC_IDS[i]) ? [i] : []));
 
 const PREVIEW_AGES = [
   { id: "26", label: "26" },

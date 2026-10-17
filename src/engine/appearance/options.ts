@@ -67,6 +67,8 @@ export interface HairStyle extends Option {
   sheen?: boolean;
   /** Iconic football hairstyle: rare, picked by its own draw, never by the everyday odds. */
   iconic?: boolean;
+  /** Removed from the game: the slot keeps its index so stored players do not shift, but it is never rolled or offered, and draws as a near style. */
+  retired?: boolean;
 }
 
 const hs = (name: string, texture: HairTexture, p: Partial<Omit<HairStyle, "name" | "texture">>): HairStyle => ({
@@ -121,7 +123,7 @@ export const HAIR_STYLES: readonly HairStyle[] = [
   hs("Lion Afro", "coily", { top: 46, side: 40, edge: "scallop", line: 66, end: 116, iconic: true }),
   hs("Divine Ponytail", "straight", { top: 11, side: 2, end: 104, strands: "ponytail", back: 1, line: 64, sheen: true, iconic: true }),
   hs("Dutch Dreads", "coily", { top: 16, side: 9, strands: "locs", back: 4, end: 126, line: 66, edge: "scallop", iconic: true }),
-  hs("Playmaker Waves", "wavy", { top: 15, side: 5, end: 108, back: 1, fringe: "sweep", part: 1, line: 66, iconic: true }),
+  hs("Playmaker Waves", "wavy", { top: 15, side: 5, end: 108, back: 1, fringe: "sweep", part: 1, line: 66, iconic: true, retired: true }),
   hs("Golden Buzz", "straight", { top: 3, side: 0.5, density: 0.75, end: 98, line: 66, iconic: true }),
   hs("Rocket Spikes", "straight", { top: 20, side: 1, edge: "spiky", end: 100, fade: 2, fringe: "messy", line: 66, iconic: true }),
   hs("Samba Mohawk", "straight", { top: 26, side: 0, edge: "tuft", end: 100, fade: 3, fringe: "quiff", line: 62, iconic: true }),

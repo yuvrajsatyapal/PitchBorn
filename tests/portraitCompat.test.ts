@@ -23,6 +23,7 @@ const KIT = "#7a1f2b";
 const TRIM = "#f1ead8";
 const base: Appearance = { ...generateAppearance("compat"), hair: 0, facial: 0, accessory: 0, scar: 0, mark: 0, freckles: 0, hairTip: 0, band: 0 };
 const ICONIC_NAMES = ["Brazilian Crescent", "Frosted Faux Hawk", "Long Headband Curls", "Lion Afro", "Divine Ponytail", "Dutch Dreads", "Playmaker Waves", "Golden Buzz", "Rocket Spikes", "Samba Mohawk", "Patterned High Top", "Slickback Flow", "Nordic Sweep", "Crown Taper", "Warrior Knot"];
+const LIVE_ICONIC = ICONIC_NAMES.filter((n) => n !== "Playmaker Waves");
 const iconicIndex = (name: string) => HAIR_STYLES.findIndex((h) => h.name === name);
 
 const render = (a: Partial<Appearance>, d: 0 | 1 | 2, age = 26, uid = "c") =>
@@ -174,7 +175,7 @@ describe("portrait compatibility: hair metadata", () => {
 
   it("the iconic styles are exactly the fifteen generic designs, flagged in both the options and the library", () => {
     expect(HAIR_STYLES.filter((h) => h.iconic).map((h) => h.name)).toEqual(ICONIC_NAMES);
-    for (const name of ICONIC_NAMES) {
+    for (const name of LIVE_ICONIC) {
       const meta = hairMeta(POC_IDS[iconicIndex(name)]!);
       expect(meta?.name).toBe(name);
       expect(meta?.category).toBe("iconic");
@@ -281,7 +282,7 @@ describe("portrait compatibility: generation", () => {
     expect(goldenLions).toBeGreaterThan(0);
   });
 
-  it("iconic styles are rare overall, all fifteen occur, and squads rarely carry more than one", () => {
+  it("iconic styles are rare overall, all fourteen live ones occur, and squads rarely carry more than one", () => {
     const N = 20_000;
     const seen = new Map<string, number>();
     let total = 0;
@@ -299,7 +300,7 @@ describe("portrait compatibility: generation", () => {
     }
     expect(total / N).toBeGreaterThan(0.008);
     expect(total / N).toBeLessThan(0.022);
-    expect([...seen.keys()].sort()).toEqual([...ICONIC_NAMES].sort());
+    expect([...seen.keys()].sort()).toEqual([...LIVE_ICONIC].sort());
     expect(crowded / (N / 25)).toBeLessThan(0.02);
   });
 
