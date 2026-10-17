@@ -123,6 +123,7 @@ export const HAIR_STYLES: readonly HairStyle[] = [
   hs("Dutch Dreads", "coily", { top: 16, side: 9, strands: "locs", back: 4, end: 126, line: 66, edge: "scallop", iconic: true }),
   hs("Playmaker Waves", "wavy", { top: 15, side: 5, end: 108, back: 1, fringe: "sweep", part: 1, line: 66, iconic: true }),
   hs("Golden Buzz", "straight", { top: 3, side: 0.5, density: 0.75, end: 98, line: 66, iconic: true }),
+  hs("Rocket Spikes", "straight", { top: 20, side: 1, edge: "spiky", end: 100, fade: 2, fringe: "messy", line: 66, iconic: true }),
 ];
 
 // ------------------------------------------------------------------ facial features

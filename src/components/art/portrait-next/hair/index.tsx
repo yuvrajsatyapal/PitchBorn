@@ -10,6 +10,7 @@ import { dutchHair } from "./dutch";
 import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
 import { locsHair, type LocsDesign } from "./locs";
 import { wavesHair, type WavesDesign } from "./waves";
+import { spikesHair, type SpikeDesign } from "./spikes";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
 
 export type { HairArt, HairInput } from "./core";
@@ -208,7 +209,12 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => dutchHair(i) },
   { ...meta({ id: "playmaker-waves", name: "Playmaker Waves", category: "iconic", hairType: "wavy", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 0.8, modern: 0.8 }, supportsHeadband: true, ears: "partial" }), draw: (i) => wavesHair(i, PLAYMAKER_WAVES) },
   { ...meta({ id: "golden-buzz", name: "Golden Buzz", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 38, eraWeight: { retro: 1, modern: 0.5 }, ears: "visible" }), draw: (i) => buzzHair(i, GOLDEN_BUZZ) },
+  { ...meta({ id: "rocket-spikes", name: "Rocket Spikes", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 34, eraWeight: { retro: 1, modern: 0.4 }, supportsHeadband: true, ears: "visible" }), draw: (i) => spikesHair(i, ROCKET_SPIKES) },
 ];
+
+// Short athletic hair: five equal broad spikes in an even row across the whole top, over close sides, with a
+// short angular fringe. Not a central crest (Frosted Faux Hawk) and not a fringe of locks (Short Textured).
+const ROCKET_SPIKES: SpikeDesign = { count: [5, 5], height: 22, crown: 8, span: [0.2, 0.8], overlap: 1, fringe: { count: 5, height: 4 } };
 
 // Clipper-cut hair: a thin mass hugging the skull, a few units thick on the crown and almost nothing at the sides,
 // with a natural hairline. No locks, fringe or tufts; the hair colour is whatever the player has.
@@ -254,6 +260,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   44: "dutch-dreads",
   45: "playmaker-waves",
   46: "golden-buzz",
+  47: "rocket-spikes",
 };
 
 /**

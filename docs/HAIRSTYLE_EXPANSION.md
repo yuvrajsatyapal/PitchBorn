@@ -23,8 +23,9 @@ a time, each stopping for approval. All live in `src/components/art/portrait-nex
 | # | Style | Status | Notes |
 |---|---|---|---|
 | 1 | Playmaker Waves | already implemented (before this task) | not recreated |
-| 2 | Golden Buzz | **implemented, awaiting approval** | see below |
-| 3-11 | Rocket Spikes, Samba Mohawk, Crescent Patch, Patterned High Top, Slickback Flow, Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crescent Patch must be compared with Brazilian Crescent first; Crown Taper with Curly Fade |
+| 2 | Golden Buzz | **approved, committed** | see below |
+| 3 | Rocket Spikes | **implemented, awaiting approval** | see below |
+| 4-11 | Samba Mohawk, Crescent Patch, Patterned High Top, Slickback Flow, Nordic Sweep, Crown Taper, Pitch Cornrows, Warrior Knot | not started | Crescent Patch must be compared with Brazilian Crescent first; Crown Taper with Curly Fade |
 
 ## Golden Buzz
 
@@ -53,3 +54,24 @@ neck/hair, beard and appearance suites (63 tests). `tsc` and eslint clean. Exist
 **Limitations.** Dark hair on the darkest skin has low contrast inside the mass (the outline carries it, as with other short
 styles). Pure-black silhouette is a rounded cap because the whole scalp above the hairline is hair. Not yet added to a master
 comparison sheet (done once more styles exist).
+
+## Rocket Spikes
+
+**Structural analysis.** Silhouette: short sides, moderately raised crown, five equal, evenly spaced broad spikes across the whole top.
+Length: short. Crown: 8 units of mass plus spikes of one height (22). Parting: none. Fringe: short, angular, four small forward spikes over the
+hairline, no long locks. Temples: close cap thinning to the top of the ear. Rear: not drawn. Hairline: straight, hung with the small
+spikes. Flow: upward along the skull normal, so the row fans with the dome. Masses: one crown mass, five spikes. Variation (per review feedback:
+spikes must be uniform): only a few percent of height and width per spike, seeded.
+
+**Closest existing:** Frosted Faux Hawk (one central crest with the crest following the skull, flanked by faded sides) and Short
+Textured (forward fringe of locks). Rocket Spikes has no central crest: spikes share the full width and height is moderate; it has no hanging
+locks. New helper `spikesHair` (`hair/spikes.tsx`) is built from existing primitives (`shell`, `bumped`, `hanging`, `hairline`,
+`fadeRegion`); a broad-spike profile (less concave than `tuft`) keeps spikes reading as masses, not thorns.
+
+**Tests:** `tests/portraitSpikes.test.ts` (colours, determinism, seed variation, close sides on 24 head shapes, element counts, missing
+fields) and the existing compat / next / beard / appearance suites: 70 passing. tsc and eslint clean.
+
+**Review sheet:** `docs/hairstyles/rocket-spikes-review.png`.
+
+**Limitations.** Spike tilt cannot show "forward" in a front view, so the front reads through the short angular fringe and a
+band of shade under the hairline. Very dark hair on the darkest skin is carried by the outline and highlights.
