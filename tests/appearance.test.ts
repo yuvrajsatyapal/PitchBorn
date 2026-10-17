@@ -97,7 +97,9 @@ describe("deterministic generation", () => {
     expect(seen.skin.size).toBe(COUNTS.skin);
     expect(seen.face.size).toBe(COUNTS.face);
     expect(seen.hair.size).toBeGreaterThan(HAIR_STYLES.length - 4);
-    expect(seen.facial.size).toBeGreaterThan(FACIAL_HAIR.length - 3);
+    // The four newest styles are editor-only (rarity unchanged): seeds roll the first sixteen.
+    expect(seen.facial.size).toBeGreaterThan(FACIAL_HAIR.length - 4 - 3);
+    expect(Math.max(...seen.facial)).toBeLessThan(16);
   });
 
   it("a regional lean nudges odds but never decides the face", () => {

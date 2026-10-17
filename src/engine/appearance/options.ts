@@ -144,6 +144,8 @@ export const EAR_STYLES = ["Small", "Medium", "Large"] as const;
 export const FACIAL_HAIR = [
   "Clean shaven", "Light stubble", "Heavy stubble", "Moustache", "Thin moustache", "Goatee", "Moustache + goatee", "Soul patch",
   "Short beard", "Boxed beard", "Full beard", "Long beard", "Chin beard", "Sideburns", "Mutton chops", "Chinstrap",
+  // Appended later (editor only: the generator's FACIAL_ODDS covers the first sixteen).
+  "Imperial Goatee", "Sharp Chinstrap", "Maestro Beard", "Rising Stubble",
 ] as const;
 export const SCARS = ["None", "Cheek scar", "Eyebrow scar", "Chin scar"] as const;
 export const MARKS = ["None", "Beauty mark left", "Beauty mark right"] as const;

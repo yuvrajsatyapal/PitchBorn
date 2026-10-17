@@ -4,7 +4,7 @@ import { GlassesNext, HeadbandNext, MarksNext } from "./accessories";
 import { anchorsFor } from "./anchors";
 import { BackdropNext } from "./backdrop";
 import { AgeLinesNext, BrowsNext, EarsNext, EyesNext, HeadInk, MouthNext, NoseNext, Planes, Sockets, type Detail } from "./face";
-import { BeardNext, StubbleNext } from "./facialHair";
+import { BeardNext, RisingStubbleNext, StubbleNext } from "./facialHair";
 import { POC_IDS, drawHair, extentOf, hairMeta } from "./hair";
 import { buildHeadNext } from "./head";
 import { KitBack, KitFront, necklineFor } from "./kit";
@@ -44,6 +44,7 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
   const box = viewFor(d);
   const { x, y, w, h } = box;
   const stubble = m.facial === 1 || m.facial === 2;
+  const rising = m.facial === 19;
   const bald = m.hairStyle === "none";
   const pocId = m.hairStyle ?? POC_IDS[m.hair];
   const next = !bald && pocId ? drawHair(pocId, { f, head, color: m.hairColor, skin: t, uid, d, recede: m.recede, seed: m.seed, tip: m.hairTip, band: m.band }) : null;
@@ -128,6 +129,7 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
             {Sockets({ f, t })}
             {AgeLinesNext({ f, t, lines: m.lines, d })}
             {stubble && StubbleNext({ f, head, t, color: m.facialColor, heavy: m.facial === 2, youth: m.youth, d, uid })}
+            {rising && RisingStubbleNext({ f, head, a, t, color: m.facialColor, youth: m.youth, d, uid, pSeed: m.seed })}
             {legacy && HairOnSkin({ ctx, g })}
             {next?.onSkin}
           </g>
@@ -138,7 +140,7 @@ function drawPortrait({ m, uid, d, silhouette = false }: { m: NextModel; uid: st
           {MouthNext({ f, t, d })}
           {EyesNext({ f, t, iris: m.iris, uid, d, lines: m.lines })}
           {BrowsNext({ f, color: m.browColor, d })}
-          {!stubble && BeardNext({ f, head, a, t, style: m.facial, color: m.facialColor, youth: m.youth, d, uid })}
+          {!stubble && !rising && BeardNext({ f, head, a, t, style: m.facial, color: m.facialColor, youth: m.youth, d, uid, pSeed: m.seed })}
           {m.accessory === 3 && GlassesNext({ f, head, a, d })}
           {/* 5. The hair mass (its arms pass under it to the ears), a headband over it, then locks in front of the band. */}
           {legacy && HairFront({ ctx, g })}

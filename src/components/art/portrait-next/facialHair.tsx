@@ -4,7 +4,7 @@ import { CX, add, along, clamp, hash01, lerp, q, scale, sub, unit, type Pt } fro
 import type { Anchors } from "./anchors";
 import type { Detail } from "./face";
 import type { NextSpec } from "./head";
-import { noise1, pieces, ring, roughen, stroke, strokeLine } from "./ink";
+import { blob, lodNow, noise1, pieces, ring, roughen, stroke, strokeLine } from "./ink";
 import { P, burnY, inside, mouthGap, outline, smooth01 } from "./beardGeometry";
 import { BeardMass, type MassKind } from "./beardMass";
 import { beardTones, mixHex, type SkinTones } from "./palette";
@@ -109,6 +109,155 @@ export function StubbleNext({ f, head, t, color, heavy, youth, d, uid }: { f: Ne
   );
 }
 
+
+// ------------------------------------------------------------------ rising stubble
+
+/** One region of early growth: how dense it is, how to fill it, and where a single hair mark can start inside it. */
+interface Patch {
+  dens: number;
+  /** Fill shapes from the outer, faintest to the denser core (one for thumbnails). */
+  shapes: Pt[][];
+  /** The direction hair lies in this region at a point. */
+  dir: (p: Pt) => Pt;
+  at: (u: number, v: number) => Pt;
+  wash: boolean;
+}
+
+/** An irregular, rounded patch: radii vary round the outline so it never reads as a circle. */
+function patchBlob(cx: number, cy: number, rx: number, ry: number, seed: number): Pt[] {
+  const n = 10;
+  return Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    const k = 0.78 + 0.34 * hash01(seed, i * 3 + 1);
+    return P(cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k);
+  });
+}
+
+/** A band that follows the head outline between two heights, `w` wide and set `inset` in from the edge. */
+function outlineBand(head: Head, s: 1 | -1, y0: number, y1: number, w: number, inset: number): Pt[] {
+  const edge = outline(head, s, y0, y1).map((p) => P(p[0] - s * inset, p[1]));
+  if (edge.length < 2) return [];
+  const inner = edge.map((p) => P(p[0] - s * w, p[1] - 0.6));
+  return [...edge, ...inner.reverse()];
+}
+
+/**
+ * Rising stubble: early, uneven growth. Not a wash over the lower face (that is Light stubble) but separate regions
+ * of different density: the chin and the upper lip strongest, a thin broken line along the jaw, a faint lower cheek,
+ * a light sideburn, and nothing in the middle of the upper lip or high on the cheek. Each region is a soft, nested
+ * shape; larger sizes add short hair marks, sampled by density, in one path.
+ */
+export function RisingStubbleNext({ f, head, a, t, color, youth, d, uid: _uid, pSeed = 0 }: { f: NextSpec; head: Head; a: Anchors; t: SkinTones; color: string; youth: number; d: Detail; uid: string; pSeed?: number }) {
+  const seed = 19 * 31 + Math.round(f.jawW * 3 + f.chinY) + pSeed;
+  const T = beardTones(color, t.base);
+  const wash = mixHex(T.base, t.deep, 0.45);
+  const markTone = mixHex(T.deep, T.shade, 0.35);
+  const m = f.mouth;
+  const lipTop = f.mouthY - m.up;
+  const lipBot = f.mouthY + m.lo;
+  const k = 1 - 0.3 * youth;
+  // The two sides are never equally grown: one lip patch and one cheek patch are lighter.
+  const lean = noise1(seed, 3);
+  const nest = (pts: Pt[], cx: number, cy: number): Pt[][] => (d === 0 ? [pts] : [pts, pts.map((p) => P(cx + (p[0] - cx) * 0.62, cy + (p[1] - cy) * 0.62))]);
+  const ell = (cx: number, cy: number, rx: number, ry: number, dens: number, dir: (p: Pt) => Pt, sd: number, washOn = true): Patch => ({
+    dens: dens * k,
+    shapes: nest(patchBlob(cx, cy, rx, ry, sd), cx, cy),
+    dir,
+    at: (u, v) => P(cx + (u * 2 - 1) * rx * 0.85, cy + (v * 2 - 1) * ry * 0.85),
+    wash: washOn,
+  });
+  const down = (p: Pt): Pt => unit(P((CX - p[0]) * 0.02, 1));
+  const outward = (p: Pt): Pt => unit(P(Math.sign(p[0] - CX || 1) * 0.6, 0.7));
+  const patches: Patch[] = [];
+  // Chin: the strongest region, two overlapping blobs, one lower and to a side.
+  const cyChin = lerp(lipBot, f.chinY, 0.58);
+  patches.push(ell(CX + 1.5 * lean, cyChin, f.chinW * 0.78 + 2, Math.max(5.5, (f.chinY - lipBot) * 0.42), 0.8, down, seed + 1));
+  patches.push(ell(CX + Math.sign(lean || 1) * f.chinW * 0.42, f.chinY - 5.5, f.chinW * 0.5, 4.2, 0.55, down, seed + 2));
+  // Upper lip: a thin moustache with a gap in the middle, one side lighter.
+  for (const s of [-1, 1] as const) {
+    const strength = s === Math.sign(lean || 1) ? 0.58 : 0.4;
+    patches.push(ell(CX + s * (m.w * 0.55 + 2), lipTop - 3.6, m.w * 0.42, 3, strength, outward, seed + 3 + s));
+  }
+  // Along the jaw: broken, one segment sometimes missing on a side.
+  for (const s of [-1, 1] as const) {
+    const y0 = f.jawY - 6;
+    const y1 = f.chinY - 7;
+    const mid = lerp(y0, y1, 0.5 + 0.1 * noise1(seed + s, 5));
+    const segs: [number, number][] = [[y0, mid - 3], [mid + 4, y1]];
+    segs.forEach(([ya, yb], i) => {
+      if (i === 1 && hash01(seed + s, 8) < 0.25) return;
+      const band = outlineBand(head, s, ya, yb, 6.5, 3.5);
+      if (band.length < 4) return;
+      const edge = band.slice(0, band.length / 2);
+      patches.push({
+        dens: 0.32 * k,
+        shapes: [band],
+        dir: (p) => unit(P(-s * 0.35, 1)),
+        at: (u, v) => {
+          const e = edge[Math.min(edge.length - 1, Math.floor(u * edge.length))];
+          return P(e[0] - s * (1 + v * 5), e[1] - v * 0.6);
+        },
+        wash: true,
+      });
+    });
+  }
+  // Lower cheeks: very sparse and uneven.
+  for (const s of [-1, 1] as const) {
+    const cheek = s > 0 ? a.cheekR : a.cheekL;
+    const cx = CX + s * Math.min(Math.abs(cheek[0] - CX) * 0.8, head.half(f.noseY + 18, s) - 16);
+    patches.push(ell(cx, f.noseY + 17 + 2 * noise1(seed + s, 11), 11, 8, s === Math.sign(lean || 1) ? 0.12 : 0.18, down, seed + 20 + s));
+  }
+  // A light sideburn.
+  for (const s of [-1, 1] as const) {
+    const band = outlineBand(head, s, burnY(f), burnY(f) + 15, 5, 2.5);
+    if (band.length < 4) continue;
+    const edge = band.slice(0, band.length / 2);
+    patches.push({ dens: 0.26 * k, shapes: [band], dir: down, at: (u, v) => P(edge[Math.min(edge.length - 1, Math.floor(u * edge.length))][0] - s * (1 + v * 4), edge[Math.min(edge.length - 1, Math.floor(u * edge.length))][1]), wash: true });
+  }
+  // High on the cheek: no wash, only the odd mark at the largest sizes.
+  const high = (s: 1 | -1) => (s > 0 ? a.cheekR : a.cheekL);
+  if (d === 2) for (const s of [-1, 1] as const) patches.push(ell(high(s)[0] - s * 4, high(s)[1] + 18, 10, 7, 0.06, down, seed + 30 + s, false));
+
+  const alpha = 0.42;
+  const fills = patches.filter((p) => p.wash).flatMap((p, i) =>
+    p.shapes.map((pts, j) => {
+      // The nested core is denser; a band is one flat shape.
+      const o = alpha * p.dens * (j === 0 ? (p.shapes.length > 1 ? 0.62 : 1) : 0.55);
+      return { key: `${i}-${j}`, d: p.shapes.length === 1 && pts.length > 12 ? ring(pts) : blob(pts), o };
+    }),
+  );
+
+  const marks: string[] = [];
+  const n = d === 0 ? 0 : d === 1 ? 20 : 84;
+  const total = patches.reduce((sum, p) => sum + p.dens, 0);
+  for (let i = 0; i < n; i++) {
+    let r = hash01(seed + 40, i * 3) * total;
+    const p = patches.find((q) => (r -= q.dens) <= 0) ?? patches[0];
+    const at = p.at(hash01(seed + 41, i * 3 + 1), hash01(seed + 42, i * 3 + 2));
+    const dir = p.dir(at);
+    const len = 1.7 + 1.5 * hash01(seed + 43, i);
+    marks.push(stroke([sub(at, scale(dir, len * 0.4)), add(at, scale(dir, len * 0.6))], { w: 0.8, start: 0.55, end: 0.1, steps: 2, seed: seed + i }));
+  }
+  const soft = d > 0 ? `url(#${_uid}rs)` : undefined;
+  return (
+    <g>
+      {d > 0 && (
+        <defs>
+          <filter id={`${_uid}rs`} x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation={1.5} />
+          </filter>
+        </defs>
+      )}
+      <g filter={soft}>
+        {fills.map((fl) => (
+          <path key={fl.key} d={fl.d} fill={wash} opacity={fl.o} fillRule="evenodd" />
+        ))}
+      </g>
+      {marks.length > 0 && <path d={marks.join("")} fill={markTone} opacity={0.62 * k} />}
+    </g>
+  );
+}
+
 // ------------------------------------------------------------------ beards
 
 /** One piece of facial hair: its region (and a hole for the lips), the edge that is inked, and how hair grows on it. */
@@ -122,6 +271,10 @@ interface Growth {
   /** Thin growth (straps, sideburns): how far the lit body sits above the shadow, so a band of shadow never turns
    * into a dark outline. */
   lift?: number;
+  /** A trimmed upper edge: no soft wash where growth starts, the edge stays as drawn. */
+  crisp?: boolean;
+  /** A few short marks only. */
+  calm?: boolean;
 }
 
 
@@ -232,8 +385,81 @@ function strap(f: NextSpec, head: Head, w: number, seed: number): Growth {
   return { pts: [...roughen(outer, 0.35, seed + 1, 0.7), ...roughen(inner, 0.7, seed + 2, 0.6).reverse()], edge: undefined, flow: "down", lift: 1.4 };
 }
 
+
+/**
+ * The imperial goatee's moustache: two broad masses with a small division at the philtrum. Each is thickest over the
+ * middle of the lip, rides the upper lip's own curve along its lower edge (no gap above the lip, none over it), and
+ * curves down over the mouth corner to a softly tapered end. Thickness, end length and droop differ a little between
+ * the sides. The lips stay clear and the top edge keeps skin under the nose.
+ */
+function imperialMoustache(f: NextSpec, a: Anchors, seed: number): Growth {
+  const m = f.mouth;
+  const rx = m.w + 0.8;
+  const cy = f.mouthY + (m.lo - m.up) / 2;
+  const ry = (m.up + m.lo) / 2 + 0.7;
+  // The upper lip's top edge at distance x from the middle.
+  const lip = (x: number) => cy - ry * Math.sqrt(Math.max(0, 1 - (x / rx) ** 2));
+  const body = 6.4 + 0.6 * noise1(seed, 1);
+  const floor = f.noseY + 5.5;
+  const up = (x: number, thick: number) => Math.max(floor, lip(x) - thick);
+  const sideTop = (s: 1 | -1): Pt[] => {
+    const corner = s > 0 ? a.mouthR : a.mouthL;
+    const k = 1 + 0.14 * noise1(seed + s, 3);
+    const tk = 1 + 0.1 * noise1(seed + 3 * s, 6);
+    const droop = 1.6 + 1.2 * (0.5 + 0.5 * noise1(seed + 2 * s, 4));
+    return [
+      P(corner[0] + s * 5.2 * k, f.mouthY + 1.4 + droop * 0.8),
+      P(corner[0] + s * 3 * k, f.mouthY - 1.4),
+      P(CX + s * rx * 0.88, up(rx * 0.88, body * 0.62 * tk)),
+      P(CX + s * rx * 0.5, up(rx * 0.5, body * 1.0 * tk)),
+      P(CX + s * Math.max(f.nose.w * 0.7, 3.2), up(rx * 0.2, body * 1.12 * tk) + 0.5),
+    ];
+  };
+  const sideLow = (s: 1 | -1): Pt[] => {
+    const corner = s > 0 ? a.mouthR : a.mouthL;
+    const k = 1 + 0.14 * noise1(seed + s, 3);
+    return [
+      P(corner[0] + s * 3 * k, f.mouthY + 2.2 + 0.4 * (1 + noise1(seed + s, 9))),
+      P(CX + s * rx * 0.96, lip(rx * 0.96) - 0.3),
+      P(CX + s * rx * 0.72, lip(rx * 0.72) - 0.15),
+      P(CX + s * rx * 0.4, lip(rx * 0.4) - 0.1),
+      P(CX + s * 1.6, lip(1.6) - 0.1),
+    ];
+  };
+  const top = along([...sideTop(-1), P(CX - 0.9, up(0, body * 1.12) + 1.4), P(CX, up(0, body * 1.12) + 2.4), P(CX + 0.9, up(0, body * 1.12) + 1.4), ...sideTop(1).reverse()], 4);
+  const lower = along([...sideLow(1), ...sideLow(-1).reverse()], 4);
+  // Ink only the body of the lower edge, never the tapered ends (they would end in hard ticks).
+  const edge = lower.filter((p) => Math.abs(p[0] - CX) < m.w * 0.7);
+  return { pts: [...top, ...lower], edge, flow: "out", crisp: true, calm: true };
+}
+
+/**
+ * Sharp chinstrap: a thin band of even width that starts where the hair's sideburn ends and runs the whole jaw to the
+ * other sideburn. Its inner (upper) edge is trimmed, so it hardly roughens and gets no soft wash; the lower edge may
+ * wander a little; it is a touch fuller on the chin. Width follows the jaw (narrow jaws, a narrow strap).
+ */
+function sharpStrap(f: NextSpec, head: Head, seed: number): Growth {
+  const y0 = burnY(f) - 1;
+  const w = clamp(6.4 + (f.jawW - 60) * 0.05, 5.6, 7.4);
+  const push = 0.2;
+  const outer = [...outline(head, 1, y0, f.chinY + 1).map((p) => P(p[0] + push, p[1])), ...outline(head, -1, y0, f.chinY + 1).reverse().map((p) => P(p[0] - push, p[1]))];
+  const c = P(CX, f.eyeY + 10);
+  const n = outer.length - 1;
+  const inner = outer.map((p, i) => {
+    const u = i / n;
+    // Full width right from the sideburn (it continues the hair), a slow fullness on the chin, a small wander.
+    const chin = 1 + 0.32 * Math.max(0, 1 - Math.abs(u - 0.5) / 0.15);
+    // It leaves the sideburn already at width, but its first few units are drawn in so the top end is not square.
+    const start = 0.55 + 0.45 * smooth01(Math.min(u, 1 - u) / 0.07);
+    return sub(p, scale(unit(sub(p, c)), w * chin * start * (1 + 0.1 * noise1(seed, u * 9))));
+  });
+  const outerEdge = lodNow() === 0 ? outer : roughen(outer, 0.45, seed + 1, 0.7);
+  const innerEdge = lodNow() === 0 ? inner : roughen(inner, 0.22, seed + 2, 0.5);
+  return { pts: [...outerEdge, ...innerEdge.slice().reverse()], flow: "down", lift: 1.1, crisp: true };
+}
+
 /** Facial hair styles (FACIAL_HAIR order) as growth regions fitted to this face. 1-2 are stubble, drawn as tone. */
-export function growthFor(f: NextSpec, head: Head, a: Anchors, style: number): Growth[] {
+export function growthFor(f: NextSpec, head: Head, a: Anchors, style: number, pSeed = 0): Growth[] {
   const m = f.mouth;
   switch (style) {
     case 3:
@@ -260,28 +486,34 @@ export function growthFor(f: NextSpec, head: Head, a: Anchors, style: number): G
       return [sideBand(f, head, 1, f.mouthY + 6, (t) => 8 + t * 14), sideBand(f, head, -1, f.mouthY + 6, (t) => 8 + t * 14)];
     case 15:
       return [strap(f, head, 6.5, Math.round(f.jawW * 7))];
+    case 16:
+      return [imperialMoustache(f, a, 16 * 31 + Math.round(f.chinY * 3 + f.jawW) + pSeed)];
+    case 17:
+      return [sharpStrap(f, head, 17 * 31 + Math.round(f.jawW * 7) + pSeed)];
     default:
       return [];
   }
 }
 
 /** Styles with a body of their own (boxed, long, chin): built by `BeardMass` instead of the shared growth regions. */
-const MASS_STYLES: Partial<Record<number, MassKind>> = { 5: "goatee", 6: "ring", 9: "boxed", 11: "long", 12: "chin" };
+const MASS_STYLES: Partial<Record<number, MassKind>> = { 5: "goatee", 6: "ring", 9: "boxed", 11: "long", 12: "chin", 16: "imperial", 18: "maestro" };
 
 /**
  * Beards and moustaches drawn by value, like the hair: a soft wash where growth starts on the cheek (never a ruled
  * edge), the mass in the beard colour turning to shadow underneath and on the far side, a lit area on the upper
  * left, and at larger sizes a few strokes in the direction of growth. Ink only where the beard stands off the face.
  */
-export function BeardNext({ f, head, a, t, style, color, youth, d, uid }: { f: NextSpec; head: Head; a: Anchors; t: SkinTones; style: number; color: string; youth: number; d: Detail; uid: string }): ReactNode {
+export function BeardNext({ f, head, a, t, style, color, youth, d, uid, pSeed = 0, moustache = false }: { f: NextSpec; head: Head; a: Anchors; t: SkinTones; style: number; color: string; youth: number; d: Detail; uid: string; pSeed?: number; moustache?: boolean }): ReactNode {
   const mass = MASS_STYLES[style];
   // Called, not rendered as an element: the geometry must be written inside the size-aware pass.
-  if (mass) {
-    const body = BeardMass({ kind: mass, f, head, a, t, B: beardTones(color, t.base), youth, d, uid });
+  if (mass && !moustache) {
+    const body = BeardMass({ kind: mass, f, head, a, t, B: beardTones(color, t.base), youth, d, uid, pSeed });
     // A moustache with its goatee: the moustache is the shared growth, drawn over the chin mass.
-    return style === 6 ? <>{body}{BeardNext({ f, head, a, t, style: 3, color, youth, d, uid })}</> : body;
+    if (style === 6) return <>{body}{BeardNext({ f, head, a, t, style: 3, color, youth, d, uid })}</>;
+    if (style === 16) return <>{body}{BeardNext({ f, head, a, t, style, color, youth, d, uid, pSeed, moustache: true })}</>;
+    return body;
   }
-  const list = growthFor(f, head, a, style);
+  const list = growthFor(f, head, a, style, pSeed);
   if (!list.length) return null;
   const T = beardTones(color, t.base);
   // Dark beard on dark skin: separated by a cooler, slightly lifted light on the beard mass and its growth, not by
@@ -302,8 +534,8 @@ export function BeardNext({ f, head, a, t, style, color, youth, d, uid }: { f: N
         const dark: string[] = [];
         const lit: string[] = [];
         if (d > 0) {
-          const n = d === 2 ? 22 : 9;
-          for (let k = 0, tries = 0; k < n && tries < n * 6; tries++) {
+          const n = b.calm ? (d === 2 ? 8 : 3) : d === 2 ? (b.crisp ? 34 : 22) : b.crisp ? 14 : 9;
+          for (let k = 0, tries = 0; k < n && tries < n * (b.crisp ? 40 : 6); tries++) {
             const p = P(lerp(x0, x1, hash01(seed + bi, tries * 2)), lerp(y0, y1, hash01(seed + bi, tries * 2 + 1)));
             if (!inside(b.pts, p) || (b.hole && inside(b.hole, p))) continue;
             k++;
@@ -323,7 +555,7 @@ export function BeardNext({ f, head, a, t, style, color, youth, d, uid }: { f: N
               </clipPath>
             </defs>
             {/* Where growth starts on the skin: a slightly larger, translucent wash so the upper edge fades. */}
-            {d > 0 && <path d={ring(roughen(b.pts.map((p) => add(p, scale(unit(sub(p, P(CX, f.mouthY))), -1.6))), 1.2, seed + bi)) + (b.hole ? ring(b.hole) : "")} fill={mixHex(color, t.deep, 0.35)} fillRule="evenodd" opacity={0.3} />}
+            {d > 0 && !b.crisp && <path d={ring(roughen(b.pts.map((p) => add(p, scale(unit(sub(p, P(CX, f.mouthY))), -1.6))), 1.2, seed + bi)) + (b.hole ? ring(b.hole) : "")} fill={mixHex(color, t.deep, 0.35)} fillRule="evenodd" opacity={0.3} />}
             <path d={region} fill={T.shade} fillRule="evenodd" />
             <g clipPath={`url(#${id})`}>
               {/* The lit body: the region moved up and left, so a band of shadow stays underneath and on the right. */}

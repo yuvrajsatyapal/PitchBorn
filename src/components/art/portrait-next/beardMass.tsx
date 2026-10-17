@@ -14,10 +14,10 @@ import type { Anchors } from "./anchors";
 import { P, burnY, inside, mouthGap, outline, smin, smooth01 } from "./beardGeometry";
 import type { Detail } from "./face";
 import type { NextSpec } from "./head";
-import { lodNow, noise1, pieces, resample, ring, roughen, stroke, strokeLine } from "./ink";
+import { blob, lodNow, noise1, pieces, resample, ring, roughen, stroke, strokeLine } from "./ink";
 import { mixHex, type BeardTones, type SkinTones } from "./palette";
 
-export type MassKind = "boxed" | "long" | "chin" | "goatee" | "ring";
+export type MassKind = "boxed" | "long" | "chin" | "goatee" | "ring" | "imperial" | "maestro";
 
 /** The lowest the long beard hangs (canvas y): just above where the front of the collar meets the neck. */
 export const BEARD_LIMIT_Y = 300;
@@ -33,6 +33,22 @@ export interface Mass {
   lower: Pt[];
   /** Direction hair grows at a point. */
   flow: (p: Pt) => Pt;
+  /** Overlapping clumps inside the mass, given a little value of their own (lit on the light side, shaded on the far side). */
+  clumps?: { pts: Pt[]; tone: "light" | "shade"; smooth?: boolean }[];
+  /** Thin dark divisions between clumps (hair parting where two clumps meet). */
+  seams?: Pt[][];
+  /** Skip the soft fade round the upper edge (shapes whose inner edge is a skin edge, such as a U round the mouth). */
+  noFeather?: boolean;
+  /** No flyaway strands along the inner edge. */
+  noStrands?: boolean;
+  /** A few short, curved marks only (shapes where texture must not stand in for form). */
+  calm?: boolean;
+}
+
+/** A sum of soft, unevenly placed and sized bumps over t in [0, 1]: the clumps along a hanging edge, never periodic. */
+function bumps(seed: number, n: number, amp: number): (t: number) => number {
+  const cs = Array.from({ length: n }, (_, i) => ({ c: (i + 0.25 + 0.5 * hash01(seed, i)) / n, w: 0.05 + 0.05 * hash01(seed, i + 20), a: amp * (0.45 + 0.55 * hash01(seed, i + 40)) }));
+  return (t) => cs.reduce((sum, b) => sum + b.a * Math.exp(-(((t - b.c) / b.w) ** 2)), 0);
 }
 
 /** Outline points pushed off the face (away from the middle of the head) by a thickness that depends on height. */
@@ -162,7 +178,118 @@ function chinMass(f: NextSpec, head: Head, a: Anchors, seed: number, shape: "chi
   return { pts: [...edge, ...upper.slice(1, -1)], edge, upper, lower: edge, hole: shape === "ring" ? mouthGap(f) : undefined, flow: (p) => unit(P((CX - p[0]) * 0.05, 1)) };
 }
 
-export const massFor = (kind: MassKind, f: NextSpec, head: Head, a: Anchors, seed: number): Mass => (kind === "boxed" ? boxedMass(f, head, a, seed) : kind === "long" ? longMass(f, head, a, seed) : chinMass(f, head, a, seed, kind === "chin" ? "chin" : kind));
+
+/**
+ * Imperial goatee's chin: a small soul patch under the lower lip widens into a tuft that is fullest above the chin and
+ * rounds off a few units below it. It is not joined to the moustache (that is drawn separately), so the skin at the
+ * mouth corners stays clean. Widths come from the mouth and chin anchors and the
+ * length from the chin's own height, never from the height of the face, so a long face does not grow a long goatee.
+ */
+function imperialMass(f: NextSpec, head: Head, a: Anchors, seed: number): Mass {
+  const m = f.mouth;
+  const lipBot = f.mouthY + m.lo;
+  const yTop = lipBot + 2.4;
+  // How far the tuft hangs below the chin and how wide it is come from the chin's own width: a narrow chin gets a
+  // short, slim tuft, a wide chin is capped so it never grows a heavy bulb.
+  const extWide = clamp(2.6 + f.chinW * 0.11 + 0.8 * noise1(seed, 5), 3.5, 5.6);
+  // Total tuft length is capped from the lip, so a long face (far chin) ends the tuft at the chin instead of dropping it towards the neck.
+  const ext = clamp(yTop + m.w * 1.62 - f.chinY, 2.2, extWide);
+  const sp = m.w * 0.27 + 1.5;
+  const full = clamp(f.chinW * 0.3 + 10 + 0.8 * noise1(seed, 2), sp + 5.5, 16.8);
+  // Fullest part sits well above the chin point, so the tuft narrows a little towards its rounded end.
+  const yF = lerp(yTop, f.chinY, 0.58);
+
+  const tipX = 2.6 * noise1(seed, 8);
+  const n = lodNow() === 0 ? 3 : 4;
+  const bump = bumps(seed + 3, 4, 1.5);
+  const k = (s: 1 | -1) => 1 + 0.1 * s * noise1(seed, 12);
+  // Half-width of the tuft at height y: a soul patch that starts narrow and rounded under the lip, then widens
+  // gradually to its fullest.
+  const X = (y: number, s: 1 | -1) => {
+    const soul = sp * (0.55 + 0.45 * smooth01((y - yTop) / 11));
+    return (soul + (full - sp) * smooth01((y - yTop - 2) / (yF - yTop - 2))) * k(s);
+  };
+  const at = (s: 1 | -1, y: number): Pt => P(CX + s * X(y, s), y);
+  const side = (s: 1 | -1, y0: number, y1: number): Pt[] => {
+    const ys = [0, 0.25, 0.5, 0.75, 1].map((t) => lerp(y0, y1, t));
+    return along(ys.map((y) => at(s, y)), 3);
+  };
+  const yE = f.chinY + ext;
+  const lowerChain = along([at(1, yF), P(CX + full * 0.97 * k(1), lerp(yF, f.chinY, 0.5)), P(CX + full * 0.84, f.chinY), P(CX + full * 0.68, f.chinY + ext * 0.58), P(CX + full * 0.36, f.chinY + ext * 0.9), P(CX + tipX, yE), P(CX - full * 0.36, f.chinY + ext * 0.88), P(CX - full * 0.64, f.chinY + ext * 0.5), P(CX - full * 0.84 * k(-1), f.chinY), P(CX - full * 0.97 * k(-1), lerp(yF, f.chinY, 0.5)), at(-1, yF)], n).map((p) => P(p[0], p[1] > f.chinY + 2 ? p[1] + bump((p[0] - CX) / (2 * full) + 0.5) : p[1]));
+  // The soul patch starts as a small rounded arch under the lip, not a flat top with corners.
+  const arch = [P(CX - sp * 0.55, yTop + 1.8), P(CX - sp * 0.3, yTop + 0.5), P(CX, yTop), P(CX + sp * 0.3, yTop + 0.5), P(CX + sp * 0.55, yTop + 1.8)];
+  const outline = [...along(arch, 3), ...side(1, yTop + 1.8, yF).slice(1, -1), ...lowerChain, ...side(-1, yTop + 1.8, yF).slice(1, -1).reverse()];
+  const rough = lodNow() === 0 ? outline : roughen(outline, 0.8, seed + 8, 0.7);
+  // Two restrained clumps in the tuft: lit on the near side, shaded on the far side.
+  const yc = lerp(yTop, f.chinY, 0.55);
+  const clumps: NonNullable<Mass["clumps"]> = lodNow() === 0 ? [] : [
+    // The soul patch is the lightest part: a thinner growth that thickens into the tuft.
+    { smooth: true, tone: "light", pts: [P(CX - sp * 0.5, yTop + 2.6), P(CX + sp * 0.35, yTop + 2.2), P(CX + sp * 0.45, yTop + 8), P(CX + full * 0.1, yc), P(CX - full * 0.2, yc + 1), P(CX - sp * 0.6, yTop + 8)] },
+    { smooth: true, tone: "light", pts: [P(CX - full * 0.55, yc + 1), P(CX - full * 0.3, yc), P(CX - full * 0.2, f.chinY - 1), P(CX - full * 0.3, f.chinY + ext * 0.55), P(CX - full * 0.56, f.chinY - 2)] },
+    { smooth: true, tone: "shade", pts: [P(CX + full * 0.3, yc + 3), P(CX + full * 0.6, yc + 4), P(CX + full * 0.58, f.chinY), P(CX + full * 0.36, f.chinY + ext * 0.45), P(CX + full * 0.24, f.chinY - 3)] },
+  ];
+  return { pts: rough, edge: rough, upper: rough, lower: rough, flow: (p) => unit(P((CX - p[0]) * 0.05, 1)), noFeather: true, noStrands: true, calm: true, clumps };
+}
+
+/**
+ * Maestro: a natural, medium-length full beard. Soft cheek line, full jaw, and a chin that hangs a few units below the
+ * jaw and tapers gently to the middle; the lower edge is made of uneven rounded clumps, not triangles. Where the clumps
+ * overlap they get a little value of their own so the mass reads as hair, not one flat shape.
+ */
+function maestroMass(f: NextSpec, head: Head, a: Anchors, seed: number): Mass {
+  const y0 = burnY(f) + 2;
+  // Always shorter than the long beard would hang on this chin, and held back where the collar is near.
+  const hang = clamp(15.5 + 3.2 * noise1(seed, 31), 9, Math.max(9, Math.min(20, BEARD_LIMIT_Y - f.chinY - 5)));
+  const yJ = lerp(f.jawY, f.chinY, 0.55);
+  const th = (y: number) => lerp(1.8, 6.4, smooth01((y - y0) / (yJ - y0)));
+  const W = f.chinW + 10.5;
+  const jaw = (s: 1 | -1) => pushed(f, outline(head, s, y0, yJ), th, seed, s);
+  const rightJ = jaw(1);
+  const leftJ = jaw(-1);
+  const sideAt = (s: 1 | -1): Pt[] => {
+    const k = s > 0 ? 1.03 : 0.97;
+    return [P(CX + s * (head.half(yJ, s) + 6.2), yJ), P(CX + s * Math.max(W * k, head.half(f.chinY - 4, s) + 7.5), f.chinY - 4)];
+  };
+  const sR = sideAt(1);
+  const sL = sideAt(-1);
+  const bump = bumps(seed + 4, 5, 2.6);
+  const n = lodNow() === 0 ? 9 : 17;
+  const tip = 2.4 * noise1(seed, 9);
+  const contour: Pt[] = Array.from({ length: n }, (_, i) => {
+    const t = i / (n - 1);
+    const th = Math.PI * t;
+    // An elliptical lower edge: round, widest at the sides, drawn a little in towards the middle as it hangs.
+    const x = CX + Math.cos(th) * W * 0.97 * (1 - 0.2 * Math.sin(th)) + tip * Math.sin(th);
+    return P(x, f.chinY - 3 + Math.sin(th) * (hang + 3) + bump(t) * Math.sin(th));
+  });
+  const lowerPts = lodNow() === 0 ? contour : roughen(contour, 0.7, seed + 6, 0.8);
+  const upper = cheekCurve(f, head, a, { y0, low: 0.38, burnW: 9, seed });
+  const edge = [...rightJ, ...sR, ...lowerPts, ...sL.slice().reverse(), ...leftJ.slice().reverse()];
+  // Clumps: slices of the lower contour lifted a few units, alternately lit and shaded.
+  const clumps: NonNullable<Mass["clumps"]> = [];
+  if (lodNow() > 0) {
+    const m2 = lowerPts.length;
+    for (let c = 0; c < 4; c++) {
+      const a0 = Math.round((m2 - 1) * (0.06 + c * 0.23 + 0.05 * hash01(seed, c + 70)));
+      const a1 = Math.min(m2 - 1, a0 + Math.round((m2 - 1) * (0.2 + 0.07 * hash01(seed, c + 80))));
+      const seg = lowerPts.slice(a0, a1 + 1);
+      if (seg.length < 3) continue;
+      const rise = 6.5 + 3 * hash01(seed, c + 90);
+      const x = seg[Math.floor(seg.length / 2)][0];
+      clumps.push({ tone: x < CX - 2 ? "light" : "shade", pts: [...seg, ...seg.map((p, i) => P(p[0] - 1.5, p[1] - rise * Math.sin((Math.PI * (i + 0.5)) / seg.length) - 1)).reverse()] });
+    }
+  }
+  const flow = (p: Pt): Pt => {
+    // Down and a little outward, curling further outward as it hangs.
+    if (p[1] < f.mouthY - 1) return unit(P(Math.sign(p[0] - CX || 1), 0.55));
+    const k = p[1] > f.chinY ? 0.028 : 0.014;
+    return unit(P((p[0] - CX) * k, 1));
+  };
+  return { pts: [...edge, ...upper], edge, hole: mouthGap(f), upper, lower: edge.slice().reverse(), flow, clumps };
+}
+
+export const massFor = (kind: MassKind, f: NextSpec, head: Head, a: Anchors, seed: number): Mass =>
+  kind === "boxed" ? boxedMass(f, head, a, seed) : kind === "long" ? longMass(f, head, a, seed) : kind === "imperial" ? imperialMass(f, head, a, seed) : kind === "maestro" ? maestroMass(f, head, a, seed) : chinMass(f, head, a, seed, kind);
 
 const bounds = (pts: readonly Pt[]) => {
   const xs = pts.map((p) => p[0]);
@@ -170,29 +297,30 @@ const bounds = (pts: readonly Pt[]) => {
   return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
 };
 
-export function BeardMass({ kind, f, head, a, t, B, youth, d, uid }: { kind: MassKind; f: NextSpec; head: Head; a: Anchors; t: SkinTones; B: BeardTones; youth: number; d: Detail; uid: string }) {
-  const seed = ({ boxed: 9, long: 11, chin: 12, goatee: 5, ring: 6 }[kind]) * 31 + Math.round(f.chinY * 3 + f.jawW);
+export function BeardMass({ kind, f, head, a, t, B, youth, d, uid, pSeed = 0 }: { kind: MassKind; f: NextSpec; head: Head; a: Anchors; t: SkinTones; B: BeardTones; youth: number; d: Detail; uid: string; pSeed?: number }) {
+  // The newest styles also vary per player (`pSeed`); the older ones keep their face-only seed so they never change.
+  const seed = ({ boxed: 9, long: 11, chin: 12, goatee: 5, ring: 6, imperial: 16, maestro: 18 }[kind]) * 31 + Math.round(f.chinY * 3 + f.jawW) + (kind === "imperial" || kind === "maestro" ? pSeed : 0);
   const mass = massFor(kind, f, head, a, seed);
   const { x0, x1, y0, y1 } = bounds(mass.pts);
   const region = ring(mass.pts) + (mass.hole ? ring(mass.hole) : "");
   const id = `${uid}bm`;
   const height = y1 - y0;
   const thin = 1 - 0.45 * youth;
-  const chin = kind === "chin" || kind === "goatee" || kind === "ring";
+  const chin = kind === "chin" || kind === "goatee" || kind === "ring" || kind === "imperial";
 
   // Hair strokes: short, tapered, in the direction of growth. Dark ones fill the shadow side, light ones catch the
   // light on the near cheek and the top of the mass.
   const dark: string[] = [];
   const lit: string[] = [];
   if (d > 0) {
-    const n = (d === 2 ? 40 : 14) * (chin ? 0.6 : 1);
+    const n = mass.calm ? (d === 2 ? 9 : 4) : (d === 2 ? 40 : 14) * (chin ? 0.6 : 1);
     for (let k = 0, tries = 0; k < n && tries < n * 8; tries++) {
       const p = P(lerp(x0, x1, hash01(seed, tries * 2)), lerp(y0, y1, hash01(seed, tries * 2 + 1)));
       if (!inside(mass.pts, p) || (mass.hole && inside(mass.hole, p))) continue;
       k++;
       const dir = mass.flow(p);
-      const len = 4 + hash01(seed, tries + 400) * (kind === "long" && p[1] > f.chinY ? 10 : 5);
-      const bendv = scale(P(-dir[1], dir[0]), (hash01(seed, tries + 450) - 0.5) * 2.2);
+      const len = mass.calm ? 3.5 + hash01(seed, tries + 400) * 3 : 4 + hash01(seed, tries + 400) * (kind === "long" && p[1] > f.chinY ? 10 : 5);
+      const bendv = scale(P(-dir[1], dir[0]), (hash01(seed, tries + 450) - 0.5) * (mass.calm ? 4.6 : 2.2));
       const line = [sub(p, scale(dir, len * 0.4)), add(add(p, scale(dir, len * 0.15)), bendv), add(p, scale(dir, len * 0.6))];
       const light = p[0] < CX - 4 && p[1] < lerp(y0, y1, 0.75) && hash01(seed, tries + 500) < 0.55;
       (light ? lit : dark).push(stroke(line, { w: d === 2 ? 0.9 : 1.3, start: 0.35, end: 0.1, steps: 3, seed: seed + tries }));
@@ -207,7 +335,7 @@ export function BeardMass({ kind, f, head, a, t, B, youth, d, uid }: { kind: Mas
   if (d > 0 && !chin && cheeks.length > 3) {
     cheekZone.push(ring([...cheeks, ...cheeks.map((p) => P(p[0] + (p[0] > CX ? -2 : 2), p[1] + 8 + 2.5 * noise1(seed + 20, p[0] * 0.1))).reverse()]));
   }
-  if (d > 0 && mass.upper.length > 3) {
+  if (d > 0 && !mass.noStrands && mass.upper.length > 3) {
     const step = d === 2 ? 4.2 : 7.5;
     const line = resample(mass.upper, step);
     line.forEach((p, i) => {
@@ -231,7 +359,7 @@ export function BeardMass({ kind, f, head, a, t, B, youth, d, uid }: { kind: Mas
   const wash = mixHex(B.base, t.deep, 0.4);
   const centre = P(CX, lerp(y0, y1, 0.62));
   const feather =
-    d === 0
+    d === 0 || mass.noFeather
       ? []
       : (d === 2 ? [[2.4, 0.3], [5.4, 0.17], [9, 0.08]] : [[3, 0.25], [7, 0.1]]).map(([dist, o]) => ({
           o,
@@ -295,6 +423,7 @@ export function BeardMass({ kind, f, head, a, t, B, youth, d, uid }: { kind: Mas
         {d > 0 && <path d={ring(roughen(along([P(x0 - 6, lerp(y0, y1, 0.08)), P(lerp(x0, CX, 0.55), ym + 2), P(CX - 8, lerp(y0, y1, 0.35)), P(lerp(x0, CX, 0.45), lerp(y0, y1, 0.62)), P(x0 - 4, lerp(y0, y1, 0.72)), P(x0 - 6, lerp(y0, y1, 0.08))], 5), 1.6, seed + 15, 0.5))} fill={mixHex(B.base, B.light, 0.32)} opacity={0.42} />}
         {dark.length > 0 && <path d={dark.join("")} fill={B.deep} opacity={0.5} />}
         {lit.length > 0 && <path d={lit.join("")} fill={B.light} opacity={0.55} />}
+        {d > 0 && mass.clumps?.map((c, i) => <path key={i} d={c.smooth ? blob(c.pts) : ring(c.pts)} fill={c.tone === "light" ? B.light : B.shade} opacity={c.tone === "light" ? 0.2 : 0.3} />)}
         {mass.hole && d > 0 && <path d={strokeLine(mass.hole.slice(1, 8), { w: 1, start: 0.2, end: 0.2, seed })} fill={B.deep} opacity={0.55} />}
       </g>
       {strands.length > 0 && <path d={strands.join("")} fill={B.base} opacity={0.75} />}
