@@ -69,16 +69,6 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
   const crownPart = sh[ip];
   const center = P(CX, f.top + f.skullW * 0.95);
 
-  /** The dome point `t` of the way from the part to the side end, pulled `inset` towards the head centre. */
-  const domePt = (s: 1 | -1, t: number, inset: number): Pt => {
-    const idx = Math.round(s > 0 ? lerp(ip, nsh, t) : lerp(ip, 0, t));
-    const p = sh[Math.max(0, Math.min(nsh, idx))];
-    const dx = center[0] - p[0];
-    const dy = center[1] - p[1];
-    const m = Math.hypot(dx, dy) || 1;
-    return P(p[0] + (dx / m) * inset, p[1] + (dy / m) * inset);
-  };
-
   interface Lock {
     path: Pt[];
     w: number;
@@ -102,10 +92,8 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
       const wv = (t: number) => amp * Math.sin(t * Math.PI * 2.6 - 0.2 + (ph - 3.14) * 0.1 + k * 0.3) * smooth(t / 0.12);
       const ypt = (t: number) => lerp(yW, end, t);
       const xAt = (t: number, y: number) => CX + s * (fallHalf(head, s, yW, y) + out + wv(t) + t * 4 + 5 * v * Math.sin(Math.PI * Math.min(1, t * 1.25)));
-      const edge = v === 1 ? 0.5 : 0;
       const ctl: Pt[] = [
-        P(partX + s * (2.5 + 5 * v), hl.y - 9 - 5 * (1 - v)),
-        domePt(s, 0.45, w * 0.45 * edge + 3 + (1 - v) * 3),
+        P(CX + s * (head.half(yW - 16, s) + lerp(w * 0.2, out - w * 0.3, v)), yW - 16),
         P(CX + s * (head.half(yW, s) + lerp(w * 0.2, out - w * 0.3, v)), yW),
         P(xAt(0.2, ypt(0.2)), ypt(0.2)),
         P(xAt(0.4, ypt(0.4)), ypt(0.4)),
@@ -184,6 +172,18 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
       {d > 0 && <path d={ring(outline(l, l.s * l.w * 0.25 * -1, 0.45))} fill={T.shade} opacity={0.22} />}
     </g>
   );
+  /** One broad soft light across the dome on each side of the part, following the skull's curve (no outline). */
+  const domeLight = (s: 1 | -1) => {
+    const idx = (t: number) => Math.round(s > 0 ? lerp(ip, nsh, t) : lerp(ip, 0, t));
+    const path = [0.2, 0.4, 0.62, 0.8].map((t) => {
+      const q = sh[Math.max(0, Math.min(nsh, idx(t)))];
+      const dx = center[0] - q[0];
+      const dy = center[1] - q[1];
+      const m = Math.hypot(dx, dy) || 1;
+      return P(q[0] + (dx / m) * 11, q[1] + (dy / m) * 11);
+    });
+    return <path key={s} d={ring(lockOutline(path, { w: s < 0 ? 11 : 7, root: 0.2, peak: 0.45, tip: 0.2, wobble: 0.1, seed: seed + 90 + s }))} fill={T.light} opacity={s < 0 ? 0.32 : 0.2} />;
+  };
   const sideArt = (ls: Lock[]) => ls.slice().reverse().map((l, idx) => drawLock(l, idx, true));
 
   const lights: string[] = [];
@@ -202,7 +202,9 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     ),
     mid: (
       <g>
-        <path d={base} fill={mixHex(T.base, T.shade, 0.3)} />
+        <path d={base} fill={mixHex(T.base, T.shade, 0.12)} />
+        {d > 0 && domeLight(-1)}
+        {d > 0 && domeLight(1)}
         {sideArt(L)}
         {sideArt(R)}
         {fringeOrder.map((l, idx) => drawLock(l, idx, false))}

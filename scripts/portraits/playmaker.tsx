@@ -19,6 +19,15 @@ const FACES: [string, Partial<Appearance>][] = [
   ["Round face", { face: 1, headW: 70, headH: 0 }],
   ["Angular / diamond", { face: 4, headW: 40, headH: 50 }],
 ];
+const ALL: [string, Partial<Appearance>][] = [
+  ...FACES,
+  ["Oval", { face: 0, headW: 50, headH: 50 }],
+  ["Broad strong jaw", { face: 6, headW: 100, headH: 40 }],
+  ["Long chin", { face: 7, headW: 30, headH: 100 }],
+  ["Heart", { face: 8, headW: 50, headH: 40 }],
+  ["Narrowest", { face: 0, headW: 0, headH: 100 }],
+  ["Widest", { face: 2, headW: 100, headH: 0 }],
+];
 const out = process.argv[2] ?? "portrait-playmaker";
 mkdirSync(out, { recursive: true });
 const PLAYMAKER = 45;
@@ -30,14 +39,16 @@ const draw = (a: Appearance, size = 260, silhouette = false, view?: { x: number;
   return renderToStaticMarkup(createElement("svg", { width: size, height: Math.round((size * v.h) / v.w), viewBox: `${v.x} ${v.y} ${v.w} ${v.h}` }, createElement(PortraitNext, { m, uid: `p${n++}`, d, silhouette })));
 };
 let n = 0;
-const css = `body{margin:0;padding:14px;background:#ddd5c4;font:13px sans-serif;color:#222}h3{margin:2px 0 10px}.row{display:flex;gap:12px;margin-bottom:14px;align-items:flex-end}.c{display:flex;flex-direction:column;gap:4px}`;
+const css = `body{margin:0;padding:14px;background:#ddd5c4;font:13px sans-serif;color:#222}h3{margin:2px 0 10px}.row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px;align-items:flex-end}.c{display:flex;flex-direction:column;gap:4px}`;
 const cell = (l: string, svg: string) => `<div class=c><b>${l}</b>${svg}</div>`;
 const base: Appearance = { ...REP, facial: 0, hair: PLAYMAKER, hairColor: 2, accessory: 0, scar: 0, mark: 0, freckles: 0, hairTip: 0, band: 0 };
 const hair = (h: number): Appearance => ({ ...base, hair: h });
 const glasses = Math.max(1, named(ACCESSORIES as readonly string[], /glass/i));
 const beard = (re: RegExp) => Math.max(0, named(FACIAL_HAIR as unknown as readonly string[], re));
 const pick = (names: string[]) => FACES.filter((f) => names.some((x) => f[0].startsWith(x)));
+const crown = { x: 40, y: 10, w: 220, h: 200 };
 const rows = [
+  `<div class=row>${ALL.map(([l, f]) => cell(l, draw({ ...base, ...f }, 330, false, crown))).join("")}</div>`,
   `<div class=row>${cell("Default face", draw(base, 420))}${cell("Black silhouette", draw(base, 420, true))}<div class=c><b>48px</b>${draw(base, 48)}<b>96px</b>${draw(base, 96)}</div>${cell("Light brown", draw({ ...base, hairColor: 4 }, 260))}${cell("Blond", draw({ ...base, hairColor: 6 }, 260))}</div>`,
   `<div class=row>${pick(["Narrow", "Wide", "Round", "Angular"]).map(([l, f]) => cell(l, draw({ ...base, ...f }, 290))).join("")}</div>`,
   `<div class=row>${pick(["Narrow", "Wide", "Round", "Angular"]).map(([l, f]) => cell(`${l} · silhouette`, draw({ ...base, ...f }, 290, true))).join("")}</div>`,
