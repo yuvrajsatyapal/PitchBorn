@@ -114,7 +114,7 @@ function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
             <Crest clubId={f.home} size={56} />
             <span className="max-w-full truncate font-display text-base sm:text-xl">{teamLabel(f.home)}</span>
           </div>
-          <span className="scoreboard rounded-xl border-2 border-sun bg-black px-4 py-1 text-4xl text-sun sm:text-5xl">{scoreText(f)}</span>
+          <span className="scoreboard whitespace-nowrap rounded-xl border-2 border-sun bg-black px-3 py-1 text-3xl text-sun sm:px-4 sm:text-5xl">{scoreText(f)}</span>
           <div className="flex min-w-0 flex-col items-center gap-1.5 text-center">
             <Crest clubId={f.away} size={56} />
             <span className="max-w-full truncate font-display text-base sm:text-xl">{teamLabel(f.away)}</span>

@@ -80,8 +80,8 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
             <Crest clubId={home.id} size={44} />
             <span className="truncate font-display text-lg sm:text-2xl">{teamLabel(home.id, true)}</span>
           </div>
-          <div className={`text-center ${flash ? "anim-goal" : ""}`}>
-            <div className="scoreboard rounded-xl border-2 border-sun bg-black px-4 py-1 text-4xl text-sun sm:text-5xl" aria-live="polite" data-testid="score">
+          <div className={`shrink-0 text-center ${flash ? "anim-goal" : ""}`}>
+            <div className="scoreboard whitespace-nowrap rounded-xl border-2 border-sun bg-black px-3 py-1 text-3xl text-sun sm:px-4 sm:text-5xl" aria-live="polite" data-testid="score">
               {h}-{a}
             </div>
             <div className="scoreboard mt-1 text-xs text-sun/80">{eng.finished ? "FT" : `${minute}'`}</div>

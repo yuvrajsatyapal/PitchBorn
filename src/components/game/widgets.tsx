@@ -198,7 +198,7 @@ function SimResultCard({ g, fixtureId }: { g: GameState; fixtureId: string }) {
           <Crest clubId={f.home} size={54} />
           <span className="text-sm font-bold">{teamLabel(f.home, true)}</span>
         </div>
-        <span className="scoreboard rounded-xl border-2 border-sun bg-black px-4 py-1 text-3xl text-sun">{scoreText(f)}</span>
+        <span className="scoreboard whitespace-nowrap rounded-xl border-2 border-sun bg-black px-3 py-1 text-3xl text-sun">{scoreText(f)}</span>
         <div className="flex flex-col items-center gap-1 text-center">
           <Crest clubId={f.away} size={54} />
           <span className="text-sm font-bold">{teamLabel(f.away, true)}</span>
