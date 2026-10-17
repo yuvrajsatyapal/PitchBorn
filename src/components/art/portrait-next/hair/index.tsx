@@ -2,6 +2,7 @@
  * Hair designs for the improved renderer. Each design picks a technique for its hair type and gives it its own
  * shape; the metadata follows the long-term library format (only the proof-of-concept styles are defined so far).
  */
+import { buzzHair, type BuzzDesign } from "./buzz";
 import { coilyHair, type CoilyDesign } from "./coily";
 import type { HairArt, HairInput } from "./core";
 import { flowHair, type FlowDesign } from "./flow";
@@ -206,7 +207,12 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "divine-ponytail", name: "Divine Ponytail", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.8, modern: 0.8 }, supportsRecedingHairline: true }), draw: (i) => ponytailHair(i) },
   { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => dutchHair(i) },
   { ...meta({ id: "playmaker-waves", name: "Playmaker Waves", category: "iconic", hairType: "wavy", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 0.8, modern: 0.8 }, supportsHeadband: true, ears: "partial" }), draw: (i) => wavesHair(i, PLAYMAKER_WAVES) },
+  { ...meta({ id: "golden-buzz", name: "Golden Buzz", category: "iconic", hairType: "straight", length: "short", rarity: "legendary", minimumAge: 17, maximumAge: 38, eraWeight: { retro: 1, modern: 0.5 }, ears: "visible" }), draw: (i) => buzzHair(i, GOLDEN_BUZZ) },
 ];
+
+// Clipper-cut hair: a thin mass hugging the skull, a few units thick on the crown and almost nothing at the sides,
+// with a natural hairline. No locks, fringe or tufts; the hair colour is whatever the player has.
+const GOLDEN_BUZZ: BuzzDesign = { kind: "straight", top: [2.6, 3.6], side: 1, density: 0.74 };
 
 // Medium football cut with soft natural waves: fuller crown, loose off-centre parting, a fringe of several locks of
 // different length, side locks that curve out and in on their way to the ears, and no hair behind the neck.
@@ -247,6 +253,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   43: "divine-ponytail",
   44: "dutch-dreads",
   45: "playmaker-waves",
+  46: "golden-buzz",
 };
 
 /**
