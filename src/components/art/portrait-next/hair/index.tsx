@@ -8,6 +8,7 @@ import { flowHair, type FlowDesign } from "./flow";
 import { dutchHair } from "./dutch";
 import { fauxHawkHair, headbandCurlsHair, ponytailHair } from "./iconic";
 import { locsHair, type LocsDesign } from "./locs";
+import { wavesHair, type WavesDesign } from "./waves";
 import { crescentHair, cropHair, shavedHair, type CropDesign } from "./short";
 
 export type { HairArt, HairInput } from "./core";
@@ -204,7 +205,21 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
   { ...meta({ id: "lion-afro", name: "Lion Afro", category: "iconic", hairType: "coily", length: "long", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 1, modern: 0.7 }, ears: "covered" }), draw: (i) => coilyHair(i, LION_AFRO) },
   { ...meta({ id: "divine-ponytail", name: "Divine Ponytail", category: "iconic", hairType: "straight", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 38, eraWeight: { retro: 0.8, modern: 0.8 }, supportsRecedingHairline: true }), draw: (i) => ponytailHair(i) },
   { ...meta({ id: "dutch-dreads", name: "Dutch Dreads", category: "iconic", hairType: "locs", length: "long", rarity: "legendary", minimumAge: 18, maximumAge: 36, eraWeight: { retro: 1, modern: 0.5 }, supportsSecondaryColor: true, supportsHeadband: true, ears: "covered" }), draw: (i) => dutchHair(i) },
+  { ...meta({ id: "playmaker-waves", name: "Playmaker Waves", category: "iconic", hairType: "wavy", length: "medium", rarity: "legendary", minimumAge: 17, maximumAge: 36, eraWeight: { retro: 0.8, modern: 0.8 }, supportsHeadband: true, ears: "partial" }), draw: (i) => wavesHair(i, PLAYMAKER_WAVES) },
 ];
+
+// Medium football cut with soft natural waves: fuller crown, loose off-centre parting, a fringe of several locks of
+// different length, side locks that curve out and in on their way to the ears, and a short rear flow.
+const PLAYMAKER_WAVES: WavesDesign = {
+  part: 8,
+  top: 19,
+  side: 3.5,
+  reach: [0.4, 0.75],
+  wave: 8.5,
+  locks: 3,
+  fringe: 5,
+  back: { from: (f) => f.ear.top, end: (f) => f.jawY + 2, spread: 3, masses: 1 },
+};
 
 const BY_ID = new Map(HAIR_LIBRARY.map((h) => [h.id, h]));
 
@@ -232,6 +247,7 @@ export const POC_IDS: Partial<Record<number, string>> = {
   42: "lion-afro",
   43: "divine-ponytail",
   44: "dutch-dreads",
+  45: "playmaker-waves",
 };
 
 /**

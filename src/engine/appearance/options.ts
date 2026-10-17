@@ -121,6 +121,7 @@ export const HAIR_STYLES: readonly HairStyle[] = [
   hs("Lion Afro", "coily", { top: 46, side: 40, edge: "scallop", line: 66, end: 116, iconic: true }),
   hs("Divine Ponytail", "straight", { top: 11, side: 2, end: 104, strands: "ponytail", back: 1, line: 64, sheen: true, iconic: true }),
   hs("Dutch Dreads", "coily", { top: 16, side: 9, strands: "locs", back: 4, end: 126, line: 66, edge: "scallop", iconic: true }),
+  hs("Playmaker Waves", "wavy", { top: 15, side: 5, end: 108, back: 1, fringe: "sweep", part: 1, line: 66, iconic: true }),
 ];
 
 // ------------------------------------------------------------------ facial features
