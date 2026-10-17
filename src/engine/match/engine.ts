@@ -424,6 +424,8 @@ export class MatchEngine {
   private decisionsMade = 0;
   /** The scenarios and wordings already dealt to the user this match, so the same situation does not come round twice. */
   private usedScenes = new Set<string>();
+  /** The flank the possession phase in hand is being played down (set as the phase is built, read when the user is considered for a moment). */
+  private phaseFlank: 0 | 1 | 2 = 1;
   /** How many decisions the user's player is expected to get this match, and how much faster moments come to him than to an average player. */
   private budget?: { cap: number; mul: number };
   private extraTime = false;
@@ -1489,6 +1491,7 @@ export class MatchEngine {
     const sD = this.strength(def);
     const press = clamp((sD.press - REF.press - (sA.resist - REF.resist)) * 0.004, -0.05, 0.08);
     const flank = this.chooseFlank(att);
+    this.phaseFlank = flank;
     att.flank[flank]++;
     const st = att.input.style;
     const n = clamp(r.int(8, 13) + Math.round(((st?.tempo ?? 0.5) - 0.5) * 3), 6, 15);
@@ -1786,7 +1789,7 @@ export class MatchEngine {
     let mine = 0;
     for (const p of t.players) {
       if (!p.onPitch) continue;
-      const w = attacking ? this.flowWeight(p, 0.5, 1) : DEFEND_WEIGHT[p.input.slot] * (this.rate(p, PICK_TACKLE) / 60);
+      const w = attacking ? this.flowWeight(p, 0.5, this.phaseFlank) : DEFEND_WEIGHT[p.input.slot] * (this.rate(p, PICK_TACKLE) / 60);
       total += w;
       if (p === u) mine = w;
     }

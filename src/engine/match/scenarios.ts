@@ -13,8 +13,19 @@ export interface Scenario {
   prompt: string;
   options: MomentOpt[];
   cond?: SceneCond;
-  /** A potentially decisive moment (a chance created, a one-on-one, a last-ditch block) rather than routine play. */
+  /** How much hangs on it: routine involvement, a threatening situation, or (when the menu is all about a chance) a clear-cut opportunity. */
+  tier: Tier;
+  /** Not routine: a potentially decisive moment (a chance created, a one-on-one, a last-ditch block). */
   impact: boolean;
+}
+
+export type Tier = "routine" | "threat" | "clearcut";
+
+/** Where a chance that comes to the user falls: a shot from range or a header is a threat; a close-range finish or a one-on-one is clear-cut. */
+export function chanceTier(kind: "shoot" | "create" | "keep" | "claim" | "defend", type?: string): Tier {
+  if (kind === "shoot") return type === "open" || type === "oneonone" ? "clearcut" : "threat";
+  if (kind === "keep") return type === "oneonone" ? "clearcut" : "threat";
+  return "threat";
 }
 
 export interface SceneContext {
@@ -99,8 +110,10 @@ const scene = (lib: Record<string, MomentOpt>, prompt: string, ids: string, cond
   });
   // Decisive when the whole menu is about creating a chance (attacking) or the wrong call would concede one (defending), not when it is a safe option among riskier ones.
   const mean = (f: (o: MomentOpt) => number) => options.reduce((t, o) => t + f(o), 0) / options.length;
-  const impact = options[0].defending ? mean((o) => o.pMulFail ?? 1) >= 1.4 : mean((o) => (o.credit === "none" ? 1 : o.pMulOk)) >= 1.45;
-  return { prompt, options, cond, impact };
+  const danger = options[0].defending ? mean((o) => o.pMulFail ?? 1) : mean((o) => (o.credit === "none" ? 1 : o.pMulOk));
+  const threshold = options[0].defending ? 1.4 : 1.45;
+  const tier: Tier = danger >= 1.65 ? "clearcut" : danger >= threshold ? "threat" : "routine";
+  return { prompt, options, cond, tier, impact: tier !== "routine" };
 };
 const a = (prompt: string, ids: string, cond?: SceneCond) => scene(A, prompt, ids, cond);
 const f = (prompt: string, ids: string, cond?: SceneCond) => scene(D, prompt, ids, cond);

@@ -15,6 +15,7 @@
     "data:build": "tsx scripts/data/build.ts",
     "sim:careers": "tsx scripts/sim/careers.mts",
     "sim:match": "tsx scripts/sim/calibrate-match.ts",
+    "sim:moments": "tsx scripts/sim/moments.ts",
     "sim:traits": "tsx scripts/sim/traits.ts",
     "sim:wages": "tsx scripts/sim/wages.ts",
     "preview": "npx --yes serve out -l 4173",
