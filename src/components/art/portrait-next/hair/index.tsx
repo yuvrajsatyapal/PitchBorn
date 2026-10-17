@@ -209,16 +209,15 @@ export const HAIR_LIBRARY: readonly (HairStyleMeta & { draw: (i: HairInput) => H
 ];
 
 // Medium football cut with soft natural waves: fuller crown, loose off-centre parting, a fringe of several locks of
-// different length, side locks that curve out and in on their way to the ears, and a short rear flow.
+// different length, side locks that curve out and in on their way to the ears, and no hair behind the neck.
 const PLAYMAKER_WAVES: WavesDesign = {
   part: 8,
   top: 19,
   side: 3.5,
-  reach: [0.4, 0.75],
-  wave: 8.5,
+  reach: [0.6, 1],
+  wave: 7,
   locks: 3,
-  fringe: 5,
-  back: { from: (f) => f.ear.top, end: (f) => f.jawY + 2, spread: 3, masses: 1 },
+  fringe: 6,
 };
 
 const BY_ID = new Map(HAIR_LIBRARY.map((h) => [h.id, h]));

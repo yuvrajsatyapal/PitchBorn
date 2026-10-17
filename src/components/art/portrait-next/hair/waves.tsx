@@ -6,7 +6,6 @@
  * the outer silhouette is inked. Both sides differ (volume, lock lengths, wave phase) from the player seed.
  */
 import { CX, hash01, lerp, type Pt } from "../../portrait/geometry";
-import { backHair, type BackDesign } from "./flow";
 import { noise1, ring } from "../ink";
 import { INK, hairTones, mixHex } from "../palette";
 import {
@@ -39,7 +38,6 @@ export interface WavesDesign {
   /** Side locks per side and fringe locks (total). */
   locks: number;
   fringe: number;
-  back: BackDesign;
 }
 
 interface Edge {
@@ -103,10 +101,10 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     const locks: Lock[] = [];
     for (let k = 0; k < n; k++) {
       const v = n === 1 ? 1 : k / (n - 1);
-      const w = r(17, 22) * (0.85 + 0.2 * v);
+      const w = r(15, 20) * (0.85 + 0.2 * v);
       const out = lerp(-1, o.side + (s > 0 ? volR : volL), v);
       const end = endBase + r(-5, 6) + (1 - v) * r(-2, 5);
-      const wv = (t: number) => amp * Math.sin(t * Math.PI * 2.3 - 0.35 + (ph - 3.14) * 0.1 + k * 0.3) * smooth(t / 0.3);
+      const wv = (t: number) => amp * Math.sin(t * Math.PI * 2.6 - 0.2 + (ph - 3.14) * 0.1 + k * 0.3) * smooth(t / 0.12);
       const ypt = (t: number) => lerp(yW, end, t);
       const xAt = (t: number, y: number) => CX + s * (fallHalf(head, s, yW, y) + out + wv(t) + t * 4 + 5 * v * Math.sin(Math.PI * Math.min(1, t * 1.25)));
       const edge = v === 1 ? 0.5 : 0;
@@ -114,9 +112,10 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
         P(partX + s * (2.5 + 5 * v), hl.y - 9 - 5 * (1 - v)),
         domePt(s, 0.45, w * 0.45 * edge + 3 + (1 - v) * 3),
         P(CX + s * (head.half(yW, s) + lerp(w * 0.2, out - w * 0.3, v)), yW),
-        P(xAt(0.3, ypt(0.3)), ypt(0.3)),
+        P(xAt(0.2, ypt(0.2)), ypt(0.2)),
+        P(xAt(0.4, ypt(0.4)), ypt(0.4)),
         P(xAt(0.6, ypt(0.6)), ypt(0.6)),
-        P(xAt(0.82, ypt(0.82)), ypt(0.82)),
+        P(xAt(0.8, ypt(0.8)), ypt(0.8)),
         P(xAt(1, end) + s * lerp(0.5, 2.5, 1 - v), end),
       ];
       locks.push({ path: bend(ctl, seed + k + (s > 0 ? 20 : 0), 1.4), w, k: k + (s > 0 ? 20 : 0), s, v });
@@ -124,7 +123,7 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     return locks;
   };
   const outline = (l: Lock, dx = 0, wk = 1) =>
-    lockOutline(dx ? offset(l.path, dx, 0) : l.path, { w: l.w * wk, root: 0.85, peak: 0.35, tip: l.k >= 60 ? 0.5 : 0.2, round: l.k >= 60, wobble: 0.06, swell: 0.1, seed: seed + l.k });
+    lockOutline(dx ? offset(l.path, dx, 0) : l.path, { w: l.w * wk, root: 0.85, peak: 0.35, tip: l.k >= 60 ? 0.5 : 0.1, round: l.k >= 60, wobble: 0.06, swell: 0.1, seed: seed + l.k });
   const L = sideLocks(-1);
   const R = sideLocks(1);
 
@@ -136,12 +135,12 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     const sd: 1 | -1 = k < nf - 2 ? fs : ps;
     const j = sd === fs ? k : k - (nf - 2);
     const m = sd === fs ? nf - 2 : 2;
-    const span = f.templeW * (sd === fs ? 0.62 : 0.42);
+    const span = f.templeW * (sd === fs ? 0.7 : 0.5);
     const frac = (j + 0.5 + r(-0.15, 0.25)) / m;
     const xe = partX + sd * span * frac + r(-2, 2);
-    const len = forehead * (sd === fs ? lerp(0.78, 0.3, frac) * r(0.85, 1.15) : r(0.3, 0.5)) * (k % 2 ? 0.85 : 1.1);
+    const len = forehead * (sd === fs ? lerp(0.8, 0.38, frac) * r(0.9, 1.15) : r(0.35, 0.55)) * (k % 2 ? 0.85 : 1.1);
     const ye = hl.y + 4 + len;
-    const root = P(partX + sd * (4 + frac * 14), hl.y - 14 - r(0, 6));
+    const root = P(partX + sd * (4 + frac * 14), hl.y - 18 - r(0, 6));
     const mid = P(lerp(partX, xe, 0.5) + sd * r(3, 7), lerp(root[1], ye, 0.45));
     const end = P(xe + sd * r(0, 5), ye);
     fringe.push({ path: bend([root, mid, end], seed + 60 + k, 1.5), w: r(21, 28), k: 60 + k, s: sd, v: Math.max(0, j) });
@@ -203,7 +202,6 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
   const fringeOrder = fringe.slice().sort((a, b) => b.path[2][1] - a.path[2][1]);
 
   return {
-    back: backHair(i, o.back, o.side - 1),
     onSkin: (
       <g fill={skin.shade}>
         {d > 0 && fringe.map((l) => <path key={l.k} d={ring(offset(outline(l), -l.s * 1.2, 2.6))} opacity={0.4} />)}
