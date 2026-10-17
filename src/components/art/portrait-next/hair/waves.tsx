@@ -179,13 +179,13 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     ...inner(-1, endY(L)).reverse(),
   ]);
 
-  const tone = (l: Lock) => mixHex(T.base, hash01(seed, l.k + 3) < 0.5 ? T.shade : T.light, hash01(seed, l.k + 4) * 0.16);
+  const tone = (l: Lock) => mixHex(T.base, hash01(seed, l.k + 3) < 0.5 ? T.shade : T.light, hash01(seed, l.k + 4) * 0.06);
   const lit = (s: 1 | -1) => s < 0;
   const drawLock = (l: Lock, idx: number, withContact: boolean) => (
     <g key={l.k}>
       {d === 2 && withContact && idx > 0 && <path d={ring(offset(outline(l), l.s * 1.3, 1.6))} fill={T.deep} opacity={0.4} />}
       <path d={ring(outline(l))} fill={tone(l)} />
-      {d > 0 && <path d={ring(outline(l, l.s * l.w * (lit(l.s) ? 0.3 : 0.2) * -1, 0.55))} fill={T.shade} opacity={lit(l.s) ? 0.3 : 0.45} />}
+      {d > 0 && <path d={ring(outline(l, l.s * l.w * 0.25 * -1, 0.45))} fill={T.shade} opacity={0.22} />}
     </g>
   );
   const sideArt = (ls: Lock[]) => ls.slice().reverse().map((l, idx) => drawLock(l, idx, true));
@@ -210,7 +210,7 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     ),
     mid: (
       <g>
-        <path d={base} fill={mixHex(T.base, T.shade, 0.55)} />
+        <path d={base} fill={mixHex(T.base, T.shade, 0.3)} />
         {sideArt(L)}
         {sideArt(R)}
         {fringeOrder.map((l, idx) => drawLock(l, idx, false))}
