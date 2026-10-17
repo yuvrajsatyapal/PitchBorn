@@ -6,7 +6,7 @@
  * the outer silhouette is inked. Both sides differ (volume, lock lengths, wave phase) from the player seed.
  */
 import { CX, hash01, lerp, type Pt } from "../../portrait/geometry";
-import { noise1, ring } from "../ink";
+import { ring } from "../ink";
 import { INK, hairTones, mixHex } from "../palette";
 import {
   P,
@@ -38,11 +38,6 @@ export interface WavesDesign {
   /** Side locks per side and fringe locks (total). */
   locks: number;
   fringe: number;
-}
-
-interface Edge {
-  pts: Pt[];
-  tip: Pt;
 }
 
 export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
@@ -123,7 +118,7 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
     return locks;
   };
   const outline = (l: Lock, dx = 0, wk = 1) =>
-    lockOutline(dx ? offset(l.path, dx, 0) : l.path, { w: l.w * wk, root: 0.85, peak: 0.35, tip: l.k >= 60 ? 0.5 : 0.1, round: l.k >= 60, wobble: 0.06, swell: 0.1, seed: seed + l.k });
+    lockOutline(dx ? offset(l.path, dx, 0) : l.path, { w: l.w * wk, root: 0.85, peak: 0.35, tip: l.k >= 60 ? 0.28 : 0.1, wobble: 0.06, swell: 0.1, seed: seed + l.k });
   const L = sideLocks(-1);
   const R = sideLocks(1);
 
@@ -147,21 +142,23 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
   }
 
   // Outer silhouette: the dome, then the outer edge of the back-most lock of each side.
-  const outerOf = (l: Lock): Edge => {
-    const o2 = outline(l);
-    const n2 = o2.length / 2;
-    const a = o2.slice(0, n2);
-    const b = o2.slice(n2).reverse();
-    const mean = (p: Pt[]) => p.reduce((q, c) => q + Math.abs(c[0] - CX), 0) / p.length;
-    const pts = (mean(a) > mean(b) ? a : b).filter((p) => p[1] >= sh[s2i(l.s)][1] - 1);
-    return { pts, tip: pts[pts.length - 1] };
-  };
+  // The silhouette is the outermost edge of every lock on a side (a lock may swell past the back one), so the ink
+  // always sits on the hair's true edge.
   const s2i = (s: 1 | -1) => (s > 0 ? nsh : 0);
-  const backL = L[L.length - 1];
-  const backR = R[R.length - 1];
-  const eL = outerOf(backL);
-  const eR = outerOf(backR);
-  const outer = [...eL.pts.slice().reverse(), ...sh.slice(1, nsh), ...eR.pts];
+  const envelope = (ls: Lock[], s: 1 | -1): Pt[] => {
+    const y0 = sh[s2i(s)][1];
+    const rows = new Map<number, Pt>();
+    for (const l of ls) {
+      for (const p of outline(l)) {
+        if (p[1] < y0 - 1) continue;
+        const key = Math.round(p[1] / 2);
+        const cur = rows.get(key);
+        if (!cur || (p[0] - CX) * s > (cur[0] - CX) * s) rows.set(key, p);
+      }
+    }
+    return [...rows.entries()].sort((x, y) => x[0] - y[0]).map(([, p]) => p);
+  };
+  const outer = [...envelope(L, -1).reverse(), ...sh.slice(1, nsh), ...envelope(R, 1)];
 
   const endY = (ls: Lock[]) => Math.min(...ls.map((l) => l.path[l.path.length - 1][1])) - 8;
   const inner = (s: 1 | -1, y1: number): Pt[] => {
@@ -180,7 +177,6 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
   ]);
 
   const tone = (l: Lock) => mixHex(T.base, hash01(seed, l.k + 3) < 0.5 ? T.shade : T.light, hash01(seed, l.k + 4) * 0.06);
-  const lit = (s: 1 | -1) => s < 0;
   const drawLock = (l: Lock, idx: number, withContact: boolean) => (
     <g key={l.k}>
       {d === 2 && withContact && idx > 0 && <path d={ring(offset(outline(l), l.s * 1.3, 1.6))} fill={T.deep} opacity={0.4} />}
@@ -192,10 +188,6 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
 
   const lights: string[] = [];
   if (d > 0) {
-    for (const l of [...L, ...R]) {
-      if (!lit(l.s) || l.v === 0) continue;
-      lights.push(hairStroke(l.path, { from: 0.16 + noise1(seed + l.k, 3) * 0.04, to: 0.34, w: 2.6, seed: seed + l.k }));
-    }
     for (const l of fringe.slice(0, 2)) lights.push(hairStroke(l.path, { from: 0.35, to: 0.6, w: 2.2, seed: seed + l.k }));
   }
   const fringeOrder = fringe.slice().sort((a, b) => b.path[2][1] - a.path[2][1]);
@@ -216,7 +208,7 @@ export function wavesHair(i: HairInput, o: WavesDesign): HairArt {
         {fringeOrder.map((l, idx) => drawLock(l, idx, false))}
         {lights.length > 0 && <path d={lights.join("")} fill={T.light} opacity={0.4} />}
         <path d={silhouetteInk(outer, d, seed + 5, [[0, 1]], 2)} fill={INK} />
-        {d > 0 && <path d={hairStroke([P(partX, hl.y + 0.5), P(lerp(partX, crownPart[0], 0.5), lerp(hl.y, crownPart[1], 0.5)), P(crownPart[0], crownPart[1] + 2)], { from: 0, to: 1, w: 1.1, seed, start: 0.6, end: 0.2 })} fill={T.deep} opacity={0.8} />}
+        {d > 0 && <path d={hairStroke([P(partX, hl.y + 0.5), P(lerp(partX, crownPart[0], 0.2), lerp(hl.y, crownPart[1], 0.2)), P(lerp(partX, crownPart[0], 0.4), lerp(hl.y, crownPart[1], 0.4))], { from: 0, to: 1, w: 1.1, seed, start: 0.6, end: 0.05 })} fill={T.deep} opacity={0.8} />}
       </g>
     ),
     ears: "partial",
