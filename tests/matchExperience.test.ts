@@ -282,7 +282,6 @@ describe("key moments", () => {
       const lo = avgDecisions(slot, 62);
       const mid = avgDecisions(slot, 76);
       const hi = avgDecisions(slot, 91);
-      console.log(slot, lo.toFixed(1), mid.toFixed(1), hi.toFixed(1));
       expect(hi).toBeGreaterThan(mid);
       expect(mid).toBeGreaterThan(lo);
       expect(hi - lo).toBeGreaterThan(2);
