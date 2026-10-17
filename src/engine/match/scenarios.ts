@@ -13,6 +13,8 @@ export interface Scenario {
   prompt: string;
   options: MomentOpt[];
   cond?: SceneCond;
+  /** A potentially decisive moment (a chance created, a one-on-one, a last-ditch block) rather than routine play. */
+  impact: boolean;
 }
 
 export interface SceneContext {
@@ -89,15 +91,17 @@ const D: Record<string, MomentOpt> = {
   cutDM: d(B.hold, "cutDM", "Screen the holding midfielder", "Cut the passing lane in.", "You cut the lane and they have to go sideways.", "The pass goes through the lane you left.", { base: 0.56, pMulOk: 0.7, pMulFail: 1.3, mix: [["positioning", 0.3], ["interceptions", 0.3], ["workRate", 0.2], ["decisions", 0.2]] }),
 };
 
-const scene = (lib: Record<string, MomentOpt>, prompt: string, ids: string, cond?: SceneCond): Scenario => ({
-  prompt,
-  options: ids.split(" ").map((id) => {
+const scene = (lib: Record<string, MomentOpt>, prompt: string, ids: string, cond?: SceneCond): Scenario => {
+  const options = ids.split(" ").map((id) => {
     const o = lib[id];
     if (!o) throw new Error(`Unknown scenario option "${id}" in "${prompt}"`);
     return o;
-  }),
-  cond,
-});
+  });
+  // Decisive when the whole menu is about creating a chance (attacking) or the wrong call would concede one (defending), not when it is a safe option among riskier ones.
+  const mean = (f: (o: MomentOpt) => number) => options.reduce((t, o) => t + f(o), 0) / options.length;
+  const impact = options[0].defending ? mean((o) => o.pMulFail ?? 1) >= 1.4 : mean((o) => (o.credit === "none" ? 1 : o.pMulOk)) >= 1.45;
+  return { prompt, options, cond, impact };
+};
 const a = (prompt: string, ids: string, cond?: SceneCond) => scene(A, prompt, ids, cond);
 const f = (prompt: string, ids: string, cond?: SceneCond) => scene(D, prompt, ids, cond);
 
@@ -388,12 +392,13 @@ export const DEFEND_SCENES: Record<Position, Scenario[]> = {
 
 /**
  * One scenario from a pool: never one already used in this match (until the pool runs out), and the ones that suit the state of
- * the match (chasing a goal, protecting a lead, the opening minutes) count for more. `roll` is a draw in [0, 1).
+ * the match (chasing a goal, protecting a lead, the opening minutes) count for more. Decisive scenarios are favoured by `impactBias`
+ * (above 1 for a player in the thick of it, below 1 for one on the fringe). `roll` is a draw in [0, 1).
  */
-export function pickScenario(pool: Scenario[], x: SceneContext, used: Set<string>, roll: number): Scenario {
+export function pickScenario(pool: Scenario[], x: SceneContext, used: Set<string>, roll: number, impactBias = 1): Scenario {
   let fresh = pool.filter((s) => !used.has(s.prompt) && (!s.cond || sceneHolds(s.cond, x)));
   if (!fresh.length) fresh = pool.filter((s) => !s.cond || sceneHolds(s.cond, x));
-  const weights = fresh.map((s) => (s.cond ? 3 : 1));
+  const weights = fresh.map((s) => (s.cond ? 3 : 1) * (s.impact ? impactBias : 1));
   let r = roll * weights.reduce((t, w) => t + w, 0);
   for (let i = 0; i < fresh.length; i++) {
     r -= weights[i];

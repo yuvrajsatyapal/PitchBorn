@@ -258,6 +258,14 @@ describe("key moments", () => {
     // Situations tied to the state of the match only come up when it holds.
     const level = pickScenario(pool, x, new Set(), 0.99);
     expect(level.cond).toBeUndefined();
+    // A player in the thick of it is dealt the decisive situations more often than one on the fringe.
+    const share = (bias: number) => {
+      let hits = 0;
+      for (let i = 0; i < 400; i++) if (pickScenario(pool, x, new Set(), (i + 0.5) / 400, bias).impact) hits++;
+      return hits / 400;
+    };
+    expect(pool.some((sc) => sc.impact) && pool.some((sc) => !sc.impact)).toBe(true);
+    expect(share(2.5)).toBeGreaterThan(share(0.4));
   });
 
   it("involves a better player more: decisions per match rise with his level, inside the cap", () => {

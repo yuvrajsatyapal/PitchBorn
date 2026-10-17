@@ -178,7 +178,7 @@ export const BASE = {
 };
 
 /** How much of a say each position has in the build-up (scales how often a moment comes), and in defending. */
-export const ATTACK_K: Record<Position, number> = { GK: 0.45, CB: 0.7, RB: 0.9, LB: 0.9, DM: 1, CM: 1.05, AM: 1.1, RW: 1.15, LW: 1.15, ST: 0.85 };
+export const ATTACK_K: Record<Position, number> = { GK: 0.45, CB: 0.7, RB: 0.9, LB: 0.9, DM: 1, CM: 1.05, AM: 1.3, RW: 1.4, LW: 1.4, ST: 1.35 };
 export const DEFEND_K: Record<Position, number> = { GK: 0, CB: 1.2, RB: 1, LB: 1, DM: 1, CM: 0.6, AM: 0.12, RW: 0.15, LW: 0.15, ST: 0.1 };
 
 // ───────────────────────────── trait reads: a trait makes a choice the natural thing to try; it never makes it work by itself

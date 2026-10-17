@@ -1816,6 +1816,8 @@ export class MatchEngine {
         break;
       }
     }
+    // The ball finds attackers more than it finds a keeper, but a defender is busy: keep the striker feeling as involved as the centre-back.
+    target *= { GK: 0.85, CB: 0.82, RB: 0.9, LB: 0.9, DM: 0.92, CM: 0.94, AM: 1.1, RW: 1.15, LW: 1.15, ST: 1.2 }[u.input.slot];
     target = clamp(target + this.crng.normal(0, 1.1), 2, MAX_DECISIONS - 1);
     this.budget = { cap: Math.min(MAX_DECISIONS, Math.round(target + 1)), mul: clamp(target / 7, 0.55, 1.7) };
     return this.budget;
@@ -1873,7 +1875,7 @@ export class MatchEngine {
 
   /** The next situation for the user: drawn on the wording stream, so being asked never changes how the match plays. */
   private dealScene(pool: Scenario[], mine: LiveTeam, theirs: LiveTeam): Scenario {
-    const scene = pickScenario(pool, { minute: this.minute, diff: mine.goals - theirs.goals }, this.usedScenes, (this.crng as Rng).next());
+    const scene = pickScenario(pool, { minute: this.minute, diff: mine.goals - theirs.goals }, this.usedScenes, (this.crng as Rng).next(), Math.pow(this.momentBudget()?.mul ?? 1, 1.6));
     this.usedScenes.add(scene.prompt);
     return scene;
   }
