@@ -1,15 +1,17 @@
 import { ceremonyPending } from "../awards/ceremony";
+import { worldCeremonyPending } from "../awards/world";
 import { BALANCE } from "../balance";
 import type { GameState } from "../types";
 import { userPlayer } from "../world/helpers";
 
-export type InterruptReason = "retired" | "new-season" | "match" | "awards" | "decision" | "offer" | "injury";
+export type InterruptReason = "retired" | "new-season" | "match" | "awards" | "world-awards" | "decision" | "offer" | "injury";
 
 export const INTERRUPT_LABEL: Record<InterruptReason, string> = {
   retired: "Career over",
   "new-season": "New season",
   match: "Match day",
   awards: "Awards night",
+  "world-awards": "Golden Pitch gala",
   decision: "Decision needed",
   offer: "New offer",
   injury: "Injury",
@@ -20,6 +22,7 @@ export interface AttentionSnapshot {
   decisions: Set<string>;
   offers: Set<string>;
   ceremony: boolean;
+  worldCeremony: boolean;
   injured: boolean;
 }
 
@@ -28,6 +31,7 @@ export function snapshotAttention(state: GameState): AttentionSnapshot {
     decisions: new Set(state.user.decisions.map((d) => d.id)),
     offers: new Set(state.user.offers.map((o) => o.id)),
     ceremony: ceremonyPending(state),
+    worldCeremony: worldCeremonyPending(state),
     injured: !!userPlayer(state).injury,
   };
 }
@@ -42,6 +46,8 @@ export function interruptReason(
   opts: { newSeason: boolean; stopOnMatch: boolean },
 ): InterruptReason | null {
   if (state.user.retired) return "retired";
+  // The gala is held on the first day of the new season, so it outranks the new-season stop it arrives with.
+  if (!before.worldCeremony && worldCeremonyPending(state)) return "world-awards";
   if (opts.newSeason) return "new-season";
   if (opts.stopOnMatch && state.pending.length > 0) return "match";
   if (!before.ceremony && ceremonyPending(state) && state.turn > BALANCE.calendar.endOfSeasonTurn) return "awards";

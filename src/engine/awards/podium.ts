@@ -7,7 +7,7 @@
 import type { AwardResult } from "../types";
 
 /** Awards that opt into the podium reveal. Statistical and team awards never do. */
-export const PODIUM_AWARDS: readonly string[] = ["pots", "ypots", "goldenglove", "breakthrough"];
+export const PODIUM_AWARDS: readonly string[] = ["pots", "ypots", "goldenglove", "breakthrough", "golden-pitch", "rising-star", "world-glove"];
 
 export const hasPodiumReveal = (r: Pick<AwardResult, "id" | "tier">): boolean => r.tier !== "statistical" && PODIUM_AWARDS.includes(r.id);
 

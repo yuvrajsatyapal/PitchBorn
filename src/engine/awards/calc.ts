@@ -11,7 +11,6 @@ import { positionGroup } from "../players/attributes";
 import { ageOf } from "../players/generate";
 import { keeperMetrics } from "../players/keeper";
 import type { AwardNominee, AwardResult, GameState, Player, Position, PositionGroup, StatLine, TeamOfSeasonSlot } from "../types";
-import { squadOf } from "../world/helpers";
 
 /** All the thresholds in one place, so none are scattered through the code. */
 export const AWARD_RULES = {
@@ -28,15 +27,15 @@ export const AWARD_RULES = {
   nominees: 4,
 } as const;
 
-const empty = (): StatLine => ({ apps: 0, starts: 0, minutes: 0, goals: 0, assists: 0, cleanSheets: 0, conceded: 0, yellow: 0, red: 0, ratingSum: 0, motm: 0, shots: 0, shotsOnTarget: 0, keyPasses: 0, tackles: 0, saves: 0 });
-
 interface Row {
   p: Player;
   s: StatLine;
   group: PositionGroup;
   avg: number;
   min90: number;
-  /** League position of the player's club (1 = champions). */
+  /** The club he played this league for (the last one, if he moved within it). */
+  clubId: string | null;
+  /** League position of that club (1 = champions). */
   clubPos: number;
   age: number;
   contribution: number;
@@ -98,23 +97,35 @@ function bigAverage(p: Player, state: GameState, leagueCompId_: string): number 
   return apps >= 2 ? sum / apps : null;
 }
 
+/** Every real player with at least one appearance in this league competition, in a stable order. */
+export function leagueStatPlayers(state: GameState, compId: string): Player[] {
+  const out: Player[] = [];
+  for (const id of Object.keys(state.players).sort()) {
+    const p = state.players[id];
+    if (p.virtual || p.retired) continue;
+    if ((p.season[compId]?.apps ?? 0) >= 1) out.push(p);
+  }
+  return out;
+}
+
 /** Everything the awards need from one league's finished season, gathered once. */
 export function leagueSeason(state: GameState, leagueId: string, leagueName: string): LeagueSeason | null {
   const compId = leagueCompId(leagueId, state.season);
   const comp = state.competitions[compId];
   if (!comp?.table) return null;
-  const clubIds = state.leagueClubs[leagueId] ?? [];
+  const inLeague = new Set(state.leagueClubs[leagueId] ?? []);
   const games = Math.max(...comp.table.map((r) => r.played), 0);
   const posOf = new Map(comp.table.map((r, i) => [r.team, i + 1]));
   const rows: Row[] = [];
-  for (const clubId of clubIds) {
-    for (const p of squadOf(state, clubId)) {
-      const s = p.season[compId] ?? empty();
-      if (s.apps < 1) continue;
-      const min90 = Math.max(1, s.minutes / 90);
-      const group = positionGroup(p.position);
-      rows.push({ p, s, group, avg: s.ratingSum / s.apps, min90, clubPos: posOf.get(clubId) ?? comp.table.length, age: ageOf(p, state.season), contribution: contributionOf(group, s, min90), bigAvg: bigAverage(p, state, compId) });
-    }
+  // Everyone who played this league's season, wherever he is now: a mid-season move must not erase his goals here
+  // (leaving the league) or add them to another league's race (joining it).
+  for (const p of leagueStatPlayers(state, compId)) {
+    const s = p.season[compId];
+    const played = p.seasonClubs?.[compId];
+    const clubId = played && inLeague.has(played) ? played : p.clubId && inLeague.has(p.clubId) ? p.clubId : played ?? p.clubId;
+    const min90 = Math.max(1, s.minutes / 90);
+    const group = positionGroup(p.position);
+    rows.push({ p, s, group, avg: s.ratingSum / s.apps, min90, clubId, clubPos: (clubId && posOf.get(clubId)) || comp.table.length, age: ageOf(p, state.season), contribution: contributionOf(group, s, min90), bigAvg: bigAverage(p, state, compId) });
   }
   const minApps = Math.max(AWARD_RULES.minAppsFloor, Math.round(games * AWARD_RULES.minGameShare));
   const qualified = rows.filter((r) => r.s.apps >= minApps);
@@ -151,7 +162,7 @@ function nominee(r: Row): AwardNominee {
       : g === "DEF"
         ? `${a} apps · ${r.s.cleanSheets} clean sheets · ${r.s.goals}G ${r.s.assists}A · ${avg} avg rating`
         : `${a} apps · ${r.s.goals}G ${r.s.assists}A · ${avg} avg rating`;
-  return { playerId: r.p.id, clubId: r.p.clubId, position: r.p.position, age: r.age, apps: a, goals: r.s.goals, assists: r.s.assists, cleanSheets: r.s.cleanSheets, saves: r.s.saves, avgRating: r2(r.avg), reason };
+  return { playerId: r.p.id, clubId: r.clubId, position: r.p.position, age: r.age, apps: a, goals: r.s.goals, assists: r.s.assists, cleanSheets: r.s.cleanSheets, saves: r.s.saves, avgRating: r2(r.avg), reason };
 }
 
 const byName = (a: Row, b: Row) => name(a.p).localeCompare(name(b.p)) || (a.p.id < b.p.id ? -1 : 1);
@@ -211,7 +222,7 @@ export function teamOfTheSeason(ls: LeagueSeason, scoreOf: (r: Row) => number): 
   }
   for (const slot of TEAM_SLOTS) {
     const r = fill.get(slot.slot);
-    if (r) out.push({ slot: slot.slot, label: slot.label, playerId: r.p.id, clubId: r.p.clubId, position: r.p.position, reason: nominee(r).reason });
+    if (r) out.push({ slot: slot.slot, label: slot.label, playerId: r.p.id, clubId: r.clubId, position: r.p.position, reason: nominee(r).reason });
   }
   return out;
 }

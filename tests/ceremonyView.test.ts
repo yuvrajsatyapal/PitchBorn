@@ -106,3 +106,43 @@ describe("ceremony presentation", () => {
     expect(t).toContain("Young Player of the Season");
   });
 });
+
+describe("the Golden Pitch gala presentation", () => {
+  let rolled: GameState;
+  beforeAll(() => {
+    const s = structuredClone(ready);
+    for (let i = 0; i < 6; i++) advanceTurn(s);
+    rolled = s;
+  }, 120000);
+  const gala = (scene: ReturnType<typeof buildScenes>[number]) => renderToStaticMarkup(sceneView(rolled, rolled.worldCeremony!, scene) as never);
+
+  it("has its own identity: its own opening, its own awards in its own order, ending on the user's gala", () => {
+    const scenes = buildScenes(rolled.worldCeremony!);
+    expect(scenes[0].kind).toBe("opening");
+    expect(text(gala(scenes[0]))).toContain("Golden Pitch Gala");
+    expect(scenes.some((x) => x.kind === "team" || x.kind === "story")).toBe(false);
+    const order = scenes.filter((x) => x.kind === "award" && x.phase === "winner").map((x) => (x.kind === "award" ? x.id : ""));
+    expect(order[order.length - 1]).toBe("golden-pitch");
+    expect(scenes[scenes.length - 1].kind).toBe("yours");
+  });
+
+  it("every scene renders cleanly, nominees before the winner, with the podium reveal for the Golden Pitch", () => {
+    const c = rolled.worldCeremony!;
+    for (const scene of buildScenes(c)) {
+      const t = text(gala(scene));
+      expect(t.length).toBeGreaterThan(20);
+      expect(t).not.toMatch(/undefined|NaN|null/);
+    }
+    const r = c.results.find((x) => x.id === "golden-pitch")!;
+    const picture = text(renderToStaticMarkup(createElement(PodiumStage, { g: rolled, r, revealed: 3, uid: rolled.user.playerId })));
+    expect(picture).toContain("AND THE WINNER IS");
+    expect(picture).toContain(rolled.players[r.winnerId].lastName);
+    const nominees = text(gala(buildScenes(c).find((x) => x.kind === "award" && x.id === "golden-pitch" && x.phase === "nominees")!));
+    expect(nominees).toContain("The nominees");
+    expect(nominees).not.toContain("And the winner is");
+  });
+
+  it("the finished gala shows the full results", () => {
+    expect(text(renderToStaticMarkup(createElement(CeremonyResults, { g: rolled, c: rolled.worldCeremony! })))).toContain("Golden Pitch");
+  });
+});

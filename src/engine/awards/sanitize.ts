@@ -32,9 +32,18 @@ function nominees(v: unknown, state: GameState): AwardNominee[] {
  * ceremony can never be completed again.
  */
 export function sanitizeCeremony(state: GameState): void {
-  const raw = state.ceremony as Partial<SeasonCeremony> | undefined;
+  sanitizeOne(state, "ceremony");
+  sanitizeOne(state, "worldCeremony");
+  const noms: AwardNomination[] = (Array.isArray(state.user.awardNoms) ? state.user.awardNoms : [])
+    .filter((n) => n && typeof n === "object" && typeof n.id === "string")
+    .map((n) => ({ season: num(n.season, state.season), id: n.id, name: str(n.name, n.id), scope: str(n.scope), place: Math.max(2, Math.min(4, Math.round(num(n.place, 2)))) }));
+  state.user.awardNoms = noms.slice(-60);
+}
+
+function sanitizeOne(state: GameState, key: "ceremony" | "worldCeremony"): void {
+  const raw = state[key] as Partial<SeasonCeremony> | undefined;
   if (!raw || typeof raw !== "object") {
-    delete state.ceremony;
+    delete state[key];
     return;
   }
   const results: AwardResult[] = (Array.isArray(raw.results) ? raw.results : [])
@@ -47,12 +56,15 @@ export function sanitizeCeremony(state: GameState): void {
     .map((t) => ({ slot: str(t.slot), label: str(t.label), playerId: t.playerId as string, clubId: typeof t.clubId === "string" && state.clubs[t.clubId] ? t.clubId : null, position: POSITIONS.includes(t.position) ? t.position : state.players[t.playerId].position, reason: str(t.reason) }));
   const others = (Array.isArray(raw.others) ? raw.others : [])
     .filter((o) => o && typeof o === "object" && typeof o.playerId === "string")
-    .map((o) => ({ id: str(o.id), name: str(o.name), scope: str(o.scope), leagueId: str(o.leagueId), playerId: o.playerId as string }));
+    .map((o) => ({ id: str(o.id), name: str(o.name), scope: str(o.scope), leagueId: str(o.leagueId), playerId: o.playerId as string, clubId: typeof o.clubId === "string" && state.clubs[o.clubId] ? o.clubId : null, ...(typeof o.value === "string" ? { value: o.value } : {}), ...(typeof o.age === "number" && Number.isFinite(o.age) ? { age: o.age } : {}) }));
   const applied = raw.applied === true;
   let status: CeremonyStatus = STATUSES.includes(raw.status as CeremonyStatus) ? (raw.status as CeremonyStatus) : "completed";
   if (applied) status = "completed";
   if (!results.length && !team.length) status = "completed";
+  const world = key === "worldCeremony";
   const c: SeasonCeremony = {
+    ...(world ? { kind: "world" as const } : {}),
+    ...(world && typeof raw.userRank === "number" && Number.isFinite(raw.userRank) && raw.userRank >= 1 ? { userRank: Math.round(raw.userRank) } : {}),
     season: num(raw.season, state.season),
     leagueId: str(raw.leagueId),
     leagueName: str(raw.leagueName),
@@ -68,10 +80,5 @@ export function sanitizeCeremony(state: GameState): void {
     turnIndex: num(raw.turnIndex, state.turnIndex),
   };
   c.step = Math.max(0, Math.min(Math.round(num(raw.step)), buildScenes(c).length - 1));
-  state.ceremony = c;
-
-  const noms: AwardNomination[] = (Array.isArray(state.user.awardNoms) ? state.user.awardNoms : [])
-    .filter((n) => n && typeof n === "object" && typeof n.id === "string")
-    .map((n) => ({ season: num(n.season, state.season), id: n.id, name: str(n.name, n.id), scope: str(n.scope), place: Math.max(2, Math.min(4, Math.round(num(n.place, 2)))) }));
-  state.user.awardNoms = noms.slice(-60);
+  state[key] = c;
 }

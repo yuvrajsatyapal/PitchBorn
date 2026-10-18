@@ -72,6 +72,29 @@ test.describe("core career flow", () => {
     await expect(page.getByText("2026/27").first()).toBeVisible();
   });
 
+  test("the Golden Pitch gala is held on day one of the next season, stops play, and is attended once", async ({ page }) => {
+    test.setTimeout(300_000);
+    await createCareer(page);
+    await fastForward(page, 50);
+    const info = await gameInfo(page);
+    expect(info).toMatchObject({ season: 2027, turn: 1 });
+    // The first day of the new season belongs to the gala: Continue is replaced until it is attended or skipped.
+    await expect(page.getByTestId("gala-button")).toBeVisible();
+    await expect(page.getByTestId("continue")).toHaveCount(0);
+    await page.getByTestId("gala-button").click();
+    await expect(page).toHaveURL(/\/play\/gala\/?$/);
+    await page.getByTestId("watch-gala").click();
+    await expect(page.getByTestId("gala-opening")).toBeVisible();
+    for (let i = 0; i < 16 && (await page.getByTestId("gala").isVisible().catch(() => false)); i++) await page.getByTestId("ceremony-next").click();
+    await expect(page).toHaveURL(/\/play\/?$/);
+    await expect(page.getByTestId("gala-button")).toHaveCount(0);
+    await expect(page.getByTestId("continue")).toBeVisible();
+    // It stays in the results afterwards, and is never offered again.
+    await page.goto("/play/gala/");
+    await expect(page.getByText("results", { exact: false }).first()).toBeVisible();
+    await expect(page.getByTestId("watch-gala")).toHaveCount(0);
+  });
+
   test("retirement shows the legacy screen", async ({ page }) => {
     await createCareer(page);
     await page.evaluate(async () => {

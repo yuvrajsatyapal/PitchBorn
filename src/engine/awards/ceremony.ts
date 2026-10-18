@@ -11,10 +11,11 @@ import { staticLeague } from "../data/world";
 import { rememberSeasonAward } from "../memory/detect";
 import { noteAwardDuel, primaryRival } from "../career/rivalry/engine";
 import { clamp } from "../rng";
-import type { AwardRecord, AwardResult, GameState, Player, SeasonCeremony } from "../types";
+import type { AwardRecord, AwardResult, GameState, Player, SeasonArchive, SeasonCeremony } from "../types";
 import { addNews, addTimeline, fullName, userPlayer } from "../world/helpers";
 import { calculateLeagueAwards, leagueSeason, TEAM_FORMATION } from "./calc";
 import { updateAwardRecords } from "./records";
+import { WORLD_ORDER, completeWorld } from "./world";
 import { leaguesInPlay } from "../data/world";
 
 /** Reputation each award is worth before it is scaled down for a player who is already well known. */
@@ -65,9 +66,10 @@ const toRecord = (state: GameState, r: AwardResult): AwardRecord => ({ season: s
 
 /**
  * Called once, when the season's league tables are final. Calculates the awards for every league, keeps the full
- * results (nominees, Team of the Season) for the user's league, and returns the winners for the season archive.
+ * results (nominees, statistics, Team of the Season) for every league in the season archive, drives the ceremony from
+ * the user's league, and returns the winners. An archived league result is never replaced once written.
  */
-export function prepareSeasonAwards(state: GameState): AwardRecord[] {
+export function prepareSeasonAwards(state: GameState, archive?: SeasonArchive): AwardRecord[] {
   settleCeremony(state); // never leave an earlier ceremony unapplied
   const records: AwardRecord[] = [];
   const own = primaryLeague(state);
@@ -78,11 +80,14 @@ export function prepareSeasonAwards(state: GameState): AwardRecord[] {
     if (!ls) continue;
     const out = calculateLeagueAwards(state, ls);
     for (const r of out.results) records.push(toRecord(state, r));
+    if (archive && !(archive.leagueAwards ?? []).some((x) => x.compId === ls.compId)) {
+      (archive.leagueAwards ??= []).push({ season: state.season, leagueId: l.id, leagueName: l.name, compId: ls.compId, results: structuredClone(out.results), team: structuredClone(out.team), formation: TEAM_FORMATION });
+    }
     if (l.id === own?.id) {
       for (const t of out.team) records.push({ season: state.season, id: "tots", name: "Team of the Season", scope: l.name, playerId: t.playerId, clubId: t.clubId });
       ceremony = { season: state.season, leagueId: l.id, leagueName: l.name, status: "ready", step: 0, results: out.results, team: out.team, formation: TEAM_FORMATION, others: [], applied: false, turnIndex: state.turnIndex };
     } else {
-      for (const r of out.results) others.push({ id: r.id, name: r.name, scope: r.scope, leagueId: r.leagueId, playerId: r.winnerId });
+      for (const r of out.results) others.push({ id: r.id, name: r.name, scope: r.scope, leagueId: r.leagueId, playerId: r.winnerId, clubId: r.nominees[0].clubId, value: valueOf(r), age: r.nominees[0].age });
     }
   }
   if (ceremony) {
@@ -104,34 +109,40 @@ export type Scene =
 /** The ordered scenes of the ceremony. Judged awards show their nominees first, then reveal the winner. */
 export function buildScenes(c: SeasonCeremony): Scene[] {
   const scenes: Scene[] = [{ kind: "opening" }];
-  for (const id of CEREMONY_ORDER) {
+  for (const id of c.kind === "world" ? WORLD_ORDER : CEREMONY_ORDER) {
     const r = c.results.find((x) => x.id === id);
     if (!r) continue;
     if (r.tier === "statistical") scenes.push({ kind: "award", id, phase: "winner" });
     else scenes.push({ kind: "award", id, phase: "nominees" }, { kind: "award", id, phase: "winner" });
   }
   if (c.team.length) scenes.push({ kind: "team" });
-  scenes.push({ kind: "yours" }, { kind: "story" });
+  scenes.push({ kind: "yours" });
+  // The season in review belongs to the league night; the gala ends on what it meant for the user.
+  if (c.kind !== "world") scenes.push({ kind: "story" });
   return scenes;
 }
 
 // --------------------------------------------------------------------------- lifecycle
 
-export function startCeremony(state: GameState): boolean {
-  const c = state.ceremony;
+export type CeremonyKind = "league" | "world";
+const slotOf = (state: GameState, kind: CeremonyKind) => (kind === "world" ? state.worldCeremony : state.ceremony);
+
+export function startCeremony(state: GameState, kind: CeremonyKind = "league"): boolean {
+  const c = slotOf(state, kind);
   if (!c || c.status === "completed") return false;
   if (c.status === "ready") c.status = "in-progress";
   return true;
 }
 
-export function setCeremonyStep(state: GameState, step: number): void {
-  const c = state.ceremony;
+export function setCeremonyStep(state: GameState, step: number, kind: CeremonyKind = "league"): void {
+  const c = slotOf(state, kind);
   if (!c || c.status !== "in-progress") return;
   c.step = clamp(Math.round(step), 0, Math.max(0, buildScenes(c).length - 1));
 }
 
 /** Finishes the ceremony, watched or skipped. The consequences are identical, and applied once. */
-export function completeCeremony(state: GameState, how: "watched" | "skipped" | "auto" = "skipped"): boolean {
+export function completeCeremony(state: GameState, how: "watched" | "skipped" | "auto" = "skipped", kind: CeremonyKind = "league"): boolean {
+  if (kind === "world") return completeWorld(state, how);
   const c = state.ceremony;
   if (!c || c.status === "completed") return false;
   applyCeremony(state);
@@ -232,6 +243,15 @@ function applyCeremony(state: GameState): void {
   for (const o of c.others) {
     const p = state.players[o.playerId];
     if (p) giveReputation(p, o.id, o.leagueId, gained);
+    // The user can win in a league other than today's: moving mid-season leaves his old league's honours to claim.
+    if (o.playerId === uid) {
+      const prior = before.filter((a) => a.id === o.id);
+      state.user.awards.push({ season: state.season, id: o.id, name: o.name, scope: o.scope, playerId: uid, playerName: fullName(me), clubId: o.clubId ?? null, value: o.value, age: o.age });
+      addTimeline(state, { kind: "award", title: `${o.name} — ${o.scope}`, detail: o.value });
+      rememberSeasonAward(state, { id: o.id, name: o.name, scope: o.scope, clubId: o.clubId ?? null }, { first: prior.length === 0, streak: 1, total: prior.length + 1 });
+      addNews(state, { kind: "award", title: prior.length === 0 ? `You win your first ${o.name}` : `You win ${o.name}`, body: [o.scope, o.value].filter(Boolean).join(" · "), important: prior.length === 0 });
+      continue;
+    }
     if (p && (o.id === "pots" || o.id === "topscorer") && staticLeague(o.leagueId)?.tier === 1) addNews(state, { kind: "award", title: `${fullName(p)} wins the ${o.scope} ${o.name}` });
   }
   // News for the user's own league's headline winners (when it is not the user).

@@ -293,6 +293,7 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     const stat = lineToStat(line);
     if (line.id === res.motm) stat.motm = 1;
     const s = (p.season[key] ??= emptyStat());
+    if (!nat && p.clubId) (p.seasonClubs ??= {})[key] = p.clubId;
     addStat(s, stat);
     addStat(p.career, stat);
     p.month.apps++;

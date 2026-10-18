@@ -127,10 +127,11 @@ describe("shapes follow each face", () => {
         const half = g.pts.length / 2;
         const outer = g.pts.slice(0, half);
         const inner = g.pts.slice(half).reverse();
+        // Band width is jawW-scaled (5.6-7.4) and a third fuller at the chin by design, so the widest point can pass 9.
         for (let i = 0; i < outer.length; i += 3) {
           const w = Math.hypot(outer[i][0] - inner[Math.min(inner.length - 1, i)][0], outer[i][1] - inner[Math.min(inner.length - 1, i)][1]);
           expect(w).toBeGreaterThan(1.5);
-          expect(w).toBeLessThan(9);
+          expect(w).toBeLessThan(11);
         }
         expect(outer.some((p) => Math.abs(p[0] - CX) < 4 && p[1] > f.chinY - 3)).toBe(true);
         for (const p of outer) if (p[1] < f.chinY - 1) expect(Math.abs(p[0] - CX)).toBeLessThan(head.half(p[1], p[0] > CX ? 1 : -1) + 4);

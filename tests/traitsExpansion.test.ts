@@ -103,8 +103,8 @@ describe("the expanded catalogue", () => {
 
   it("positionTag summarises where a trait belongs", () => {
     expect(positionTag(TRAIT_BY_ID.get("shot_stopper")!)).toBe("GK");
-    expect(positionTag(TRAIT_BY_ID.get("inside_threat")!)).toBe("W");
-    expect(positionTag(TRAIT_BY_ID.get("poacher")!)).toBe("AM · W · ST");
+    expect(positionTag(TRAIT_BY_ID.get("inside_threat")!)).toBe("LW/RW");
+    expect(positionTag(TRAIT_BY_ID.get("poacher")!)).toBe("AM · LW/RW · ST");
     expect(positionTag(TRAIT_BY_ID.get("leader")!)).toBe("");
   });
 });

@@ -8,7 +8,8 @@ import { flushSync } from "react-dom";
 import { create } from "zustand";
 import { BALANCE } from "@/engine/balance";
 import { dayNumber } from "@/engine/calendar";
-import { completeCeremony, setCeremonyStep, startCeremony } from "@/engine/awards/ceremony";
+import { ceremonyPending, completeCeremony, setCeremonyStep, startCeremony, type CeremonyKind } from "@/engine/awards/ceremony";
+import { worldCeremonyPending } from "@/engine/awards/world";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { acceptSponsorOffer, declineSponsorOffer } from "@/engine/career/sponsors";
 import { resolveDecision } from "@/engine/career/events";
@@ -72,9 +73,9 @@ interface GameStore {
   negotiate: (offerId: string, action: NegotiationAction) => string;
   decide: (decisionId: string, optionId: string) => void;
   /** Awards night: presentation only. Watching and skipping end in the same place. */
-  ceremonyStart: () => void;
-  ceremonyStep: (step: number) => void;
-  ceremonyFinish: (how: "watched" | "skipped") => Promise<void>;
+  ceremonyStart: (kind?: CeremonyKind) => void;
+  ceremonyStep: (step: number, kind?: CeremonyKind) => void;
+  ceremonyFinish: (how: "watched" | "skipped", kind?: CeremonyKind) => Promise<void>;
   transferRequest: (on: boolean) => void;
   requestRenewal: () => void;
   setWantsLoan: (on: boolean) => void;
@@ -188,6 +189,12 @@ export const useGame = create<GameStore>((set, get) => ({
   advance: async (weeks) => {
     const g = get().game;
     if (!g || get().busy) return;
+    // A fast-forward is never run past an awards night waiting for the player: it would count as skipping it unseen.
+    // (A single step is how the test handle and the Awards night buttons move on, and keeps its skip semantics.)
+    if (weeks !== 1 && (worldCeremonyPending(g) || (ceremonyPending(g) && g.turn > BALANCE.calendar.endOfSeasonTurn))) {
+      get().notify("The awards night is waiting. Watch it or skip it first.");
+      return;
+    }
     const untilEvent = weeks === undefined;
     const maxWeeks = untilEvent ? MAX_RUN_WEEKS : Math.max(1, weeks);
     // Open decisions fall back to their default as weeks pass: with some open, step one week rather than expire them unseen.
@@ -335,25 +342,25 @@ export const useGame = create<GameStore>((set, get) => ({
     get().notify(msg);
   },
 
-  ceremonyStart: () => {
+  ceremonyStart: (kind = "league") => {
     const g = get().game;
-    if (!g || !startCeremony(g)) return;
+    if (!g || !startCeremony(g, kind)) return;
     get().bump();
     void get().save();
   },
 
-  ceremonyStep: (step) => {
+  ceremonyStep: (step, kind = "league") => {
     const g = get().game;
     if (!g) return;
-    setCeremonyStep(g, step);
+    setCeremonyStep(g, step, kind);
     get().bump();
     void get().save();
   },
 
-  ceremonyFinish: async (how) => {
+  ceremonyFinish: async (how, kind = "league") => {
     const g = get().game;
     if (!g) return;
-    completeCeremony(g, how);
+    completeCeremony(g, how, kind);
     get().bump();
     await get().save();
   },

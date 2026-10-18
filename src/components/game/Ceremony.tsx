@@ -14,7 +14,7 @@ import { POSITION_LABEL } from "@/engine/players/attributes";
 import { ageOf } from "@/engine/players/generate";
 import type { AwardNominee, AwardResult, GameState, SeasonCeremony, TeamOfSeasonSlot } from "@/engine/types";
 
-const TROPHY: Record<string, string> = { pots: "🏆", topscorer: "👟", topassist: "🎯", goldenglove: "🧤", ypots: "🌱", breakthrough: "🚀" };
+const TROPHY: Record<string, string> = { pots: "🏆", topscorer: "👟", topassist: "🎯", goldenglove: "🧤", ypots: "🌱", breakthrough: "🚀", "golden-pitch": "🌍", "rising-star": "🌠", "world-glove": "🧤" };
 
 const nameOf = (g: GameState, id: string) => (g.players[id] ? `${g.players[id].firstName} ${g.players[id].lastName}` : "Retired player");
 
@@ -90,7 +90,8 @@ export function PodiumStage({ g, r, revealed, uid }: { g: GameState; r: AwardRes
   const latest = revealed > 0 ? places[revealed - 1] : null;
   const remaining = new Set(inContention(r.nominees.length, revealed));
   const finished = revealed >= places.length;
-  const shown = r.nominees.slice(0, 4);
+  const shown = r.nominees.slice(0, 5);
+  const world = r.leagueId === "world";
   const alphabetical = shown.map((n, i) => ({ n, i })).sort((a, b) => byNameThenId(g)(a.n, b.n));
   const kicker = `${r.scope} · ${r.tier === "major" ? "Major award" : "Special award"}`;
   return (
@@ -117,6 +118,7 @@ export function PodiumStage({ g, r, revealed, uid }: { g: GameState; r: AwardRes
               <div className="break-words font-display text-4xl uppercase leading-tight sm:text-5xl">{nameOf(g, r.nominees[0].playerId)}</div>
               <div className="mt-1 flex justify-center"><ClubLine clubId={r.nominees[0].clubId} /></div>
               <p className="mt-2 text-sm font-semibold">{r.nominees[0].reason}</p>
+              {world && <p className="mt-2 text-2xl" aria-hidden>{r.nominees[0].playerId === uid ? "🎆 🏆 🎆" : "✨"}</p>}
               {r.nominees[0].playerId === uid && <p className="mt-3 font-bold" data-testid="you-won">That&apos;s you — {r.name}!</p>}
               {r.nominees[0].playerId !== uid && r.nominees.some((n) => n.playerId === uid) && <p className="mt-3 text-sm font-semibold">You were in the running, but not this year.</p>}
               {r.nominees[0].playerId !== uid && primaryRival(g)?.playerId === r.nominees[0].playerId && <p className="mt-1 text-sm font-semibold">Your rival takes the honour.</p>}
@@ -244,10 +246,11 @@ export function YourNight({ g, c }: { g: GameState; c: SeasonCeremony }) {
   const inTeam = c.team.find((t) => t.playerId === uid);
   const rival = primaryRival(g);
   const rivalWon = rival ? c.results.filter((r) => r.winnerId === rival.playerId) : [];
-  const nothing = !won.length && !noms.length && !inTeam;
+  const world = c.kind === "world";
+  const nothing = !won.length && !noms.length && !inTeam && !(world && c.userRank);
   return (
     <div key="yours" className="anim-slide">
-      <Heading kicker={`${seasonLabel(c.season)} · ${c.leagueName}`} title="Your night" trophy="🎖️" />
+      <Heading kicker={`${seasonLabel(c.season)} · ${c.leagueName}`} title={world ? "Your gala" : "Your night"} trophy="🎖️" />
       <Card className="mx-auto max-w-2xl" tone={won.length ? "sun" : undefined}>
         {won.length > 0 && (
           <ul className="grid gap-1.5">
@@ -256,6 +259,7 @@ export function YourNight({ g, c }: { g: GameState; c: SeasonCeremony }) {
             ))}
           </ul>
         )}
+        {world && c.userRank && !won.some((r) => r.id === "golden-pitch") && <p className="mt-2 text-sm font-semibold">🌍 You finished #{c.userRank} in the Golden Pitch voting.</p>}
         {inTeam && <p className="mt-2 text-sm font-semibold">⭐ Named in the Team of the Season as your side&apos;s {inTeam.label.toLowerCase()}.</p>}
         {noms.length > 0 && (
           <p className="mt-2 text-sm">
@@ -304,6 +308,16 @@ export function sceneView(g: GameState, c: SeasonCeremony, scene: Scene, onPodiu
   const uid = g.user.playerId;
   switch (scene.kind) {
     case "opening":
+      if (c.kind === "world") {
+        return (
+          <div key="opening" className="anim-pop mx-auto max-w-xl rounded-3xl border-4 border-line bg-sun-2 px-6 py-8 text-center shadow-[6px_6px_0_var(--shadow)]" data-testid="gala-opening">
+            <div className="text-6xl" aria-hidden>🌍</div>
+            <div className="mt-2 text-[11px] font-black uppercase tracking-widest text-muted">{seasonLabel(c.season)} · The world&apos;s best</div>
+            <h2 className="font-display text-5xl leading-none">Golden Pitch Gala</h2>
+            <p className="mt-3 text-sm text-ink-2">The leagues are done and the summer tournaments are over. Every game of the year, in every league, has been counted. Tonight the world names its best.</p>
+          </div>
+        );
+      }
       return (
         <div key="opening" className="anim-pop mx-auto max-w-xl py-6 text-center">
           <div className="text-5xl" aria-hidden>🏆</div>

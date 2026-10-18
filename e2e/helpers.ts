@@ -42,10 +42,16 @@ export async function fastForward(page: Page, turns: number) {
   await page.evaluate(async (n) => {
     const st = (window as unknown as { __pitchborn: Handle }).__pitchborn;
     for (let i = 0; i < n; i++) {
-      const g = st.getState().game;
-      if (!g || g.user.retired) break;
-      for (const p of [...g.pending]) await st.getState().simMatch(p.fixtureId);
-      await st.getState().advance(1);
+      const start = st.getState().game;
+      if (!start || start.user.retired) break;
+      const key = `${start.season}-${start.turn}`;
+      // A week with two of the user's matches is played as two match days, so one step may stop mid-week: go on until the week changes.
+      for (let guard = 0; guard < 6; guard++) {
+        const g = st.getState().game;
+        if (!g || g.user.retired || `${g.season}-${g.turn}` !== key) break;
+        for (const p of [...g.pending]) await st.getState().simMatch(p.fixtureId);
+        await st.getState().advance(1);
+      }
     }
   }, turns);
 }

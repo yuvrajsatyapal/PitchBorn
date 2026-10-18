@@ -11,7 +11,9 @@ import { BALANCE } from "../balance";
 import { isInternationalTurn, isMonthEnd, isTransferWindow, seasonLabel, tournamentFor, upcomingWindow, windowName } from "../calendar";
 import { AWARD_RECORD_PREFIX } from "../awards/records";
 import { prepareSeasonAwards, settleCeremony } from "../awards/ceremony";
-import { awardTrophy, playerOfTheMonth, teamOfTheWeek, totalSeason, worldAwards } from "./awards";
+import { leagueStatPlayers } from "../awards/calc";
+import { awardTrophy, playerOfTheMonth, teamOfTheWeek, totalSeason } from "./awards";
+import { prepareWorldCeremony, settleWorldCeremony } from "../awards/world";
 import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
@@ -337,6 +339,7 @@ export interface AdvanceReport {
 export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): AdvanceReport {
   if (state.user.retired) return { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
   settleCeremony(state);
+  settleWorldCeremony(state);
   const report: AdvanceReport = { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
   do {
     for (const pm of [...state.pending]) simUserMatch(state, pm.fixtureId);
@@ -398,7 +401,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       report.seasonEnded = true;
     }
     if (state.turn >= C.turnsPerSeason) {
-      const world = worldAwards(state);
+      const world = prepareWorldCeremony(state);
       state.archive[state.archive.length - 1]?.awards.push(...world);
       rollover(state, rng);
       report.newSeason = true;
@@ -489,16 +492,16 @@ function seasonEnd(state: GameState, rng: Rng): void {
       comp.runnerUp = comp.table[1]?.team;
       archive.tables[comp.id] = comp.table.map((r) => ({ ...r, form: [...r.form] }));
       let best: { playerId: string; name: string; clubId: string | null; goals: number } | null = null;
-      for (const clubId of comp.teams) for (const p of squadOf(state, clubId)) {
-        const g = p.season[comp.id]?.goals ?? 0;
-        if (!best || g > best.goals) best = { playerId: p.id, name: fullName(p), clubId: p.clubId, goals: g };
+      for (const p of leagueStatPlayers(state, comp.id)) {
+        const g = p.season[comp.id].goals;
+        if (!best || g > best.goals) best = { playerId: p.id, name: fullName(p), clubId: p.seasonClubs?.[comp.id] ?? p.clubId, goals: g };
       }
       if (best) archive.topScorers[comp.id] = best;
     }
   }
   settleObjectives(state);
   awardCompletedTrophies(state);
-  archive.awards = prepareSeasonAwards(state);
+  archive.awards = prepareSeasonAwards(state, archive);
   for (const comp of Object.values(state.competitions)) {
     if (comp.season === state.season && comp.winner && comp.kind !== "international") archive.champions[comp.id] = { name: comp.name, winner: comp.winner, runnerUp: comp.runnerUp };
   }
@@ -627,6 +630,7 @@ export function retireUser(state: GameState, reason = "You announce your retirem
   closeStint(state, "player-left");
   endNumberTenure(state);
   settleCeremony(state);
+  settleWorldCeremony(state);
   addTimeline(state, { kind: "retirement", title: "Retired from professional football", detail: reason });
   addNews(state, { kind: "career", title: "End of an era", body: reason, important: true });
   u.legacy = computeLegacy(state);
@@ -655,6 +659,7 @@ function rollover(state: GameState, rng: Rng): void {
   state.user.freeSeasons = wasFree && !u.clubId ? (state.user.freeSeasons ?? 0) + 1 : 0;
   for (const p of Object.values(state.players)) {
     p.season = {};
+    p.seasonClubs = {};
     p.yellowAccum = 0;
     p.suspension = 0;
     p.month = { apps: 0, ratingSum: 0, goals: 0, assists: 0 };

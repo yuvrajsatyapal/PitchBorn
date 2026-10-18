@@ -53,7 +53,7 @@ export default function CeremonyPage() {
           <h2 className="mt-2 font-display text-3xl">Awards Night is ready</h2>
           <p className="mt-2 text-sm">The season is final. Watch the awards presented, or go straight to the results — everything counts the same either way.</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <Button tone="pitch" size="lg" onClick={start} disabled={busy} data-testid="watch-ceremony">Watch ceremony</Button>
+            <Button tone="pitch" size="lg" onClick={() => start()} disabled={busy} data-testid="watch-ceremony">Watch ceremony</Button>
             <Button tone="paper" size="lg" onClick={async () => { await finish("skipped"); }} disabled={busy} data-testid="skip-ceremony">Skip to results</Button>
           </div>
           <p className="mt-3 text-xs text-muted">If you carry on without choosing, it counts as skipping.</p>

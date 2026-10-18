@@ -8,6 +8,7 @@ import { Crest } from "@/components/art/Crest";
 import { Button, LinkButton, Modal } from "@/components/ui";
 import { formatFixtureDate, isTransferWindow, phaseOf, seasonLabel, weeksToNewYear, weeksToNextMonth, windowName } from "@/engine/calendar";
 import { ceremonyPending } from "@/engine/awards/ceremony";
+import { worldCeremonyPending } from "@/engine/awards/world";
 import { BALANCE } from "@/engine/balance";
 import { clubName } from "@/engine/data/world";
 import { useGame, useGameState } from "@/game/store";
@@ -40,6 +41,14 @@ function ContinueButton({ compact = false }: { compact?: boolean }) {
       </Button>
     );
   }
+  // The first day of a new season, and the world's best are being honoured: the gala comes before anything else.
+  if (worldCeremonyPending(game)) {
+    return (
+      <Button tone="sun" size={compact ? "sm" : "md"} onClick={() => router.push("/play/gala")} disabled={pathname === "/play/gala/"} data-testid="gala-button">
+        <span aria-hidden>🌍</span> Golden Pitch gala
+      </Button>
+    );
+  }
   // The season is over and the awards are ready: carrying on goes through Awards Night, where they can be skipped.
   if (ceremonyPending(game) && game.turn > BALANCE.calendar.endOfSeasonTurn) {
     return (
@@ -63,6 +72,7 @@ function SimMenu() {
   if (!game || game.user.retired) return null;
   const matchDue = game.pending.length > 0;
   const C = BALANCE.calendar;
+  const awardsDue = worldCeremonyPending(game) || (ceremonyPending(game) && game.turn > C.endOfSeasonTurn);
   const toNewYear = weeksToNewYear(game.season, game.turn);
   const afterEnd = game.turn > C.endOfSeasonTurn;
   // Before the season ends, no option runs past it: the summer tournament and transfer window stay ahead of you.
@@ -79,7 +89,7 @@ function SimMenu() {
   );
   return (
     <>
-      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy || matchDue} aria-label="Simulate several weeks" title={matchDue ? "Play or sim your match first" : "Simulate ahead"}>
+      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy || matchDue || awardsDue} aria-label="Simulate several weeks" title={matchDue ? "Play or sim your match first" : awardsDue ? "Awards night first" : "Simulate ahead"}>
         <span className="font-black">»</span>
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Simulate ahead">

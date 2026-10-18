@@ -185,6 +185,8 @@ export interface Player {
   intlReputation: number; // 0-100
   value: number;
   season: Record<CompetitionId, StatLine>;
+  /** The club this player last played each competition for this season, so awards credit the right club after a move. */
+  seasonClubs?: Record<CompetitionId, ClubId>;
   career: StatLine;
   history: SeasonRecord[];
   intl: {
@@ -441,6 +443,10 @@ export interface TeamOfSeasonSlot {
 
 /** The end-of-season awards: calculated once from final results, presented by the ceremony, applied once. */
 export interface SeasonCeremony {
+  /** Absent means the domestic league ceremony. "world" is the global gala (Golden Pitch, Rising Star, World Goalkeeper). */
+  kind?: "league" | "world";
+  /** World gala only: the user's finishing place in the Golden Pitch voting, when they were ranked at all. */
+  userRank?: number;
   season: number;
   leagueId: string;
   leagueName: string;
@@ -451,7 +457,7 @@ export interface SeasonCeremony {
   team: TeamOfSeasonSlot[];
   formation: string;
   /** Winners of the other leagues' awards: no ceremony for them, but their careers feel the same consequences. */
-  others: { id: string; name: string; scope: string; leagueId: string; playerId: PlayerId }[];
+  others: { id: string; name: string; scope: string; leagueId: string; playerId: PlayerId; clubId?: ClubId | null; value?: string; age?: number }[];
   /** Career consequences (reputation, memories, history, rivalry, news) have been applied. */
   applied: boolean;
   /** Presentation only: how it was completed. Both give an identical world. */
@@ -1176,8 +1182,21 @@ export interface LegacyResult {
   identity?: { label: string; lines: string[]; traits: TraitId[] };
 }
 
+/** One league's finished awards, kept exactly as decided: never recalculated from later stats, ratings or clubs. */
+export interface LeagueSeasonAwards {
+  season: number;
+  leagueId: string;
+  leagueName: string;
+  compId: string;
+  results: AwardResult[];
+  team: TeamOfSeasonSlot[];
+  formation: string;
+}
+
 export interface SeasonArchive {
   season: number;
+  /** Full results (nominees, statistics, Team of the Season) for every simulated league. Absent in older saves. */
+  leagueAwards?: LeagueSeasonAwards[];
   champions: Record<CompetitionId, { name: string; winner: string; runnerUp?: string }>;
   topScorers: Record<CompetitionId, { playerId: PlayerId; name: string; clubId: ClubId | null; goals: number }>;
   awards: AwardRecord[];
@@ -1233,6 +1252,8 @@ export interface GameState {
   archive: SeasonArchive[];
   /** The latest end-of-season awards ceremony. Optional so old saves load. */
   ceremony?: SeasonCeremony;
+  /** The global awards gala for the season just finished, held on the first day of the next one. Optional so old saves load. */
+  worldCeremony?: SeasonCeremony;
   records: WorldRecord[];
   /** Every manager's career, by stable id. */
   managers?: Record<ManagerId, ManagerRecord>;
