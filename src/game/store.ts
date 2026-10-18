@@ -4,8 +4,10 @@
  * The engine mutates the GameState in place; after each action we bump
  * `version` so subscribed components re-render.
  */
+import { flushSync } from "react-dom";
 import { create } from "zustand";
 import { BALANCE } from "@/engine/balance";
+import { dayNumber } from "@/engine/calendar";
 import { completeCeremony, setCeremonyStep, startCeremony } from "@/engine/awards/ceremony";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { acceptSponsorOffer, declineSponsorOffer } from "@/engine/career/sponsors";
@@ -15,6 +17,7 @@ import { syncSagas } from "@/engine/career/saga/engine";
 import type { MatchResult } from "@/engine/match/engine";
 import { retireFromInternational } from "@/engine/national/national";
 import { advanceTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
+import { interruptReason, snapshotAttention, type InterruptReason } from "@/engine/season/interrupts";
 import { prepareMatch, type PreparedMatch } from "@/engine/season/matchday";
 import { chooseIntlNumber as chooseIntlNumberAction, chooseSquadNumber } from "@/engine/jersey/numbers";
 import { performPreMatch, type PreMatchKind } from "@/engine/season/preview";
@@ -31,8 +34,19 @@ interface LiveMatch {
   startedAt: number;
 }
 
+/** What the "Simulating…" overlay shows: the calendar day currently highlighted, which is never past the game's own date. */
+export interface SimView {
+  day: number;
+  stepMs: number;
+  ease: boolean;
+  stopping: boolean;
+  reason: InterruptReason | null;
+}
+
 interface GameStore {
   game: GameState | null;
+  sim: SimView | null;
+  stopSim: () => void;
   version: number;
   busy: string | null;
   error: string | null;
@@ -48,6 +62,7 @@ interface GameStore {
   loadActive: () => Promise<boolean>;
   close: () => void;
   save: (manual?: boolean) => Promise<void>;
+  /** No argument: play on until something needs the player. A number: at most that many weeks (matches are quick-simmed). */
   advance: (weeks?: number) => Promise<void>;
   simMatch: (fixtureId: string) => Promise<MatchResult | null>;
   startLive: (fixtureId: string) => PreparedMatch | null;
@@ -79,9 +94,29 @@ interface GameStore {
 }
 
 const yieldFrame = () => new Promise<void>((r) => setTimeout(r, 16));
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/** Safety cap for an open-ended run (a little over a season). */
+const MAX_RUN_WEEKS = 60;
+/** How long the overlay stays on the day a run stopped, so the reason can be read. */
+const STOP_HOLD_MS = 200;
+let stopRequested = false;
+
+/** Milliseconds each calendar day stays highlighted: quick once a run is under way, slower for short ones. */
+function stepMsFor(week: number, weeks: number | undefined): number {
+  if (weeks === undefined) return week < 2 ? 220 : 130;
+  return weeks <= 5 ? 150 : 50;
+}
 
 export const useGame = create<GameStore>((set, get) => ({
   game: null,
+  sim: null,
+  stopSim: () => {
+    stopRequested = true;
+    const sim = get().sim;
+    if (sim) set({ sim: { ...sim, stopping: true } });
+  },
   version: 0,
   busy: null,
   error: null,
@@ -150,36 +185,88 @@ export const useGame = create<GameStore>((set, get) => ({
     }
   },
 
-  advance: async (weeks = 1) => {
+  advance: async (weeks) => {
     const g = get().game;
     if (!g || get().busy) return;
-    set({ busy: weeks > 1 ? "Simulating…" : "Playing the week…" });
+    const untilEvent = weeks === undefined;
+    const maxWeeks = untilEvent ? MAX_RUN_WEEKS : Math.max(1, weeks);
+    // Open decisions fall back to their default as weeks pass: with some open, step one week rather than expire them unseen.
+    const cautious = untilEvent && g.user.decisions.length > 0;
+    const reduced = reducedMotion();
+    stopRequested = false;
+    set({ busy: "Simulating…", sim: { day: dayNumber(g.season, g.turn), stepMs: 0, ease: false, stopping: false, reason: null } });
     await yieldFrame();
     try {
       let seasonRolled = false;
+      let reason: InterruptReason | null = null;
+      const before = snapshotAttention(g);
       const startSeason = g.season;
       const beforeSeasonEnd = g.turn <= BALANCE.calendar.endOfSeasonTurn;
-      for (let i = 0; i < weeks; i++) {
-        // Multi-week sims run straight through: matches are quick-simmed and decisions use their fallback.
-        if (i > 0 && g.user.retired) break;
+      const baseOf = (week: number) => (reduced ? 0 : stepMsFor(week, weeks));
+
+      // Plays one week and says how the run stands on its new date.
+      const step = (week: number) => {
+        const fromDay = dayNumber(g.season, g.turn);
         const report = advanceTurn(g);
         if (report.newSeason) seasonRolled = true;
+        const toDay = dayNumber(g.season, g.turn);
+        const why = interruptReason(g, before, { newSeason: report.newSeason, stopOnMatch: untilEvent });
         // A multi-week sim from before the season's end always stops once the season has ended, so the summer
         // tournament and the transfer window are never skipped past.
-        if (weeks > 1 && beforeSeasonEnd && g.season === startSeason && g.turn > BALANCE.calendar.endOfSeasonTurn) break;
-        if (weeks > 1 && i % 3 === 2) {
-          set({ version: get().version + 1 });
-          await yieldFrame();
+        const seasonOver = !untilEvent && beforeSeasonEnd && g.season === startSeason && g.turn > BALANCE.calendar.endOfSeasonTurn;
+        const last = why !== null || cautious || seasonOver || g.user.retired || week === maxWeeks - 1;
+        return { fromDay, toDay, why, last };
+      };
+
+      // The first week is worked out before the strip moves: it is the heaviest (one frame of waiting beats a stutter).
+      await yieldFrame();
+      let cur = step(0);
+      for (let week = 0; ; week++) {
+        reason = cur.why;
+        const base = baseOf(week);
+        let next: ReturnType<typeof step> | null = null;
+        for (let day = cur.fromDay + 1; day <= cur.toDay; day++) {
+          const began = performance.now();
+          const stopping = stopRequested;
+          const ease = cur.last && !stopping && cur.toDay - day < 2 && base > 0;
+          const ms = stopping ? Math.min(base, 40) : ease ? base * 1.6 : base;
+          set({ sim: { day, stepMs: ms, ease, stopping, reason: null } });
+          // The next week is worked out while this day's slide is under way, so the strip never waits between weeks.
+          // (A frame first, so the slide has really started before the main thread is busy.)
+          if (!cur.last && !next) {
+            await yieldFrame();
+            next = step(week + 1);
+          }
+          const left = ms - (performance.now() - began);
+          if (left > 0) await sleep(left);
+          else if (ms === 0 && day % 7 === 0) await yieldFrame();
         }
+        if (cur.last || (!next && stopRequested)) break;
+        // A week already worked out cannot be undone, so a Stop pressed meanwhile ends the run on it.
+        cur = next ?? step(week + 1);
+        if (stopRequested) cur.last = true;
       }
-      set({ version: get().version + 1 });
+      // Landed: show why it stopped, and only then refresh the page behind (the repaint is the slow part, and
+      // doing it any earlier would show the new date there before the strip has reached it).
+      const landed = performance.now();
+      const sim = get().sim;
+      if (reason && !reduced && sim) {
+        set({ sim: { ...sim, stepMs: 0, ease: false, reason } });
+        await yieldFrame();
+      }
+      flushSync(() => set({ version: get().version + 1 }));
+      if (reason && !reduced) await sleep(Math.max(0, STOP_HOLD_MS - (performance.now() - landed)));
+      set({ sim: null });
+      // Let the closed overlay paint before the save, which serialises the whole career and blocks the page for a moment.
+      await sleep(50);
       if (g.settings.autoSave || seasonRolled) await saveGame(g, { backup: seasonRolled, label: seasonRolled ? `Season ${g.season} start` : undefined });
       set({ lastSavedAt: new Date().toISOString() });
     } catch (err) {
       console.error(err);
       set({ error: (err as Error).message });
     } finally {
-      set({ busy: null });
+      stopRequested = false;
+      set({ busy: null, sim: null });
     }
   },
 

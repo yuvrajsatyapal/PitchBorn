@@ -13,6 +13,7 @@ import { clubName } from "@/engine/data/world";
 import { useGame, useGameState } from "@/game/store";
 import { NAV } from "./nav";
 import { OfflineBadge } from "./OfflineBadge";
+import { SimOverlay } from "./SimOverlay";
 
 function ContinueButton({ compact = false }: { compact?: boolean }) {
   const game = useGameState();
@@ -48,7 +49,7 @@ function ContinueButton({ compact = false }: { compact?: boolean }) {
     );
   }
   return (
-    <Button tone="sun" size={compact ? "sm" : "md"} onClick={() => advance(1)} disabled={!!busy} data-testid="continue">
+    <Button tone="sun" size={compact ? "sm" : "md"} onClick={() => advance()} disabled={!!busy} data-testid="continue">
       {busy ? "…" : decisions ? "Continue ⚑" : "Continue ▸"}
     </Button>
   );
@@ -60,6 +61,7 @@ function SimMenu() {
   const busy = useGame((s) => s.busy);
   const [open, setOpen] = useState(false);
   if (!game || game.user.retired) return null;
+  const matchDue = game.pending.length > 0;
   const C = BALANCE.calendar;
   const toNewYear = weeksToNewYear(game.season, game.turn);
   const afterEnd = game.turn > C.endOfSeasonTurn;
@@ -77,12 +79,12 @@ function SimMenu() {
   );
   return (
     <>
-      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy} aria-label="Simulate several weeks" title="Simulate ahead">
+      <Button tone="paper" size="sm" onClick={() => setOpen(true)} disabled={!!busy || matchDue} aria-label="Simulate several weeks" title={matchDue ? "Play or sim your match first" : "Simulate ahead"}>
         <span className="font-black">»</span>
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Simulate ahead">
         <p className="mb-4 text-sm text-ink-2">
-          Your matches are quick-simmed with sensible decisions. Simulation only stops early if your career ends; open decisions fall back to their default and offers may lapse.
+          Your matches are quick-simmed with sensible decisions. Simulation stops early for new offers, decisions, injuries, awards night or a new season; open decisions fall back to their default and offers may lapse.
         </p>
         <div className="grid gap-2">
           {options.map((o) => (
@@ -272,6 +274,7 @@ export function GameShell({ children }: { children: ReactNode }) {
       <SideNav />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
+        <SimOverlay />
         <div className="mx-auto flex w-full max-w-[1800px] flex-1 gap-6 px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-5 lg:pb-10 [@media(max-height:480px)]:pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <main id="main" className="min-w-0 flex-1">
             {error && <div className="pb-card mb-4 bg-coral-2 p-3 text-sm">Something went wrong: {error}</div>}

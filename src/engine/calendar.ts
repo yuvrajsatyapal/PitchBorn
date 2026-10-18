@@ -85,6 +85,11 @@ export function isMonthEnd(turn: number): boolean {
 
 const DAY = 86_400_000;
 
+/** Whole days since 1 Jan 1970 for a turn's date: lets the UI count calendar days between two turns. */
+export function dayNumber(season: number, turn: number): number {
+  return Math.round(turnDate(season, turn).getTime() / DAY);
+}
+
 /** Weeks to advance so the displayed date lands as close as possible to `target` (at least one week). */
 export function weeksToDate(season: number, turn: number, target: Date): number {
   const now = turnDate(season, turn).getTime();
