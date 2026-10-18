@@ -59,6 +59,19 @@ export function turnDate(season: number, turn: number): Date {
   return d;
 }
 
+/** The calendar date of a fixture: its week's date plus the day it was given within that week. */
+export function fixtureDate(season: number, f: { turn: number; day?: number }): Date {
+  const d = turnDate(season, f.turn);
+  d.setUTCDate(d.getUTCDate() + (f.day ?? 0));
+  return d;
+}
+
+const fmtDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+export function formatFixtureDate(season: number, f: { turn: number; day?: number }): string {
+  return fmtDate(fixtureDate(season, f));
+}
+
 export function formatTurnDate(season: number, turn: number): string {
   return turnDate(season, turn).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
@@ -86,8 +99,8 @@ export function isMonthEnd(turn: number): boolean {
 const DAY = 86_400_000;
 
 /** Whole days since 1 Jan 1970 for a turn's date: lets the UI count calendar days between two turns. */
-export function dayNumber(season: number, turn: number): number {
-  return Math.round(turnDate(season, turn).getTime() / DAY);
+export function dayNumber(season: number, turn: number, day = 0): number {
+  return Math.round(turnDate(season, turn).getTime() / DAY) + day;
 }
 
 /** Weeks to advance so the displayed date lands as close as possible to `target` (at least one week). */

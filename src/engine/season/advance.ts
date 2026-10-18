@@ -18,6 +18,7 @@ import { checkUserContract, expireOffers, generateUserOffers, processBids, rollo
 import { divertToSaga, stepSagas } from "../career/saga/engine";
 import { noteRecord, weeklyRivalry } from "../career/rivalry/engine";
 import { RUMOUR_MIN_REPUTATION } from "../career/saga/eligibility";
+import { assignMatchDays } from "../competitions/matchdays";
 import { leagueCompId, progressKnockouts, refreshLeagueTables, setupSeason } from "../competitions/setup";
 import { clubName, leaguesInPlay, stadium, staticClub, staticLeague } from "../data/world";
 import type { MatchResult } from "../match/engine";
@@ -59,6 +60,20 @@ import { applyMatchResult, fixturesForTurn, involvesUserTeam, prepareMatch, type
 
 const C = BALANCE.calendar;
 
+/** Makes the user's next unplayed match day of the week current: only that day's matches are pending. */
+function loadUserDay(state: GameState): boolean {
+  const mine = fixturesForTurn(state).filter((f) => involvesUserTeam(state, f));
+  if (!mine.length) {
+    state.pending = [];
+    state.turnDay = 0;
+    return false;
+  }
+  const day = mine[0].day ?? 0;
+  state.turnDay = day;
+  state.pending = mine.filter((f) => (f.day ?? 0) === day).map((f) => ({ fixtureId: f.id, compId: f.compId }));
+  return true;
+}
+
 export function beginTurn(state: GameState): void {
   if (state.user.retired) {
     state.pending = [];
@@ -70,10 +85,9 @@ export function beginTurn(state: GameState): void {
       scheduleInternationalWindow(state, rng);
     }
   });
+  assignMatchDays(state);
   ensureObjectives(state);
-  state.pending = fixturesForTurn(state)
-    .filter((f) => involvesUserTeam(state, f))
-    .map((f) => ({ fixtureId: f.id, compId: f.compId }));
+  loadUserDay(state);
   announceFormerManagers(state);
 }
 
@@ -320,11 +334,18 @@ export interface AdvanceReport {
 }
 
 /** Simulate the rest of the current week and move to the next one. */
-export function advanceTurn(state: GameState): AdvanceReport {
+export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): AdvanceReport {
   if (state.user.retired) return { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
   settleCeremony(state);
-  for (const pm of [...state.pending]) simUserMatch(state, pm.fixtureId);
   const report: AdvanceReport = { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
+  do {
+    for (const pm of [...state.pending]) simUserMatch(state, pm.fixtureId);
+    // A later match day in the same week: the UI stops on it; otherwise it is played through with the rest of the week.
+    if (opts.byDay && loadUserDay(state)) {
+      state.updatedAt = new Date().toISOString();
+      return report;
+    }
+  } while (loadUserDay(state));
   withRng(state, (rng) => {
     if (state.turn === 1 && state.season === state.user.startSeason) setExpectations(state);
     const ratings: TurnRatings = {};
@@ -332,6 +353,7 @@ export function advanceTurn(state: GameState): AdvanceReport {
     refreshLeagueTables(state);
     progressKnockouts(state, rng);
     progressTournament(state, rng);
+    assignMatchDays(state);
     awardCompletedTrophies(state);
     if (state.turn >= C.seasonStart && state.turn <= C.seasonEnd) teamOfTheWeek(state, ratings);
 
@@ -555,6 +577,7 @@ function seasonEnd(state: GameState, rng: Rng): void {
     }
   }
   setupTournament(state, rng);
+  assignMatchDays(state);
 }
 
 function applyMoves(state: GameState): void {

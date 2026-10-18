@@ -194,7 +194,7 @@ export const useGame = create<GameStore>((set, get) => ({
     const cautious = untilEvent && g.user.decisions.length > 0;
     const reduced = reducedMotion();
     stopRequested = false;
-    set({ busy: "Simulating…", sim: { day: dayNumber(g.season, g.turn), stepMs: 0, ease: false, stopping: false, reason: null } });
+    set({ busy: "Simulating…", sim: { day: dayNumber(g.season, g.turn, g.turnDay), stepMs: 0, ease: false, stopping: false, reason: null } });
     await yieldFrame();
     try {
       let seasonRolled = false;
@@ -206,10 +206,10 @@ export const useGame = create<GameStore>((set, get) => ({
 
       // Plays one week and says how the run stands on its new date.
       const step = (week: number) => {
-        const fromDay = dayNumber(g.season, g.turn);
-        const report = advanceTurn(g);
+        const fromDay = dayNumber(g.season, g.turn, g.turnDay);
+        const report = advanceTurn(g, { byDay: true });
         if (report.newSeason) seasonRolled = true;
-        const toDay = dayNumber(g.season, g.turn);
+        const toDay = dayNumber(g.season, g.turn, g.turnDay);
         const why = interruptReason(g, before, { newSeason: report.newSeason, stopOnMatch: untilEvent });
         // A multi-week sim from before the season's end always stops once the season has ended, so the summer
         // tournament and the transfer window are never skipped past.

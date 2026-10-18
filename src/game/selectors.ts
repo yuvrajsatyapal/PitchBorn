@@ -26,7 +26,7 @@ export function teamFixtures(g: GameState, teamId: string): { comp: Competition;
     if (comp.season !== g.season) continue;
     for (const f of comp.fixtures) if (f.home === teamId || f.away === teamId) out.push({ comp, f });
   }
-  return out.sort((a, b) => a.f.turn - b.f.turn || a.f.round - b.f.round);
+  return out.sort((a, b) => a.f.turn - b.f.turn || (a.f.day ?? 0) - (b.f.day ?? 0) || a.f.round - b.f.round);
 }
 
 /** All fixtures for the user: club + national team. */
@@ -36,7 +36,7 @@ export function userFixtures(g: GameState): { comp: Competition; f: Fixture }[] 
   if (p.clubId) list.push(...teamFixtures(g, p.clubId));
   const nat = intlTeam(p);
   for (const x of teamFixtures(g, nat)) if (x.comp.kind === "international") list.push(x);
-  return list.sort((a, b) => a.f.turn - b.f.turn || a.f.round - b.f.round);
+  return list.sort((a, b) => a.f.turn - b.f.turn || (a.f.day ?? 0) - (b.f.day ?? 0) || a.f.round - b.f.round);
 }
 
 export function seasonTotal(p: Player): StatLine {

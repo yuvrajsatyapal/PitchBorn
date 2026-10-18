@@ -33,7 +33,7 @@ export function fixturesForTurn(state: GameState): Fixture[] {
     if (comp.season !== state.season || comp.complete) continue;
     for (const f of comp.fixtures) if (f.turn === state.turn && !f.result) out.push(f);
   }
-  return out.sort((a, b) => a.round - b.round);
+  return out.sort((a, b) => (a.day ?? 0) - (b.day ?? 0) || a.round - b.round);
 }
 
 export function isNationalComp(comp: Competition | undefined): boolean {

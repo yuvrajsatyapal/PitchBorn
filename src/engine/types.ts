@@ -309,6 +309,8 @@ export interface Fixture {
   compId: CompetitionId;
   round: number;
   turn: number;
+  /** Days after the week's date (0-6) on which this match falls, so one team never plays twice on the same day. */
+  day?: number;
   home: string; // ClubId or CountryCode for internationals
   away: string;
   stage?: string;
@@ -1240,6 +1242,8 @@ export interface GameState {
   settings: { difficulty: "relaxed" | "standard" | "hardcore"; autoSave: boolean; countries?: string[] };
   /** Match the user must play this turn before the world advances. */
   pending: PendingMatch[];
+  /** Day within the current week (0-6) that the user is on: a week with two of their matches plays out as two separate days. */
+  turnDay?: number;
   /** Agents available to represent the user (generated lazily per career). */
   agents?: Agent[];
   /** Unemployed managers clubs can hire (seeded from real free agents; sacked managers join it). */

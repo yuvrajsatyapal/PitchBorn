@@ -6,7 +6,7 @@ import { SponsorRail } from "@/ads/SponsorSections";
 import { Logo } from "@/components/art/Logo";
 import { Crest } from "@/components/art/Crest";
 import { Button, LinkButton, Modal } from "@/components/ui";
-import { formatTurnDate, isTransferWindow, phaseOf, seasonLabel, weeksToNewYear, weeksToNextMonth, windowName } from "@/engine/calendar";
+import { formatFixtureDate, isTransferWindow, phaseOf, seasonLabel, weeksToNewYear, weeksToNextMonth, windowName } from "@/engine/calendar";
 import { ceremonyPending } from "@/engine/awards/ceremony";
 import { BALANCE } from "@/engine/balance";
 import { clubName } from "@/engine/data/world";
@@ -123,7 +123,7 @@ function TopBar() {
           <div className="min-w-0 leading-tight">
             <div className="truncate text-sm font-bold">{clubName(u.clubId, true)}</div>
             <div className="scoreboard truncate text-[11px] text-muted">
-              {formatTurnDate(game.season, game.turn)}<span className="hidden min-[420px]:inline"> · {seasonLabel(game.season)}</span> · W{game.turn}
+              {formatFixtureDate(game.season, { turn: game.turn, day: game.turnDay })}<span className="hidden min-[420px]:inline"> · {seasonLabel(game.season)}</span> · W{game.turn}
             </div>
           </div>
         </div>

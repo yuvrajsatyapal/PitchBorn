@@ -249,7 +249,7 @@ export default function MatchDay() {
               </>
             );
           })()}
-          {g.pending.length > 1 && <p className="mt-3 text-center text-xs">{g.pending.length - 1} more match{g.pending.length > 2 ? "es" : ""} this week.</p>}
+          
         </Card>
       ) : (
         <Card className="mb-5">

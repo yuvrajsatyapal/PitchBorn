@@ -5,6 +5,7 @@ import type { Rng } from "../rng";
 import type { Competition, Fixture, GameState } from "../types";
 import { nextId } from "../world/helpers";
 import { drawKnockout, groupDraw, makeLeagueFixtures } from "./fixtures";
+import { assignMatchDays } from "./matchdays";
 import { buildTable, emptyRow, sortTable } from "./table";
 
 const C = BALANCE.calendar;
@@ -95,6 +96,7 @@ export function setupSeason(state: GameState, rng: Rng): void {
     state.competitions[comp.id] = comp;
   }
   setupContinental(state, rng);
+  assignMatchDays(state);
 }
 
 function previousTable(state: GameState, leagueId: string): string[] | null {
@@ -176,6 +178,7 @@ export function progressKnockouts(state: GameState, rng: Rng): void {
     if (comp.kind === "cup") progressCup(state, comp, rng);
     else if (comp.kind === "continental") progressContinental(state, comp, rng);
   }
+  assignMatchDays(state);
 }
 
 function progressCup(state: GameState, comp: Competition, rng: Rng) {
