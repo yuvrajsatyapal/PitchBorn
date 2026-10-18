@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Crest } from "@/components/art/Crest";
 import { clubKit } from "@/components/art/clubKit";
 import { Flag } from "@/components/art/Flag";
@@ -261,13 +262,16 @@ export function PendingMatchCard({ g }: { g: GameState }) {
   );
 }
 
+/** Open decisions pop up one at a time over whatever screen is showing; there is no close button, so each gets an answer. */
 export function DecisionCards({ g }: { g: GameState }) {
   const decide = useGame((s) => s.decide);
-  if (!g.user.decisions.length) return null;
-  return (
-    <>
-      {g.user.decisions.map((d) => (
-        <Card key={d.id} tone="plum" title={d.title}>
+  const d = g.user.decisions[0];
+  if (!d) return null;
+  const more = g.user.decisions.length - 1;
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] sm:items-center sm:p-4" data-testid="decision-popup">
+      <div role="alertdialog" aria-modal="true" aria-label={d.title} className="w-full overflow-y-auto overscroll-contain sm:max-w-lg" style={{ maxHeight: "92dvh" }}>
+        <Card key={d.id} tone="plum" title={d.title} className="anim-pop rounded-b-none pb-[max(1rem,env(safe-area-inset-bottom))] sm:rounded-b-[1.1rem]">
           <p className="mb-3 whitespace-pre-line text-sm">{d.body}</p>
           <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
             {d.options.map((o) => (
@@ -277,9 +281,11 @@ export function DecisionCards({ g }: { g: GameState }) {
               </button>
             ))}
           </div>
+          {more > 0 && <p className="mt-3 text-xs opacity-80">{more} more waiting after this one</p>}
         </Card>
-      ))}
-    </>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
