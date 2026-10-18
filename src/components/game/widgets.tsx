@@ -273,7 +273,7 @@ export function DecisionCards({ g }: { g: GameState }) {
       <div role="alertdialog" aria-modal="true" aria-label={d.title} className="w-full overflow-y-auto overscroll-contain sm:max-w-lg" style={{ maxHeight: "92dvh" }}>
         <Card key={d.id} tone="plum" title={d.title} className="anim-pop rounded-b-none pb-[max(1rem,env(safe-area-inset-bottom))] sm:rounded-b-[1.1rem]">
           <p className="mb-3 whitespace-pre-line text-sm">{d.body}</p>
-          <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
+          <div className="grid gap-2">
             {d.options.map((o) => (
               <button key={o.id} onClick={() => decide(d.id, o.id)} className="pb-btn pb-choice bg-card text-sm">
                 <span>{o.label}</span>

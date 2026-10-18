@@ -15,6 +15,10 @@ import { useGame, useGameState } from "@/game/store";
 import { NAV } from "./nav";
 import { OfflineBadge } from "./OfflineBadge";
 import { SimOverlay } from "./SimOverlay";
+import { DecisionCards } from "@/components/game/widgets";
+
+/** Screens that run their own flow and must not be interrupted by a decision pop-up. */
+const NO_DECISION_POPUP = ["/play/match", "/play/ceremony", "/play/gala"];
 
 function ContinueButton({ compact = false }: { compact?: boolean }) {
   const game = useGameState();
@@ -254,6 +258,8 @@ export function GameShell({ children }: { children: ReactNode }) {
   const loadActive = useGame((s) => s.loadActive);
   const busy = useGame((s) => s.busy);
   const error = useGame((s) => s.error);
+  const sim = useGame((s) => s.sim);
+  const pathname = usePathname() ?? "";
   const [checked, setChecked] = useState(false);
   useEffect(() => {
     loadActive().finally(() => setChecked(true));
@@ -295,6 +301,7 @@ export function GameShell({ children }: { children: ReactNode }) {
       </div>
       <BottomNav />
       {busy && <BusyOverlay label={busy} />}
+      {!sim && !NO_DECISION_POPUP.some((r) => pathname.startsWith(r)) && <DecisionCards g={game} />}
     </div>
   );
 }
