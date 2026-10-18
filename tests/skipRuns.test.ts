@@ -18,3 +18,20 @@ describe("fixed-length skips", () => {
     expect(stoppedEarly).toBeNull();
   }, 60000);
 });
+
+describe("week counting", () => {
+  it("a week with two of your matches takes two steps but still counts as one week", () => {
+    const g = newCareer();
+    strongUser(g);
+    for (let i = 0; i < 5; i++) advanceTurn(g);
+    const weeks = BALANCE.calendar.endOfSeasonTurn - g.turn + 1;
+    const start = g.turnIndex;
+    let steps = 0;
+    while (g.turnIndex - start < weeks) {
+      advanceTurn(g, { byDay: true });
+      steps++;
+    }
+    expect(g.turn).toBe(BALANCE.calendar.endOfSeasonTurn + 1);
+    expect(steps).toBeGreaterThan(weeks);
+  }, 60000);
+});

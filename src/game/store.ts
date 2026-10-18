@@ -208,11 +208,12 @@ export const useGame = create<GameStore>((set, get) => ({
       let reason: InterruptReason | null = null;
       const before = snapshotAttention(g);
       const startSeason = g.season;
+      const startIndex = g.turnIndex;
       const beforeSeasonEnd = g.turn <= BALANCE.calendar.endOfSeasonTurn;
       const baseOf = (week: number) => (reduced ? 0 : stepMsFor(week, weeks));
 
       // Plays one week and says how the run stands on its new date.
-      const step = (week: number) => {
+      const step = () => {
         const fromDay = dayNumber(g.season, g.turn, g.turnDay);
         const report = advanceTurn(g, { byDay: true });
         if (report.newSeason) seasonRolled = true;
@@ -221,13 +222,14 @@ export const useGame = create<GameStore>((set, get) => ({
         // A multi-week sim from before the season's end always stops once the season has ended, so the summer
         // tournament and the transfer window are never skipped past.
         const seasonOver = !untilEvent && beforeSeasonEnd && g.season === startSeason && g.turn > BALANCE.calendar.endOfSeasonTurn;
-        const last = why !== null || cautious || seasonOver || g.user.retired || week === maxWeeks - 1;
+        // A week with two of your matches plays as two steps, so the weeks are counted by the calendar, not by steps.
+        const last = why !== null || cautious || seasonOver || g.user.retired || g.turnIndex - startIndex >= maxWeeks;
         return { fromDay, toDay, why, last };
       };
 
       // The first week is worked out before the strip moves: it is the heaviest (one frame of waiting beats a stutter).
       await yieldFrame();
-      let cur = step(0);
+      let cur = step();
       for (let week = 0; ; week++) {
         reason = cur.why;
         const base = baseOf(week);
@@ -242,7 +244,7 @@ export const useGame = create<GameStore>((set, get) => ({
           // (A frame first, so the slide has really started before the main thread is busy.)
           if (!cur.last && !next) {
             await yieldFrame();
-            next = step(week + 1);
+            next = step();
           }
           const left = ms - (performance.now() - began);
           if (left > 0) await sleep(left);
@@ -250,7 +252,7 @@ export const useGame = create<GameStore>((set, get) => ({
         }
         if (cur.last || (!next && stopRequested)) break;
         // A week already worked out cannot be undone, so a Stop pressed meanwhile ends the run on it.
-        cur = next ?? step(week + 1);
+        cur = next ?? step();
         if (stopRequested) cur.last = true;
       }
       // Landed: show why it stopped, and only then refresh the page behind (the repaint is the slow part, and
