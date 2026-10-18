@@ -6,7 +6,7 @@ import { clubKit } from "@/components/art/clubKit";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Badge, Bar, Button, Card, CompChip, FormDots, LinkButton, Rating } from "@/components/ui";
-import { formatFixtureDate, seasonLabel } from "@/engine/calendar";
+import { dayNumber, formatFixtureDate, seasonLabel } from "@/engine/calendar";
 import { clubName } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { formatMoney } from "@/engine/players/economy";
@@ -223,9 +223,11 @@ function SimResultCard({ g, fixtureId }: { g: GameState; fixtureId: string }) {
 export function PendingMatchCard({ g }: { g: GameState }) {
   const sim = useGame((s) => s.simMatch);
   const busy = useGame((s) => s.busy);
-  const [simmed, setSimmed] = useState<{ id: string; turnIndex: number } | null>(null);
-  // The result belongs to the week it was played in; Continue moves on and clears it.
-  const result = simmed && simmed.turnIndex === g.turnIndex ? <SimResultCard g={g} fixtureId={simmed.id} /> : null;
+  const [simmed, setSimmed] = useState<{ id: string; day: number } | null>(null);
+  // The result belongs to the day it was played on. Matches are one per day, so a week can hold two: keying on
+  // the week would keep the old result up beside the next match after Continue.
+  const today = dayNumber(g.season, g.turn, g.turnDay);
+  const result = simmed && simmed.day === today ? <SimResultCard g={g} fixtureId={simmed.id} /> : null;
   const pm = g.pending[0];
   const comp = pm ? g.competitions[pm.compId] : undefined;
   const f = comp?.fixtures.find((x) => x.id === pm?.fixtureId);
@@ -250,7 +252,7 @@ export function PendingMatchCard({ g }: { g: GameState }) {
           <Link href="/play/match" className="pb-btn bg-sun px-5 text-[#1b1712]" data-testid="play-live">
             ▶ Play live
           </Link>
-          <Button tone="paper" onClick={async () => { await sim(f.id); setSimmed({ id: f.id, turnIndex: g.turnIndex }); }} disabled={!!busy} data-testid="quick-sim">
+          <Button tone="paper" onClick={async () => { await sim(f.id); setSimmed({ id: f.id, day: today }); }} disabled={!!busy} data-testid="quick-sim">
             Quick sim
           </Button>
         </div>
