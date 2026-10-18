@@ -43,7 +43,7 @@ export function snapshotAttention(state: GameState): AttentionSnapshot {
 export function interruptReason(
   state: GameState,
   before: AttentionSnapshot,
-  opts: { newSeason: boolean; stopOnMatch: boolean },
+  opts: { newSeason: boolean; stopOnMatch: boolean; stopForNews?: boolean },
 ): InterruptReason | null {
   if (state.user.retired) return "retired";
   // The gala is held on the first day of the new season, so it outranks the new-season stop it arrives with.
@@ -51,6 +51,9 @@ export function interruptReason(
   if (opts.newSeason) return "new-season";
   if (opts.stopOnMatch && state.pending.length > 0) return "match";
   if (!before.ceremony && ceremonyPending(state) && state.turn > BALANCE.calendar.endOfSeasonTurn) return "awards";
+  // A skip of a set length (the » menu) runs to its date: decisions fall back to their default and offers lapse on the
+  // way, as that menu says. Only "Continue" stops for them.
+  if (opts.stopForNews === false) return null;
   if (state.user.decisions.some((d) => !before.decisions.has(d.id))) return "decision";
   if (state.user.offers.some((o) => !before.offers.has(o.id) && o.status === "terms")) return "offer";
   if (!before.injured && userPlayer(state).injury) return "injury";

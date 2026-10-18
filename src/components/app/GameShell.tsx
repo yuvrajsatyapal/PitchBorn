@@ -98,7 +98,7 @@ function SimMenu() {
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Simulate ahead">
         <p className="mb-4 text-sm text-ink-2">
-          Your matches are quick-simmed with sensible decisions. Simulation stops early for new offers, decisions, injuries, awards night or a new season; open decisions fall back to their default and offers may lapse.
+          Your matches are quick-simmed with sensible decisions. It runs all the way to the date you pick, stopping early only for awards night or a new season. Decisions fall back to their default and offers may lapse on the way; use Continue to stop at each one.
         </p>
         <div className="grid gap-2">
           {options.map((o) => (

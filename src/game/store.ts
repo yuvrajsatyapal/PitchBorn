@@ -217,7 +217,7 @@ export const useGame = create<GameStore>((set, get) => ({
         const report = advanceTurn(g, { byDay: true });
         if (report.newSeason) seasonRolled = true;
         const toDay = dayNumber(g.season, g.turn, g.turnDay);
-        const why = interruptReason(g, before, { newSeason: report.newSeason, stopOnMatch: untilEvent });
+        const why = interruptReason(g, before, { newSeason: report.newSeason, stopOnMatch: untilEvent, stopForNews: untilEvent });
         // A multi-week sim from before the season's end always stops once the season has ended, so the summer
         // tournament and the transfer window are never skipped past.
         const seasonOver = !untilEvent && beforeSeasonEnd && g.season === startSeason && g.turn > BALANCE.calendar.endOfSeasonTurn;
