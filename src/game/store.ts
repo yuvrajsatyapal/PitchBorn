@@ -106,8 +106,8 @@ let stopRequested = false;
 
 /** Milliseconds each calendar day stays highlighted: quick once a run is under way, slower for short ones. */
 function stepMsFor(week: number, weeks: number | undefined): number {
-  if (weeks === undefined) return week < 2 ? 320 : 230;
-  return weeks <= 5 ? 280 : 150;
+  if (weeks === undefined) return week < 2 ? 480 : 360;
+  return weeks <= 5 ? 450 : 300;
 }
 
 export const useGame = create<GameStore>((set, get) => ({
