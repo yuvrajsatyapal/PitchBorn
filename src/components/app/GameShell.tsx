@@ -258,7 +258,7 @@ export function GameShell({ children }: { children: ReactNode }) {
   const loadActive = useGame((s) => s.loadActive);
   const busy = useGame((s) => s.busy);
   const error = useGame((s) => s.error);
-  const sim = useGame((s) => s.sim);
+  const simming = useGame((s) => s.sim !== null);
   const pathname = usePathname() ?? "";
   const [checked, setChecked] = useState(false);
   useEffect(() => {
@@ -301,7 +301,7 @@ export function GameShell({ children }: { children: ReactNode }) {
       </div>
       <BottomNav />
       {busy && <BusyOverlay label={busy} />}
-      {!sim && !NO_DECISION_POPUP.some((r) => pathname.startsWith(r)) && <DecisionCards g={game} />}
+      {!simming && !NO_DECISION_POPUP.some((r) => pathname.startsWith(r)) && <DecisionCards g={game} />}
     </div>
   );
 }
