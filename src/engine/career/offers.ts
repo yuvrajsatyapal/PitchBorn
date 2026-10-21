@@ -563,12 +563,13 @@ export function rolloverUserContract(state: GameState): void {
     const parent = p.loan.fromClubId;
     removeFromSquad(state, p.id);
     p.loan = undefined;
-    if (p.contract && p.contract.expires > state.season) {
+    // `expires` is the last season covered, so a contract ending this season still binds him to the parent club.
+    if (p.contract && p.contract.expires >= state.season) {
       addToSquad(state, p.id, parent);
       addNews(state, { kind: "transfer", title: `Loan over — back at ${clubName(parent)}`, important: true });
       onUserJoinedClub(state, parent);
     } else {
-      p.clubId = null;
+      p.clubId = parent;
     }
   }
   // `expires` is the last season covered. This runs after the season counter has advanced, so only a
