@@ -106,8 +106,8 @@ let stopRequested = false;
 
 /** Milliseconds each calendar day stays highlighted: quick once a run is under way, slower for short ones. */
 function stepMsFor(week: number, weeks: number | undefined): number {
-  if (weeks === undefined) return week < 2 ? 220 : 130;
-  return weeks <= 5 ? 150 : 50;
+  if (weeks === undefined) return week < 2 ? 320 : 230;
+  return weeks <= 5 ? 280 : 150;
 }
 
 export const useGame = create<GameStore>((set, get) => ({
@@ -237,23 +237,23 @@ export const useGame = create<GameStore>((set, get) => ({
         for (let day = cur.fromDay + 1; day <= cur.toDay; day++) {
           const began = performance.now();
           const stopping = stopRequested;
-          const ease = cur.last && !stopping && cur.toDay - day < 2 && base > 0;
-          const ms = stopping ? Math.min(base, 40) : ease ? base * 1.6 : base;
+          const ending = cur.last || stopping;
+          const ease = ending && cur.toDay - day < 2 && base > 0;
+          const ms = ease ? base * 1.6 : base;
           set({ sim: { day, stepMs: ms, ease, stopping, reason: null } });
-          // The next week is worked out while this day's slide is under way, so the strip never waits between weeks.
-          // (A frame first, so the slide has really started before the main thread is busy.)
-          if (!cur.last && !next) {
+          // The next week is worked out on the last day of this one, while its slide is under way. It cannot be undone,
+          // so doing it any earlier would make a Stop run on past the day it was pressed.
+          if (day === cur.toDay && !ending && !stopRequested) {
             await yieldFrame();
-            next = step();
+            if (!stopRequested) next = step();
           }
           const left = ms - (performance.now() - began);
           if (left > 0) await sleep(left);
           else if (ms === 0 && day % 7 === 0) await yieldFrame();
         }
-        if (cur.last || (!next && stopRequested)) break;
-        // A week already worked out cannot be undone, so a Stop pressed meanwhile ends the run on it.
+        // A Stop ends the run on the week being shown: the days that remain of it still play out, at the normal pace.
+        if (cur.last || stopRequested) break;
         cur = next ?? step();
-        if (stopRequested) cur.last = true;
       }
       // Landed: show why it stopped, and only then refresh the page behind (the repaint is the slow part, and
       // doing it any earlier would show the new date there before the strip has reached it).
