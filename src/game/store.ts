@@ -237,6 +237,11 @@ export const useGame = create<GameStore>((set, get) => ({
         for (let day = cur.fromDay + 1; day <= cur.toDay; day++) {
           const began = performance.now();
           const stopping = stopRequested;
+          // The week is already worked out, so a Stop jumps the strip to its last day rather than crawling there.
+          if (stopping && !cur.last) {
+            set({ sim: { day: cur.toDay, stepMs: 0, ease: false, stopping, reason: null } });
+            break;
+          }
           const ending = cur.last || stopping;
           const ease = ending && cur.toDay - day < 2 && base > 0;
           const ms = ease ? base * 1.6 : base;
