@@ -29,8 +29,7 @@ export interface AttentionSnapshot {
 export function snapshotAttention(state: GameState): AttentionSnapshot {
   return {
     decisions: new Set(state.user.decisions.map((d) => d.id)),
-    // Only offers already open for talks: a bid still waiting on the club must interrupt when the club agrees.
-    offers: new Set(state.user.offers.filter((o) => o.status === "terms").map((o) => o.id)),
+    offers: new Set(state.user.offers.map((o) => o.id)),
     ceremony: ceremonyPending(state),
     worldCeremony: worldCeremonyPending(state),
     injured: !!userPlayer(state).injury,
