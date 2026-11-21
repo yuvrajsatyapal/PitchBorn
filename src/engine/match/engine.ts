@@ -16,7 +16,8 @@ import { overallExact, overallFor } from "../players/attributes";
 import { footAttrMultipliers, type Foot } from "../players/foot";
 import type { MatchFx, SignalKey } from "../traits/types";
 import { clamp, type Rng } from "../rng";
-import type { Attributes, AttrKey, Position } from "../types";
+import type { Attributes, AttrKey, MatchConditions, Position } from "../types";
+import { attrMultipliers, drainMultiplier, weatherFx, type WeatherFx } from "../weather/effects";
 import { ATTR_LABEL } from "../players/model";
 import {
   ATTACK_K, BUILD_W, CARRY_W, CLEAR_WEIGHT, CROSSERS, DEFEND_K, DRIB_MIX, DUEL_MIX, FINAL_W, FINISHERS,
@@ -74,6 +75,8 @@ export interface MatchInput {
   detail: boolean;
   /** Ask the user to decide key moments (interactive play). */
   interactive?: boolean;
+  /** Weather and pitch (see engine/weather). Absent, or clear on a good pitch, the match plays exactly as without weather. */
+  conditions?: MatchConditions;
 }
 
 export type Side = "home" | "away";
@@ -200,6 +203,8 @@ export interface MatchResult {
   };
   motm: string;
   injuries: { id: string; side: Side; minute: number }[];
+  /** The conditions the match was played in, when it had any. */
+  conditions?: MatchConditions;
 }
 
 interface LivePlayer {
@@ -379,12 +384,15 @@ function conditionFactor(p: MatchPlayerInput): number {
   return fit * morale * form * sharp;
 }
 
-function effective(input: MatchPlayerInput, condition: number): Record<AttrKey, number> {
+function effective(input: MatchPlayerInput, condition: number, wx: WeatherFx | null = null): Record<AttrKey, number> {
   const eff = {} as Record<AttrKey, number>;
   // Footedness: the actions that force a weaker foot (cut inside onto the wrong foot, cross from the off flank) cost a little,
   // relative to a typical player in the role. Applied to the effective attributes so every shot, pass and cross sees it.
   const foot = input.foot ? footAttrMultipliers(input.foot, input.weakFoot ?? 60, !!input.ambidextrous, input.slot) : undefined;
   for (const k in input.attrs) eff[k as AttrKey] = input.attrs[k as AttrKey] * condition * (foot?.[k as AttrKey] ?? 1);
+  // Weather: a slick or heavy surface costs a little touch and passing, wind a little delivery (null in normal conditions).
+  const wxMul = attrMultipliers(wx, input.attrs);
+  if (wxMul) for (const k in wxMul) eff[k as AttrKey] *= wxMul[k as AttrKey] as number;
   return eff;
 }
 
@@ -403,11 +411,11 @@ export function emptyInv(): Involvement {
   return { touches: 0, passes: 0, passesOk: 0, dribbles: 0, dribblesWon: 0, duels: 0, duelsWon: 0, aerials: 0, aerialsWon: 0, interceptions: 0, clearances: 0, recoveries: 0, possLost: 0, crosses: 0, crossesOk: 0, boxTouches: 0, claims: 0, xg: 0, errors: 0 };
 }
 
-function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm: number, detail: boolean): LivePlayer {
+function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm: number, detail: boolean, wx: WeatherFx | null = null): LivePlayer {
   // A good or bad day: it changes how the player actually performs, so it shows in goals and ratings alike.
   const condition = conditionFactor(input) * (1 + dayForm);
   // Bench players get their effective attributes lazily when they come on.
-  const eff = started ? effective(input, condition) : (input.attrs as Record<AttrKey, number>);
+  const eff = started ? effective(input, condition, wx) : (input.attrs as Record<AttrKey, number>);
   const lvl = overallExact(input.attrs, input.slot) * condition;
   return {
     zones: started ? zonesOfFx(eff, input.fx) : [0, 0, 0],
@@ -471,10 +479,13 @@ export class MatchEngine {
   private statusMade = 0;
   private statusKinds: Record<string, number> = {};
   private duelStreak = 0;
+  /** What the weather does to this match; null when it does nothing (no conditions, or clear on a good pitch). */
+  private wx: WeatherFx | null;
 
   constructor(input: MatchInput, rng: Rng) {
     this.input = input;
     this.rng = rng;
+    this.wx = weatherFx(input.conditions);
     this.srng = rng.fork("subs");
     if (input.detail || input.interactive) {
       this.irng = rng.fork("flow");
@@ -484,8 +495,8 @@ export class MatchEngine {
     const mk = (t: TeamInput, side: Side): LiveTeam => ({
       input: t,
       side,
-      players: t.starters.map((p) => makeLive(p, side, true, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)), input.detail)),
-      bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)), input.detail)),
+      players: t.starters.map((p) => makeLive(p, side, true, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)), input.detail, this.wx)),
+      bench: t.bench.map((p) => makeLive(p, side, false, rng.normal(0, M.dayFormSd * (p.fx?.variance ?? 1)), input.detail, this.wx)),
       subsUsed: 0,
       subWindows: 0,
       subPlan: this.planWindows(),
@@ -627,10 +638,11 @@ export class MatchEngine {
     const styleDef = st ? 1 - (st.tempo - 0.5) * 0.02 + (st.pressing - 0.5) * 0.015 : 1;
     t.cache = {
       mid: mid * penalty * homeBoost * styleMid * (1 + clamp(teamMid, -0.05, 0.06)) * (1 + clamp((build - REF.build) / 100, -0.2, 0.2) * 0.04),
-      att: att * penalty * homeBoost * styleAtt * (1 + mentality * 0.03) * (1 + clamp(teamAtt, -0.05, 0.06)),
+      att: att * penalty * homeBoost * styleAtt * (1 + mentality * 0.03) * (1 + clamp(teamAtt, -0.05, 0.06)) * (1 - (this.wx?.tempo ?? 0)),
       def: def * penalty * homeBoost * styleDef * (1 - mentality * 0.03) * (1 + clamp(teamDef, -0.05, 0.06)),
       gk,
-      agg: agg ?? NEUTRAL_AGG,
+      // Snow or a frozen pitch: the odd defender loses his footing (a lapse the side would not otherwise make).
+      agg: this.wx?.lapse ? { ...(agg ?? NEUTRAL_AGG), lapse: (agg?.lapse ?? 0) + this.wx.lapse } : agg ?? NEUTRAL_AGG,
       star,
       mark: dw ? mark / dw : REF.mark,
       air: dw ? air / dw : REF.air,
@@ -791,7 +803,7 @@ export class MatchEngine {
         const stamina = p.input.attrs.stamina;
         // Hard workers run themselves down a little faster; stamina is what lets them keep it up.
         const drain = (0.55 - stamina / 300) * (this.half === 3 ? 1.2 : 1) * (0.94 + p.input.attrs.workRate / 800);
-        p.energy = clamp(p.energy - 3 * Math.max(0.12, drain) * (p.fx?.drain ?? 1), 5, 100);
+        p.energy = clamp(p.energy - 3 * Math.max(0.12, drain) * (p.fx?.drain ?? 1) * drainMultiplier(this.wx, stamina), 5, 100);
       }
     }
   }
@@ -891,7 +903,12 @@ export class MatchEngine {
   /** Who is to blame for a lapse: the player most prone to them, weighted by how prone. */
   private lapseCulprit(t: LiveTeam): LivePlayer | undefined {
     const prone = this.onPitch(t).filter((p) => (p.fx?.lapse ?? 0) > 0);
-    if (!prone.length) return undefined;
+    if (!prone.length) {
+      // Only weather can cause a lapse in a side without a lapse-prone player: any defender can lose his footing.
+      if (!this.wx?.lapse) return undefined;
+      const back = this.onPitch(t).filter((p) => p.input.slot !== "GK" && DEFEND_WEIGHT[p.input.slot] >= 1);
+      return back.length ? this.rng.pick(back) : undefined;
+    }
     let total = 0;
     for (const p of prone) total += p.fx?.lapse ?? 0;
     let r = this.rng.next() * total;
@@ -1172,8 +1189,8 @@ export class MatchEngine {
     } else if (this.input.detail && this.rng.chance(0.3)) {
       this.log({ minute: this.minute, side: def.side, type: "foul", text: `Foul by ${this.name(fouler)}.`, playerId: fouler.input.id, user: fouler.input.isUser });
     }
-    // Injury from the challenge
-    if (this.rng.chance(0.012)) {
+    // Injury from the challenge (a heavy or frozen pitch makes them a little likelier)
+    if (this.rng.chance(0.012 * (this.wx?.injury ?? 1))) {
       const victim = this.rng.pick(this.onPitch(att).filter((p) => p.input.slot !== "GK"));
       if (victim) this.injure(att, victim);
     }
@@ -1298,7 +1315,7 @@ export class MatchEngine {
     off.line.minuteOff = this.minute;
     off.line.offReason = forced ? "injury" : "sub";
     pick.input = { ...pick.input, slot };
-    pick.eff = effective(pick.input, pick.condition);
+    pick.eff = effective(pick.input, pick.condition, this.wx);
     pick.lvl = overallExact(pick.input.attrs, slot) * pick.condition;
     pick.sp = specials(pick.eff, pick.lvl);
     pick.zones = zonesOfFx(pick.eff, pick.fx);
@@ -1414,6 +1431,7 @@ export class MatchEngine {
       stats: this.statsNow(),
       motm: motm?.id ?? "",
       injuries: this.injuries,
+      ...(this.input.conditions ? { conditions: this.input.conditions } : {}),
     };
   }
 

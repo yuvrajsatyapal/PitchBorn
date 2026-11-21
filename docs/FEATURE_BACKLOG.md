@@ -28,7 +28,7 @@ Already in the game: match engine with key moments and substitutions, training, 
 
 5. **Teammate chemistry.** Partnerships with certain teammates that improve link-up on the pitch. Friends and rivals in the dressing room. Builds on the basic mentors that already exist.
 6. **Set-piece specialist roles.** Become the team's penalty or free-kick taker, with interactive moments for those kicks.
-7. **Weather and pitch conditions.** Rain, heat and snow change fatigue, passing and injury risk. There's no weather yet.
+7. **Weather and pitch conditions.** Rain, heat and snow change fatigue, passing and injury risk. **V1 in progress**: see `WEATHER.md`.
 8. **Agent personality.** Give the existing agents a style (greedy, loyal, well connected). Let the player fire and hire agents.
 9. **Loan advice for academy players.** Young players at elite clubs rarely play, so the UI should suggest a loan. This is already in the known issues in `PROJECT_STATE.md`.
 

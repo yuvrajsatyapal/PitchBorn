@@ -3,6 +3,7 @@ import { MatchEngine, type MatchPlayerInput, type TeamInput } from "../../src/en
 import { FORMATIONS } from "../../src/engine/match/lineup";
 import { generatePlayer } from "../../src/engine/players/generate";
 import { Rng } from "../../src/engine/rng";
+import type { MatchConditions } from "../../src/engine/types";
 
 const rng = Rng.fromSeed("calib");
 let n = 0;
@@ -32,3 +33,38 @@ run("82 vs 74", 82, 74);
 run("74 vs 82", 74, 82);
 run("86 vs 66", 86, 66);
 console.log("ms per match", (Date.now() - t0) / 7500);
+
+/** Weather: the same two sides in each condition (docs/WEATHER.md). Clear weather is the baseline. */
+const WH = team("WH", 76), WA = team("WA", 76);
+function weather(label: string, conditions: MatchConditions | undefined, N = 1200) {
+  const h = WH, a = WA;
+  let goals = 0, shots = 0, inj = 0, energy = 0, fin = 0, subMin = 0, subs = 0, passes = 0, passesOk = 0, detailN = 0;
+  for (let i = 0; i < N; i++) {
+    // One match in six is played in detail, for passing numbers.
+    const detail = i % 6 === 0;
+    const eng = new MatchEngine({ home: h, away: a, importance: 1, detail, ...(conditions ? { conditions } : {}) }, Rng.fromSeed(`wx:${i}`));
+    const r = eng.runToEnd();
+    goals += r.homeGoals + r.awayGoals;
+    shots += r.stats.shots[0] + r.stats.shots[1];
+    inj += r.injuries.length;
+    if (detail) {
+      detailN++;
+      passes += (r.stats.passes?.[0] ?? 0) + (r.stats.passes?.[1] ?? 0);
+      passesOk += (r.stats.passesOk?.[0] ?? 0) + (r.stats.passesOk?.[1] ?? 0);
+    }
+    for (const l of r.lines) {
+      if (l.started && !l.offReason) { energy += eng.energyOf(l.id) ?? 0; fin++; }
+      if (!l.started) { subMin += l.minuteOn; subs++; }
+    }
+  }
+  console.log(`${label.padEnd(22)} goals/m ${(goals / N).toFixed(2)} shots ${(shots / N).toFixed(1)} pass% ${(passes ? (passesOk / passes) * 100 : 0).toFixed(1)} (${detailN} detailed) inj ${(inj / N).toFixed(3)} end energy ${(energy / Math.max(1, fin)).toFixed(1)} sub min ${(subMin / Math.max(1, subs)).toFixed(1)}`);
+}
+console.log("\nWeather (76 v 76):");
+weather("no conditions", undefined);
+weather("clear / good", { weather: "clear", pitch: "good", tempC: 14 });
+weather("rain / good", { weather: "rain", pitch: "good", tempC: 10 });
+weather("heavy rain / heavy", { weather: "heavy-rain", pitch: "heavy", tempC: 9 });
+weather("wind / good", { weather: "wind", pitch: "good", tempC: 8 });
+weather("snow / frozen", { weather: "snow", pitch: "frozen", tempC: -3 });
+weather("heat 30 / dry", { weather: "heat", pitch: "dry", tempC: 30 });
+weather("heat 36 / dry", { weather: "heat", pitch: "dry", tempC: 36 });

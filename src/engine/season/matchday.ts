@@ -31,6 +31,8 @@ import { maybePressConference } from "../career/press";
 import { feedAfterMatch } from "../career/feed";
 import { applyChemistry, chemistryAfterMatch, chemistryBenchRivals } from "../career/chemistry";
 import { applyCoaching } from "../career/coaching";
+import { conditionsFor } from "../weather/conditions";
+import { weatherFx } from "../weather/effects";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
   const out: Fixture[] = [];
@@ -214,6 +216,8 @@ export function prepareMatch(state: GameState, fixture: Fixture, rng: Rng, opts:
     importance: matchImportance(state, comp, fixture),
     detail: opts.detail,
     interactive: opts.interactive,
+    // Only the user's matches feel the weather: the rest of the world plays exactly as it always has.
+    ...(involvesUserTeam(state, fixture) ? { conditions: conditionsFor(state, fixture) } : {}),
   };
   const uid = state.user.playerId;
   const inHome = home.starters.some((s) => s.player.id === uid) || home.bench.some((p) => p.id === uid);
@@ -286,6 +290,7 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
           passes: res.stats.passes,
           passesOk: res.stats.passesOk,
           userLine: res.lines.find((l) => l.id === state.user.playerId),
+          ...(res.conditions ? { conditions: res.conditions } : {}),
           ratings: Object.fromEntries(res.lines.map((l) => [l.id, l.rating])),
         }
       : undefined,
@@ -363,11 +368,12 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
   // that tired or injury-prone players are more likely to pick up.
   const userId = state.user.playerId;
   const hurt = new Set(res.injuries.map((i) => i.id));
+  const pitchInjury = weatherFx(res.conditions)?.injury ?? 1;
   for (const line of res.lines) {
     const p = state.players[line.id];
     const mins = lineMinutes(line);
     if (!p || hurt.has(p.id) || p.injury || mins <= 0) continue;
-    if (rng.chance(BALANCE.match.injuryPerPlayerMatch * (mins / 90) * injuryRiskFactor(p))) hurt.add(p.id);
+    if (rng.chance(BALANCE.match.injuryPerPlayerMatch * (mins / 90) * injuryRiskFactor(p) * pitchInjury)) hurt.add(p.id);
   }
   for (const id of hurt) {
     const p = state.players[id];

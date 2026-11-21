@@ -157,6 +157,44 @@ export const BALANCE = {
     tournamentTurns: { group: [45, 46, 47], QF: 48, SF: 49, F: 50 },
     monthLength: 4,
   },
+  /** Weather and pitch conditions (docs/WEATHER.md). Only the user's matches feel them; clear weather on a good pitch is neutral. */
+  weather: {
+    /** Temperature noise around the monthly mean (°C, sd). */
+    tempSd: 3.2,
+    /** °C per degree of latitude away from the country's reference latitude (further north = colder). */
+    tempPerLatitude: 0.55,
+    /** At or above this temperature the weather is "heat"; heat severity reaches 1 at `heatMaxC`. */
+    heatC: 28,
+    heatMaxC: 36,
+    /** Precipitation falls as snow at or below this temperature. */
+    snowMaxC: 1,
+    /** A pitch can only freeze at or below this temperature, and does so with this chance (always when it snows this cold). */
+    frozenMaxC: -1,
+    frozenChance: 0.55,
+    /** Share of precipitation that is heavy rain; chance light rain still leaves a heavy pitch. */
+    heavyRainShare: 0.28,
+    rainHeavyPitch: 0.35,
+    /** A warm, dry summer day leaves a dry pitch from this temperature. */
+    dryPitchC: 24,
+    /** Energy drain multiplier in the heat, from mild to severe heat; share of the extra drain high stamina removes. */
+    heatDrain: [1.15, 1.25] as [number, number],
+    staminaRelief: 0.6,
+    /** Stamina where heat relief starts and where it is full. */
+    staminaReliefRange: [55, 90] as [number, number],
+    /** Fraction off first touch, passing, dribbling and technique. Weather and pitch add up to `techCap`. */
+    tech: { rain: 0.02, "heavy-rain": 0.035, snow: 0.025, heavyPitch: 0.02, frozenPitch: 0.025 },
+    techCap: 0.05,
+    /** Share of the technical penalty strength + balance can remove, and the strength/balance range it builds over. */
+    physicalRelief: 0.5,
+    physicalReliefRange: [60, 85] as [number, number],
+    /** Fraction off crossing, long shots and keeper kicking in the wind. */
+    wind: 0.06,
+    /** Snow or a frozen pitch: attack strength (tempo) down by this fraction, and this extra chance per phase of a defensive mistake. */
+    tempo: 0.03,
+    lapse: 0.006,
+    /** Injury multipliers (challenges and non-contact). */
+    injury: { heavy: 1.2, frozen: 1.3 },
+  },
   rewards: {
     trainingBoost: { amount: 0.12, durationTurns: 6, cooldownTurns: 6 },
     recoveryBoost: { amount: 12, durationTurns: 1, cooldownTurns: 4 },

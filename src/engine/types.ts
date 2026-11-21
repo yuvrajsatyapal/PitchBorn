@@ -289,6 +289,17 @@ export interface FixtureResult {
   detail?: MatchDetailSummary;
 }
 
+export type WeatherKind = "clear" | "rain" | "heavy-rain" | "snow" | "heat" | "wind";
+export type PitchKind = "good" | "heavy" | "frozen" | "dry";
+
+/** The weather and pitch a match is played in (see engine/weather and docs/WEATHER.md). */
+export interface MatchConditions {
+  weather: WeatherKind;
+  /** Air temperature at kick-off, °C. */
+  tempC: number;
+  pitch: PitchKind;
+}
+
 export interface MatchDetailSummary {
   possession: [number, number];
   shots: [number, number];
@@ -304,6 +315,8 @@ export interface MatchDetailSummary {
   ratings: Record<PlayerId, number>;
   /** The user's own match line, so the full-time summary can be shown again from the results screen. */
   userLine?: PlayerLine;
+  /** The weather and pitch the match was played in. Absent in results from before weather existed. */
+  conditions?: MatchConditions;
 }
 
 export interface Fixture {
