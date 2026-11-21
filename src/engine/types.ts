@@ -1180,6 +1180,8 @@ export interface UserCareer {
   rewardCooldowns: Record<string, number>;
   /** Unlocked achievements, oldest first. Optional for old saves. */
   achievements?: AchievementUnlock[];
+  /** First-season tips the player has dismissed. */
+  tipsSeen?: string[];
 }
 
 export interface LegacyResult {
@@ -1273,7 +1275,8 @@ export interface GameState {
   /** Hall of fame of retired notable NPCs (name + totals) to keep records after removal. */
   legends: { id: PlayerId; name: string; nationality: CountryCode; goals: number; assists?: number; apps: number; caps: number; peak: number; retiredSeason: number }[];
   transferLog: { season: number; turn: number; playerId: PlayerId; name: string; from: ClubId | null; to: ClubId; fee: number }[];
-  settings: { difficulty: "relaxed" | "standard" | "hardcore"; autoSave: boolean; countries?: string[] };
+  /** `tips: false` hides the first-season tips (absent means on). */
+  settings: { difficulty: "relaxed" | "standard" | "hardcore"; autoSave: boolean; countries?: string[]; tips?: boolean };
   /** Match the user must play this turn before the world advances. */
   pending: PendingMatch[];
   /** Day within the current week (0-6) that the user is on: a week with two of their matches plays out as two separate days. */

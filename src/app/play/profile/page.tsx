@@ -22,6 +22,7 @@ import { hasTrait } from "@/engine/traits/effects";
 import { seasonLabel } from "@/engine/calendar";
 import { age, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
+import { TipCard } from "@/components/game/TipCard";
 
 export default function Profile() {
   const g = useGameState();
@@ -52,6 +53,7 @@ export default function Profile() {
       <PageTitle kicker="My player" title="Player profile" className="-mb-1">
         <LinkButton href="/play/card" size="sm" tone="sun">🪪 Career card</LinkButton>
       </PageTitle>
+      <TipCard page="profile" />
       <PlayerHero g={g} p={p} />
       <JerseyCard g={g} />
       <HonoursCard g={g} />

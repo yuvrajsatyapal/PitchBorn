@@ -15,6 +15,7 @@ export default function Settings() {
   const notify = useGame((s) => s.notify);
   const setDifficulty = useGame((s) => s.setDifficulty);
   const setAutoSave = useGame((s) => s.setAutoSave);
+  const setTips = useGame((s) => s.setTips);
   const lastSavedAt = useGame((s) => s.lastSavedAt);
   const router = useRouter();
   const file = useRef<HTMLInputElement>(null);
@@ -126,6 +127,10 @@ export default function Settings() {
           <div className="mb-2 text-sm font-bold">Difficulty</div>
           <Tabs value={g.settings.difficulty} onChange={setDifficulty} items={[{ id: "relaxed", label: "Easy" }, { id: "standard", label: "Medium" }, { id: "hardcore", label: "Hard" }]} />
           <p className="mt-1 text-xs text-muted">Affects manager trust and contract generosity. Potential is fixed at career start.</p>
+          <label className="mt-4 flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" checked={g.settings.tips !== false} onChange={(e) => setTips(e.target.checked)} className="h-5 w-5 accent-[var(--pitch)]" data-testid="tips-toggle" />
+            Show first-season tips
+          </label>
           <div className="mb-2 mt-4 text-sm font-bold">Theme</div>
           <Tabs value={theme} onChange={applyTheme} items={[{ id: "system", label: "System" }, { id: "light", label: "Light" }, { id: "dark", label: "Dark" }]} />
         </Card>

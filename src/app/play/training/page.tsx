@@ -9,6 +9,7 @@ import { focusOf, focusStrength } from "@/engine/players/focus";
 import type { TrainingFocus } from "@/engine/types";
 import { user } from "@/game/selectors";
 import { useGame, useGameState } from "@/game/store";
+import { TipCard } from "@/components/game/TipCard";
 
 export default function Training() {
   const g = useGameState();
@@ -25,6 +26,7 @@ export default function Training() {
   return (
     <div className="grid gap-4">
       <PageTitle kicker="Weekly plan" title="Training" className="-mb-1" />
+      <TipCard page="training" />
       {p.injury && (
         <Card tone="coral">
           🩹 You&apos;re in rehab ({p.injury.type}, {p.injury.weeksLeft} week{p.injury.weeksLeft === 1 ? "" : "s"} left). Training resumes when you&apos;re fit.

@@ -13,6 +13,7 @@ import { worldCeremonyPending } from "@/engine/awards/world";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { acceptSponsorOffer, declineSponsorOffer } from "@/engine/career/sponsors";
 import { resolveDecision } from "@/engine/career/events";
+import { dismissTip as dismissTipAction, setTipsEnabled } from "@/engine/career/tips";
 import { negotiate, requestRenewal, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
 import { syncSagas } from "@/engine/career/saga/engine";
 import type { MatchResult } from "@/engine/match/engine";
@@ -92,6 +93,8 @@ interface GameStore {
   grantReward: (kind: RewardKind) => boolean;
   setDifficulty: (d: GameState["settings"]["difficulty"]) => void;
   setAutoSave: (on: boolean) => void;
+  dismissTip: (id: string) => void;
+  setTips: (on: boolean) => void;
 }
 
 const yieldFrame = () => new Promise<void>((r) => setTimeout(r, 16));
@@ -497,6 +500,22 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!g) return;
     g.settings.autoSave = on;
     get().bump();
+  },
+
+  dismissTip: (id) => {
+    const g = get().game;
+    if (!g) return;
+    dismissTipAction(g, id);
+    get().bump();
+    void get().save();
+  },
+
+  setTips: (on) => {
+    const g = get().game;
+    if (!g) return;
+    setTipsEnabled(g, on);
+    get().bump();
+    void get().save();
   },
 }));
 

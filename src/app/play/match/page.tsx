@@ -17,6 +17,7 @@ import { canRequestRest } from "@/engine/season/advance";
 import { matchStatus } from "@/engine/season/selection";
 import { FormerManagerBlock, MatchContextStrip, MatchPreviewPanel, SelectionBlock } from "@/components/game/MatchBriefing";
 import { useGame, useGameState } from "@/game/store";
+import { TipCard } from "@/components/game/TipCard";
 
 function derbyLevel(g: GameState, f: Fixture): number {
   const me = user(g).clubId;
@@ -202,6 +203,7 @@ export default function MatchDay() {
   return (
     <div>
       <PageTitle kicker={`${seasonLabel(g.season)} · Week ${g.turn}`} title="Match Day" />
+      <TipCard page="match" className="mb-4" />
       {fixture && comp ? (
         <Card tone="coral" className="mb-5">
           <div className="text-[11px] font-black uppercase tracking-widest">

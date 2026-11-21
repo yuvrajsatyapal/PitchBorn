@@ -16,6 +16,7 @@ import { TRAINING_FOCUS, INTENSITY } from "@/engine/players/development";
 import { keeperMetrics } from "@/engine/players/keeper";
 import { fmtRating, seasonTotal, user, userFixtures, userLeague } from "@/game/selectors";
 import { useGameState } from "@/game/store";
+import { TipCard } from "@/components/game/TipCard";
 
 export default function Dashboard() {
   const g = useGameState();
@@ -48,6 +49,7 @@ export default function Dashboard() {
   return (
     <div className="grid gap-4">
       <PlayerHero g={g} p={p} />
+      <TipCard page="dashboard" />
       <SponsorSlot />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-4">

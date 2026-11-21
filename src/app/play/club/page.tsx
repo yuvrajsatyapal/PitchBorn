@@ -16,6 +16,7 @@ import type { Player } from "@/engine/types";
 import { squadOf } from "@/engine/world/helpers";
 import { age, name, ovr, POS_TONE, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
+import { TipCard } from "@/components/game/TipCard";
 
 const OWNERSHIP_TONE: Record<OwnershipType, "sun" | "pitch" | "plum" | "coral" | "sky" | "paper"> = {
   "fan-owned": "pitch", billionaire: "sun", "state-backed": "plum", corporate: "sky", "private-equity": "coral", standard: "paper",
@@ -51,6 +52,7 @@ export default function ClubPage() {
   return (
     <div className="grid gap-4">
       <PageTitle kicker={league?.name} title={<span className="flex items-center gap-3"><Crest clubId={club.id} size={48} /> {st.name}</span>} className="-mb-1" />
+      <TipCard page="club" />
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="grid content-start gap-4 lg:col-span-2">
         <Card title="The club">

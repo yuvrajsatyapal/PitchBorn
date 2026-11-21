@@ -16,6 +16,7 @@ import { formatMoney } from "@/engine/players/economy";
 import type { TransferOffer } from "@/engine/types";
 import { age, user } from "@/game/selectors";
 import { useGame, useGameState } from "@/game/store";
+import { TipCard } from "@/components/game/TipCard";
 
 function bonusSummary(t: TransferOffer["terms"]): string {
   const parts: string[] = [];
@@ -113,6 +114,7 @@ export default function CareerPage() {
   return (
     <div className="grid gap-4">
       <PageTitle kicker={win ? `${win === "summer" ? "Summer" : "January"} window open` : "Transfer window closed"} title="Career & Contract" className="-mb-1" />
+      <TipCard page="transfers" />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title="Contract" className="lg:col-span-2">
           {p.contract ? (
