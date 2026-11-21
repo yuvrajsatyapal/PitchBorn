@@ -12,6 +12,7 @@ import { Button, Card, Tabs } from "@/components/ui";
 import type { PreparedMatch } from "@/engine/season/matchday";
 import { teamLabel } from "@/game/selectors";
 import { useGame } from "@/game/store";
+import { ConditionsChip } from "@/components/game/Conditions";
 
 type Pane = "commentary" | "stats";
 
@@ -94,6 +95,11 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-paper/20">
           <div className="h-full bg-sun transition-all" style={{ width: `${Math.min(100, (minute / 90) * 100)}%` }} />
         </div>
+        {eng.input.conditions && (
+          <div className="mt-2 flex justify-center">
+            <ConditionsChip c={eng.input.conditions} />
+          </div>
+        )}
       </Card>
 
       <DecisionCard

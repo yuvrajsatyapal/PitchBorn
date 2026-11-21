@@ -18,6 +18,7 @@ import { matchStatus } from "@/engine/season/selection";
 import { FormerManagerBlock, MatchContextStrip, MatchPreviewPanel, SelectionBlock } from "@/components/game/MatchBriefing";
 import { useGame, useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
+import { ConditionsChip } from "@/components/game/Conditions";
 
 function derbyLevel(g: GameState, f: Fixture): number {
   const me = user(g).clubId;
@@ -110,6 +111,11 @@ function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
         <div className="text-center text-xs font-bold uppercase tracking-widest text-sun/80">
           {comp?.name} {f.stage ? `· ${f.stage}` : ""} · Full time
         </div>
+        {d?.conditions && (
+          <div className="mt-1.5 flex justify-center">
+            <ConditionsChip c={d.conditions} />
+          </div>
+        )}
         <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
           <div className="flex min-w-0 flex-col items-center gap-1.5 text-center">
             <Crest clubId={f.home} size={56} />

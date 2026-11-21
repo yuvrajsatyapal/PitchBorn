@@ -11,6 +11,8 @@ import { formerManagerContext, headToHead, IMPORTANCE_LABEL, keyOpponents, match
 import type { Availability, MatchStatus } from "@/engine/season/selection";
 import type { Fixture, GameState } from "@/engine/types";
 import { useGame } from "@/game/store";
+import { ConditionsForecast } from "@/components/game/Conditions";
+import { conditionsFor } from "@/engine/weather/conditions";
 
 const STATUS_TEXT: Record<Availability, { label: string; tone: "pitch" | "sky" | "sun" | "coral" | "paper"; line: string }> = {
   starting: { label: "Starting XI", tone: "pitch", line: "The manager has named you in the starting XI." },
@@ -66,6 +68,7 @@ export function MatchContextStrip({ g, fixture }: { g: GameState; fixture: Fixtu
           ))}
         </div>
       )}
+      <ConditionsForecast c={conditionsFor(g, fixture)} className="mx-auto mt-3 max-w-xl" />
     </div>
   );
 }
