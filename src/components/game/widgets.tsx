@@ -327,3 +327,17 @@ export function RecentAchievementsCard({ g }: { g: GameState }) {
     </Card>
   );
 }
+
+/** Dashboard prompt while reporters are waiting. */
+export function PressCard({ g }: { g: GameState }) {
+  const c = g.user.press;
+  if (!c || c.done) return null;
+  return (
+    <Card tone="coral" title={`🎙️ ${c.kind === "pre" ? "Pre-match" : "Post-match"} press conference`}>
+      <p className="mb-3 text-sm">
+        {c.questions.length} reporter{c.questions.length > 1 ? "s" : ""} want a word about {c.kind === "pre" ? "the game against" : "the match with"} {clubName(c.opponentId)}. What you say moves the fans, the dressing room and the manager.
+      </p>
+      <LinkButton href="/play/press" tone="coral" size="sm">Face the press</LinkButton>
+    </Card>
+  );
+}

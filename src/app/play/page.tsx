@@ -7,7 +7,7 @@ import { JerseyChoiceCard } from "@/components/game/NumberPicker";
 import { RecentRatings } from "@/components/game/RecentRatings";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { VaultCard } from "@/components/game/VaultCard";
-import { AwardsNightCard, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, RecentAchievementsCard, TeamForm } from "@/components/game/widgets";
+import { AwardsNightCard, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, PressCard, RecentAchievementsCard, TeamForm } from "@/components/game/widgets";
 import { Badge, Card, Empty, LinkButton, Stat } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
 import { windowName } from "@/engine/calendar";
@@ -56,6 +56,7 @@ export default function Dashboard() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-4">
           <PendingMatchCard g={g} />
+          <PressCard g={g} />
           <VaultCard g={g} />
           <AwardsNightCard g={g} />
           <RecentAchievementsCard g={g} />

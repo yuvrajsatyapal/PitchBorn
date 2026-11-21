@@ -37,6 +37,7 @@ import { ensureMinimumSquads, listForFinancialReasons, processExpiringContracts,
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
 import { checkCareerAchievements } from "../career/achievements";
+import { expirePress, maybePressConference } from "../career/press";
 import { refreshRecall } from "../memory/recall";
 import { captainScore, weeklyPersonality, mentorsOf } from "../traits/career";
 import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
@@ -92,6 +93,18 @@ export function beginTurn(state: GameState): void {
   ensureObjectives(state);
   loadUserDay(state);
   announceFormerManagers(state);
+  preMatchPress(state);
+}
+
+/** Derbies, semi-finals, finals and continental nights get a press conference before kick-off. */
+function preMatchPress(state: GameState): void {
+  const me = userPlayer(state);
+  for (const pm of state.pending) {
+    const found = findFixture(state, pm.fixtureId);
+    if (!found || !me.clubId || (found.fixture.home !== me.clubId && found.fixture.away !== me.clubId)) continue;
+    const opponentId = found.fixture.home === me.clubId ? found.fixture.away : found.fixture.home;
+    if (maybePressConference(state, { kind: "pre", comp: found.comp, fixture: found.fixture, opponentId, myTeam: me.clubId })) break;
+  }
 }
 
 export function findFixture(state: GameState, fixtureId: string) {
@@ -413,6 +426,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
   });
   if (state.user.retired) report.retiredForced = true;
   checkCareerAchievements(state);
+  expirePress(state);
   beginTurn(state);
   refreshRecall(state);
   state.updatedAt = new Date().toISOString();

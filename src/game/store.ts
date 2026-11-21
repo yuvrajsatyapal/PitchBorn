@@ -13,6 +13,7 @@ import { worldCeremonyPending } from "@/engine/awards/world";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { acceptSponsorOffer, declineSponsorOffer } from "@/engine/career/sponsors";
 import { resolveDecision } from "@/engine/career/events";
+import { answerPress as answerPressAction, skipPress as skipPressAction } from "@/engine/career/press";
 import { cancelLoanRequest, requestLoan as requestLoanAction } from "@/engine/career/loanAdvice";
 import { dismissTip as dismissTipAction, setTipsEnabled } from "@/engine/career/tips";
 import { negotiate, requestRenewal, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
@@ -96,6 +97,9 @@ interface GameStore {
   setDifficulty: (d: GameState["settings"]["difficulty"]) => void;
   setAutoSave: (on: boolean) => void;
   dismissTip: (id: string) => void;
+  /** Returns the reaction to the answer. */
+  answerPress: (questionId: string, answerId: string) => string;
+  skipPress: () => void;
   setTips: (on: boolean) => void;
 }
 
@@ -511,6 +515,24 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!g) return;
     g.settings.autoSave = on;
     get().bump();
+  },
+
+  answerPress: (questionId, answerId) => {
+    const g = get().game;
+    if (!g) return "";
+    const res = answerPressAction(g, questionId, answerId);
+    get().bump();
+    if (!res.ok) get().notify(res.text, "bad");
+    else if (g.user.press?.done) void get().save();
+    return res.text;
+  },
+
+  skipPress: () => {
+    const g = get().game;
+    if (!g) return;
+    skipPressAction(g);
+    get().bump();
+    get().notify("You walked past the reporters.");
   },
 
   dismissTip: (id) => {

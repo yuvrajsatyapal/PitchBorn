@@ -8,6 +8,7 @@ import type { GameState, LegacyAppearance } from "../engine/types";
 import { agentRating, agentWeeklyFee, tierFor } from "../engine/career/agents";
 import { sanitizeCeremony } from "../engine/awards/sanitize";
 import { sanitizeAchievements } from "../engine/career/achievements";
+import { sanitizePress } from "../engine/career/press";
 import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
@@ -244,6 +245,11 @@ export function migrateState(raw: RawState): GameState {
     sanitizeCeremony(state);
   } catch {
     delete state.ceremony;
+  }
+  try {
+    sanitizePress(state);
+  } catch {
+    if (state.user) state.user.press = undefined;
   }
   try {
     sanitizeAchievements(state);

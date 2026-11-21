@@ -9,7 +9,7 @@ import { rivalHref } from "@/components/game/RivalCards";
 import { MemoryLane } from "@/components/game/VaultCard";
 import { matchPreview } from "@/engine/career/rivalry/engine";
 import { rivalryLevel } from "@/engine/memory/rivalry";
-import { Badge, Button, Card, Empty, PageTitle, Rating } from "@/components/ui";
+import { Badge, Button, Card, Empty, LinkButton, PageTitle, Rating } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
 import type { Fixture, GameState } from "@/engine/types";
 import { name, scoreText, teamLabel, user, userFixtures } from "@/game/selectors";
@@ -126,6 +126,11 @@ function ResultSummary({ g, f }: { g: GameState; f: Fixture }) {
           <ul className="grid content-start gap-0.5">{scorerLine("away")}</ul>
         </div>
       </Card>
+      {g.user.press && !g.user.press.done && g.user.press.fixtureId === f.id && (
+        <Card tone="coral" title="🎙️ The press are waiting" action={<LinkButton href="/play/press" tone="coral" size="sm">Face the press</LinkButton>}>
+          <p className="text-sm">Reporters want your reaction to the game. Your answers move the fans, the dressing room and the manager.</p>
+        </Card>
+      )}
       {d && (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
           <div className="grid gap-4">

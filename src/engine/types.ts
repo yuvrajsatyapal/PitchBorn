@@ -488,6 +488,66 @@ export interface AwardRecord {
   age?: number;
 }
 
+export type PressTone = "humble" | "confident" | "fiery" | "deflect";
+
+/** What one press answer does: relationship, morale and reputation deltas. */
+export interface PressEffects {
+  manager?: number;
+  teammates?: number;
+  supporters?: number;
+  board?: number;
+  morale?: number;
+  reputation?: number;
+}
+
+export interface PressAnswer {
+  id: string;
+  tone: PressTone;
+  label: string;
+  /** Who will like it, in a few words. */
+  hint: string;
+  /** What happens, shown after answering. */
+  reaction: string;
+  effects: PressEffects;
+}
+
+export interface PressQuestion {
+  id: string;
+  topic: "result" | "personal" | "rivalry" | "preview" | "transfer" | "contract" | "playing-time";
+  text: string;
+  reporter: string;
+  outlet: string;
+  answers: PressAnswer[];
+}
+
+/** A press conference before or after one of the user's matches (see engine/career/press.ts). */
+export interface PressConference {
+  id: string;
+  kind: "pre" | "post";
+  fixtureId: string;
+  compName: string;
+  opponentId: string;
+  season: number;
+  turn: number;
+  /** Turn index after which an unanswered conference lapses. */
+  expiresIndex: number;
+  questions: PressQuestion[];
+  /** Question id → answer id. */
+  answers: Record<string, string>;
+  done?: boolean;
+  headline?: string;
+}
+
+export interface PressLogEntry {
+  season: number;
+  turn: number;
+  kind: "pre" | "post";
+  fixtureId: string;
+  opponentId: string;
+  headline: string;
+  tone: PressTone;
+}
+
 /** One unlocked achievement (definitions live in engine/career/achievements.ts). */
 export interface AchievementUnlock {
   id: string;
@@ -1184,6 +1244,11 @@ export interface UserCareer {
   achievements?: AchievementUnlock[];
   /** First-season tips the player has dismissed. */
   tipsSeen?: string[];
+  /** The current press conference, answered or not, and the headlines from past ones. */
+  press?: PressConference;
+  pressLog?: PressLogEntry[];
+  /** Conferences skipped in a row (the board minds a habit of it). */
+  pressSkips?: number;
 }
 
 export interface LegacyResult {
