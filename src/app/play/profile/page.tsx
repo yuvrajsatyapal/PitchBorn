@@ -12,7 +12,7 @@ import {
   SkillStarsGroup,
   Stars,
 } from "@/components/game/widgets";
-import { AttrValue, Badge, Card, PageTitle, Table } from "@/components/ui";
+import { AttrValue, Badge, Card, LinkButton, PageTitle, Table } from "@/components/ui";
 import { clubName, countryName } from "@/engine/data/world";
 import { POSITION_LABEL, overallFor } from "@/engine/players/attributes";
 import { ATTR_LABEL, groupsFor } from "@/engine/players/model";
@@ -49,7 +49,9 @@ export default function Profile() {
     .slice(0, 4);
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="My player" title="Player profile" className="-mb-1" />
+      <PageTitle kicker="My player" title="Player profile" className="-mb-1">
+        <LinkButton href="/play/card" size="sm" tone="sun">🪪 Career card</LinkButton>
+      </PageTitle>
       <PlayerHero g={g} p={p} />
       <JerseyCard g={g} />
       <HonoursCard g={g} />

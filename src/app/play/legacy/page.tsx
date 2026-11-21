@@ -124,6 +124,7 @@ export default function Legacy() {
       </Card>
       <div className="flex flex-wrap gap-2">
         <Link href="/play/history" className="pb-btn bg-card px-5">Full timeline</Link>
+        <LinkButton href="/play/card" tone="sun">🪪 Share career card</LinkButton>
         <LinkButton href="/new" tone="pitch">Start a new career ▸</LinkButton>
       </div>
     </div>
