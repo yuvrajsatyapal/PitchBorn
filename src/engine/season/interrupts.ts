@@ -4,10 +4,11 @@ import { BALANCE } from "../balance";
 import type { GameState } from "../types";
 import { userPlayer } from "../world/helpers";
 
-export type InterruptReason = "retired" | "new-season" | "match" | "awards" | "world-awards" | "decision" | "offer" | "injury";
+export type InterruptReason = "coaching" | "retired" | "new-season" | "match" | "awards" | "world-awards" | "decision" | "offer" | "injury";
 
 export const INTERRUPT_LABEL: Record<InterruptReason, string> = {
   retired: "Career over",
+  coaching: "Coaching news",
   "new-season": "New season",
   match: "Match day",
   awards: "Awards night",
@@ -24,6 +25,8 @@ export interface AttentionSnapshot {
   ceremony: boolean;
   worldCeremony: boolean;
   injured: boolean;
+  coachOffers: Set<string>;
+  coachClub: string | null;
 }
 
 export function snapshotAttention(state: GameState): AttentionSnapshot {
@@ -33,6 +36,8 @@ export function snapshotAttention(state: GameState): AttentionSnapshot {
     ceremony: ceremonyPending(state),
     worldCeremony: worldCeremonyPending(state),
     injured: !!userPlayer(state).injury,
+    coachOffers: new Set((state.user.coach?.offers ?? []).map((o) => o.id)),
+    coachClub: state.user.coach?.clubId ?? null,
   };
 }
 
@@ -45,7 +50,16 @@ export function interruptReason(
   before: AttentionSnapshot,
   opts: { newSeason: boolean; stopOnMatch: boolean; stopForNews?: boolean },
 ): InterruptReason | null {
-  if (state.user.retired) return "retired";
+  if (state.user.retired && !state.user.coach?.active) return "retired";
+  if (state.user.retired) {
+    // In the dugout: stop for a new season, a job offer, or losing the job.
+    if (opts.newSeason) return "new-season";
+    if (opts.stopForNews === false) return null;
+    const c = state.user.coach;
+    if (c?.offers.some((o) => !before.coachOffers.has(o.id))) return "coaching";
+    if (before.coachClub && c?.clubId !== before.coachClub) return "coaching";
+    return null;
+  }
   // The gala is held on the first day of the new season, so it outranks the new-season stop it arrives with.
   if (!before.worldCeremony && worldCeremonyPending(state)) return "world-awards";
   if (opts.newSeason) return "new-season";

@@ -39,8 +39,16 @@ Read this first after any context reset. Keep it short and current.
 ## Career systems pass (schema 10)
 Club overview/relationships, Match Day briefing + selection reasons, knockout brackets, contract clauses and bonuses, national-team allegiance and invitations, match log + analytics, dashboard rating chart. Design and limits: `docs/CAREER_SYSTEMS.md`.
 
+## Retention & career features (Nov 2026)
+All optional on `UserCareer`, sanitised on load (`persistence/migrations.ts`), no schema bump:
+achievements (`engine/career/achievements.ts`), career card (`card.ts` + `/play/card`), first-season tips (`tips.ts`, `settings.tips`),
+loan advice (`loanAdvice.ts`; `loanPool` is shared with loan offers in `offers.ts`), press conferences (`press.ts`),
+social feed (`feed.ts`), teammate chemistry (`chemistry.ts`, applied to match inputs in `season/matchday.ts`),
+coaching career (`coaching.ts`). Press, feed and coaching draw from `Rng.fromSeed(seed + event)` streams so they never move the world RNG.
+Coaching: after `startCoaching`, `advanceTurn` keeps simulating the world with the user-only steps skipped; the user's managed club is
+skipped by AI sackings and season-boundary manager moves (`managers/movement.ts`), and keeps its chosen formation at rollover.
+
 ## Known issues / TODO
 - Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
-- Academy prospects at elite clubs rarely play — UI should surface loan advice
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).
 - Acceleration's automatic-play use is small (a share of the counter-attack chance after a won ball, plus the overall, ageing and the interactive jockey odds); keeper anticipation has no measurable effect on shots against (see docs/ATTRIBUTES.md, docs/SIMULATION.md).

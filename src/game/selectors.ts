@@ -16,7 +16,9 @@ export function teamLabel(id: string, short = false): string {
 
 export function userLeague(g: GameState): Competition | undefined {
   const p = user(g);
-  const lid = p.clubId ? g.clubs[p.clubId]?.leagueId : undefined;
+  // A retired player's league is the one his coaching job is in.
+  const clubId = p.clubId ?? (g.user.coach?.active ? g.user.coach.clubId : null);
+  const lid = clubId ? g.clubs[clubId]?.leagueId : undefined;
   return lid ? g.competitions[leagueCompId(lid, g.season)] : undefined;
 }
 

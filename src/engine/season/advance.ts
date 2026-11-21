@@ -40,6 +40,7 @@ import { checkCareerAchievements } from "../career/achievements";
 import { expirePress, maybePressConference } from "../career/press";
 import { feedWeekly } from "../career/feed";
 import { chemistryWeekly } from "../career/chemistry";
+import { coachSeasonEnd, coachWeekly, coaching, isUserManagedClub } from "../career/coaching";
 import { refreshRecall } from "../memory/recall";
 import { captainScore, weeklyPersonality, mentorsOf } from "../traits/career";
 import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
@@ -81,7 +82,7 @@ function loadUserDay(state: GameState): boolean {
 }
 
 export function beginTurn(state: GameState): void {
-  if (state.user.retired) {
+  if (state.user.retired && !coaching(state)) {
     state.pending = [];
     return;
   }
@@ -92,6 +93,12 @@ export function beginTurn(state: GameState): void {
     }
   });
   assignMatchDays(state);
+  // In the dugout the world runs on, but there is no player to pick: nothing waits for the user on match days.
+  if (state.user.retired) {
+    state.pending = [];
+    state.turnDay = 0;
+    return;
+  }
   ensureObjectives(state);
   loadUserDay(state);
   announceFormerManagers(state);
@@ -325,6 +332,7 @@ function monthlyDevelopment(state: GameState, rng: Rng): void {
 
 function sackManagers(state: GameState, rng: Rng): void {
   for (const club of Object.values(state.clubs)) {
+    if (isUserManagedClub(state, club.id)) continue;
     if (state.season - club.manager.since < 1 && state.turn < 30) continue;
     const comp = state.competitions[leagueCompId(club.leagueId, state.season)];
     if (!comp?.table || club.expectation === undefined) continue;
@@ -353,7 +361,8 @@ export interface AdvanceReport {
 
 /** Simulate the rest of the current week and move to the next one. */
 export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): AdvanceReport {
-  if (state.user.retired) return { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
+  const coach = state.user.retired && !!coaching(state);
+  if (state.user.retired && !coach) return { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
   settleCeremony(state);
   settleWorldCeremony(state);
   const report: AdvanceReport = { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
@@ -386,7 +395,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       }
       weeklyCondition(p, played.has(p.id) || (p.id === uid && state.user.lastMatchTurn === state.turn));
     }
-    userWeekly(state, rng);
+    if (!coach) userWeekly(state, rng);
     weeklyFinances(state);
     if (state.turn % 4 === 0) monthlyDevelopment(state, rng);
     if (isMonthEnd(state.turn)) playerOfTheMonth(state);
@@ -398,22 +407,25 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       runAiTransfers(state, rng, windowName(state.turn) === "summer" ? 0.3 : 0.15);
       repairAllSquads(state);
     }
-    processBids(state, rng);
-    generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r));
-    // Stories can start brewing in the weeks before a window opens, but only for players clubs would build a saga around.
-    if (!state.user.retired && upcomingWindow(state.turn) && userPlayer(state).reputation >= RUMOUR_MIN_REPUTATION) {
-      generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r), true);
-    }
-    checkUserContract(state, rng);
-    stepSagas(state, rng);
-    stepInvitations(state, rng);
-    weeklyRivalry(state);
-    expireOffers(state);
-    maybeCareerEvent(state, rng);
-    expireDecisions(state);
+    if (!coach) {
+      processBids(state, rng);
+      generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r));
+      // Stories can start brewing in the weeks before a window opens, but only for players clubs would build a saga around.
+      if (!state.user.retired && upcomingWindow(state.turn) && userPlayer(state).reputation >= RUMOUR_MIN_REPUTATION) {
+        generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r), true);
+      }
+      checkUserContract(state, rng);
+      stepSagas(state, rng);
+      stepInvitations(state, rng);
+      weeklyRivalry(state);
+      expireOffers(state);
+      maybeCareerEvent(state, rng);
+      expireDecisions(state);
+    } else coachWeekly(state);
 
     if (state.turn === C.endOfSeasonTurn) {
       seasonEnd(state, rng);
+      if (coach) coachSeasonEnd(state);
       report.seasonEnded = true;
     }
     if (state.turn >= C.turnsPerSeason) {
@@ -426,7 +438,12 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
     }
     state.turnIndex++;
   });
-  if (state.user.retired) report.retiredForced = true;
+  if (state.user.retired && !coach) report.retiredForced = true;
+  // A coach has no awards night of his own to attend: the season's ceremonies are applied as they come.
+  if (coach) {
+    settleCeremony(state);
+    settleWorldCeremony(state);
+  }
   checkCareerAchievements(state);
   feedWeekly(state);
   chemistryWeekly(state);
@@ -547,7 +564,7 @@ function seasonEnd(state: GameState, rng: Rng): void {
   const u = userPlayer(state);
   const myClub = u.clubId;
   const myMove = moves.find((m) => m.clubId === myClub);
-  if (myMove && myClub) {
+  if (myMove && myClub && !state.user.retired) {
     const up = (staticLeague(myMove.to)?.tier ?? 9) < (staticLeague(state.clubs[myClub].leagueId)?.tier ?? 9);
     addTimeline(state, { kind: up ? "promotion" : "relegation", title: `${up ? "Promoted" : "Relegated"} with ${clubName(myClub)}`, detail: `To the ${staticLeague(myMove.to)?.name}` });
     addNews(state, { kind: "club", title: up ? `Promotion! ${clubName(myClub)} go up` : `Heartbreak: ${clubName(myClub)} relegated`, important: true });
@@ -585,7 +602,7 @@ function seasonEnd(state: GameState, rng: Rng): void {
 
   // User season review
   const last = u.history[u.history.length - 1];
-  if (last) {
+  if (last && !state.user.retired) {
     const avg = last.stats.apps ? last.stats.ratingSum / last.stats.apps : 0;
     addNews(state, {
       kind: "career",
@@ -675,8 +692,10 @@ function rollover(state: GameState, rng: Rng): void {
   state.turn = 1;
   const u = userPlayer(state);
   const wasFree = !u.clubId;
-  rolloverUserContract(state);
-  applyWageRise(state);
+  if (!state.user.retired) {
+    rolloverUserContract(state);
+    applyWageRise(state);
+  }
   state.user.freeSeasons = wasFree && !u.clubId ? (state.user.freeSeasons ?? 0) + 1 : 0;
   for (const p of Object.values(state.players)) {
     p.season = {};
@@ -692,7 +711,8 @@ function rollover(state: GameState, rng: Rng): void {
   for (const club of Object.values(state.clubs)) {
     const squad = squadOf(state, club.id);
     assignRoles(squad.filter((p) => !p.isUser));
-    club.formation = bestFormation(squad);
+    // The user, as manager, keeps the shape he chose.
+    if (!isUserManagedClub(state, club.id)) club.formation = bestFormation(squad);
     club.form = [];
     if (!club.captain || !club.squad.includes(club.captain)) club.captain = [...squad].sort((a, b) => captainScore(b) - captainScore(a))[0]?.id;
   }

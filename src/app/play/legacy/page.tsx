@@ -125,6 +125,7 @@ export default function Legacy() {
       <div className="flex flex-wrap gap-2">
         <Link href="/play/history" className="pb-btn bg-card px-5">Full timeline</Link>
         <LinkButton href="/play/card" tone="sun">🪪 Share career card</LinkButton>
+        <LinkButton href="/play/coach" tone="pitch">{g.user.coach ? "📋 Coaching" : "📋 Start coaching career"}</LinkButton>
         <LinkButton href="/new" tone="pitch">Start a new career ▸</LinkButton>
       </div>
     </div>

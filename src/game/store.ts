@@ -25,7 +25,8 @@ import { interruptReason, snapshotAttention, type InterruptReason } from "@/engi
 import { prepareMatch, type PreparedMatch } from "@/engine/season/matchday";
 import { chooseIntlNumber as chooseIntlNumberAction, chooseSquadNumber } from "@/engine/jersey/numbers";
 import { performPreMatch, type PreMatchKind } from "@/engine/season/preview";
-import type { GameState, TrainingPlan } from "@/engine/types";
+import type { ClubState, FormationId, GameState, PrepFocus, TrainingPlan, YouthFocus } from "@/engine/types";
+import * as coach from "@/engine/career/coaching";
 import { createWorld, type NewCareerInput } from "@/engine/world/create";
 import { withRng } from "@/engine/world/helpers";
 import { Rng } from "@/engine/rng";
@@ -97,6 +98,13 @@ interface GameStore {
   setDifficulty: (d: GameState["settings"]["difficulty"]) => void;
   setAutoSave: (on: boolean) => void;
   dismissTip: (id: string) => void;
+  startCoaching: () => void;
+  acceptCoachOffer: (offerId: string) => void;
+  declineCoachOffer: (offerId: string) => void;
+  resignCoach: () => void;
+  setTactics: (t: { formation?: FormationId; style?: Partial<ClubState["style"]> }) => void;
+  setYouthFocus: (f: YouthFocus) => void;
+  setPrepFocus: (f: PrepFocus) => void;
   /** Returns the reaction to the answer. */
   answerPress: (questionId: string, answerId: string) => string;
   skipPress: () => void;
@@ -232,7 +240,7 @@ export const useGame = create<GameStore>((set, get) => ({
         // tournament and the transfer window are never skipped past.
         const seasonOver = !untilEvent && beforeSeasonEnd && g.season === startSeason && g.turn > BALANCE.calendar.endOfSeasonTurn;
         // A week with two of your matches plays as two steps, so the weeks are counted by the calendar, not by steps.
-        const last = why !== null || cautious || seasonOver || g.user.retired || g.turnIndex - startIndex >= maxWeeks;
+        const last = why !== null || cautious || seasonOver || (g.user.retired && !g.user.coach?.active) || g.turnIndex - startIndex >= maxWeeks;
         return { fromDay, toDay, why, last };
       };
 
@@ -533,6 +541,59 @@ export const useGame = create<GameStore>((set, get) => ({
     skipPressAction(g);
     get().bump();
     get().notify("You walked past the reporters.");
+  },
+
+  startCoaching: () => {
+    const g = get().game;
+    if (!g) return;
+    const msg = coach.startCoaching(g);
+    get().bump();
+    get().notify(msg, g.user.coach ? "good" : "bad");
+    void get().save();
+  },
+
+  acceptCoachOffer: (offerId) => {
+    const g = get().game;
+    if (!g) return;
+    get().notify(coach.acceptCoachOffer(g, offerId), "good");
+    get().bump();
+    void get().save();
+  },
+
+  declineCoachOffer: (offerId) => {
+    const g = get().game;
+    if (!g) return;
+    coach.declineCoachOffer(g, offerId);
+    get().bump();
+  },
+
+  resignCoach: () => {
+    const g = get().game;
+    if (!g) return;
+    get().notify(coach.resignCoachJob(g));
+    get().bump();
+    void get().save();
+  },
+
+  setTactics: (t) => {
+    const g = get().game;
+    if (!g) return;
+    coach.setTactics(g, t);
+    get().bump();
+  },
+
+  setYouthFocus: (f) => {
+    const g = get().game;
+    if (!g) return;
+    coach.setYouthFocus(g, f);
+    get().bump();
+  },
+
+  setPrepFocus: (f) => {
+    const g = get().game;
+    if (!g) return;
+    coach.setPrepFocus(g, f);
+    get().bump();
   },
 
   dismissTip: (id) => {

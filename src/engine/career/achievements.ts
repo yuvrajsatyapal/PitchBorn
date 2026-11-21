@@ -174,6 +174,13 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "telepathic", name: "Telepathic", description: "Build a telepathic understanding (85+) with a teammate.", tier: "gold", group: "Career", icon: "🧠", career: (s) => bestBond(s) >= 85 },
   { id: "dynamic-duo", name: "Dynamic Duo", description: "Combine for 15 goals with the same teammate.", tier: "silver", group: "Career", icon: "👯", ...count(15, mostLinks) },
   { id: "legend", name: "Legend", description: "Retire with a legacy rated Legend or higher.", tier: "platinum", group: "Career", icon: "🗿", career: (s) => (s.user.legacy?.score ?? 0) >= 450 },
+
+  // Coaching
+  { id: "dugout", name: "Back in the Dugout", description: "Start a coaching career after retiring.", tier: "bronze", group: "Coaching", icon: "📋", career: (s) => !!s.user.coach },
+  { id: "the-gaffer", name: "The Gaffer", description: "Become a manager.", tier: "silver", group: "Coaching", icon: "🧥", career: (s) => !!s.user.coach?.stints.some((x) => x.role === "manager") },
+  { id: "academy-architect", name: "Academy Architect", description: "Bring five academy players through to first-team debuts.", tier: "silver", group: "Coaching", icon: "🎓", ...count(5, (s) => (s.user.coach?.stints ?? []).reduce((n, x) => n + x.graduates, 0)) },
+  { id: "bench-silverware", name: "Silverware from the Bench", description: "Win a trophy as a manager.", tier: "gold", group: "Coaching", icon: "🏆", career: (s) => !!s.user.coach?.trophies.some((t) => t.role === "manager") },
+  { id: "title-manager", name: "Title-Winning Manager", description: "Win a league title as a manager.", tier: "platinum", group: "Coaching", icon: "👔", secret: true, career: (s) => !!s.user.coach?.trophies.some((t) => t.role === "manager" && t.kind === "league") },
 ];
 
 const BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));

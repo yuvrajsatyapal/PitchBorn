@@ -1,6 +1,19 @@
 # Feature Backlog
 
-Ideas for what to add next. Nothing here is built yet. Build them only when the owner says to start one.
+Ideas for what to add next. Build them only when the owner says to start one.
+
+## Built (November 2026)
+
+- **Achievements and trophies** (#10): `engine/career/achievements.ts`, `/play/achievements`.
+- **Shareable career card** (#11): `engine/career/card.ts`, `components/game/CareerCard.tsx`, `/play/card`.
+- **First-season tips** (#15, as contextual tips rather than a guided week): `engine/career/tips.ts`, `components/game/TipCard.tsx`.
+- **Loan advice for academy players** (#9): `engine/career/loanAdvice.ts`, `components/game/LoanAdviceCard.tsx`.
+- **Press conferences** (#2, first half): `engine/career/press.ts`, `/play/press`.
+- **Social feed** (#2, second half): `engine/career/feed.ts`, `/play/feed`.
+- **Teammate chemistry** (#5): `engine/career/chemistry.ts`, Dressing Room card on the Club page.
+- **Coaching career** (#1): `engine/career/coaching.ts`, `/play/coach`.
+
+The numbered list below is the original backlog; the items above are done.
 
 Already in the game: match engine with key moments and substitutions, training, transfers, contracts, loans, national team, awards and the gala, rivalries, memories, legacy, appearance editor, decisions, simulation.
 

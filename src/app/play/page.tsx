@@ -19,6 +19,7 @@ import { useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
 import { LoanAdviceCard } from "@/components/game/LoanAdviceCard";
 import { loanAdvice } from "@/engine/career/loanAdvice";
+import { ROLE_LABEL } from "@/engine/career/coaching";
 
 export default function Dashboard() {
   const g = useGameState();
@@ -35,13 +36,47 @@ export default function Dashboard() {
   const win = windowName(g.turn);
 
   if (g.user.retired) {
+    const coach = g.user.coach;
+    const cClub = coach?.clubId ?? null;
     return (
       <div className="grid gap-4">
-        <Card title="Career over" tone="plum">
-          <p className="mb-3">You have retired from professional football. Your legacy has been written.</p>
-          <LinkButton href="/play/legacy" tone="plum">
-            View legacy ▸
-          </LinkButton>
+        {coach?.active ? (
+          <Card title={coach.role ? `📋 ${ROLE_LABEL[coach.role]}${cClub ? ` · ${clubName(cClub)}` : ""}` : "📋 Coach between jobs"} tone="pitch" action={<LinkButton href="/play/coach" size="sm" tone="paper">Coaching</LinkButton>}>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Stat label="Rating" value={coach.rating} tone="pitch" />
+              <Stat label="Reputation" value={coach.reputation} tone="sun" />
+              {coach.role === "manager" ? <Stat label="Board" value={`${coach.confidence}/100`} tone={coach.confidence < 30 ? "coral" : undefined} /> : <Stat label="XP" value={Math.round(coach.xp)} />}
+              <Stat label="Offers" value={coach.offers.length} tone={coach.offers.length ? "sky" : undefined} />
+            </div>
+            {coach.offers.length > 0 && <p className="mt-3 text-sm font-bold">You have job offers waiting on the Coaching page.</p>}
+          </Card>
+        ) : (
+          <Card title="Career over" tone="plum">
+            <p className="mb-3">You have retired from professional football. Your legacy has been written.</p>
+            <div className="flex flex-wrap gap-2">
+              <LinkButton href="/play/legacy" tone="plum">
+                View legacy ▸
+              </LinkButton>
+              <LinkButton href="/play/coach" tone="pitch">
+                📋 Start coaching
+              </LinkButton>
+            </div>
+          </Card>
+        )}
+        {coach?.active && league?.table && cClub && (
+          <Card title={league.name}>
+            <MiniTable table={league.table} highlight={cClub} promo={league.tier && league.tier > 1 ? 3 : 4} releg={league.tier === 3 ? 0 : 3} />
+          </Card>
+        )}
+        <Card title="Latest news" action={<Link href="/play/world" className="pb-hit text-sm font-bold underline">All news</Link>}>
+          <ul className="grid gap-2">
+            {g.news.slice(0, 6).map((n) => (
+              <li key={n.id} className={`rounded-xl border-2 px-3 py-2 text-sm ${n.important ? "border-line bg-sun-2" : "border-line/20"}`}>
+                <div className="font-semibold">{n.title}</div>
+                {n.body && <div className="text-xs text-ink-2">{n.body}</div>}
+              </li>
+            ))}
+          </ul>
         </Card>
         <IconicShowcase g={g} limit={3} final />
       </div>

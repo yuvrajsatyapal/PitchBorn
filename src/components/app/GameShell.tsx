@@ -27,7 +27,7 @@ function ContinueButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   if (!game) return null;
-  if (game.user.retired) {
+  if (game.user.retired && !game.user.coach?.active) {
     return (
       <LinkButton href="/play/legacy" tone="plum" size={compact ? "sm" : "md"}>
         View legacy
@@ -73,7 +73,7 @@ function SimMenu() {
   const advance = useGame((s) => s.advance);
   const busy = useGame((s) => s.busy);
   const [open, setOpen] = useState(false);
-  if (!game || game.user.retired) return null;
+  if (!game || (game.user.retired && !game.user.coach?.active)) return null;
   const matchDue = game.pending.length > 0;
   const C = BALANCE.calendar;
   const awardsDue = worldCeremonyPending(game) || (ceremonyPending(game) && game.turn > C.endOfSeasonTurn);
@@ -124,6 +124,8 @@ function TopBar() {
   const busy = useGame((s) => s.busy);
   if (!game) return null;
   const u = game.players[game.user.playerId];
+  // In the dugout the header shows the club being coached.
+  const shownClub = u.clubId ?? (game.user.coach?.active ? game.user.coach.clubId : null);
   const phase = phaseOf(game.turn);
   const win = windowName(game.turn);
   return (
@@ -133,9 +135,9 @@ function TopBar() {
           <Logo size={32} />
         </Link>
         <div className="flex min-w-0 items-center gap-2">
-          <Crest clubId={u.clubId} size={34} />
+          <Crest clubId={shownClub} size={34} />
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-bold">{clubName(u.clubId, true)}</div>
+            <div className="truncate text-sm font-bold">{shownClub || !game.user.coach?.active ? clubName(shownClub, true) : "Coach · between jobs"}</div>
             <div className="scoreboard truncate text-[11px] text-muted">
               {formatFixtureDate(game.season, { turn: game.turn, day: game.turnDay })}<span className="hidden min-[420px]:inline"> · {seasonLabel(game.season)}</span> · W{game.turn}
             </div>
@@ -184,11 +186,18 @@ function SideNav() {
           );
         })}
         {game?.user.retired && (
-          <li>
-            <Link href="/play/legacy" className="flex items-center gap-2.5 rounded-xl border-2 border-line bg-plum-2 px-2.5 py-1.5 text-sm font-bold">
-              🏛️ Legacy
-            </Link>
-          </li>
+          <>
+            <li>
+              <Link href="/play/coach" className="flex items-center gap-2.5 rounded-xl border-2 border-line bg-pitch-2 px-2.5 py-1.5 text-sm font-bold" data-testid="nav-coaching">
+                📋 Coaching
+              </Link>
+            </li>
+            <li>
+              <Link href="/play/legacy" className="flex items-center gap-2.5 rounded-xl border-2 border-line bg-plum-2 px-2.5 py-1.5 text-sm font-bold">
+                🏛️ Legacy
+              </Link>
+            </li>
+          </>
         )}
       </ul>
       <div className="mt-2 px-2 text-[11px] text-muted">
@@ -239,7 +248,7 @@ function BottomNav() {
       </nav>
       <Modal open={more} onClose={() => setMore(false)} title="Menu">
         <ul className="grid grid-cols-2 gap-2">
-          {[...NAV.filter((n) => !n.mobile), ...(game?.user.retired ? [{ href: "/play/legacy", label: "Legacy", icon: "🏛️" }] : []), { href: "/credits", label: "Credits", icon: "ℹ️" }].map((n) => (
+          {[...NAV.filter((n) => !n.mobile), ...(game?.user.retired ? [{ href: "/play/coach", label: "Coaching", icon: "📋" }, { href: "/play/legacy", label: "Legacy", icon: "🏛️" }] : []), { href: "/credits", label: "Credits", icon: "ℹ️" }].map((n) => (
             <li key={n.href}>
               <Link href={n.href} onClick={() => setMore(false)} className="flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-line bg-card px-3 text-sm font-bold">
                 <span aria-hidden>{n.icon}</span>

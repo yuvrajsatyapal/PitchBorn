@@ -14,6 +14,9 @@ import { closeTenure, openTenure, openTenureOf, recordOf } from "./registry";
 import { onFormerManagerMoved, onManagerChangedAtUserClub } from "./story";
 
 const RETIRE_FROM = 65;
+
+/** The club the user manages in his coaching career: the board there, not the AI, decides his fate. */
+const userManaged = (state: GameState, club: ClubState) => !!state.user?.coach?.active && !!club.manager.id && club.manager.id === state.user.coach.managerId;
 /** Most clubs that may lose a manager in one off-season, as a share of all clubs. */
 const MAX_TURNOVER = 0.07;
 
@@ -49,6 +52,7 @@ export function fill(state: GameState, rng: Rng, club: ClubState, oldId: Manager
 
 /** Sack (or accept the resignation of) a manager mid-season and appoint a successor. */
 export function replaceManager(state: GameState, rng: Rng, club: ClubState, reason: DepartureReason): void {
+  if (userManaged(state, club)) return;
   const oldId = vacate(state, club, reason);
   const old = club.manager;
   fill(state, rng, club, oldId, reason);
@@ -105,6 +109,7 @@ export function seasonBoundaryManagers(state: GameState, rng: Rng, promoted: Set
 
   // 2. Retirement: older managers step away, employed or not.
   for (const club of clubs) {
+    if (userManaged(state, club)) continue;
     const age = ageOf(state, club.manager.born);
     if (age >= RETIRE_FROM && rng.chance(Math.min(0.55, (age - (RETIRE_FROM - 1)) * 0.07))) {
       vacancies.push({ club, oldId: vacate(state, club, "retired"), reason: "retired" });
@@ -125,7 +130,7 @@ export function seasonBoundaryManagers(state: GameState, rng: Rng, promoted: Set
 
   // 3. A poor season costs some their job (or they walk): a year's grace for a new appointment, and a cap on turnover.
   for (const club of clubs) {
-    if (vacating.size >= cap || vacating.has(club.id)) continue;
+    if (vacating.size >= cap || vacating.has(club.id) || userManaged(state, club)) continue;
     const i = info.get(club.id);
     if (!i || state.season - club.manager.since < 1) continue;
     const down = relegated.has(club.id);
@@ -142,7 +147,7 @@ export function seasonBoundaryManagers(state: GameState, rng: Rng, promoted: Set
   vacancies.sort((a, b) => b.club.reputation - a.club.reputation);
   const over = clubs.filter((c) => {
     const i = info.get(c.id);
-    return !!i && !vacating.has(c.id) && i.under <= -3 && state.season - c.manager.since >= 1 && c.manager.quality >= 45 && ageOf(state, c.manager.born) < RETIRE_FROM;
+    return !!i && !vacating.has(c.id) && !userManaged(state, c) && i.under <= -3 && state.season - c.manager.since >= 1 && c.manager.quality >= 45 && ageOf(state, c.manager.born) < RETIRE_FROM;
   });
   const taken = new Set<string>();
   const knock: { club: ClubState; oldId: ManagerId | undefined }[] = [];

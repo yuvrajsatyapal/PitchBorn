@@ -30,6 +30,7 @@ import { checkMatchAchievements } from "../career/achievements";
 import { maybePressConference } from "../career/press";
 import { feedAfterMatch } from "../career/feed";
 import { applyChemistry, chemistryAfterMatch, chemistryBenchRivals } from "../career/chemistry";
+import { applyCoaching } from "../career/coaching";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
   const out: Fixture[] = [];
@@ -174,7 +175,10 @@ export function matchImportance(state: GameState, comp: Competition | undefined,
 export function buildTeamInput(state: GameState, teamId: string, sel: Selection): TeamInput {
   const starters = sel.starters.map((s) => toInput(s.player, s.slot));
   // Partnerships (and feuds) with the user change how sharply they link up when they start together.
-  if (state.clubs[teamId]) applyChemistry(state, starters);
+  if (state.clubs[teamId]) {
+    applyChemistry(state, starters);
+    applyCoaching(state, teamId, starters);
+  }
   return {
     id: teamId,
     name: teamName(state, teamId),

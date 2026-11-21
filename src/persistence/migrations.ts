@@ -11,6 +11,7 @@ import { sanitizeAchievements } from "../engine/career/achievements";
 import { sanitizePress } from "../engine/career/press";
 import { sanitizeFeed } from "../engine/career/feed";
 import { sanitizeChemistry } from "../engine/career/chemistry";
+import { sanitizeCoaching } from "../engine/career/coaching";
 import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
@@ -247,6 +248,11 @@ export function migrateState(raw: RawState): GameState {
     sanitizeCeremony(state);
   } catch {
     delete state.ceremony;
+  }
+  try {
+    sanitizeCoaching(state);
+  } catch {
+    // A save must always load; a broken coaching record is checked again next time.
   }
   try {
     sanitizeChemistry(state);

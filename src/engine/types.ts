@@ -575,6 +575,61 @@ export interface ChemistryBond {
   since: number;
 }
 
+export type CoachRole = "youth" | "assistant" | "manager";
+export type YouthFocus = "technical" | "physical" | "mental";
+export type PrepFocus = "balanced" | "attack" | "defence" | "set-pieces";
+
+/** One coaching job, with the record the user built in it. */
+export interface CoachStint {
+  clubId: ClubId;
+  role: CoachRole;
+  from: { season: number; turn: number };
+  to?: { season: number; turn: number };
+  reason?: "promoted" | "moved" | "sacked" | "resigned";
+  games: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  trophies: string[];
+  /** Academy players who made their first-team debut during the stint. */
+  graduates: number;
+  bestFinish?: number;
+}
+
+export interface CoachOffer {
+  id: string;
+  clubId: ClubId;
+  role: CoachRole;
+  expiresIndex: number;
+  note: string;
+}
+
+/** The career after retirement (see engine/career/coaching.ts). */
+export interface CoachCareer {
+  active: boolean;
+  role: CoachRole | null;
+  clubId: ClubId | null;
+  /** The user's id in the manager registry, used whenever he runs a club. */
+  managerId: ManagerId;
+  /** Coaching ability, 1-99. */
+  rating: number;
+  /** Standing in the game, 1-100: which clubs would hire him. */
+  reputation: number;
+  xp: number;
+  youthFocus: YouthFocus;
+  prepFocus: PrepFocus;
+  /** Board confidence while managing, 0-100. */
+  confidence: number;
+  formation?: FormationId;
+  stints: CoachStint[];
+  offers: CoachOffer[];
+  trophies: { season: number; name: string; clubId: ClubId; role: CoachRole; kind?: CompetitionKind }[];
+  startedSeason: number;
+  unemployedSince?: number;
+  /** Academy players still waiting for a first-team debut (graduate tracking). */
+  watch: PlayerId[];
+}
+
 /** One unlocked achievement (definitions live in engine/career/achievements.ts). */
 export interface AchievementUnlock {
   id: string;
@@ -1281,6 +1336,8 @@ export interface UserCareer {
   feedSeen?: { transfers: number; trophies: number; awards: number; injuries: number };
   /** Bonds with current club teammates, by player id. */
   chemistry?: Record<PlayerId, ChemistryBond>;
+  /** The coaching career after retirement, once started. */
+  coach?: CoachCareer;
 }
 
 export interface LegacyResult {
