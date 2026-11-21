@@ -14,6 +14,7 @@ import { POSITION_LABEL } from "@/engine/players/attributes";
 import { formatMoney } from "@/engine/players/economy";
 import { Rng } from "@/engine/rng";
 import { ShirtNo } from "@/components/game/NumberPicker";
+import { FeedPostCard } from "@/components/game/FeedPostCard";
 import { intlTeam } from "@/engine/national/identity";
 import type { Competition, Fixture, GameState, Player, TableRow } from "@/engine/types";
 import { age, name, ovr, resultFor, scoreText, teamLabel } from "@/game/selectors";
@@ -338,6 +339,21 @@ export function PressCard({ g }: { g: GameState }) {
         {c.questions.length} reporter{c.questions.length > 1 ? "s" : ""} want a word about {c.kind === "pre" ? "the game against" : "the match with"} {clubName(c.opponentId)}. What you say moves the fans, the dressing room and the manager.
       </p>
       <LinkButton href="/play/press" tone="coral" size="sm">Face the press</LinkButton>
+    </Card>
+  );
+}
+
+/** The latest few posts from the social feed. */
+export function FeedPreviewCard({ g }: { g: GameState }) {
+  const posts = [...(g.user.feed ?? [])].reverse().slice(0, 3);
+  if (!posts.length) return null;
+  return (
+    <Card title="📱 Social feed" action={<Link href="/play/feed" className="pb-hit text-sm font-bold underline">See all</Link>}>
+      <ul className="grid gap-2">
+        {posts.map((p) => (
+          <FeedPostCard key={p.id} post={p} now={g} />
+        ))}
+      </ul>
     </Card>
   );
 }

@@ -13,6 +13,7 @@ export const NAV: NavItem[] = [
   { href: "/play/training", label: "Training", icon: "🏋️" },
   { href: "/play/club", label: "Club & Squad", icon: "🛡️" },
   { href: "/play/press", label: "Press Room", icon: "🎙️" },
+  { href: "/play/feed", label: "Social Feed", icon: "📱" },
   { href: "/play/league", label: "Competitions", icon: "🏆" },
   { href: "/play/transfers", label: "Career & Contract", icon: "✍️", mobile: true },
   { href: "/play/national", label: "National Team", icon: "🌍" },

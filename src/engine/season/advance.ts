@@ -38,6 +38,7 @@ import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } f
 import { agentSkill, payAgent } from "../career/agents";
 import { checkCareerAchievements } from "../career/achievements";
 import { expirePress, maybePressConference } from "../career/press";
+import { feedWeekly } from "../career/feed";
 import { refreshRecall } from "../memory/recall";
 import { captainScore, weeklyPersonality, mentorsOf } from "../traits/career";
 import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
@@ -426,6 +427,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
   });
   if (state.user.retired) report.retiredForced = true;
   checkCareerAchievements(state);
+  feedWeekly(state);
   expirePress(state);
   beginTurn(state);
   refreshRecall(state);

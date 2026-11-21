@@ -548,6 +548,23 @@ export interface PressLogEntry {
   tone: PressTone;
 }
 
+export type FeedAuthorKind = "fan" | "rival-fan" | "journalist" | "pundit" | "club" | "teammate";
+
+/** One post in the player's social feed (flavour only; see engine/career/feed.ts). */
+export interface FeedPost {
+  id: string;
+  season: number;
+  turn: number;
+  kind: FeedAuthorKind;
+  author: string;
+  handle: string;
+  text: string;
+  mood: "pos" | "neg" | "neutral";
+  topic: "match" | "transfer" | "trophy" | "award" | "injury" | "press" | "achievement" | "chemistry" | "coaching";
+  likes: number;
+  reposts: number;
+}
+
 /** One unlocked achievement (definitions live in engine/career/achievements.ts). */
 export interface AchievementUnlock {
   id: string;
@@ -1249,6 +1266,9 @@ export interface UserCareer {
   pressLog?: PressLogEntry[];
   /** Conferences skipped in a row (the board minds a habit of it). */
   pressSkips?: number;
+  /** Social feed, oldest first, capped; and how far through the career records the feed has reacted. */
+  feed?: FeedPost[];
+  feedSeen?: { transfers: number; trophies: number; awards: number; injuries: number };
 }
 
 export interface LegacyResult {

@@ -7,7 +7,7 @@ import { JerseyChoiceCard } from "@/components/game/NumberPicker";
 import { RecentRatings } from "@/components/game/RecentRatings";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { VaultCard } from "@/components/game/VaultCard";
-import { AwardsNightCard, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, PressCard, RecentAchievementsCard, TeamForm } from "@/components/game/widgets";
+import { AwardsNightCard, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, FeedPreviewCard, PressCard, RecentAchievementsCard, TeamForm } from "@/components/game/widgets";
 import { Badge, Card, Empty, LinkButton, Stat } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
 import { windowName } from "@/engine/calendar";
@@ -161,6 +161,7 @@ export default function Dashboard() {
               </Empty>
             )}
           </Card>
+          <FeedPreviewCard g={g} />
           <Card title="Latest news" action={<Link href="/play/world" className="pb-hit text-sm font-bold underline">All news</Link>}>
             {g.news.length ? (
               <ul className="grid gap-2">

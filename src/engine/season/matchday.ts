@@ -28,6 +28,7 @@ import { currentStint, noteStintMatch } from "../managers/history";
 import { onMatchAgainstFormerManager, rememberBreakthrough } from "../managers/story";
 import { checkMatchAchievements } from "../career/achievements";
 import { maybePressConference } from "../career/press";
+import { feedAfterMatch } from "../career/feed";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
   const out: Fixture[] = [];
@@ -482,6 +483,7 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
   detectInjuryComeback(state, fixture, comp, line);
   checkMatchAchievements(state, { comp, fixture, res, line, mine, theirs, myTeam, opponent: opp, nat });
   if (!nat) maybePressConference(state, { kind: "post", comp, fixture, opponentId: opp, myTeam, line, res, mine, theirs });
+  feedAfterMatch(state, { comp, fixture, res, line, mine, theirs, myTeam, opponent: opp, nat });
   void resultText;
   void fullName;
   void overallFor;

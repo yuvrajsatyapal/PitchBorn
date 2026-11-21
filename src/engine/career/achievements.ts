@@ -11,6 +11,7 @@ import { rivalryLevel } from "../memory/rivalry";
 import { ageOf } from "../players/generate";
 import type { AchievementUnlock, Competition, Fixture, GameState } from "../types";
 import { addNews, userPlayer } from "../world/helpers";
+import { feedAfterAchievement } from "./feed";
 
 export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
 export type AchievementGroup = "Matches" | "Milestones" | "Honours" | "Career" | "Coaching";
@@ -206,6 +207,7 @@ export function unlock(state: GameState, id: string, opts: { silent?: boolean; d
   unlocked(state).push(rec);
   if (!opts.silent) {
     addNews(state, { kind: "career", title: `${def.icon} Achievement unlocked: ${def.name}`, body: def.description, important: def.tier === "gold" || def.tier === "platinum" });
+    if (def.tier === "gold" || def.tier === "platinum") feedAfterAchievement(state, def.id, def.name, def.icon);
   }
   return true;
 }

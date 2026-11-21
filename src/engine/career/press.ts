@@ -15,6 +15,7 @@ import { clamp, Rng } from "../rng";
 import type { Competition, Fixture, GameState, PressAnswer, PressConference, PressEffects, PressQuestion, PressTone, Relationships } from "../types";
 import { addNews, nextId, userPlayer } from "../world/helpers";
 import { adjustRel } from "./relationships";
+import { feedAfterPress } from "./feed";
 
 const OUTLETS = ["The Touchline", "Matchday Mirror", "The Final Whistle", "Pitchside Daily", "The Terrace Times", "Ninety Minutes", "The Back Post", "Full-Time Report"];
 export const PRESS_LOG_CAP = 30;
@@ -315,6 +316,7 @@ function finishPress(state: GameState): void {
   const log = (state.user.pressLog ??= []);
   log.push({ season: conf.season, turn: conf.turn, kind: conf.kind, opponentId: conf.opponentId, headline, tone, fixtureId: conf.fixtureId });
   if (log.length > PRESS_LOG_CAP) log.splice(0, log.length - PRESS_LOG_CAP);
+  feedAfterPress(state, headline, tone, `${conf.kind}:${conf.fixtureId}`);
 }
 
 /** Skip the press: no effects either way, but they notice when it keeps happening. */
