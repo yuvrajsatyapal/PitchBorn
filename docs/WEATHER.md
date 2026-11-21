@@ -86,3 +86,8 @@ baseline equality (no conditions and clear/good conditions both reproduce the or
 - Only the user's matches (as a player) feel the weather. A coaching career's club is not affected in V1.
 - The pitch does not remember earlier weeks' weather: a heavy pitch comes from that day's rain.
 - International venues use the home nation's climate at its reference latitude (no stadium coordinates for nations).
+  Only England, Spain, Italy, Germany and France have their own climate tables; every other nation uses the temperate
+  default (seasons reversed for the southern-hemisphere nations), so a hot nation never gets heat and, for example,
+  Brazil can see snow in August.
+- Neutral-venue fixtures (international tournament matches, cup and continental finals) take the weather of the side
+  listed as home: its stadium for a club, its country's climate for a nation. There is no separate neutral venue.

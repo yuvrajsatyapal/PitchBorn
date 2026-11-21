@@ -31,7 +31,7 @@ export function conditionsNote(c: MatchConditions): string {
   if (c.pitch === "frozen") return "Rock-hard, icy surface: footing, touch and tempo will suffer, and tackles hurt more.";
   if (c.weather === "snow") return "Snow falling: the ball holds up and the game slows down.";
   if (c.weather === "heavy-rain") return "Heavy rain: the slick surface may make control difficult. Strong, balanced players cope best.";
-  if (c.pitch === "heavy") return "A heavy, cut-up pitch: tiring underfoot, harder to keep the ball, a little more injury risk.";
+  if (c.pitch === "heavy") return "A heavy, cut-up pitch: harder to keep the ball, a little more injury risk.";
   if (c.weather === "rain") return "Rain on the surface: the ball skids, so first touches need care.";
   if (c.weather === "wind") return "Gusting wind: crosses, long shots and goal kicks will be hard to judge.";
   if (c.weather === "heat") return c.tempC >= 33 ? "Fierce heat: legs will go early. Stamina is gold today." : "A hot day: expect tired legs late on. Stamina matters.";
