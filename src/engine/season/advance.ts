@@ -36,6 +36,7 @@ import { clamp, Rng } from "../rng";
 import { ensureMinimumSquads, listForFinancialReasons, processExpiringContracts, processRetirements, refreshVirtualPools, runAiTransfers, youthIntake } from "../transfers/market";
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
+import { checkCareerAchievements } from "../career/achievements";
 import { refreshRecall } from "../memory/recall";
 import { captainScore, weeklyPersonality, mentorsOf } from "../traits/career";
 import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
@@ -411,6 +412,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
     state.turnIndex++;
   });
   if (state.user.retired) report.retiredForced = true;
+  checkCareerAchievements(state);
   beginTurn(state);
   refreshRecall(state);
   state.updatedAt = new Date().toISOString();
@@ -635,6 +637,7 @@ export function retireUser(state: GameState, reason = "You announce your retirem
   addNews(state, { kind: "career", title: "End of an era", body: reason, important: true });
   u.legacy = computeLegacy(state);
   rememberRetirement(state);
+  checkCareerAchievements(state);
   state.pending = [];
   u.offers = u.offers.map((o) => (o.status === "terms" || o.status === "club-pending" ? { ...o, status: "withdrawn" as const } : o));
 }

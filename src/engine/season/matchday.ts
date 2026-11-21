@@ -26,6 +26,7 @@ import { recordMatchLog } from "../stats/matchlog";
 import { settleCommitment } from "./commitments";
 import { currentStint, noteStintMatch } from "../managers/history";
 import { onMatchAgainstFormerManager, rememberBreakthrough } from "../managers/story";
+import { checkMatchAchievements } from "../career/achievements";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
   const out: Fixture[] = [];
@@ -478,6 +479,7 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
   noteMatch(state, fixture, comp, res, line);
   detectMatchMemory(state, fixture, comp, res, line);
   detectInjuryComeback(state, fixture, comp, line);
+  checkMatchAchievements(state, { comp, fixture, res, line, mine, theirs, myTeam, opponent: opp, nat });
   void resultText;
   void fullName;
   void overallFor;

@@ -488,6 +488,17 @@ export interface AwardRecord {
   age?: number;
 }
 
+/** One unlocked achievement (definitions live in engine/career/achievements.ts). */
+export interface AchievementUnlock {
+  id: string;
+  season: number;
+  turn: number;
+  /** The match or moment it came from, when there was one. */
+  detail?: string;
+  /** Recorded when an older save was loaded: earned before achievements were tracked. */
+  backfilled?: boolean;
+}
+
 export interface TrophyRecord {
   season: number;
   compId: string;
@@ -1167,6 +1178,8 @@ export interface UserCareer {
   /** Consecutive season rollovers spent without a club. */
   freeSeasons?: number;
   rewardCooldowns: Record<string, number>;
+  /** Unlocked achievements, oldest first. Optional for old saves. */
+  achievements?: AchievementUnlock[];
 }
 
 export interface LegacyResult {

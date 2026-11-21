@@ -7,7 +7,7 @@ import { JerseyChoiceCard } from "@/components/game/NumberPicker";
 import { RecentRatings } from "@/components/game/RecentRatings";
 import { IconicShowcase } from "@/components/game/IconicShowcase";
 import { VaultCard } from "@/components/game/VaultCard";
-import { AwardsNightCard, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, TeamForm } from "@/components/game/widgets";
+import { AwardsNightCard, FixtureRow, MiniTable, PendingMatchCard, PlayerHero, RecentAchievementsCard, TeamForm } from "@/components/game/widgets";
 import { Badge, Card, Empty, LinkButton, Stat } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
 import { windowName } from "@/engine/calendar";
@@ -54,6 +54,7 @@ export default function Dashboard() {
           <PendingMatchCard g={g} />
           <VaultCard g={g} />
           <AwardsNightCard g={g} />
+          <RecentAchievementsCard g={g} />
           <JerseyChoiceCard g={g} />
           {openOffers.length > 0 && (
             <Card tone="sky" title={`📨 ${openOffers.length} open offer${openOffers.length > 1 ? "s" : ""}`} action={<LinkButton href="/play/transfers" size="sm">Review</LinkButton>}>

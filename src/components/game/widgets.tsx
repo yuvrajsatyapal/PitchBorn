@@ -8,6 +8,7 @@ import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Badge, Bar, Button, Card, CompChip, FormDots, LinkButton, Rating } from "@/components/ui";
 import { dayNumber, formatFixtureDate, seasonLabel } from "@/engine/calendar";
+import { achievementById } from "@/engine/career/achievements";
 import { clubName } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { formatMoney } from "@/engine/players/economy";
@@ -303,6 +304,26 @@ export function AwardsNightCard({ g }: { g: GameState }) {
     <Card tone="sun" title="Awards Night">
       <p className="mb-3 text-sm">The {c.leagueName} awards for {seasonLabel(c.season)} are ready. {c.status === "in-progress" ? "You left the ceremony part-way through." : "Watch them presented, or skip to the results."}</p>
       <LinkButton href="/play/ceremony" tone="pitch">{c.status === "in-progress" ? "Resume ceremony" : "Open Awards Night"}</LinkButton>
+    </Card>
+  );
+}
+
+/** Dashboard nudge for achievements unlocked in the last few weeks. */
+export function RecentAchievementsCard({ g }: { g: GameState }) {
+  const fresh = (g.user.achievements ?? []).filter((a) => !a.backfilled && a.season === g.season && g.turn - a.turn <= 3);
+  if (!fresh.length) return null;
+  const defs = fresh.map((a) => achievementById(a.id)).filter((a) => !!a).reverse();
+  return (
+    <Card tone="plum" title={`🏅 ${defs.length === 1 ? "Achievement unlocked" : `${defs.length} achievements unlocked`}`} action={<LinkButton href="/play/achievements" size="sm" tone="paper">Cabinet</LinkButton>}>
+      <ul className="grid gap-1.5">
+        {defs.slice(0, 3).map((a) => (
+          <li key={a.id} className="flex items-center gap-2 text-sm">
+            <span aria-hidden className="text-xl">{a.icon}</span>
+            <span className="font-bold">{a.name}</span>
+            <span className="text-ink-2">— {a.description}</span>
+          </li>
+        ))}
+      </ul>
     </Card>
   );
 }
