@@ -1136,6 +1136,8 @@ export interface UserCareer {
   peakSeason: number;
   transferRequest: boolean;
   wantsLoan: boolean;
+  /** A loan club the player asked his agent to pursue (see career/loanAdvice.ts). */
+  loanTarget?: ClubId;
   lastMatchTurn?: number;
   eventCooldowns: Record<string, number>;
   boosts: ActiveBoost[];

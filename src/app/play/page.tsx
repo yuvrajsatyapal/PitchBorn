@@ -17,6 +17,8 @@ import { keeperMetrics } from "@/engine/players/keeper";
 import { fmtRating, seasonTotal, user, userFixtures, userLeague } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
+import { LoanAdviceCard } from "@/components/game/LoanAdviceCard";
+import { loanAdvice } from "@/engine/career/loanAdvice";
 
 export default function Dashboard() {
   const g = useGameState();
@@ -71,10 +73,11 @@ export default function Dashboard() {
               </ul>
             </Card>
           )}
-          {lowMinutes && !p.loan && (
+          <LoanAdviceCard g={g} />
+          {lowMinutes && !p.loan && !loanAdvice(g) && (
             <Card tone="sun" title="Agent's advice">
               <p className="text-sm">
-                You&apos;ve played only {tot.minutes} minutes this season. Regular football matters for development — consider asking for a loan or a move in the next window.
+                You&apos;ve played only {tot.minutes} minutes this season. Regular football matters for development: consider a move in the next window.
               </p>
               <div className="mt-2">
                 <LinkButton href="/play/transfers" size="sm" tone="paper">

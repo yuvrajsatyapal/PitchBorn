@@ -17,6 +17,7 @@ import { payOnce } from "./money";
 import { onUserJoinedClub } from "../managers/story";
 import { addStintEvent, affinityAt } from "../managers/history";
 import { adjustRel } from "./relationships";
+import { loanPool } from "./loanAdvice";
 import { contractClauses, extrasWeekly, normaliseClauses, openingClauses, sanitizeClauses, signingBonusCeiling, CLAUSE_KEYS, type ClauseKey } from "./contracts";
 import { addNews, addTimeline, addToSquad, nextId, removeFromSquad, squadOf, userPlayer } from "../world/helpers";
 
@@ -188,8 +189,10 @@ export function generateUserOffers(state: GameState, rng: Rng, divert?: OfferDiv
   // Loan offers for young players who are not playing.
   if (window && p.clubId && ageOf(p, state.season) <= 22 && (state.user.wantsLoan || lowMinutes(state, p)) && !p.loan && rng.chance((state.user.wantsLoan ? 0.6 : 0.3) * (0.7 + agentSkill(state, "care") / 100))) {
     const parent = state.clubs[p.clubId];
-    const pool = Object.values(state.clubs).filter((c) => c.reputation < parent.reputation - 6 && clubLevel(c.reputation) <= uOvr(p) + 3 && clubLevel(c.reputation) >= uOvr(p) - 6);
-    const club = pool.length ? rng.pick(pool) : null;
+    const pool = loanPool(state, p);
+    // A club the player asked for comes first while it still fits; otherwise any suitable club.
+    const preferred = state.user.wantsLoan && state.user.loanTarget ? pool.find((c) => c.id === state.user.loanTarget) : undefined;
+    const club = preferred ?? (pool.length ? rng.pick(pool) : null);
     if (club && !state.user.offers.some((o) => o.kind === "loan" && o.status === "terms")) {
       const { terms, maxWage } = makeTerms(state, rng, club, p, "loan");
       state.user.offers.unshift({
@@ -443,6 +446,7 @@ function completeOffer(state: GameState, o: TransferOffer) {
     addNews(state, { kind: "transfer", title: `Loan to ${clubName(club.id)} completed`, important: true });
     state.user.relationships.manager = 50;
     state.user.wantsLoan = false;
+    delete state.user.loanTarget;
     onUserJoinedClub(state, club.id);
     withdrawOtherOffers(state, o);
     return;

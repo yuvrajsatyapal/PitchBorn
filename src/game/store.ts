@@ -13,6 +13,7 @@ import { worldCeremonyPending } from "@/engine/awards/world";
 import { hireAgent, releaseAgent } from "@/engine/career/agents";
 import { acceptSponsorOffer, declineSponsorOffer } from "@/engine/career/sponsors";
 import { resolveDecision } from "@/engine/career/events";
+import { cancelLoanRequest, requestLoan as requestLoanAction } from "@/engine/career/loanAdvice";
 import { dismissTip as dismissTipAction, setTipsEnabled } from "@/engine/career/tips";
 import { negotiate, requestRenewal, setTransferRequest, type NegotiationAction } from "@/engine/career/offers";
 import { syncSagas } from "@/engine/career/saga/engine";
@@ -80,6 +81,7 @@ interface GameStore {
   transferRequest: (on: boolean) => void;
   requestRenewal: () => void;
   setWantsLoan: (on: boolean) => void;
+  requestLoan: (clubId?: string) => void;
   askRest: () => void;
   preMatch: (fixtureId: string, kind: PreMatchKind) => void;
   chooseNumber: (no: number) => void;
@@ -389,9 +391,18 @@ export const useGame = create<GameStore>((set, get) => ({
   setWantsLoan: (on) => {
     const g = get().game;
     if (!g) return;
-    g.user.wantsLoan = on;
+    if (on) g.user.wantsLoan = true;
+    else cancelLoanRequest(g);
     get().bump();
     get().notify(on ? "Your agent will look for loan opportunities in the next window." : "Loan search cancelled.");
+  },
+
+  requestLoan: (clubId) => {
+    const g = get().game;
+    if (!g) return;
+    const msg = requestLoanAction(g, clubId);
+    get().bump();
+    get().notify(msg, g.user.wantsLoan ? "good" : "bad");
   },
 
   hireAgent: (agentId) => {

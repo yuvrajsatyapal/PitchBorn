@@ -17,6 +17,7 @@ import type { TransferOffer } from "@/engine/types";
 import { age, user } from "@/game/selectors";
 import { useGame, useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
+import { LoanAdviceCard } from "@/components/game/LoanAdviceCard";
 
 function bonusSummary(t: TransferOffer["terms"]): string {
   const parts: string[] = [];
@@ -146,6 +147,7 @@ export default function CareerPage() {
         </Card>
         <AgentPanel g={g} />
       </div>
+      <LoanAdviceCard g={g} />
       <SponsorPanel g={g} />
       <Card title="Career moves">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
