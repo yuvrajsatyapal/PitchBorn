@@ -48,6 +48,11 @@ coaching career (`coaching.ts`). Press, feed and coaching draw from `Rng.fromSee
 Coaching: after `startCoaching`, `advanceTurn` keeps simulating the world with the user-only steps skipped; the user's managed club is
 skipped by AI sackings and season-boundary manager moves (`managers/movement.ts`), and keeps its chosen formation at rollover.
 
+## Weather V1 (Nov 2026)
+`engine/weather/` (climate table, deterministic roll from `seed:wx:fixtureId`, effects, wording). `prepareMatch` passes
+`conditions` only for fixtures involving the user; the engine reads them through `BALANCE.weather`. Clear on a good
+pitch is exactly the baseline. Played conditions live in `FixtureResult.detail.conditions`. Spec and calibration: `docs/WEATHER.md`.
+
 ## Known issues / TODO
 - Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).

@@ -118,6 +118,22 @@ export function feedAfterMatch(state: GameState, c: FeedMatchContext): void {
     post(state, rng, `${k}:rival`, "rival-fan", rf, rText, lost ? "neg" : great ? "pos" : "neg", "match");
   }
 
+  // Extreme conditions get a mention of their own.
+  const wx = c.res.conditions;
+  if (wx && (wx.weather === "heavy-rain" || wx.weather === "snow" || wx.pitch === "frozen" || (wx.weather === "heat" && wx.tempC >= 32) || wx.weather === "wind")) {
+    const wj = journalist(rng);
+    const t = Math.round(wx.tempC);
+    const wText =
+      wx.weather === "snow" || wx.pitch === "frozen"
+        ? rng.pick([`Played on a frozen pitch at ${t}°C. Credit to both sides for keeping their feet. ${team} ${score} ${vs}.`, `Snow, ice and ${score}. Football in the raw at ${short(c.fixture.home)} tonight. ❄️`])
+        : wx.weather === "heavy-rain"
+          ? rng.pick([`An absolute monsoon. ${team} ${score} ${vs}, and nobody's shirt is dry. 🌧️`, `The pitch looked more like a pond by the end. ${score}.`])
+          : wx.weather === "heat"
+            ? rng.pick([`${t}°C at kick-off. Brutal conditions; ${me} ${!l.offReason ? "lasted the full 90" : `went off on ${l.minuteOff}'`}.`, `Drinks breaks, ice towels, ${t} degrees. ${score} in the furnace. 🔥`])
+            : rng.pick([`The wind made a mockery of every long ball today. ${score}. 💨`, `Crosses ending up in the stands all afternoon. Blame the wind. ${score}.`]);
+    post(state, rng, `${k}:wx`, "journalist", wj, wText, "neutral", "match", 0.7);
+  }
+
   // Pundits pick up big performances and bad days.
   if (great || poor || c.fixture.stage === "Final") {
     const pd = rng.pick(PUNDITS);

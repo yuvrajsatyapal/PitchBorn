@@ -12,6 +12,7 @@ Ideas for what to add next. Build them only when the owner says to start one.
 - **Social feed** (#2, second half): `engine/career/feed.ts`, `/play/feed`.
 - **Teammate chemistry** (#5): `engine/career/chemistry.ts`, Dressing Room card on the Club page.
 - **Coaching career** (#1): `engine/career/coaching.ts`, `/play/coach`.
+- **Weather and pitch conditions V1** (#7): `engine/weather/`, `docs/WEATHER.md`.
 
 The numbered list below is the original backlog; the items above are done.
 
@@ -28,7 +29,7 @@ Already in the game: match engine with key moments and substitutions, training, 
 
 5. **Teammate chemistry.** Partnerships with certain teammates that improve link-up on the pitch. Friends and rivals in the dressing room. Builds on the basic mentors that already exist.
 6. **Set-piece specialist roles.** Become the team's penalty or free-kick taker, with interactive moments for those kicks.
-7. **Weather and pitch conditions.** Rain, heat and snow change fatigue, passing and injury risk. **V1 in progress**: see `WEATHER.md`.
+7. **Weather and pitch conditions.** Rain, heat and snow change fatigue, passing and injury risk. **V1 built**: see `WEATHER.md` (no postponements, roofs or weather tactics yet).
 8. **Agent personality.** Give the existing agents a style (greedy, loyal, well connected). Let the player fire and hire agents.
 9. **Loan advice for academy players.** Young players at elite clubs rarely play, so the UI should suggest a loan. This is already in the known issues in `PROJECT_STATE.md`.
 

@@ -18,6 +18,7 @@ import type { MatchFx, SignalKey } from "../traits/types";
 import { clamp, type Rng } from "../rng";
 import type { Attributes, AttrKey, MatchConditions, Position } from "../types";
 import { attrMultipliers, drainMultiplier, weatherFx, type WeatherFx } from "../weather/effects";
+import { halftimeWeatherLine, kickoffWeatherLine } from "../weather/describe";
 import { ATTR_LABEL } from "../players/model";
 import {
   ATTACK_K, BUILD_W, CARRY_W, CLEAR_WEIGHT, CROSSERS, DEFEND_K, DRIB_MIX, DUEL_MIX, FINAL_W, FINISHERS,
@@ -505,6 +506,8 @@ export class MatchEngine {
     this.teams = { home: mk(input.home, "home"), away: mk(input.away, "away") };
     this.stoppage = [rng.int(1, 3), rng.int(2, 6)];
     this.log({ minute: 0, type: "kickoff", text: `Kick-off! ${input.home.name} v ${input.away.name}.` });
+    const wxLine = kickoffWeatherLine(input.conditions);
+    if (wxLine) this.log({ minute: 0, type: "info", text: wxLine });
   }
 
   // ------------------------------------------------------------ helpers
@@ -736,6 +739,8 @@ export class MatchEngine {
       this.half = 2;
       this.minute = 45;
       this.log({ minute: 45, type: "halftime", text: `Half-time: ${this.teams.home.input.short} ${this.teams.home.goals}-${this.teams.away.goals} ${this.teams.away.input.short}.` });
+      const htLine = halftimeWeatherLine(this.input.conditions);
+      if (htLine) this.log({ minute: 45, type: "info", text: htLine });
       for (const side of ["home", "away"] as Side[]) this.halfTimeSubs(this.teams[side]);
       this.invalidate();
       return;
@@ -846,7 +851,9 @@ export class MatchEngine {
       if (culprit) {
         this.bump(culprit, -0.3, "error");
         if (culprit.line.inv) culprit.line.inv.errors++;
-        this.log({ minute: this.minute, side: def.side, type: "foul", text: `${this.name(culprit)} gifts the ball away!` });
+        // A slip on the surface reads differently from a lapse of concentration.
+        const slipped = !(culprit.fx?.lapse ?? 0) && !!this.wx?.lapse;
+        this.log({ minute: this.minute, side: def.side, type: "foul", text: slipped ? `${this.name(culprit)} loses his footing on the treacherous surface and gifts the ball away!` : `${this.name(culprit)} gifts the ball away!` });
       }
       this.createChance(att, def, this.rng.chance(0.45) ? "oneonone" : "open");
       return;

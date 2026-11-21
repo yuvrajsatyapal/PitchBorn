@@ -48,3 +48,27 @@ export function conditionsLine(c: MatchConditions): string {
 export function isAdverse(c: MatchConditions | undefined): boolean {
   return !!c && (c.weather !== "clear" || c.pitch === "heavy" || c.pitch === "frozen");
 }
+
+/** A commentary line for kick-off, or null in ordinary conditions. Chosen by the conditions alone (no randomness). */
+export function kickoffWeatherLine(c: MatchConditions | undefined): string | null {
+  if (!isAdverse(c) || !c) return null;
+  const t = Math.round(c.tempC);
+  if (c.weather === "snow") return `Snow is falling and it's ${t}°C${c.pitch === "frozen" ? ", on a rock-hard, frozen pitch" : ""}. The ground staff have cleared the lines.`;
+  if (c.pitch === "frozen") return `A bitter ${t}°C and the pitch is frozen solid. Keeping your feet will be half the battle.`;
+  if (c.weather === "heavy-rain") return `The rain is lashing down${c.pitch === "heavy" ? " and the pitch is already heavy" : ""}. Expect the ball to stick and skid.`;
+  if (c.weather === "rain") return `Rain at kick-off, ${t}°C${c.pitch === "heavy" ? ", and the surface is heavy" : ""}. A slick, quick surface.`;
+  if (c.weather === "heat") return `It's ${t}°C here: a sweltering afternoon. Legs will be tested late on.`;
+  if (c.weather === "wind") return "A swirling wind around the stadium. Crosses and long balls could go anywhere.";
+  if (c.pitch === "heavy") return "The pitch is heavy and cutting up after the week's rain.";
+  return null;
+}
+
+/** A half-time line about how the conditions are telling, or null. */
+export function halftimeWeatherLine(c: MatchConditions | undefined): string | null {
+  if (!c) return null;
+  if (c.weather === "heat") return "Players take on water at the break: the heat is taking its toll.";
+  if (c.pitch === "heavy") return "The centre of the pitch is churned up. Passing on the floor is getting harder.";
+  if (c.pitch === "frozen" || c.weather === "snow") return "Ground staff scrape the lines again at the break.";
+  if (c.weather === "heavy-rain") return "Still pouring down. Puddles forming by the touchline.";
+  return null;
+}

@@ -1,5 +1,7 @@
 # Weather & Pitch Conditions (V1)
 
+Status: built (November 2026).
+
 Every fixture has weather and a pitch condition, worked out from where and when it is played. Conditions change a few
 things the match engine already simulates (fatigue, ball control, long-range delivery, tempo, mistakes, injury risk)
 by small amounts. There is no separate weather simulation, no postponements, no stadium roofs and no coaching weather
@@ -51,8 +53,9 @@ physical ones a little less; tireless ones cope with heat.
 
 ## Integrations
 
-- Commentary: a kick-off line describing the conditions, and an occasional line during adverse games.
-- Social feed: a post about extreme conditions after the user's match.
+- Commentary: a kick-off line and a half-time line in adverse conditions, and a "loses his footing" wording when snow or
+  ice causes a defensive mistake. Lines are picked from the conditions alone, so no random draw is added.
+- Social feed: a journalist's post after the user's match in heavy rain, snow, on a frozen pitch, in strong wind or 32 °C+ heat.
 - Achievements: Mudlark (score in heavy rain or on a heavy pitch), Ice Cold (win in snow or on a frozen pitch),
   Desert Heat (score in the heat), Into the Wind (assist in wind).
 - Press: no weather questions in V1 (the question builders are result- and story-led; a weather question would mostly
@@ -64,3 +67,22 @@ physical ones a little less; tireless ones cope with heat.
 heat drain, technical penalties, wind scope, snow modesty, injury multipliers, physical and stamina mitigation, and
 baseline equality (no conditions and clear/good conditions both reproduce the original match exactly).
 `npm run sim:match` reports goals, shots, injuries, substitution timing and energy for each weather type.
+
+### Calibration (76 v 76, 1,200 matches per row, `npm run sim:match`)
+
+| Conditions | Goals/match | Pass % | Injuries/match | End energy | Sub minute |
+|---|---|---|---|---|---|
+| No conditions | 2.83 | 87.8 | 0.230 | 63.9 | 71.5 |
+| Clear / good | 2.83 | 87.8 | 0.230 | 63.9 | 71.5 |
+| Rain / good | 2.82 | 87.4 | 0.228 | 63.9 | 71.5 |
+| Heavy rain / heavy | 2.77 | 86.8 | 0.263 | 63.9 | 71.4 |
+| Wind / good | 2.82 | 87.8 | 0.228 | 63.9 | 71.5 |
+| Snow / frozen | 2.80 | 86.8 | 0.291 | 64.0 | 71.2 |
+| Heat 30 °C / dry | 2.82 | 87.8 | 0.224 | 59.9 | 71.0 |
+| Heat 36 °C / dry | 2.84 | 87.7 | 0.221 | 58.2 | 70.9 |
+
+## Known limits
+
+- Only the user's matches (as a player) feel the weather. A coaching career's club is not affected in V1.
+- The pitch does not remember earlier weeks' weather: a heavy pitch comes from that day's rain.
+- International venues use the home nation's climate at its reference latitude (no stadium coordinates for nations).

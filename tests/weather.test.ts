@@ -232,3 +232,44 @@ describe("weather in a career", () => {
     expect(again.map((f) => f.result?.detail?.conditions)).toEqual(played.map((f) => f.result?.detail?.conditions));
   }, 300_000);
 });
+
+// ------------------------------------------------------------------------------------------------ integrations
+describe("weather integrations", () => {
+  it("adds kick-off and half-time commentary in adverse conditions only", () => {
+    const wet = new MatchEngine(input(C("heavy-rain", "heavy"), true), Rng.fromSeed("talk")).runToEnd();
+    const info = wet.events.filter((e) => e.type === "info").map((e) => e.text);
+    expect(info.some((t) => t.includes("rain is lashing down"))).toBe(true);
+    expect(info.some((t) => t.includes("churned up"))).toBe(true);
+    const clear = new MatchEngine(input(C("clear"), true), Rng.fromSeed("talk")).runToEnd();
+    expect(clear.events.filter((e) => e.type === "info").some((e) => /rain|snow|wind|heat|pitch/i.test(e.text))).toBe(false);
+  });
+
+  it("unlocks weather achievements from the conditions a match was played in", async () => {
+    const { checkMatchAchievements, hasAchievement } = await import("../src/engine/career/achievements");
+    const s = newCareer({ seed: "wx-ach" });
+    const uid = s.user.playerId;
+    s.players[uid].career.apps = 30;
+    const line = { id: uid, side: "home", slot: "ST", started: true, minuteOn: 0, minuteOff: null, rating: 7.2, goals: 1, assists: 1 } as unknown as import("../src/engine/match/engine").PlayerLine;
+    const mk = (conditions: MatchConditions) => ({
+      comp: { id: "c", kind: "league", name: "L" } as never,
+      fixture: { id: `f-${conditions.weather}`, home: "a", away: "b" } as never,
+      res: { goals: [{ minute: 10, side: "home", scorer: uid }], lines: [line], motm: "x", conditions } as never,
+      line, mine: 1, theirs: 0, myTeam: "a", opponent: "b", nat: false,
+    });
+    checkMatchAchievements(s, mk(C("heavy-rain", "heavy", 9)));
+    checkMatchAchievements(s, mk(C("snow", "frozen", -3)));
+    checkMatchAchievements(s, mk(C("heat", "dry", 31)));
+    checkMatchAchievements(s, mk(C("wind", "good", 8)));
+    for (const id of ["mudlark", "ice-cold", "desert-heat", "into-the-wind"]) expect(hasAchievement(s, id)).toBe(true);
+  });
+
+  it("gets a feed post when the conditions were extreme", async () => {
+    const { feedAfterMatch } = await import("../src/engine/career/feed");
+    const s = newCareer({ seed: "wx-feed" });
+    const uid = s.user.playerId;
+    const line = { id: uid, side: "home", slot: "ST", goals: 0, assists: 0, rating: 6.8 } as unknown as import("../src/engine/match/engine").PlayerLine;
+    const club = s.players[uid].clubId as string;
+    feedAfterMatch(s, { comp: { id: "c", kind: "league", name: "L" } as never, fixture: { id: "fw", home: club, away: "eng-norwich-city" } as never, res: { goals: [], lines: [line], conditions: C("snow", "frozen", -4) } as never, line, mine: 1, theirs: 1, myTeam: club, opponent: "eng-norwich-city", nat: false });
+    expect(s.user.feed?.some((p) => p.id.endsWith(":wx"))).toBe(true);
+  });
+});

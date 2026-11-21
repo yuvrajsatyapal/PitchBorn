@@ -128,6 +128,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     id: "brick-wall", name: "Brick Wall", description: "Keep a clean sheet in a full match as a keeper or defender.", tier: "bronze", group: "Matches", icon: "🧱",
     match: (_s, c) => ["GK", "CB", "RB", "LB"].includes(c.line.slot) && c.theirs === 0 && c.line.started && c.line.minuteOff === null,
   },
+  { id: "mudlark", name: "Mudlark", description: "Score in heavy rain or on a heavy pitch.", tier: "bronze", group: "Matches", icon: "🌧️", match: (_s, c) => c.line.goals > 0 && (c.res.conditions?.weather === "heavy-rain" || c.res.conditions?.pitch === "heavy") },
+  { id: "ice-cold", name: "Ice Cold", description: "Win a match in the snow or on a frozen pitch.", tier: "silver", group: "Matches", icon: "❄️", match: (_s, c) => c.mine > c.theirs && (c.res.conditions?.weather === "snow" || c.res.conditions?.pitch === "frozen") },
+  { id: "desert-heat", name: "Desert Heat", description: "Score in the heat.", tier: "bronze", group: "Matches", icon: "🔥", match: (_s, c) => c.line.goals > 0 && c.res.conditions?.weather === "heat" },
+  { id: "into-the-wind", name: "Into the Wind", description: "Set up a goal in a strong wind.", tier: "bronze", group: "Matches", icon: "💨", match: (_s, c) => c.line.assists > 0 && c.res.conditions?.weather === "wind" },
   { id: "for-your-country", name: "For Your Country", description: "Score for your national team.", tier: "silver", group: "Matches", icon: "🌍", match: (_s, c) => c.nat && c.line.goals > 0 },
 
   // Milestones
