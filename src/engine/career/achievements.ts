@@ -12,6 +12,7 @@ import { ageOf } from "../players/generate";
 import type { AchievementUnlock, Competition, Fixture, GameState } from "../types";
 import { addNews, userPlayer } from "../world/helpers";
 import { feedAfterAchievement } from "./feed";
+import { bestBond, mostLinks } from "./chemistry";
 
 export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
 export type AchievementGroup = "Matches" | "Milestones" | "Honours" | "Career" | "Coaching";
@@ -169,6 +170,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "big-money", name: "Big-Money Move", description: "Move for a fee of €50m or more.", tier: "gold", group: "Career", icon: "💸", career: (s) => s.user.transfers.some((t) => t.fee >= 50_000_000) },
   { id: "millionaire", name: "Millionaire", description: "Earn €1m over your career.", tier: "bronze", group: "Career", icon: "💰", ...count(1_000_000, (s) => Math.round(s.user.earnings)) },
   { id: "promoted", name: "Going Up", description: "Win promotion with your club.", tier: "silver", group: "Career", icon: "⬆️", career: (s) => s.user.memories.some((m) => m.kind === "promotion") },
+  { id: "partnership", name: "Partners in Crime", description: "Form an on-pitch partnership with a teammate.", tier: "bronze", group: "Career", icon: "🤝", career: (s) => bestBond(s) >= 60 },
+  { id: "telepathic", name: "Telepathic", description: "Build a telepathic understanding (85+) with a teammate.", tier: "gold", group: "Career", icon: "🧠", career: (s) => bestBond(s) >= 85 },
+  { id: "dynamic-duo", name: "Dynamic Duo", description: "Combine for 15 goals with the same teammate.", tier: "silver", group: "Career", icon: "👯", ...count(15, mostLinks) },
   { id: "legend", name: "Legend", description: "Retire with a legacy rated Legend or higher.", tier: "platinum", group: "Career", icon: "🗿", career: (s) => (s.user.legacy?.score ?? 0) >= 450 },
 ];
 

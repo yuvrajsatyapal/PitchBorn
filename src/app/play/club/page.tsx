@@ -17,6 +17,7 @@ import { squadOf } from "@/engine/world/helpers";
 import { age, name, ovr, POS_TONE, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
+import { DressingRoomCard } from "@/components/game/DressingRoomCard";
 
 const OWNERSHIP_TONE: Record<OwnershipType, "sun" | "pitch" | "plum" | "coral" | "sky" | "paper"> = {
   "fan-owned": "pitch", billionaire: "sun", "state-backed": "plum", corporate: "sky", "private-equity": "coral", standard: "paper",
@@ -99,6 +100,7 @@ export default function ClubPage() {
         </div>
         <div className="grid content-start gap-4">
           <RelationshipsCard g={g} />
+          <DressingRoomCard g={g} />
           <ClubLeadersCard g={g} clubId={club.id} />
         </div>
       </div>

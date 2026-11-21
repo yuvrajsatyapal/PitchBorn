@@ -565,6 +565,16 @@ export interface FeedPost {
   reposts: number;
 }
 
+/** The player's bond with one club teammate (see engine/career/chemistry.ts). */
+export interface ChemistryBond {
+  /** -100 (feud) to 100 (telepathic). */
+  v: number;
+  /** Matches played together, and goals one made for the other. */
+  games: number;
+  links: number;
+  since: number;
+}
+
 /** One unlocked achievement (definitions live in engine/career/achievements.ts). */
 export interface AchievementUnlock {
   id: string;
@@ -1269,6 +1279,8 @@ export interface UserCareer {
   /** Social feed, oldest first, capped; and how far through the career records the feed has reacted. */
   feed?: FeedPost[];
   feedSeen?: { transfers: number; trophies: number; awards: number; injuries: number };
+  /** Bonds with current club teammates, by player id. */
+  chemistry?: Record<PlayerId, ChemistryBond>;
 }
 
 export interface LegacyResult {

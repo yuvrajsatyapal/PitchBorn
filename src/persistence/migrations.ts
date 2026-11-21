@@ -10,6 +10,7 @@ import { sanitizeCeremony } from "../engine/awards/sanitize";
 import { sanitizeAchievements } from "../engine/career/achievements";
 import { sanitizePress } from "../engine/career/press";
 import { sanitizeFeed } from "../engine/career/feed";
+import { sanitizeChemistry } from "../engine/career/chemistry";
 import { sanitizeRivalry } from "../engine/career/rivalry/sanitize";
 import { sanitizeSagas } from "../engine/career/saga/sanitize";
 import { backfillMemories } from "../engine/memory/backfill";
@@ -246,6 +247,11 @@ export function migrateState(raw: RawState): GameState {
     sanitizeCeremony(state);
   } catch {
     delete state.ceremony;
+  }
+  try {
+    sanitizeChemistry(state);
+  } catch {
+    if (state.user) state.user.chemistry = {};
   }
   try {
     sanitizeFeed(state);

@@ -29,6 +29,7 @@ import { onMatchAgainstFormerManager, rememberBreakthrough } from "../managers/s
 import { checkMatchAchievements } from "../career/achievements";
 import { maybePressConference } from "../career/press";
 import { feedAfterMatch } from "../career/feed";
+import { applyChemistry, chemistryAfterMatch, chemistryBenchRivals } from "../career/chemistry";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
   const out: Fixture[] = [];
@@ -171,11 +172,14 @@ export function matchImportance(state: GameState, comp: Competition | undefined,
 }
 
 export function buildTeamInput(state: GameState, teamId: string, sel: Selection): TeamInput {
+  const starters = sel.starters.map((s) => toInput(s.player, s.slot));
+  // Partnerships (and feuds) with the user change how sharply they link up when they start together.
+  if (state.clubs[teamId]) applyChemistry(state, starters);
   return {
     id: teamId,
     name: teamName(state, teamId),
     short: state.clubs[teamId]?.id ? staticClub(teamId)?.abbreviation ?? teamId : teamId,
-    starters: sel.starters.map((s) => toInput(s.player, s.slot)),
+    starters,
     bench: sel.bench.map((p) => toInput(p, p.position)),
     mentality: 0,
     color: teamColor(state, teamId),
@@ -484,6 +488,10 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
   checkMatchAchievements(state, { comp, fixture, res, line, mine, theirs, myTeam, opponent: opp, nat });
   if (!nat) maybePressConference(state, { kind: "post", comp, fixture, opponentId: opp, myTeam, line, res, mine, theirs });
   feedAfterMatch(state, { comp, fixture, res, line, mine, theirs, myTeam, opponent: opp, nat });
+  if (!nat) {
+    chemistryAfterMatch(state, res, line, mine > theirs, mine < theirs);
+    chemistryBenchRivals(state, new Set(res.lines.filter((l) => l.started).map((l) => l.id)), line.started);
+  }
   void resultText;
   void fullName;
   void overallFor;

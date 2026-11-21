@@ -197,3 +197,14 @@ export function sanitizeFeed(state: GameState): void {
   const ok = u.feedSeen && typeof u.feedSeen === "object" && ["transfers", "trophies", "awards", "injuries"].every((k) => Number.isFinite((u.feedSeen as Record<string, number>)[k]));
   if (!ok) u.feedSeen = { transfers: u.transfers?.length ?? 0, trophies: u.trophies?.length ?? 0, awards: u.awards?.length ?? 0, injuries: u.injuryHistory?.length ?? 0 };
 }
+
+/** A teammate (or the club account) marks a new partnership; the papers pick up a rift. */
+export function feedChemistry(state: GameState, mate: { id: string; firstName: string; lastName: string }, kind: "partnership" | "rival"): void {
+  const rng = Rng.fromSeed(`${state.seed}:feed:chem:${kind}:${mate.id}:${state.season}`);
+  const p = userPlayer(state);
+  if (kind === "partnership") {
+    post(state, rng, `chem:${mate.id}:${state.season}:p`, "teammate", { name: `${mate.firstName} ${mate.lastName}`, handle: `@${tag(mate.firstName)}${tag(mate.lastName)}` }, rng.pick([`Love playing with this guy 🤝 @${tag(p.firstName)}${tag(p.lastName)}`, `Brothers on and off the pitch. ${p.lastName} 💪`, `We just know where each other will be. Big things coming.`]), "pos", "chemistry", 1.2);
+  } else {
+    post(state, rng, `chem:${mate.id}:${state.season}:r`, "journalist", journalist(rng), `Sources say all is not well between ${p.lastName} and ${mate.lastName} at ${short(p.clubId)}. Words exchanged at training.`, "neg", "chemistry");
+  }
+}

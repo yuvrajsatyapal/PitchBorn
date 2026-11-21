@@ -16,6 +16,7 @@ import type { Competition, Fixture, GameState, PressAnswer, PressConference, Pre
 import { addNews, nextId, userPlayer } from "../world/helpers";
 import { adjustRel } from "./relationships";
 import { feedAfterPress } from "./feed";
+import { chemistryShock } from "./chemistry";
 
 const OUTLETS = ["The Touchline", "Matchday Mirror", "The Final Whistle", "Pitchside Daily", "The Terrace Times", "Ninety Minutes", "The Back Post", "Full-Time Report"];
 export const PRESS_LOG_CAP = 30;
@@ -276,6 +277,8 @@ function applyEffects(state: GameState, e: PressEffects, cause: string): void {
   for (const k of ["manager", "teammates", "supporters", "board"] as const) if (e[k]) adjustRel(state, k, e[k] as number, cause);
   if (e.morale) p.morale = Math.round(clamp(p.morale + e.morale, 5, 100) * 10) / 10;
   if (e.reputation) p.reputation = Math.round(clamp(p.reputation + e.reputation, 0, 100) * 10) / 10;
+  // Calling out the dressing room in public is remembered by everyone in it; praising them warms existing bonds.
+  if (e.teammates) chemistryShock(state, e.teammates < 0 ? e.teammates * 2 : e.teammates * 0.5);
 }
 
 /** Answer one question. Returns the reaction, or an error message. */
