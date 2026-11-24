@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { INTERRUPT_LABEL } from "@/engine/season/interrupts";
 import { useGame } from "@/game/store";
@@ -20,19 +20,23 @@ const monthLabel = (day: number) => dateOf(day).toLocaleDateString("en-GB", { mo
 export function SimOverlay() {
   const sim = useGame((s) => s.sim);
   const stopSim = useGame((s) => s.stopSim);
-  const baseRef = useRef<number | null>(null);
+  // The day the run started: the strip slides relative to it. Set once per run, cleared when the run ends.
+  const [startDay, setStartDay] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!sim) baseRef.current = null;
     if (!sim) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && stopSim();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [!!sim, stopSim]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!sim) return null;
-  if (baseRef.current === null) baseRef.current = sim.day;
-  const base = baseRef.current;
+  // Adjusting state while rendering (React re-renders before committing), so the first frame already has the right base.
+  if (!sim) {
+    if (startDay !== null) setStartDay(null);
+    return null;
+  }
+  if (startDay === null) setStartDay(sim.day);
+  const base = startDay ?? sim.day;
   const days = Array.from({ length: REACH * 2 + 1 }, (_, i) => sim.day - REACH + i);
   const timing = sim.ease ? "cubic-bezier(0.2, 0.7, 0.3, 1)" : "linear";
   const slide = `transform ${sim.stepMs}ms ${timing}`;
