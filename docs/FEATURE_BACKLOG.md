@@ -13,6 +13,9 @@ Ideas for what to add next. Build them only when the owner says to start one.
 - **Teammate chemistry** (#5): `engine/career/chemistry.ts`, Dressing Room card on the Club page.
 - **Coaching career** (#1): `engine/career/coaching.ts`, `/play/coach`.
 - **Weather and pitch conditions V1** (#7): `engine/weather/`, `docs/WEATHER.md`.
+- **Sponsor targets** (#4): season targets with a bonus and a form clause on bigger deals, `engine/career/sponsors.ts` (`docs/CAREER_SYSTEMS.md` §11).
+- **Agent personality** (#8): greedy, loyal and well-connected agents, `engine/career/agents.ts` (§12).
+- **Hall of Fame** (#13): retired careers from every save, `engine/career/hallOfFame.ts`, `/hall-of-fame` (§13).
 
 The numbered list below is the original backlog; the items above are done.
 

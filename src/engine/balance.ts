@@ -113,6 +113,38 @@ export const BALANCE = {
     depositWeeks: 4,
     unpaidWeeksBeforeLeaving: 4,
     startingBank: 5000,
+    /**
+     * Personality (docs/CAREER_SYSTEMS.md, agents): skill bonuses on top of the agent's own skills, a multiplier on the
+     * commission they take, and how many unpaid weeks they put up with before walking.
+     */
+    styles: {
+      greedy: { skills: { negotiation: 8, connections: 3, media: 0, care: -6 }, commission: 1.3, unpaidWeeks: 2 },
+      loyal: { skills: { negotiation: 0, connections: -5, media: 0, care: 10 }, commission: 0.75, unpaidWeeks: 8 },
+      connected: { skills: { negotiation: -4, connections: 10, media: 4, care: 0 }, commission: 1, unpaidWeeks: 4 },
+    },
+  },
+  sponsors: {
+    /** A season target pays this share of the deal's yearly value as a one-off bonus. */
+    bonusShare: 0.25,
+    /** Brands needing at least this much appeal write a form clause into the deal. */
+    formClauseAppeal: 40,
+    /** Form clause: weeks below `poorForm` (in season, while fit) before a warning, and before the brand walks. */
+    // Form is an average of ratings (≈6.6 typical); in season it sits below 5.6 about one week in ten.
+    poorForm: 5.6,
+    recoveredForm: 6.0,
+    warnWeeks: 6,
+    dropWeeks: 12,
+    /** A season's target, before pro-rating for the weeks left: the player's own last season if he played enough, else these. */
+    defaultTarget: { goals: 8, assists: 5, involvements: 8, cleanSheets: 8, apps: 20 },
+    /** Without a full last season to go on, the default is scaled by the player's squad role (a backup plays far less). */
+    roleScale: { star: 1.1, first: 1, rotation: 0.6, backup: 0.35, prospect: 0.3 },
+    minTarget: { goals: 2, assists: 2, involvements: 2, cleanSheets: 2, apps: 4 },
+    /** Appearances are capped by the fixture list, so they are never stretched beyond this many in a season. */
+    maxApps: 36,
+    /** Last season counts as a guide once it had this many appearances. */
+    minAppsForHistory: 10,
+    /** Goal, assist and clean-sheet targets aim a little higher than last season (appearances do not). */
+    stretch: 1.1,
   },
   squad: {
     min: 22,

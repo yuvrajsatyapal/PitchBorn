@@ -53,6 +53,13 @@ skipped by AI sackings and season-boundary manager moves (`managers/movement.ts`
 `conditions` only for fixtures involving the user; the engine reads them through `BALANCE.weather`. Clear on a good
 pitch is exactly the baseline. Played conditions live in `FixtureResult.detail.conditions`. Spec and calibration: `docs/WEATHER.md`.
 
+## Sponsors, agents, Hall of Fame (Nov 2026)
+Sponsor deals carry a season target (bonus = a quarter of the yearly value) and, for brands needing appeal 40+, a form
+clause; tuning in `BALANCE.sponsors`. Agents have a personality (greedy, loyal, connected) derived from
+`seed:agent-style:<id>` and applied through `agentSkill` / `effectiveCommission` / `agentPatience`
+(`BALANCE.agents.styles`). The Hall of Fame (`/hall-of-fame`) keeps retired careers from every save in the kv store
+(`persistence/hallOfFame.ts`), inducted on retirement. No schema bump. Details: `docs/CAREER_SYSTEMS.md` §11–13.
+
 ## Known issues / TODO
 - Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).

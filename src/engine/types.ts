@@ -1005,6 +1005,26 @@ export interface SponsorDeal {
   paidThrough: number;
   /** A renewal offer has already been made (or declined by the brand) for this deal. */
   renewalHandled?: boolean;
+  /** This season's performance target (a new one each season while the deal runs). Absent in older saves until set. */
+  target?: SponsorTarget;
+  /** The brand can walk away if the player's form stays poor (bigger brands insist on it). */
+  formClause?: boolean;
+  /** Consecutive in-season weeks of poor form, for the form clause. */
+  poorWeeks?: number;
+}
+
+export type SponsorTargetKind = "goals" | "assists" | "involvements" | "cleanSheets" | "apps";
+
+export interface SponsorTarget {
+  season: number;
+  kind: SponsorTargetKind;
+  /** How many the player needs from `baseline` onwards. */
+  need: number;
+  /** The season total when the target was set (a deal signed mid-season only counts from then). */
+  baseline: number;
+  /** Paid once, the week the target is reached. */
+  bonus: number;
+  status: "open" | "met" | "missed";
 }
 
 export interface SponsorOffer {
@@ -1015,6 +1035,8 @@ export interface SponsorOffer {
   expiresIndex: number;
   /** Renewal of the deal with this id (replaces it when accepted). */
   renewsDealId?: string;
+  /** The deal will carry a form clause. */
+  formClause?: boolean;
 }
 
 export interface SponsorState {
@@ -1211,6 +1233,9 @@ export interface JerseyState {
 }
 
 export type AgentTier = "none" | "rookie" | "established" | "top" | "super";
+
+/** How an agent works: a greedy one squeezes clubs and takes a bigger cut, a loyal one stands by you, a connected one opens doors. */
+export type AgentStyle = "greedy" | "loyal" | "connected";
 
 export interface AgentSkills {
   /** Wage ceilings and signing bonuses. */

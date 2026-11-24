@@ -37,6 +37,7 @@ export default function SavesPage() {
           <Button tone="paper" onClick={() => file.current?.click()}>
             Import save
           </Button>
+          <LinkButton href="/hall-of-fame" tone="paper">Hall of Fame</LinkButton>
           <LinkButton href="/new">New career</LinkButton>
         </PageTitle>
         <input

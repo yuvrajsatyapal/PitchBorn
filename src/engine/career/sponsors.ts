@@ -9,14 +9,17 @@
 import { BALANCE } from "../balance";
 import { clubName } from "../data/world";
 import { formatMoney, roundMoney } from "../players/economy";
+import { positionGroup } from "../players/attributes";
 import { ageOf } from "../players/generate";
 import { Rng, clamp } from "../rng";
-import type { GameState, SponsorDeal, SponsorOffer, SponsorState } from "../types";
+import type { GameState, Player, SponsorDeal, SponsorOffer, SponsorState, SponsorTarget, SponsorTargetKind } from "../types";
 import { addNews, userPlayer } from "../world/helpers";
 import { agentSkill } from "./agents";
 import { receiveIncome } from "./money";
 
 const TURNS = BALANCE.calendar.turnsPerSeason;
+const CAL = BALANCE.calendar;
+const SP = BALANCE.sponsors;
 
 export type SponsorCategory = "boots" | "apparel" | "tech" | "drinks" | "cars" | "watches" | "finance" | "local";
 
@@ -128,6 +131,7 @@ function makeOffer(state: GameState, brand: Brand, appeal: number, rng: Rng, ren
     years,
     expiresIndex: state.turnIndex + OFFER_WAIT,
     renewsDealId,
+    ...(brand.minAppeal >= SP.formClauseAppeal ? { formClause: true } : {}),
   };
 }
 
@@ -167,6 +171,113 @@ function renewalPass(state: GameState, appeal: number, rng: Rng): void {
   }
 }
 
+// ------------------------------------------------------------------------------------------------ season targets
+
+export const TARGET_LABEL: Record<SponsorTargetKind, { one: string; many: string }> = {
+  goals: { one: "goal", many: "goals" },
+  assists: { one: "assist", many: "assists" },
+  involvements: { one: "goal or assist", many: "goals + assists" },
+  cleanSheets: { one: "clean sheet", many: "clean sheets" },
+  apps: { one: "appearance", many: "appearances" },
+};
+
+/** What a brand asks of this player: goals from forwards, involvements or assists from midfielders, clean sheets from keepers, games from defenders. */
+export function targetKindFor(p: Pick<Player, "position">): SponsorTargetKind {
+  const g = positionGroup(p.position);
+  if (g === "GK") return "cleanSheets";
+  if (g === "DEF") return "apps";
+  if (g === "MID") return p.position === "AM" ? "involvements" : "assists";
+  return "goals";
+}
+
+function countOf(line: { goals: number; assists: number; cleanSheets: number; apps: number }, kind: SponsorTargetKind): number {
+  return kind === "involvements" ? line.goals + line.assists : line[kind];
+}
+
+/** The player's tally for `kind` this season, across every competition. */
+export function seasonCount(p: Player, kind: SponsorTargetKind): number {
+  let n = 0;
+  for (const line of Object.values(p.season)) n += countOf(line, kind);
+  return n;
+}
+
+/** Share of the league season still to play, from this week. */
+function seasonLeft(turn: number): number {
+  const span = CAL.seasonEnd - CAL.seasonStart + 1;
+  return clamp((CAL.seasonEnd - Math.max(turn, CAL.seasonStart) + 1) / span, 0, 1);
+}
+
+/** A target for the rest of this season: last season's output (if he played enough) plus a little, pro-rated. */
+export function makeTarget(state: GameState, deal: Pick<SponsorDeal, "annual">): SponsorTarget {
+  const p = userPlayer(state);
+  const kind = targetKindFor(p);
+  const last = [...p.history].reverse().find((h) => h.stats.apps > 0);
+  const base =
+    last && last.stats.apps >= SP.minAppsForHistory
+      ? Math.max(countOf(last.stats, kind), SP.minTarget[kind])
+      : SP.defaultTarget[kind] * SP.roleScale[p.contract?.role ?? "rotation"];
+  const full = kind === "apps" ? Math.min(base, SP.maxApps) : base * SP.stretch;
+  const need = Math.max(SP.minTarget[kind], Math.round(full * seasonLeft(state.turn)));
+  return { season: state.season, kind, need, baseline: seasonCount(p, kind), bonus: roundMoney(deal.annual * SP.bonusShare), status: "open" };
+}
+
+/** Progress towards a target: [done, need]. */
+export function targetProgress(state: GameState, t: SponsorTarget): [number, number] {
+  const done = t.season === state.season ? Math.max(0, seasonCount(userPlayer(state), t.kind) - t.baseline) : 0;
+  return [Math.min(done, t.need), t.need];
+}
+
+/** Targets can be set from the start of the season until a month before its end. */
+const targetWindow = (turn: number) => turn >= CAL.seasonStart && turn <= CAL.seasonEnd - 4;
+
+function targetsWeekly(state: GameState): void {
+  const s = sponsorState(state);
+  for (const d of s.deals) {
+    const b = brandOf(d.brandId);
+    if (!b) continue;
+    const t = d.target;
+    if (t && t.status === "open") {
+      if (t.season !== state.season || state.turn >= CAL.endOfSeasonTurn) {
+        t.status = "missed";
+        if (t.season === state.season) addNews(state, { kind: "contract", title: `${b.name} target missed`, body: `${targetProgress(state, t)[0]} of ${t.need} ${TARGET_LABEL[t.kind].many}. No bonus this season.` });
+      } else {
+        const [done, need] = targetProgress(state, t);
+        if (done >= need) {
+          t.status = "met";
+          receiveIncome(state, t.bonus, "sponsor");
+          addNews(state, { kind: "contract", title: `${b.name} bonus: ${formatMoney(t.bonus)}`, body: `You hit your target of ${need} ${TARGET_LABEL[t.kind].many}.`, important: true });
+        }
+      }
+    }
+    if ((!d.target || d.target.season !== state.season) && targetWindow(state.turn)) d.target = makeTarget(state, d);
+  }
+}
+
+/** The form clause: a long run of poor form (in weeks he played, in season) brings a warning, then the brand walks. */
+function formClauseWeekly(state: GameState): void {
+  const s = sponsorState(state);
+  const p = userPlayer(state);
+  const inSeason = state.turn >= CAL.seasonStart + 4 && state.turn <= CAL.seasonEnd;
+  for (const d of [...s.deals]) {
+    if (!d.formClause) continue;
+    const b = brandOf(d.brandId);
+    if (!b) continue;
+    if (p.form >= SP.recoveredForm) d.poorWeeks = 0;
+    // Only weeks he actually played count: a benched player's form just sits at his last rating.
+    const played = state.user.lastMatchTurn === state.turn;
+    if (!inSeason || p.injury || !played || p.form >= SP.poorForm) continue;
+    d.poorWeeks = (d.poorWeeks ?? 0) + 1;
+    if (d.poorWeeks === SP.warnWeeks) {
+      addNews(state, { kind: "contract", title: `${b.name} is worried about your form`, body: "Their deal has a form clause. Get back to your best soon or they may pull out.", important: true });
+    } else if (d.poorWeeks >= SP.dropWeeks) {
+      s.deals = s.deals.filter((x) => x.id !== d.id);
+      s.offers = s.offers.filter((o) => o.renewsDealId !== d.id);
+      s.cooldown[d.brandId] = state.turnIndex + BRAND_COOLDOWN;
+      addNews(state, { kind: "contract", title: `${b.name} ends your deal`, body: "After weeks of poor form, the brand has used the form clause to walk away.", important: true });
+    }
+  }
+}
+
 /** Weekly: pay, expire, renew, and now and then a new approach. Called once per turn. */
 export function sponsorWeekly(state: GameState): void {
   if (state.user.retired) return;
@@ -185,6 +296,8 @@ export function sponsorWeekly(state: GameState): void {
   }
   s.deals = s.deals.filter((d) => now + 1 < d.endIndex);
   s.offers = s.offers.filter((o) => o.expiresIndex > now);
+  targetsWeekly(state);
+  formClauseWeekly(state);
 
   const rng = Rng.fromSeed(`${state.seed}:sponsor:${now}`);
   const appeal = commercialAppeal(state);
@@ -199,9 +312,10 @@ export function acceptSponsorOffer(state: GameState, offerId: string): string {
   const brand = offer && brandOf(offer.brandId);
   if (!offer || !brand) return "That offer is no longer available.";
   s.offers = s.offers.filter((o) => o.id !== offerId);
+  const renewed = offer.renewsDealId ? s.deals.find((d) => d.id === offer.renewsDealId) : undefined;
   if (offer.renewsDealId) s.deals = s.deals.filter((d) => d.id !== offer.renewsDealId);
   else if (s.deals.some((d) => brandOf(d.brandId)?.category === brand.category)) return `You already have a ${brand.category} partner.`;
-  s.deals.push({
+  const deal: SponsorDeal = {
     id: offer.id,
     brandId: brand.id,
     annual: offer.annual,
@@ -209,8 +323,14 @@ export function acceptSponsorOffer(state: GameState, offerId: string): string {
     endIndex: state.turnIndex + offer.years * TURNS,
     paidThrough: state.turnIndex - 1,
     renewalHandled: false,
-  });
-  addNews(state, { kind: "contract", title: `You sign with ${brand.name}`, body: `${formatMoney(offer.annual)} a year for ${offer.years} year${offer.years > 1 ? "s" : ""}.`, important: brand.minAppeal >= 40 });
+    ...(offer.formClause ? { formClause: true } : {}),
+  };
+  // A renewal keeps this season's target (met or not): a new deal with the same brand is not a second bonus.
+  if (renewed?.target?.season === state.season) deal.target = renewed.target;
+  else if (targetWindow(state.turn)) deal.target = makeTarget(state, deal);
+  s.deals.push(deal);
+  const goal = deal.target ? ` Target this season: ${deal.target.need} ${TARGET_LABEL[deal.target.kind].many} for a ${formatMoney(deal.target.bonus)} bonus.` : "";
+  addNews(state, { kind: "contract", title: `You sign with ${brand.name}`, body: `${formatMoney(offer.annual)} a year for ${offer.years} year${offer.years > 1 ? "s" : ""}.${goal}`, important: brand.minAppeal >= 40 });
   return `Signed with ${brand.name}.`;
 }
 

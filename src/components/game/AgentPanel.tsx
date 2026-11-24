@@ -2,30 +2,43 @@
 import { useState } from "react";
 import { Flag } from "@/components/art/Flag";
 import { Badge, Bar, Button, Card, Modal } from "@/components/ui";
-import { AGENT_SKILL_LABEL, AGENT_TIER_LABEL, agentMarket, canHireAgent, requiredReputation } from "@/engine/career/agents";
+import { AGENT_SKILL_LABEL, AGENT_STYLE_LABEL, AGENT_TIER_LABEL, agentMarket, agentPatience, agentStyle, canHireAgent, effectiveCommission, effectiveSkills, requiredReputation } from "@/engine/career/agents";
 import { formatMoney } from "@/engine/players/economy";
-import type { Agent, AgentSkills, GameState } from "@/engine/types";
+import type { Agent, AgentSkills, AgentStyle, GameState } from "@/engine/types";
 import { useGame } from "@/game/store";
 
 const SKILLS = Object.keys(AGENT_SKILL_LABEL) as (keyof AgentSkills)[];
 const TIER_TONE = { none: "paper", rookie: "paper", established: "sky", top: "plum", super: "sun" } as const;
+const STYLE_TONE: Record<AgentStyle, "coral" | "pitch" | "sky"> = { greedy: "coral", loyal: "pitch", connected: "sky" };
 
-function SkillBars({ agent }: { agent: Agent }) {
+/** Skills as they play out, personality included. */
+function SkillBars({ g, agent }: { g: GameState; agent: Agent }) {
+  const skills = effectiveSkills(g, agent);
   return (
     <div className="grid gap-1.5">
       {SKILLS.map((k) => (
-        <Bar key={k} label={AGENT_SKILL_LABEL[k].label + (agent.specialty === k ? " ★" : "")} value={agent.skills[k]} tone={agent.specialty === k ? "sun" : "pitch"} height={8} />
+        <Bar key={k} label={AGENT_SKILL_LABEL[k].label + (agent.specialty === k ? " ★" : "")} value={skills[k]} tone={agent.specialty === k ? "sun" : "pitch"} height={8} />
       ))}
     </div>
   );
 }
 
-function Costs({ agent }: { agent: Agent }) {
+function Costs({ g, agent }: { g: GameState; agent: Agent }) {
   return (
     <div className="text-sm">
-      <b>{formatMoney(agent.weeklyFee)}</b>/wk · <b>{(agent.commission * 100).toFixed(1)}%</b> of each new contract
+      <b>{formatMoney(agent.weeklyFee)}</b>/wk · <b>{(effectiveCommission(g, agent) * 100).toFixed(1)}%</b> of each new contract
     </div>
   );
+}
+
+function StyleBadge({ g, agent }: { g: GameState; agent: Agent }) {
+  const style = agentStyle(g, agent);
+  return style ? <Badge tone={STYLE_TONE[style]}>{AGENT_STYLE_LABEL[style].label}</Badge> : null;
+}
+
+function StyleNote({ g, agent }: { g: GameState; agent: Agent }) {
+  const style = agentStyle(g, agent);
+  return style ? <p className="text-xs text-ink-2">{AGENT_STYLE_LABEL[style].blurb}</p> : null;
 }
 
 export function AgentPanel({ g }: { g: GameState }) {
@@ -39,23 +52,24 @@ export function AgentPanel({ g }: { g: GameState }) {
   return (
     <>
       <Card className="flex flex-col" title="Agent" action={<Badge tone={TIER_TONE[me.tier]}>{AGENT_TIER_LABEL[me.tier]}</Badge>}>
-        <div className="flex items-center gap-2 text-lg font-bold">
-          {me.nationality && <Flag code={me.nationality} />} {me.name}
+        <div className="flex flex-wrap items-center gap-2 text-lg font-bold">
+          {me.nationality && <Flag code={me.nationality} />} {me.name} <StyleBadge g={g} agent={me} />
         </div>
         {none ? (
           <p className="mt-1 text-xs text-muted">You represent yourself: no fees, but fewer offers and weaker terms.</p>
         ) : (
           <>
             <div className="mt-1 text-xs text-ink-2">Rating {me.rating}/100 · relationship {Math.round(g.user.relationships.agent)}</div>
-            <div className="mt-2"><SkillBars agent={me} /></div>
-            <div className="mt-2"><Costs agent={me} /></div>
+            <div className="mt-1"><StyleNote g={g} agent={me} /></div>
+            <div className="mt-2"><SkillBars g={g} agent={me} /></div>
+            <div className="mt-2"><Costs g={g} agent={me} /></div>
           </>
         )}
         <div className="mt-2 text-xs text-ink-2" data-testid="bank">
           Bank: <b>{formatMoney(g.user.bank)}</b>
           {weeks !== null && ` · covers ${weeks} week${weeks === 1 ? "" : "s"} of fees`}
         </div>
-        {(g.user.agentUnpaidWeeks ?? 0) > 0 && <p className="mt-1 text-xs font-bold text-coral">Unpaid fees: {g.user.agentUnpaidWeeks} week(s). Your agent leaves after 4.</p>}
+        {(g.user.agentUnpaidWeeks ?? 0) > 0 && <p className="mt-1 text-xs font-bold text-coral">Unpaid fees: {g.user.agentUnpaidWeeks} week(s). Your agent leaves after {agentPatience(g, me)}.</p>}
         <div className={`mt-auto grid gap-2 pt-4 ${none ? "grid-cols-1" : "grid-cols-2"}`}>
           <Button size="sm" tone="sun" className="w-full whitespace-nowrap" onClick={() => setOpen(true)} data-testid="agent-market">Agent market</Button>
           {!none && <Button size="sm" tone="paper" className="w-full whitespace-nowrap" onClick={release}>Go without agent</Button>}
@@ -63,7 +77,7 @@ export function AgentPanel({ g }: { g: GameState }) {
       </Card>
       <Modal open={open} onClose={() => setOpen(false)} title="Agent market">
         <p className="mb-3 text-xs text-ink-2">
-          Fees come out of your bank every week, plus a commission on each new contract. You can change agent once a season. Top agents only take players with enough reputation (or rare potential).
+          Fees come out of your bank every week, plus a commission on each new contract. You can change agent once a season. Top agents only take players with enough reputation (or rare potential). Each agent has a way of working: greedy agents get more out of clubs but take a bigger cut, loyal ones charge less and stick by you, well-connected ones bring more offers.
         </p>
         <ul className="grid max-h-[60dvh] gap-2 overflow-y-auto pr-1">
           {[...market].reverse().map((a) => {
@@ -73,7 +87,7 @@ export function AgentPanel({ g }: { g: GameState }) {
               <li key={a.id} className={`rounded-xl border-2 p-3 ${current ? "border-pitch bg-pitch-2/20" : "border-line"}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2 font-bold">
-                    <Flag code={a.nationality} /> {a.name} <Badge tone={TIER_TONE[a.tier]}>{AGENT_TIER_LABEL[a.tier]}</Badge>
+                    <Flag code={a.nationality} /> {a.name} <Badge tone={TIER_TONE[a.tier]}>{AGENT_TIER_LABEL[a.tier]}</Badge> <StyleBadge g={g} agent={a} />
                     <span className="text-xs text-ink-2">{a.rating}</span>
                   </div>
                   <Button size="sm" tone={current ? "paper" : "pitch"} disabled={!check.ok} onClick={() => hire(a.id)}>
@@ -81,9 +95,10 @@ export function AgentPanel({ g }: { g: GameState }) {
                   </Button>
                 </div>
                 <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-                  <SkillBars agent={a} />
+                  <SkillBars g={g} agent={a} />
                   <div>
-                    <Costs agent={a} />
+                    <Costs g={g} agent={a} />
+                    <div className="mt-1"><StyleNote g={g} agent={a} /></div>
                     {a.specialty && <div className="mt-1 text-xs text-ink-2">Best at {AGENT_SKILL_LABEL[a.specialty].label.toLowerCase()}: {AGENT_SKILL_LABEL[a.specialty].blurb.toLowerCase()}.</div>}
                     {a.minReputation > 0 && !check.reason?.startsWith("Needs reputation") && <div className="mt-1 text-xs text-muted">Requires reputation {requiredReputation(g, a)}+</div>}
                     {!check.ok && !current && <div className="mt-1 text-xs font-bold text-coral">{check.reason}</div>}

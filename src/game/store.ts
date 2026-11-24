@@ -31,6 +31,7 @@ import { createWorld, type NewCareerInput } from "@/engine/world/create";
 import { withRng } from "@/engine/world/helpers";
 import { Rng } from "@/engine/rng";
 import { loadSave, saveGame, setKv, getKv } from "@/persistence/saves";
+import { inductCareer } from "@/persistence/hallOfFame";
 
 export type RewardKind = "training" | "recovery" | "morale";
 
@@ -286,6 +287,8 @@ export const useGame = create<GameStore>((set, get) => ({
       // Let the closed overlay paint before the save, which serialises the whole career and blocks the page for a moment.
       await sleep(50);
       if (g.settings.autoSave || seasonRolled) await saveGame(g, { backup: seasonRolled, label: seasonRolled ? `Season ${g.season} start` : undefined });
+      // A forced retirement happens inside the week; induct it here (later weeks in the dugout just refresh the entry).
+      if (g.user.retired) await inductCareer(g).catch((err) => console.warn("Hall of Fame induction failed", err));
       set({ lastSavedAt: new Date().toISOString() });
     } catch (err) {
       console.error(err);
@@ -486,6 +489,8 @@ export const useGame = create<GameStore>((set, get) => ({
     retireUser(g);
     get().bump();
     await saveGame(g, { backup: true, label: "Retirement" });
+    // The Hall of Fame keeps the career even if this save is deleted later.
+    await inductCareer(g).catch((err) => console.warn("Hall of Fame induction failed", err));
   },
 
   retireInternational: () => {

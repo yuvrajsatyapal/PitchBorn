@@ -63,7 +63,30 @@ optional field that older saves simply lack (schema 10, see Persistence).
 - **Legacy saves** keep the wages on their contracts. Nothing is recalculated on load, so an old contract keeps its wage until the next renewal, which uses this model.
 - **Checking the numbers:** `npm run sim:wages -- --seasons 12` (`scripts/sim/wages.ts`) reports renewal wage against the old contract and market, raise and cut rates, loyalty bands, and wage inflation by overall band and club wage-to-revenue.
 
+## 11. Sponsor targets and the form clause (`career/sponsors.ts`, `components/game/SponsorPanel.tsx`)
+- **A target every season.** Each running deal gets a season target once the league season is under way (`seasonStart` until a month before `seasonEnd`). What is asked depends on the position: goals for forwards, goals + assists for an attacking midfielder, assists for other midfielders, clean sheets for keepers, appearances for defenders (`targetKindFor`). Only what happens after the target is set counts (`baseline`), so a deal signed mid-season is pro-rated for the weeks left.
+- **How big.** Last season's tally for the same thing if he played at least 10 games, × 1.1 (appearances are not stretched and are capped at 36). Without such a season, a default (8 goals, 5 assists, 8 goals + assists, 8 clean sheets, 20 games) scaled by squad role, from 1.1 for a star down to 0.3 for a prospect. Never below 2 (4 games).
+- **The bonus.** A quarter of the deal's yearly value, paid once, the week the target is reached. A target still open at the end of the season (`endOfSeasonTurn`) is missed: no bonus and no other penalty. A renewal keeps this season's target, so a brand never pays twice in one season. Deals from older saves simply pick up a target the next in-season week.
+- **The form clause.** Brands needing commercial appeal 40+ write one into their deals (shown on the offer). Each in-season week the player plays (fit) with form below 5.6 adds one to a count; form back at 6.0 or more (an ordinary week) clears it. Six weeks bring a warning, twelve and the brand walks (the brand then keeps away for a while). Injury, weeks on the bench and pre-season pause the count (a benched player's form just sits at his last rating). In season, form sits below 5.6 roughly one week in ten, so it takes a genuine slump.
+- **Tuning** lives in `BALANCE.sponsors`.
+
+## 12. Agent personality (`career/agents.ts`, `components/game/AgentPanel.tsx`)
+- Every agent is **greedy**, **loyal** or **well connected**. The style comes from the career seed and the agent's id on its own random stream (`agentStyle`), so the market's dice are untouched and agents in older saves get one too. Nothing new is stored.
+- **Greedy:** negotiation +8, connections +3, care −6; takes 1.3× his commission; walks after 2 unpaid weeks.
+- **Loyal:** care +10, connections −5; takes 0.75× his commission; puts up with 8 unpaid weeks.
+- **Well connected:** connections +10, media +4, negotiation −4; normal commission and patience.
+- Everything that reads an agent's skills goes through `agentSkill`, which uses the skills after personality (`effectiveSkills`); commission uses `effectiveCommission`. The market and the Agent card show the personality, the skills and the commission as they play out. Hiring and releasing work as before (one change a season).
+- **Tuning** lives in `BALANCE.agents.styles`.
+
+## 13. Hall of Fame (`career/hallOfFame.ts`, `persistence/hallOfFame.ts`, `/hall-of-fame`)
+- One entry per retired career, across every save in the browser, ranked by legacy score. An entry is a small, self-contained snapshot (name, portrait, nation, main club, span, peak, legacy, identity, career stats, honours, awards) built from the career card, so it stays readable after its save is deleted.
+- **Induction.** When the player retires (the retire action, or a forced retirement inside a week); weeks in the dugout afterwards only refresh the entry, keeping its first induction date. Retired saves from before the Hall existed are inducted the first time it opens.
+- **Storage.** The key-value store (`hallOfFame`), not the save. Removing a career from the Hall is remembered (`hallOfFame:removed`) so it is never inducted again; the save itself is not touched.
+- Linked from the site header, the saves page and the Legacy page.
+
 ## Known limitations
+- Hall of Fame entries live in this browser only (they are not part of a save export).
+- Sponsor targets count every competition; there are no competition-specific targets (for example "10 league goals").
 - Sell-on clauses (club-to-club), loyalty bonuses and extension options are not implemented: their triggers are not modelled.
 - Former managers are not tracked, so "former manager" never appears in the match preview.
 - Match logs start from the first match played after upgrading: older saves keep their last 60 ratings (no minutes, scores or venues) and charts say so.

@@ -1,16 +1,53 @@
 "use client";
 import { Badge, Button, Card } from "@/components/ui";
 import { Stars } from "@/components/game/widgets";
-import { APPEAL_LEVELS, CATEGORY_LABEL, appealDrivers, appealLabel, brandOf, commercialAppeal, sponsorState, weeksLeft } from "@/engine/career/sponsors";
+import { APPEAL_LEVELS, CATEGORY_LABEL, TARGET_LABEL, appealDrivers, appealLabel, brandOf, commercialAppeal, sponsorState, targetProgress, weeksLeft } from "@/engine/career/sponsors";
 import { formatMoney } from "@/engine/players/economy";
-import type { GameState } from "@/engine/types";
+import type { GameState, SponsorDeal } from "@/engine/types";
+import { BALANCE } from "@/engine/balance";
 import { useGame } from "@/game/store";
 
 const WEEKS_PER_MONTH = 4;
 
 function duration(weeks: number): string {
   if (weeks >= 52) return `${(weeks / 50).toFixed(1).replace(/\.0$/, "")} years`;
-  return `${Math.max(1, Math.round(weeks / WEEKS_PER_MONTH))} months`;
+  const months = Math.max(1, Math.round(weeks / WEEKS_PER_MONTH));
+  return months === 1 ? "1 month" : `${months} months`;
+}
+
+/** This season's target for a deal: a progress bar while open, the outcome once settled. */
+function DealTarget({ g, d }: { g: GameState; d: SponsorDeal }) {
+  const t = d.target;
+  if (!t || t.season !== g.season) {
+    return <div className="text-[11px] text-muted">A season target is set once the league season is under way.</div>;
+  }
+  const [done, need] = targetProgress(g, t);
+  const label = TARGET_LABEL[t.kind].many;
+  if (t.status === "met") return <div className="text-xs font-bold text-pitch">Target hit: {need} {label} · {formatMoney(t.bonus)} bonus paid</div>;
+  if (t.status === "missed") return <div className="text-xs text-coral">Target missed this season ({done}/{need} {label})</div>;
+  return (
+    <div className="grid gap-1">
+      <div className="flex items-baseline justify-between gap-2 text-xs">
+        <span>Target: <b className="num">{need}</b> {label} for a <b>{formatMoney(t.bonus)}</b> bonus</span>
+        <span className="num font-bold">{done}/{need}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full border border-line bg-paper-2" role="progressbar" aria-valuemin={0} aria-valuemax={need} aria-valuenow={done} aria-label={`${done} of ${need} ${label}`}>
+        <div className="h-full bg-pitch" style={{ width: `${Math.round((done / Math.max(1, need)) * 100)}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/** The form clause, with a warning once a poor run has started to worry the brand. */
+function FormClause({ d }: { d: SponsorDeal }) {
+  if (!d.formClause) return null;
+  const SP = BALANCE.sponsors;
+  const worried = (d.poorWeeks ?? 0) >= SP.warnWeeks;
+  return (
+    <div className={`text-[11px] ${worried ? "font-bold text-coral" : "text-muted"}`}>
+      {worried ? `Form clause: ${d.poorWeeks} weeks of poor form. They walk after ${SP.dropWeeks}.` : "Form clause: the brand can pull out after a long run of poor form."}
+    </div>
+  );
 }
 
 export function SponsorPanel({ g }: { g: GameState }) {
@@ -42,6 +79,7 @@ export function SponsorPanel({ g }: { g: GameState }) {
                   <div className="min-w-0">
                     <div className="font-bold">{b.name} {o.renewsDealId && <Badge tone="sky">Renewal</Badge>}</div>
                     <div className="text-xs text-ink-2">{CATEGORY_LABEL[b.category]} · <b>{formatMoney(o.annual)}</b> / year · {o.years} year{o.years > 1 ? "s" : ""}</div>
+                    <div className="text-[11px] text-ink-2">Season target bonus: {formatMoney(Math.round(o.annual * BALANCE.sponsors.bonusShare))}{o.formClause ? " · form clause" : ""}</div>
                     <div className="text-[11px] text-muted">Offer ends in {duration(Math.max(1, o.expiresIndex - g.turnIndex))}</div>
                   </div>
                   <div className="flex gap-2">
@@ -69,15 +107,19 @@ export function SponsorPanel({ g }: { g: GameState }) {
               const weeks = weeksLeft(g, d);
               const renewing = s.offers.some((o) => o.renewsDealId === d.id);
               return (
-                <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-line p-3">
-                  <div className="min-w-0">
-                    <div className="font-bold">{b.name}</div>
-                    <div className="text-xs text-ink-2">{CATEGORY_LABEL[b.category]} · <b>{formatMoney(d.annual)}</b> / year</div>
+                <li key={d.id} className="grid gap-2 rounded-xl border-2 border-line p-3" data-testid="sponsor-deal">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-bold">{b.name}</div>
+                      <div className="text-xs text-ink-2">{CATEGORY_LABEL[b.category]} · <b>{formatMoney(d.annual)}</b> / year</div>
+                    </div>
+                    <div className="text-right text-xs text-ink-2">
+                      {duration(weeks)} left
+                      {weeks <= 10 && <div className="font-bold text-coral">{renewing ? "Renewal offered" : d.renewalHandled ? "Not renewing" : "Ending soon"}</div>}
+                    </div>
                   </div>
-                  <div className="text-right text-xs text-ink-2">
-                    {duration(weeks)} left
-                    {weeks <= 10 && <div className="font-bold text-coral">{renewing ? "Renewal offered" : d.renewalHandled ? "Not renewing" : "Ending soon"}</div>}
-                  </div>
+                  <DealTarget g={g} d={d} />
+                  <FormClause d={d} />
                 </li>
               );
             })}

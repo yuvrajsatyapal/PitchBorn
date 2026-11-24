@@ -80,6 +80,9 @@ export function PublicHeader({ wide = false }: { wide?: boolean }) {
           <Link href="/saves" className="mx-1 rounded-full border-2 border-line bg-card px-4 py-2.5 shadow-[2px_2px_0_var(--shadow)] transition-transform hover:-translate-y-px">
             My saves
           </Link>
+          <Link href="/hall-of-fame" className="mx-1 rounded-full px-3.5 py-2.5 hover:bg-paper-2">
+            Hall of Fame
+          </Link>
           <Link href="/credits" className="mx-1 rounded-full px-3.5 py-2.5 hover:bg-paper-2">
             Credits
           </Link>
@@ -104,7 +107,7 @@ export function PublicHeader({ wide = false }: { wide?: boolean }) {
 
         {open && (
           <nav id="public-menu" aria-label="Main" className="pb-card anim-pop absolute inset-x-4 top-full mt-1 flex flex-col gap-1 p-2 text-base font-bold md:hidden">
-            {[{ href: "/saves", label: "My saves" }, { href: "/credits", label: "Credits" }].map((l) => (
+            {[{ href: "/saves", label: "My saves" }, { href: "/hall-of-fame", label: "Hall of Fame" }, { href: "/credits", label: "Credits" }].map((l) => (
               <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-xl px-4 py-3 hover:bg-paper-2">
                 {l.label}
               </Link>

@@ -1,6 +1,6 @@
 import { SCHEMA_VERSION } from "../src/engine/world/helpers";
 import { describe, expect, it } from "vitest";
-import { agentMarket, agentWeeklyFee, canHireAgent, chargeCommission, hireAgent, NO_AGENT, payAgent, releaseAgent } from "../src/engine/career/agents";
+import { agentMarket, agentPatience, agentSkill, agentStyle, agentWeeklyFee, canHireAgent, chargeCommission, effectiveCommission, effectiveSkills, hireAgent, NO_AGENT, payAgent, releaseAgent } from "../src/engine/career/agents";
 import { advanceTurn } from "../src/engine/season/advance";
 import { migrateState } from "../src/persistence/migrations";
 import { userPlayer } from "../src/engine/world/helpers";
@@ -50,14 +50,15 @@ describe("hiring and paying", () => {
     expect(canHireAgent(s, next).reason).toMatch(/once a season/);
   });
 
-  it("charges the weekly fee and drops an agent after four unpaid weeks", () => {
+  it("charges the weekly fee and drops an agent after their unpaid weeks run out", () => {
     const s = newCareer({ seed: "ag-5" });
     const fee = s.user.agent.weeklyFee;
+    const patience = agentPatience(s, s.user.agent);
     s.user.bank = fee * 3;
     payAgent(s);
     expect(s.user.bank).toBe(fee * 2);
     s.user.bank = 0;
-    for (let i = 0; i < 3; i++) payAgent(s);
+    for (let i = 0; i < patience - 1; i++) payAgent(s);
     expect(s.user.agent.id).not.toBe("none");
     payAgent(s);
     expect(s.user.agent.id).toBe("none");
@@ -68,7 +69,7 @@ describe("hiring and paying", () => {
     const s = newCareer({ seed: "ag-6" });
     s.user.bank = 1_000_000;
     const paid = chargeCommission(s, 10_000, 100_000);
-    expect(paid).toBeCloseTo(s.user.agent.commission * (100_000 + 520_000), -2);
+    expect(paid).toBeCloseTo(effectiveCommission(s, s.user.agent) * (100_000 + 520_000), -2);
     releaseAgent(s);
     s.user.bank = 1_000_000;
     expect(chargeCommission(s, 10_000, 100_000)).toBe(0);
@@ -104,5 +105,45 @@ describe("save migration", () => {
     expect(m.user.agent.weeklyFee).toBeGreaterThan(0);
     expect(m.user.bank).toBe(250_000);
     expect(m.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+});
+
+describe("agent personality", () => {
+  it("every agent has a lasting style, worked out without touching the market's dice", () => {
+    const s = newCareer({ seed: "ag-style" });
+    const before = JSON.stringify(agentMarket(s));
+    const styles = agentMarket(s).map((a) => agentStyle(s, a));
+    expect(styles.every((x) => x === "greedy" || x === "loyal" || x === "connected")).toBe(true);
+    expect(new Set(styles).size).toBe(3);
+    expect(agentMarket(s).map((a) => agentStyle(s, a))).toEqual(styles);
+    expect(JSON.stringify(agentMarket(s))).toBe(before);
+    expect(agentStyle(s, NO_AGENT)).toBeUndefined();
+    expect(agentStyle(newCareer({ seed: "ag-style" }), agentMarket(s)[3])).toBe(styles[3]);
+  });
+
+  it("greedy agents take a bigger cut and squeeze harder; loyal ones charge less, care more and wait longer", () => {
+    const s = newCareer({ seed: "ag-style-2" });
+    const market = agentMarket(s);
+    const greedy = market.find((a) => agentStyle(s, a) === "greedy")!;
+    const loyal = market.find((a) => agentStyle(s, a) === "loyal")!;
+    const connected = market.find((a) => agentStyle(s, a) === "connected")!;
+    expect(effectiveCommission(s, greedy)).toBeGreaterThan(greedy.commission);
+    expect(effectiveCommission(s, loyal)).toBeLessThan(loyal.commission);
+    expect(effectiveCommission(s, connected)).toBe(connected.commission);
+    expect(effectiveSkills(s, greedy).negotiation).toBeGreaterThan(greedy.skills.negotiation);
+    expect(effectiveSkills(s, loyal).care).toBeGreaterThan(loyal.skills.care);
+    expect(effectiveSkills(s, connected).connections).toBeGreaterThan(connected.skills.connections);
+    expect(agentPatience(s, greedy)).toBeLessThan(agentPatience(s, loyal));
+  });
+
+  it("the hired agent's personality is what the career feels", () => {
+    const s = newCareer({ seed: "ag-style-3" });
+    s.user.bank = 10_000_000;
+    userPlayer(s).reputation = 99;
+    s.user.agentChangedSeason = undefined;
+    const connected = [...agentMarket(s)].reverse().find((a) => agentStyle(s, a) === "connected" && a.id !== s.user.agent.id)!;
+    expect(hireAgent(s, connected.id)).toEqual({ ok: true });
+    expect(agentSkill(s, "connections")).toBe(effectiveSkills(s, connected).connections);
+    expect(s.news.some((n) => n.body?.includes("Well connected"))).toBe(true);
   });
 });

@@ -9,7 +9,7 @@ import { addNews } from "../world/helpers";
 import { randomName } from "../players/generate";
 import { ageOf } from "../players/generate";
 import { clamp, Rng } from "../rng";
-import type { Agent, AgentSkills, AgentTier, GameState } from "../types";
+import type { Agent, AgentSkills, AgentStyle, AgentTier, GameState } from "../types";
 import { userPlayer } from "../world/helpers";
 
 const A = BALANCE.agents;
@@ -28,6 +28,48 @@ export const AGENT_TIER_LABEL: Record<AgentTier, string> = {
   top: "Top agent",
   super: "Super-agent",
 };
+
+export const AGENT_STYLE_LABEL: Record<AgentStyle, { label: string; blurb: string }> = {
+  greedy: { label: "Greedy", blurb: "Squeezes every club for more, takes a bigger cut and walks out fast if fees go unpaid." },
+  loyal: { label: "Loyal", blurb: "Takes a smaller cut and stands by you through hard times, but knows fewer people." },
+  connected: { label: "Well connected", blurb: "Knows everyone: more offers and bigger clubs calling, but softer at the negotiating table." },
+};
+
+const STYLES: AgentStyle[] = ["greedy", "loyal", "connected"];
+
+/**
+ * An agent's personality, worked out from the career seed and the agent's id on its own stream: the market's dice
+ * are never touched, and agents in saves from before personalities existed get one too.
+ */
+export function agentStyle(state: Pick<GameState, "seed">, agent: Pick<Agent, "id">): AgentStyle | undefined {
+  if (agent.id === "none") return undefined;
+  return Rng.fromSeed(`${state.seed}:agent-style:${agent.id}`).pick(STYLES);
+}
+
+/** The commission this agent actually takes, after personality. */
+export function effectiveCommission(state: Pick<GameState, "seed">, agent: Agent): number {
+  const style = agentStyle(state, agent);
+  return Math.round(agent.commission * (style ? A.styles[style].commission : 1) * 1000) / 1000;
+}
+
+/** Skills as they play out: the agent's own plus the personality's lean. */
+export function effectiveSkills(state: Pick<GameState, "seed">, agent: Agent): AgentSkills {
+  const style = agentStyle(state, agent);
+  if (!style) return agent.skills;
+  const mod = A.styles[style].skills;
+  return {
+    negotiation: clamp(agent.skills.negotiation + mod.negotiation, 1, 99),
+    connections: clamp(agent.skills.connections + mod.connections, 1, 99),
+    media: clamp(agent.skills.media + mod.media, 1, 99),
+    care: clamp(agent.skills.care + mod.care, 1, 99),
+  };
+}
+
+/** Unpaid weeks this agent puts up with before leaving. */
+export function agentPatience(state: Pick<GameState, "seed">, agent: Agent): number {
+  const style = agentStyle(state, agent);
+  return style ? A.styles[style].unpaidWeeks : A.unpaidWeeksBeforeLeaving;
+}
 
 /** Representing yourself: free, but you get no help. */
 export const NO_AGENT: Agent = {
@@ -96,7 +138,8 @@ export function agentMarket(state: GameState): Agent[] {
 
 /** The skill the user's current agent brings (no agent = weak baseline). */
 export function agentSkill(state: GameState, key: keyof AgentSkills): number {
-  return (state.user.agent?.skills ?? NO_AGENT.skills)[key];
+  const agent = state.user.agent;
+  return agent ? effectiveSkills(state, agent)[key] : NO_AGENT.skills[key];
 }
 
 /** Reputation a player needs before this agent will take them on. Promising youngsters get a look-in earlier. */
@@ -132,7 +175,8 @@ export function hireAgent(state: GameState, agentId: string, opts: { force?: boo
   u.agentChangedSeason = state.season;
   u.agentUnpaidWeeks = 0;
   u.relationships.agent = 60;
-  addNews(state, { kind: "contract", title: `${agent.name} is your new agent`, body: `${AGENT_TIER_LABEL[agent.tier]} · €${agent.weeklyFee.toLocaleString("en")}/wk + ${(agent.commission * 100).toFixed(1)}% commission on new contracts`, important: true });
+  const style = agentStyle(state, agent);
+  addNews(state, { kind: "contract", title: `${agent.name} is your new agent`, body: `${AGENT_TIER_LABEL[agent.tier]}${style ? ` · ${AGENT_STYLE_LABEL[style].label}` : ""} · €${agent.weeklyFee.toLocaleString("en")}/wk + ${(effectiveCommission(state, agent) * 100).toFixed(1)}% commission on new contracts`, important: true });
   return { ok: true };
 }
 
@@ -145,7 +189,7 @@ export function releaseAgent(state: GameState, why?: string): void {
   addNews(state, { kind: "contract", title: `You part ways with ${name}`, body: why ?? "You now represent yourself.", important: true });
 }
 
-/** Weekly retainer. Four unpaid weeks and the agent walks. */
+/** Weekly retainer. Unpaid for long enough (how long depends on the agent) and the agent walks. */
 export function payAgent(state: GameState): void {
   const u = state.user;
   const fee = u.agent?.weeklyFee ?? 0;
@@ -157,13 +201,13 @@ export function payAgent(state: GameState): void {
   }
   u.agentUnpaidWeeks = (u.agentUnpaidWeeks ?? 0) + 1;
   u.relationships.agent = clamp(u.relationships.agent - 8, 0, 100);
-  if (u.agentUnpaidWeeks >= A.unpaidWeeksBeforeLeaving) releaseAgent(state, "After weeks of unpaid fees, your agent has dropped you.");
+  if (u.agentUnpaidWeeks >= agentPatience(state, u.agent)) releaseAgent(state, "After weeks of unpaid fees, your agent has dropped you.");
 }
 
 /** Commission on a newly signed contract: a cut of the signing bonus and the first year's wages. */
 export function chargeCommission(state: GameState, wage: number, signingBonus: number): number {
   const u = state.user;
-  const rate = u.agent?.commission ?? 0;
+  const rate = u.agent ? effectiveCommission(state, u.agent) : 0;
   if (!rate) return 0;
   const amount = Math.round(rate * (signingBonus + wage * 52));
   if (amount <= 0) return 0;
