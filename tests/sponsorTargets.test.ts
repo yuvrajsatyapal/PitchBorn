@@ -33,13 +33,39 @@ function score(s: GameState, goals: number) {
 }
 
 describe("sponsor season targets", () => {
-  it("asks forwards for goals, midfielders for assists, keepers for clean sheets and defenders for games", () => {
+  it("asks forwards for goals, midfielders for assists, keepers for clean sheets and defenders and DMs for games", () => {
     expect(targetKindFor({ position: "ST" })).toBe("goals");
     expect(targetKindFor({ position: "LW" })).toBe("goals");
     expect(targetKindFor({ position: "AM" })).toBe("involvements");
     expect(targetKindFor({ position: "CM" })).toBe("assists");
     expect(targetKindFor({ position: "GK" })).toBe("cleanSheets");
     expect(targetKindFor({ position: "CB" })).toBe("apps");
+    expect(targetKindFor({ position: "DM" })).toBe("apps");
+  });
+
+  it("a defensive midfielder's target counts games: a full season sets it, appearances fill it, the bonus pays once", () => {
+    const s = newCareer({ seed: "tg-dm", position: "DM" });
+    const p = userPlayer(s);
+    const last = emptyStat();
+    last.apps = 30;
+    last.assists = 1;
+    p.history.push({ season: s.season - 1, clubId: p.clubId, age: 24, overall: 70, stats: last });
+    const d = deal(s);
+    week(s, CAL.seasonStart);
+    const t = d.target!;
+    // Appearances are not stretched, and his one assist plays no part.
+    expect(t).toMatchObject({ kind: "apps", need: 30, status: "open" });
+    const line = (p.season["test-comp"] ??= emptyStat());
+    line.assists += 5;
+    week(s, CAL.seasonStart + 1);
+    expect(targetProgress(s, t)).toEqual([0, 30]);
+    line.apps += 12;
+    week(s, CAL.seasonStart + 2);
+    expect(targetProgress(s, t)).toEqual([12, 30]);
+    line.apps += 18;
+    week(s, CAL.seasonStart + 3);
+    expect(t.status).toBe("met");
+    expect(s.news.filter((n) => n.title.includes("bonus")).length).toBe(1);
   });
 
   it("a regular gets a bigger target than a backup, and a full last season is the guide once there is one", () => {

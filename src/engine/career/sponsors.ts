@@ -181,11 +181,15 @@ export const TARGET_LABEL: Record<SponsorTargetKind, { one: string; many: string
   apps: { one: "appearance", many: "appearances" },
 };
 
-/** What a brand asks of this player: goals from forwards, involvements or assists from midfielders, clean sheets from keepers, games from defenders. */
+/**
+ * What a brand asks of this player: goals from forwards, involvements or assists from attacking and central midfielders,
+ * clean sheets from keepers, games from defenders and defensive midfielders (who rarely register an assist: in a
+ * 120-career simulation a third of their assist targets ended on zero).
+ */
 export function targetKindFor(p: Pick<Player, "position">): SponsorTargetKind {
   const g = positionGroup(p.position);
   if (g === "GK") return "cleanSheets";
-  if (g === "DEF") return "apps";
+  if (g === "DEF" || p.position === "DM") return "apps";
   if (g === "MID") return p.position === "AM" ? "involvements" : "assists";
   return "goals";
 }
