@@ -566,6 +566,7 @@ E2E runs against the static production export (what users get) in desktop and mo
 | Command | Purpose |
 |---|---|
 | `npm run sim:careers -- --count 100` | Career stress simulator; writes `data/reports/sim-100.md` |
+| `npm run sim:sponsors` | Sponsor target and form-clause balance; writes `data/reports/sponsors-120x5.md` |
 | `npm run sim:match` | Match-engine calibration |
 | `npm run sim:pairs` | Pairing calibration |
 | `npm run sim:traits` | Trait distribution sanity |

@@ -13,6 +13,12 @@ Runs against the static export on desktop (1440×900) and mobile (Pixel 7): new 
 ## Stress simulation — `npm run sim:careers -- --count N [--workers 8] [--full]`
 Simulates complete careers with the autopilot policy in worker threads and reports distributions (seasons, retirement age, apps, goals, peak overall, clubs, trophies, awards, caps, injuries, legacy) plus world metrics (goals/match, home-win/draw %, extreme scorelines, top-scorer extremes, club balances, player counts, invariant issues) and balance flags. Default "lite" world simulates only the career's country so 1,000-career runs are practical; `--full` simulates all five. Reports in `data/reports/sim-N.md`.
 
+## Sponsor balance — `npm run sim:sponsors -- [--seeds 5] [--seasons 5] [--workers N]`
+Plays careers with the autopilot and accepts every sponsor offer, across three cohorts (late starters, established pros
+and stars, from the game's own start paths) and all eight positions, `--seeds` careers each. Reports season-target hit
+rates by cohort, position and squad role, form-clause warnings and terminations, and how deals end. Writes
+`data/reports/sponsors-<careers>x<seasons>.md`. Re-run after changing `BALANCE.sponsors` or `targetKindFor`.
+
 ## Calibration — `npm run sim:match`
 Aggregate goals, results, shots, cards, injuries for equal and mismatched teams.
 

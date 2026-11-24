@@ -14,6 +14,7 @@
     "data:fetch": "tsx scripts/data/fetch.ts",
     "data:build": "tsx scripts/data/build.ts",
     "sim:careers": "tsx scripts/sim/careers.mts",
+    "sim:sponsors": "tsx scripts/sim/sponsors.mts",
     "sim:match": "tsx scripts/sim/calibrate-match.ts",
     "sim:moments": "tsx scripts/sim/moments.ts",
     "sim:traits": "tsx scripts/sim/traits.ts",
