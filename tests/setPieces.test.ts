@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { askForDuty, canAskForDuty, dutyStatus, holdsDuty, noteSetPieces, takerOrder, takerScore } from "../src/engine/career/setPieces";
+import { askForDuty, askMargin, canAskForDuty, dutyGap, dutyStatus, holdsDuty, noteSetPieces, takerOrder, takerScore } from "../src/engine/career/setPieces";
 import { MatchEngine, type MatchInput, type MatchPlayerInput } from "../src/engine/match/engine";
 import { Rng } from "../src/engine/rng";
 import { prepareMatch } from "../src/engine/season/matchday";
@@ -36,6 +36,37 @@ describe("set-piece duties", () => {
     expect(holdsDuty(t, "freekick")).toBe(true);
     const order = takerOrder(t, u.clubId as string, squadOf(t, u.clubId as string).map((p) => ({ id: p.id, attrs: p.attrs })), "freekick");
     expect(order[0]).toBe(u.id);
+  });
+
+  it("the manager gives more slack to a key player he gets on with", () => {
+    const s = newCareer({ seed: "sp-5" });
+    s.user.relationships.manager = 50;
+    expect(askMargin(s, "prospect")).toBe(3);
+    expect(askMargin(s, "first")).toBe(7);
+    expect(askMargin(s, "star")).toBe(9);
+    s.user.relationships.manager = 80;
+    expect(askMargin(s, "star")).toBe(15);
+    s.user.relationships.manager = 20;
+    expect(askMargin(s, "star")).toBe(3);
+  });
+
+  it("eight points behind the taker: yes from a manager who rates him, no from one who doesn't", () => {
+    const setup = (rel: number) => {
+      const s = newCareer({ seed: "sp-6" });
+      const me = userPlayer(s);
+      const best = Math.max(...squadOf(s, me.clubId as string).filter((p) => p.id !== me.id).map((p) => takerScore(p.attrs, "penalty")));
+      setAll(s, me.id, Math.round(best) - 8);
+      s.user.relationships.manager = rel;
+      return s;
+    };
+    const warm = setup(80);
+    const cold = setup(20);
+    expect(dutyGap(warm, "penalty")).toBeLessThanOrEqual(askMargin(warm));
+    expect(dutyGap(cold, "penalty")).toBeGreaterThan(askMargin(cold));
+    expect(dutyStatus(warm, "penalty").likely).toBe(true);
+    expect(dutyStatus(cold, "penalty").likely).toBe(false);
+    expect(askForDuty(warm, "penalty").ok).toBe(true);
+    expect(askForDuty(cold, "penalty").ok).toBe(false);
   });
 
   it("drops the penalty duty after two misses in the last three", () => {

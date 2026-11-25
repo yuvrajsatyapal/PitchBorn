@@ -7,8 +7,9 @@
 import type { MatchPlayerInput, PlayerLine } from "../match/engine";
 import { overallFor } from "../players/attributes";
 import { clamp } from "../rng";
-import type { AttrKey, Attributes, GameState, Player, PlayerId, SetPieceKind, SetPieceState } from "../types";
+import type { AttrKey, Attributes, GameState, Player, PlayerId, SetPieceKind, SetPieceState, SquadRole } from "../types";
 import { addNews, fullName, userPlayer } from "../world/helpers";
+import { expectedRole } from "./offers";
 import { adjustRel } from "./relationships";
 
 export const SET_PIECE_LABEL: Record<SetPieceKind, { one: string; many: string; duty: string }> = {
@@ -21,8 +22,15 @@ const MIX: Record<SetPieceKind, readonly (readonly [AttrKey, number])[]> = {
   freekick: [["longShots", 0.45], ["technique", 0.35], ["composure", 0.2]],
 };
 
-/** How much worse than the best teammate the user may be and still be handed a duty (more with a manager who rates him). */
-const ASK_MARGIN = 3;
+/**
+ * How much worse than the best regular the user may be and still be handed a duty. Clubs' first-choice takers are
+ * specialists, so even a star usually trails his on skill: the manager weighs standing in the squad and the relationship
+ * too (tuned with `npm run sim:systems`, where a 3-point allowance granted 22 of about 500 requests).
+ */
+const ASK_MARGIN = 5;
+const ROLE_SLACK: Record<SquadRole, number> = { star: 4, first: 2, rotation: 0, backup: -2, prospect: -2 };
+/** Points of allowance per point of manager relationship away from neutral (50). */
+const MANAGER_SLACK = 1 / 5;
 /** Penalties remembered for the drop rule, and how many misses among them cost the duty. */
 const RECENT = 3;
 const MISSES_TO_DROP = 2;
@@ -75,6 +83,8 @@ export interface DutyStatus {
   current?: { id: PlayerId; name: string };
   canAsk: boolean;
   reason?: string;
+  /** Whether the manager would say yes right now. */
+  likely: boolean;
 }
 
 /** The club's first-choice taker among its regular players (the squad, not a single line-up). */
@@ -96,7 +106,26 @@ export function dutyStatus(state: GameState, kind: SetPieceKind): DutyStatus {
   const first = order.find((id) => id !== p.id);
   const current = !mine && first ? { id: first, name: fullName(state.players[first]) } : undefined;
   const check = canAskForDuty(state, kind);
-  return { kind, mine, granted, current, canAsk: check.ok, reason: check.reason };
+  return { kind, mine, granted, current, canAsk: check.ok, reason: check.reason, likely: !mine && dutyGap(state, kind) <= askMargin(state) };
+}
+
+/** Where the user stands in the pecking order (not the contract's label, which a custom start signs as a prospect). */
+function standing(state: GameState): SquadRole {
+  const p = userPlayer(state);
+  const club = p.clubId ? state.clubs[p.clubId] : undefined;
+  return club ? expectedRole(state, club, p) : "prospect";
+}
+
+/** How far the user may trail the current taker and still be given the duty. */
+export function askMargin(state: GameState, role: SquadRole = standing(state)): number {
+  return ASK_MARGIN + ROLE_SLACK[role] + (state.user.relationships.manager - 50) * MANAGER_SLACK;
+}
+
+/** How far the user trails the club's best regular taker on the skills the kick asks for (negative: he is ahead). */
+export function dutyGap(state: GameState, kind: SetPieceKind): number {
+  const p = userPlayer(state);
+  const bestId = clubOrder(state, kind).find((id) => id !== p.id);
+  return (bestId ? takerScore(state.players[bestId].attrs, kind) : 0) - takerScore(p.attrs, kind);
 }
 
 export function canAskForDuty(state: GameState, kind: SetPieceKind): { ok: boolean; reason?: string } {
@@ -113,21 +142,17 @@ export function canAskForDuty(state: GameState, kind: SetPieceKind): { ok: boole
 }
 
 /**
- * Ask the manager for a duty. He says yes when the user is close enough to the current taker, with more slack the more he rates
- * him; a refusal stands for the rest of the season. Displacing a teammate costs a little goodwill in the dressing room.
+ * Ask the manager for a duty. He says yes when the user is close enough to the current taker (`askMargin`: more slack for
+ * key players and for a good relationship); a refusal stands for the rest of the season. Displacing a teammate costs a little goodwill in the dressing room.
  */
 export function askForDuty(state: GameState, kind: SetPieceKind): { ok: boolean; reason?: string } {
   const check = canAskForDuty(state, kind);
   if (!check.ok) return check;
   const p = userPlayer(state);
   const sp = setPieceState(state);
-  const order = clubOrder(state, kind);
-  const bestId = order.find((id) => id !== p.id);
-  const best = bestId ? takerScore(state.players[bestId].attrs, kind) : 0;
-  const mine = takerScore(p.attrs, kind);
-  const margin = ASK_MARGIN + (state.user.relationships.manager - 50) / 10;
+  const bestId = clubOrder(state, kind).find((id) => id !== p.id);
   const label = SET_PIECE_LABEL[kind];
-  if (mine + margin >= best) {
+  if (dutyGap(state, kind) <= askMargin(state)) {
     sp.granted[kind] = { season: state.season, clubId: p.clubId as string };
     delete sp.refused[kind];
     addNews(state, { kind: "club", title: `You're the new ${label.duty}`, body: bestId ? `The manager hands you the duty ahead of ${fullName(state.players[bestId])}.` : "The manager hands you the duty.", important: true });

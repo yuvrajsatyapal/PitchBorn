@@ -34,6 +34,7 @@ export function SetPieceCard({ g }: { g: GameState }) {
                     Ask for it
                   </Button>
                   {!d.canAsk && d.reason && <div className="mt-0.5 text-[11px] text-muted">{d.reason}</div>}
+                  {d.canAsk && <div className="mt-0.5 text-[11px] text-muted">{d.likely ? "The manager would probably agree." : `Long shot: work on ${k === "penalty" ? "finishing and composure" : "long shots and technique"}.`}</div>}
                 </div>
               )}
             </li>

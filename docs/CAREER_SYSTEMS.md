@@ -88,8 +88,13 @@ optional field that older saves simply lack (schema 10, see Persistence).
 
 Every side names penalty and free-kick takers from its starters (`TeamInput.takers`, best by finishing/composure/technique,
 and long shots/technique/composure). The first one on the pitch takes them; shoot-outs go takers first. The user can ask
-the manager for a duty on the Club page: granted when his score is within 3 (plus a point per 10 of manager relationship
-over 50) of the best teammate, refused for the rest of the season otherwise; displacing a teammate costs 1 teammates point.
+the manager for a duty on the Club page: granted when his score is within `askMargin` of the best regular (5, plus 4 for a
+star, 2 for a first-teamer, −2 for a backup or prospect by his place in the pecking order (`expectedRole`, not
+the contract label), plus a point per 5 of manager relationship away from 50), refused
+for the rest of the season otherwise; the card says beforehand whether the manager would probably agree. Displacing a
+teammate costs 1 teammates point. Clubs' regular takers are specialists: at the start even a star trails his by about 6
+on penalties and an established pro by about 10, so the old allowance of 3 granted 22 of about 500 requests in
+`npm run sim:systems`.
 Two misses in his last three penalties drop him for the season. In live matches his own penalties (place, power, wait)
 and direct free kicks (curl, drive, cross) are always his choice, slightly over the moment budget. Record in
 `user.setPieces`; kicks counted in `PlayerLine.sp`.
