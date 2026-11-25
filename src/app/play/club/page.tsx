@@ -18,6 +18,7 @@ import { age, name, ovr, POS_TONE, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
 import { DressingRoomCard } from "@/components/game/DressingRoomCard";
+import { SetPieceCard } from "@/components/game/SetPieceCard";
 
 const OWNERSHIP_TONE: Record<OwnershipType, "sun" | "pitch" | "plum" | "coral" | "sky" | "paper"> = {
   "fan-owned": "pitch", billionaire: "sun", "state-backed": "plum", corporate: "sky", "private-equity": "coral", standard: "paper",
@@ -107,6 +108,7 @@ export default function ClubPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <IdentityCard g={g} clubId={club.id} />
         <RoleCard g={g} />
+        <SetPieceCard g={g} />
         <AmbitionsCard g={g} clubId={club.id} />
         <StrengthCard g={g} clubId={club.id} />
       </div>

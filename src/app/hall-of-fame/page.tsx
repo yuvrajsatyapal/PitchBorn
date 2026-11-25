@@ -33,6 +33,7 @@ function Inductee({ e, rank, onRemove }: { e: HallOfFameEntry; rank: number; onR
           <span>· peak <span className="num">{e.peak}</span></span>
         </div>
         {e.identity && <div className="mt-0.5 text-xs italic text-ink-2">{e.identity}</div>}
+        {e.challenge && <div className="mt-0.5 text-xs font-bold">{e.challenge.icon} {e.challenge.title}{e.challenge.weekly ? ` (${e.challenge.weekly})` : ""}: {e.challenge.won ? "completed" : "not completed"}</div>}
         <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 text-center sm:grid-cols-6">
           {e.stats.map((s) => (
             <div key={s.label}>

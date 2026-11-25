@@ -95,6 +95,9 @@ export function computeLegacy(state: GameState): LegacyResult {
     else trophyPts += 5;
   }
   add(`${u.trophies.length} trophies`, trophyPts);
+  // Giving back: a point for every €250k given to charity, up to 12.
+  const donated = u.lifestyle?.donated ?? 0;
+  if (donated > 0) add(`€${Math.round(donated / 1000).toLocaleString("en")}k given to charity`, Math.min(12, donated / 250_000));
   const awardPts: Record<string, number> = {
     "golden-pitch": 40, "golden-pitch-podium": 12, "rising-star": 10, pots: 10, ypots: 4, topscorer: 8, topassist: 4, goldenglove: 6,
     "world-glove": 15, breakthrough: 6, tots: 3, potm: 1, totw: 0.15,

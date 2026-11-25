@@ -10,6 +10,7 @@ import { instruction, instructionResult } from "../match/insight";
 import { detectInjuryComeback, detectMatchMemory, noteLastMatch, rememberMajorInjury } from "../memory/detect";
 import { applyResult as applyToTable, sortTable } from "../competitions/table";
 import { country, stadium, staticClub, clubName } from "../data/world";
+import { noteSetPieces, takersFor } from "../career/setPieces";
 import { MatchEngine, type MatchInput, type MatchPlayerInput, type MatchResult, type TeamInput } from "../match/engine";
 import { selectTeam, type Selection, type SelectionOpts } from "../match/lineup";
 import { overallFor } from "../players/attributes";
@@ -190,6 +191,7 @@ export function buildTeamInput(state: GameState, teamId: string, sel: Selection)
     mentality: 0,
     color: teamColor(state, teamId),
     style: state.clubs[teamId]?.style,
+    takers: takersFor(state, teamId, starters.filter((s) => s.slot !== "GK")),
   };
 }
 
@@ -495,6 +497,7 @@ function recordUserMatch(state: GameState, fixture: Fixture, comp: Competition, 
   noteMatch(state, fixture, comp, res, line);
   detectMatchMemory(state, fixture, comp, res, line);
   detectInjuryComeback(state, fixture, comp, line);
+  noteSetPieces(state, line);
   checkMatchAchievements(state, { comp, fixture, res, line, mine, theirs, myTeam, opponent: opp, nat });
   if (!nat) maybePressConference(state, { kind: "post", comp, fixture, opponentId: opp, myTeam, line, res, mine, theirs });
   feedAfterMatch(state, { comp, fixture, res, line, mine, theirs, myTeam, opponent: opp, nat });

@@ -86,8 +86,21 @@ baseline equality (no conditions and clear/good conditions both reproduce the or
 - Only the user's matches (as a player) feel the weather. A coaching career's club is not affected in V1.
 - The pitch does not remember earlier weeks' weather: a heavy pitch comes from that day's rain.
 - International venues use the home nation's climate at its reference latitude (no stadium coordinates for nations).
-  Only England, Spain, Italy, Germany and France have their own climate tables; every other nation uses the temperate
-  default (seasons reversed for the southern-hemisphere nations), so a hot nation never gets heat and, for example,
-  Brazil can see snow in August.
-- Neutral-venue fixtures (international tournament matches, cup and continental finals) take the weather of the side
-  listed as home: its stadium for a club, its country's climate for a nation. There is no separate neutral venue.
+- Every nation in the world data has a regional climate table (V2); a nation added later without one falls back to the
+  temperate default (seasons reversed for a few southern-hemisphere nations).
+- A domestic cup or continental final at a neutral venue takes the listed home club's country, at the reference latitude.
+
+## V2 (November 2026)
+
+- **Climates:** regional tables for all 41 nations (`climate.ts`): Celtic, Lowlands, Alpine, Nordic, Danish, Eastern,
+  Adriatic, Iberian Atlantic, Bosphorus, US, Canada, highland Mexico, São Paulo, Andean, Río de la Plata, West Africa,
+  Sahel coast, Maghreb, Nile, Japan, Korea, Sydney. Southern tables are written in calendar months.
+- **Host nations:** international tournament games (`neutral`) are played in a host chosen from the competition id over
+  its teams (`hostOf`), so old saves agree with new ones and no RNG is drawn.
+- **Roofs:** Bernabéu, Arena AufSchalke, Merkur Spiel-Arena and Pierre Mauroy close the roof in rain, snow, wind, frost or
+  below `roofC − 6`; the game then plays clear on a good pitch at `roofC` (16°C) and `conditions.roof` keeps the weather
+  outside for the forecast, chip and kick-off line. Heat keeps the roof open.
+- **Postponements:** before the user's week, a league match of his on an unplayable pitch (frozen with snow, or frozen
+  at `postponeC` −4°C or colder) moves to the first later non-international week where neither side plays
+  (`season/postpone.ts`), once (`fixture.postponed`). The rearranged game rolls fresh weather (`id:pp1`). Cups,
+  continental and international games are never postponed.

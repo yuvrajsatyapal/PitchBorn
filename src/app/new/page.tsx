@@ -16,6 +16,7 @@ import { NO_FOCUS, focusFor, focusOptions } from "@/engine/players/focus";
 import { POSITIONS, type Appearance, type Position } from "@/engine/types";
 import { CUSTOM_LIMITS, playingTimeOutlook, sanitizeCustom, type CustomStart, type StartPath } from "@/engine/world/create";
 import { useGame } from "@/game/store";
+import { ChallengePicker, type ChallengePick } from "@/components/game/ChallengePicker";
 
 const STEPS = ["Identity", "Player", "Playstyle", "Path & club", "Confirm"];
 const LEAGUE_COUNTRIES = ["ENG", "ESP", "GER", "ITA", "FRA"];
@@ -45,6 +46,7 @@ export default function NewCareer() {
   const [clubId, setClub] = useState<string>("");
   const [difficulty, setDiff] = useState<"relaxed" | "standard" | "hardcore">("standard");
   const [err, setErr] = useState<string | null>(null);
+  const [challenge, setChallenge] = useState<ChallengePick | null>(null);
   // Stays true from the click until /play takes over, so the form never flashes back between build and navigation.
   const [starting, setStarting] = useState(false);
 
@@ -66,7 +68,7 @@ export default function NewCareer() {
     setErr(null);
     setStarting(true);
     try {
-      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty });
+      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty, ...(challenge ? { challenge: { id: challenge.id, weekly: challenge.weekly }, ...(challenge.seed ? { seed: challenge.seed } : {}) } : {}) });
       router.push("/play");
     } catch (e) {
       setStarting(false);
@@ -280,6 +282,7 @@ export default function NewCareer() {
                 <div className="mt-1 text-xs text-muted">Season 2026/27 · {path === "custom" ? `age ${custom.age}, ${custom.overall} overall, ${custom.potential} potential` : path === "academy" ? "age 17" : "age 20"} · difficulty {{ relaxed: "Easy", standard: "Medium", hardcore: "Hard" }[difficulty]}. Your true potential is hidden — scouts will give you hints.</div>
               </div>
             </div>
+            <ChallengePicker value={challenge} onChange={setChallenge} start={{ path, tier, position }} />
             {err && <div className="mt-3 rounded-xl border-2 border-line bg-coral-2 p-2 text-sm">{err}</div>}
           </Card>
         )}

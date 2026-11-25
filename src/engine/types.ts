@@ -298,6 +298,8 @@ export interface MatchConditions {
   /** Air temperature at kick-off, °C. */
   tempC: number;
   pitch: PitchKind;
+  /** Played under a closed retractable roof: what it's like outside, while the game itself plays in clear, good conditions. */
+  roof?: { outside: WeatherKind; tempC: number };
 }
 
 export interface MatchDetailSummary {
@@ -326,6 +328,8 @@ export interface Fixture {
   turn: number;
   /** Days after the week's date (0-6) on which this match falls, so one team never plays twice on the same day. */
   day?: number;
+  /** Times this match was called off (frozen pitch) and moved to a later week. */
+  postponed?: number;
   home: string; // ClubId or CountryCode for internationals
   away: string;
   stage?: string;
@@ -641,6 +645,8 @@ export interface CoachCareer {
   unemployedSince?: number;
   /** Academy players still waiting for a first-team debut (graduate tracking). */
   watch: PlayerId[];
+  /** Scouting as a manager: reports used this week, and every report on file (see career/coachMarket.ts). */
+  scouting?: { turnIndex: number; used: number; reports: Record<PlayerId, { season: number; low: number; high: number }> };
 }
 
 /** One unlocked achievement (definitions live in engine/career/achievements.ts). */
@@ -1376,6 +1382,58 @@ export interface UserCareer {
   chemistry?: Record<PlayerId, ChemistryBond>;
   /** The coaching career after retirement, once started. */
   coach?: CoachCareer;
+  /** Penalty and free-kick duties: what the manager granted or took away, and the record from the spot and dead balls. */
+  setPieces?: SetPieceState;
+  /** The challenge scenario chosen when the career began (see career/challenges.ts). */
+  challenge?: ChallengeState;
+  /** Homes, cars, staff, charity and investments (see career/lifestyle.ts). */
+  lifestyle?: LifestyleState;
+  /** Teammate bonds as they stood when the season began (for the season review). */
+  chemistrySnap?: { season: number; values: Record<PlayerId, number> };
+}
+
+export interface LifestyleState {
+  owned: { id: string; season: number; turn: number }[];
+  investments: LifestyleHolding[];
+  /** Totals over the career: everything spent on lifestyle, and the part given to charity. */
+  spent: number;
+  donated: number;
+}
+
+export interface LifestyleHolding {
+  id: string;
+  kind: "bonds" | "property" | "startup";
+  /** What was put in, and what it is worth now. */
+  amount: number;
+  value: number;
+  season: number;
+}
+
+export interface ChallengeState {
+  id: string;
+  /** Set for the weekly challenge: the ISO week it belongs to. */
+  weekly?: string;
+  status: "active" | "won" | "failed";
+  startedSeason: number;
+  settledSeason?: number;
+  note?: string;
+}
+
+export type SetPieceKind = "penalty" | "freekick";
+
+export interface SetPieceState {
+  /** Season in which the manager handed the user the duty (it lasts while at the club, until dropped). */
+  granted: Partial<Record<SetPieceKind, { season: number; clubId: ClubId }>>;
+  /** Season in which the user lost the duty (he cannot ask again that season). */
+  dropped: Partial<Record<SetPieceKind, number>>;
+  /** Season in which the user last asked for the duty and was turned down. */
+  refused: Partial<Record<SetPieceKind, number>>;
+  pens: number;
+  pensScored: number;
+  fks: number;
+  fksScored: number;
+  /** Last few penalties, newest last: 1 scored, 0 missed. */
+  recentPens: number[];
 }
 
 export interface LegacyResult {

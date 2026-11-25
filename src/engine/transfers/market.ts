@@ -153,8 +153,11 @@ export function executeTransfer(state: GameState, p: Player, buyer: ClubState, f
 export function runAiTransfers(state: GameState, rng: Rng, intensity: number): void {
   const index = buildMarketIndex(state);
   const clubs = rng.shuffle(Object.values(state.clubs));
+  const managed = state.user.coach?.active && state.user.coach.role === "manager" ? state.user.coach.clubId : null;
   for (const club of clubs) {
     if (!rng.chance(intensity)) continue;
+    // The user's own club: he does the signing himself (career/coachMarket.ts).
+    if (club.id === managed) continue;
     const squad = squadOf(state, club.id);
     // Trim bloated squads first.
     if (squad.length > S.max) releaseSurplus(state, rng, club, squad);

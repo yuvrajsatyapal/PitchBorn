@@ -6,7 +6,7 @@ import { BALANCE } from "../balance";
 import { turnDate } from "../calendar";
 import { country, stadium, staticClub } from "../data/world";
 import { Rng } from "../rng";
-import type { Fixture, GameState, MatchConditions, PitchKind, WeatherKind } from "../types";
+import type { Competition, Fixture, GameState, MatchConditions, PitchKind, WeatherKind } from "../types";
 import { climateFor, climateMonth } from "./climate";
 
 const W = BALANCE.weather;
@@ -15,13 +15,35 @@ const W = BALANCE.weather;
 export interface Venue {
   countryCode?: string;
   lat?: number;
+  /** The stadium has a retractable roof, closed in bad weather. */
+  roof?: boolean;
 }
 
-export function venueOf(fixture: Pick<Fixture, "home">): Venue {
+/** Real stadiums with a retractable roof. */
+export const ROOF_STADIUMS: ReadonlySet<string> = new Set(["bernabeu", "arena-aufschalke", "merkur-spiel-arena", "pierre-mauroy-stadium"]);
+
+function hash(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+/** The country hosting an international tournament: fixed by the competition alone, so old saves agree with new ones. */
+export function hostOf(comp: Pick<Competition, "id" | "teams">): string | undefined {
+  const teams = [...comp.teams].sort();
+  return teams.length ? teams[hash(comp.id) % teams.length] : undefined;
+}
+
+export function venueOf(fixture: Pick<Fixture, "home"> & Partial<Pick<Fixture, "neutral">>, comp?: Pick<Competition, "id" | "kind" | "teams">): Venue {
   const club = staticClub(fixture.home);
+  if (fixture.neutral) {
+    // Tournament games are played in the host nation; a domestic final at the national stadium (the country's climate).
+    if (comp && (comp.kind === "international" || comp.kind === "friendly") && !club) return { countryCode: hostOf(comp) };
+    if (club) return { countryCode: club.countryCode };
+  }
   if (club) {
     const st = stadium(club.stadiumId);
-    return { countryCode: st?.countryCode ?? club.countryCode, lat: st?.lat };
+    return { countryCode: st?.countryCode ?? club.countryCode, lat: st?.lat, roof: ROOF_STADIUMS.has(club.stadiumId) };
   }
   // A national team at home: that country's climate at its reference latitude.
   return { countryCode: country(fixture.home)?.code ?? fixture.home };
@@ -51,14 +73,27 @@ export function rollConditions(seed: string, fixtureId: string, venue: Venue, mo
   if (tempC <= W.frozenMaxC && (weather === "snow" || pitchRoll < W.frozenChance)) pitch = "frozen";
   else if (weather === "heavy-rain" || (weather === "rain" && pitchRoll < W.rainHeavyPitch)) pitch = "heavy";
   else if (weather === "heat" || (weather === "clear" && tempC >= W.dryPitchC)) pitch = "dry";
+  // Under a closed roof the game plays in the dry and the warmth, whatever it's doing outside.
+  if (venue.roof && (weather === "rain" || weather === "heavy-rain" || weather === "snow" || weather === "wind" || tempC < W.roofC - 6 || pitch === "frozen")) return { weather: "clear", tempC: W.roofC, pitch: "good", roof: { outside: weather, tempC } };
   return { weather, tempC, pitch };
 }
 
 /** The conditions a fixture is played in. */
-export function conditionsFor(state: Pick<GameState, "seed" | "season">, fixture: Pick<Fixture, "id" | "home" | "turn">): MatchConditions {
+export function conditionsFor(
+  state: Pick<GameState, "seed" | "season"> & { competitions?: GameState["competitions"] },
+  fixture: Pick<Fixture, "id" | "home" | "turn"> & Partial<Pick<Fixture, "neutral" | "compId" | "postponed">>,
+): MatchConditions {
   // The week's date, not the match day: days are assigned during the week and must never change the weather.
   const month = turnDate(state.season, fixture.turn).getUTCMonth();
-  return rollConditions(state.seed, fixture.id, venueOf(fixture), month);
+  const comp = fixture.compId ? state.competitions?.[fixture.compId] : undefined;
+  // A rearranged match gets fresh weather of its own.
+  const key = fixture.postponed ? `${fixture.id}:pp${fixture.postponed}` : fixture.id;
+  return rollConditions(state.seed, key, venueOf(fixture, comp), month);
+}
+
+/** A frozen pitch with snow falling or a deep frost is unplayable. */
+export function unplayable(c: MatchConditions): boolean {
+  return c.pitch === "frozen" && (c.weather === "snow" || c.tempC <= W.postponeC);
 }
 
 /** Clear weather on a good pitch: the baseline, with no effect at all. */

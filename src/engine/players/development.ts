@@ -8,6 +8,7 @@ import { focusTilt } from "./focus";
 import { developWeakFoot, trainWeakFoot, WEAK_FOOT_FOCUS } from "./foot";
 import { ageOf } from "./generate";
 import { applyInjury, injuryRiskFactor, rollInjury } from "./injuries";
+import { lifestyleEffects } from "../career/lifestyle";
 
 const D = BALANCE.development;
 
@@ -180,7 +181,7 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
   const streak = plan.intensity === "intense" ? (state.user.intenseStreak ?? 0) + 1 : plan.intensity === "normal" ? Math.max(0, (state.user.intenseStreak ?? 0) - 1) : 0;
   state.user.intenseStreak = streak;
   const overload = overloadMultiplier(streak);
-  const risk = BALANCE.injuries.trainingBase * int.injury * overload * injuryRiskFactor(p);
+  const risk = BALANCE.injuries.trainingBase * int.injury * overload * injuryRiskFactor(p) * (p.isUser ? lifestyleEffects(state).injury : 1);
   if (rng.chance(risk)) {
     const injury = rollInjury(rng, p, { context: "training", seriousAllowed: false });
     applyInjury(rng, p, injury);

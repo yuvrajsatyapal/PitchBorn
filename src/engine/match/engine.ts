@@ -62,6 +62,8 @@ export interface TeamInput {
   color: string;
   /** How the club plays (0–1 each). Shifts the three zones by a few percent either way; absent for national sides. */
   style?: { pressing: number; tempo: number; directness: number };
+  /** Designated set-piece takers, first choice first: the first one still on the pitch steps up (see career/setPieces.ts). */
+  takers?: { penalty: string[]; freekick: string[] };
 }
 
 export interface MatchInput {
@@ -158,6 +160,8 @@ export interface PlayerLine {
   why?: Partial<Record<RatingReason, number>>;
   /** Why the player left the pitch. */
   offReason?: "sub" | "injury" | "red";
+  /** Penalties and direct free kicks taken and scored (shoot-outs not included). */
+  sp?: { pens: number; pensScored: number; fks: number; fksScored: number };
 }
 
 export interface DecisionOption {
@@ -174,7 +178,7 @@ export interface DecisionOption {
 
 export interface PendingDecision {
   minute: number;
-  kind: "shoot" | "create" | "defend" | "keep" | "knock" | "progress" | "hold" | "claim";
+  kind: "shoot" | "create" | "defend" | "keep" | "knock" | "progress" | "hold" | "claim" | "setpiece";
   prompt: string;
   /** A short label for what kind of moment this is (shown over the prompt). */
   moment?: string;
@@ -226,12 +230,14 @@ interface LivePlayer {
   sp: Specials;
 }
 
-interface Specials { mark: number; air: number; lane: number; press: number; resist: number }
+interface Specials { mark: number; air: number; lane: number; press: number; resist: number; burst: number }
 const MARK_MIX: Mix = [["marking", 0.7], ["anticipation", 0.3]];
 const AIR_MIX: Mix = [["jumping", 0.45], ["heading", 0.35], ["strength", 0.2]];
 const LANE_MIX: Mix = [["interceptions", 0.6], ["anticipation", 0.4]];
 const PRESS_MIX: Mix = [["workRate", 0.4], ["aggression", 0.2], ["stamina", 0.2], ["anticipation", 0.2]];
 const RESIST_MIX: Mix = [["firstTouch", 0.35], ["balance", 0.25], ["composure", 0.25], ["agility", 0.15]];
+/** The first few yards: getting away from a man, or getting back to him. */
+const BURST_MIX: Mix = [["acceleration", 0.7], ["pace", 0.3]];
 
 function blend(eff: Record<AttrKey, number>, mix: Mix): number {
   let sum = 0;
@@ -240,7 +246,7 @@ function blend(eff: Record<AttrKey, number>, mix: Mix): number {
 }
 
 function specials(eff: Record<AttrKey, number>, lvl: number): Specials {
-  return { mark: blend(eff, MARK_MIX) - lvl, air: blend(eff, AIR_MIX) - lvl, lane: blend(eff, LANE_MIX) - lvl, press: blend(eff, PRESS_MIX) - lvl, resist: blend(eff, RESIST_MIX) - lvl };
+  return { mark: blend(eff, MARK_MIX) - lvl, air: blend(eff, AIR_MIX) - lvl, lane: blend(eff, LANE_MIX) - lvl, press: blend(eff, PRESS_MIX) - lvl, resist: blend(eff, RESIST_MIX) - lvl, burst: blend(eff, BURST_MIX) - lvl };
 }
 
 /** Trait effects summed over the XI on the pitch (cached with the team's strength). */
@@ -332,6 +338,9 @@ interface TeamCache {
   sweep: number;
   /** The keeper as a first passer: kicking, decisions, composure. */
   build: number;
+  /** Acceleration of the forward players (getting in behind), and of the back line (getting back). */
+  burst: number;
+  recover: number;
 }
 
 
@@ -371,7 +380,7 @@ const PICK_FOUL: Mix = [["aggression", 0.6], ["tackling", 0.4]];
  * unaffected and only real specialists or real weaknesses move the numbers. Aggression is measured in absolute terms: it is generated relative to a player's level, so it
  * is the same for good and ordinary sides. (scripts/sim/attributes.ts prints the figures these were set from.)
  */
-const REF = { mark: 0, air: -3.4, lane: -1.3, press: -5.4, resist: -1.5, aggr: 52, decisions: -5, creativity: 1, offBall: -1.5, anticipation: -1, oneOnOne: -0.5, command: 1.5, sweep: 1, build: 0.2 } as const;
+const REF = { mark: 0, air: -3.4, lane: -1.3, press: -5.4, resist: -1.5, aggr: 52, decisions: -5, creativity: 1, offBall: -1.5, anticipation: -1, oneOnOne: -0.5, command: 1.5, sweep: 1, build: 0.2, burst: -1.4, recover: -3.4 } as const;
 const MID_W: Record<Position, number> = { DM: 1.4, CM: 1.6, AM: 1.3, RW: 0.7, LW: 0.7, RB: 0.5, LB: 0.5, ST: 0.4, CB: 0.4, GK: 0 };
 const ATT_W: Record<Position, number> = { ST: 2, RW: 1.6, LW: 1.6, AM: 1.5, CM: 0.6, DM: 0.2, RB: 0.35, LB: 0.35, CB: 0.1, GK: 0 };
 const DEF_W: Record<Position, number> = { CB: 2, RB: 1.3, LB: 1.3, DM: 1.5, CM: 0.6, AM: 0.15, RW: 0.2, LW: 0.2, ST: 0.1, GK: 0 };
@@ -425,7 +434,7 @@ function makeLive(input: MatchPlayerInput, side: Side, started: boolean, dayForm
     condition,
     eff,
     lvl,
-    sp: started ? specials(eff, lvl) : { mark: 0, air: 0, lane: 0, press: 0, resist: 0 },
+    sp: started ? specials(eff, lvl) : { mark: 0, air: 0, lane: 0, press: 0, resist: 0, burst: 0 },
     energy: clamp(input.fitness, 30, 100),
     onPitch: started,
     dayForm,
@@ -581,7 +590,7 @@ export class MatchEngine {
     const sweep = keeper ? this.spec(keeper, [["anticipation", 0.4], ["command", 0.3], ["oneOnOnes", 0.3]]) : REF.sweep;
     const build = keeper ? this.spec(keeper, [["kicking", 0.4], ["decisions", 0.3], ["composure", 0.3]]) : REF.build;
     // The back line's marking, aerial and lane-cutting work, weighted by who does the defending; the whole side's pressing and resistance to it.
-    let mark = 0, air = 0, lane = 0, dw = 0, press = 0, resist = 0, aggr = 0, field = 0;
+    let mark = 0, air = 0, lane = 0, dw = 0, press = 0, resist = 0, aggr = 0, field = 0, burst = 0, bw = 0, recover = 0;
     for (const p of on) {
       if (p.input.slot === "GK") continue;
       const fat = 0.88 + 0.12 * (p.energy / 100);
@@ -591,6 +600,12 @@ export class MatchEngine {
         mark += pw * p.sp.mark * fat;
         air += pw * p.sp.air * fat;
         lane += pw * p.sp.lane * fat;
+        recover += pw * p.sp.burst * fat;
+      }
+      const fw = FINAL_W[p.input.slot];
+      if (fw > 0) {
+        bw += fw;
+        burst += fw * p.sp.burst * fat;
       }
       field++;
       press += p.sp.press * fat;
@@ -655,6 +670,8 @@ export class MatchEngine {
       aggr: field ? aggr / field : REF.aggr,
       sweep,
       build,
+      burst: bw ? burst / bw : REF.burst,
+      recover: dw ? recover / dw : REF.recover,
     };
     return t.cache;
   }
@@ -934,7 +951,11 @@ export class MatchEngine {
     const lng = clamp((1 + a.freqLong) * d.againstFreqLong, 0.55, 1.5);
     // A keeper who reads the through-ball and sweeps up behind the line sees fewer one-on-ones against him.
     const sweepMul = 1 - clamp((this.strength(def).sweep - REF.sweep) / 280, -0.08, 0.12);
-    const one = clamp((1 + a.freq1v1) * d.againstFreq1v1 * sweepMul, 0.55, 1.6);
+    // Quick forwards against a slow back line get in behind more often (and a quick back line closes the gap).
+    const sA = this.strength(att);
+    const sD = this.strength(def);
+    const burstMul = Math.exp(clamp((sA.burst - REF.burst - (sD.recover - REF.recover)) / M.burstScale, -0.3, 0.3));
+    const one = clamp((1 + a.freq1v1) * d.againstFreq1v1 * sweepMul * burstMul, 0.55, 1.6);
     const r = this.rng.next();
     const pen = M.penaltyPerChance;
     const h = 0.19 * hdr;
@@ -985,11 +1006,13 @@ export class MatchEngine {
 
   private createChance(att: LiveTeam, def: LiveTeam, forced?: ChanceType, forcedShooter?: LivePlayer, forcedCreator?: LivePlayer | null, xgMul = 1) {
     const type = forced ?? this.chooseChanceType(att, def);
+
     let shooter: LivePlayer | undefined = forcedShooter;
     if (!shooter) {
       if (type === "header") shooter = this.pickWeighted(att, HEADER_WEIGHT, PICK_HEADER, undefined, M.pickExponent, "shootHeader");
-      else if (type === "long" || type === "freekick") shooter = this.pickWeighted(att, LONG_WEIGHT, PICK_LONG, undefined, M.pickExponent, "shootLong");
-      else if (type === "penalty") shooter = this.onPitch(att).sort((x, y) => this.val(y, "finishing") + this.val(y, "composure") - this.val(x, "finishing") - this.val(x, "composure"))[0];
+      else if (type === "freekick") shooter = this.taker(att, "freekick") ?? this.pickWeighted(att, LONG_WEIGHT, PICK_LONG, undefined, M.pickExponent, "shootLong");
+      else if (type === "long") shooter = this.pickWeighted(att, LONG_WEIGHT, PICK_LONG, undefined, M.pickExponent, "shootLong");
+      else if (type === "penalty") shooter = this.taker(att, "penalty") ?? this.onPitch(att).sort((x, y) => this.val(y, "finishing") + this.val(y, "composure") - this.val(x, "finishing") - this.val(x, "composure"))[0];
       else shooter = this.pickWeighted(att, SHOOT_WEIGHT, PICK_SHOOT, undefined, M.pickExponent, "shoot", type === "oneonone" ? "shoot1v1" : undefined);
     }
     if (!shooter) return;
@@ -998,10 +1021,26 @@ export class MatchEngine {
       const assistProb = type === "header" ? 0.92 : type === "oneonone" ? 0.85 : type === "open" ? 0.72 : 0;
       creator = this.rng.chance(assistProb) ? this.pickWeighted(att, CREATE_WEIGHT, type === "header" ? PICK_CROSS : PICK_CREATE, shooter, M.pickExponent, "create", type === "header" ? "createCross" : type === "oneonone" ? "createThrough" : "createOpen") ?? null : null;
     }
+    // A keeper who reads the game comes off his line and cuts out the through-ball (or the pass into the box) before the shot.
+    if (!forced && !forcedShooter && (type === "oneonone" || (type === "open" && creator))) {
+      const keeper = this.onPitch(def).find((p) => p.input.slot === "GK");
+      const edge = keeper ? (this.strength(def).sweep - REF.sweep) * M.sweepClearPerPoint : 0;
+      const clear = clamp(type === "oneonone" ? edge : edge * M.sweepOpenShare, 0, M.sweepClearMax);
+      if (keeper && clear > 0 && this.rng.chance(clear)) {
+        this.act(keeper, "save1v1");
+        this.bump(keeper, 0.08, "save");
+        if (this.input.detail) this.log({ minute: this.minute, side: def.side, type: "save", text: `${this.name(keeper)} reads it and races off his line to sweep up.`, playerId: keeper.input.id, user: keeper.input.isUser });
+        return;
+      }
+    }
 
+    // The user's own penalties and direct free kicks are always his call: they are rare, and the role is something he earned.
+    if (this.input.interactive && !forcedShooter && shooter.input.isUser && (type === "penalty" || type === "freekick") && this.decisionsMade < (this.momentBudget()?.cap ?? MAX_DECISIONS) + 2) {
+      return this.askSetPiece(att, def, shooter, type);
+    }
     // Key moments for the user's player.
     if (this.input.interactive && this.canAsk() && !forcedShooter) {
-      if (shooter.input.isUser && type !== "penalty") return this.askShoot(att, def, shooter, creator ?? null, type);
+      if (shooter.input.isUser && type !== "penalty" && type !== "freekick") return this.askShoot(att, def, shooter, creator ?? null, type);
       if (creator && creator.input.isUser) return this.askCreate(att, def, creator, shooter, type);
       const keeper = this.onPitch(def).find((p) => p.input.slot === "GK");
       if (keeper?.input.isUser && (type === "oneonone" || type === "open") && this.rng.chance(0.5)) return this.askKeep(att, def, shooter, creator ?? null, type, keeper);
@@ -1046,6 +1085,8 @@ export class MatchEngine {
     let m = 1;
     if (type !== "long" && type !== "freekick") m *= Math.exp(clamp((this.spec(shooter, "offBall") - REF.offBall - (sDef.mark - REF.mark)) / 130, -0.1, 0.1));
     if (type === "header") m *= Math.exp(-clamp((sDef.air - REF.air) / 200, -0.08, 0.08));
+    // A yard of acceleration on the man marking him: a cleaner sight of goal in behind.
+    if (type === "open" || type === "oneonone") m *= Math.exp(clamp((this.spec(shooter, BURST_MIX) - REF.burst - (sDef.recover - REF.recover)) / M.burstXgScale, -0.06, 0.08));
     if (type === "open" || type === "oneonone" || type === "header") {
       if (creator) m *= 1 + clamp((this.spec(creator, "creativity") - REF.creativity) / 250, -0.03, 0.05);
       m *= 1 + clamp((this.spec(shooter, "decisions") - REF.decisions) / 400, -0.03, 0.04);
@@ -1083,8 +1124,17 @@ export class MatchEngine {
     const keeper = this.onPitch(def).find((p) => p.input.slot === "GK");
     const desc = this.describeChance(type, shooter, creator);
     if (type === "penalty") this.log({ minute: this.minute, side: sideTag, type: "penalty", text: `Penalty to ${att.input.name}! ${this.name(shooter)} steps up…`, playerId: shooter.input.id, user: shooter.input.isUser });
+    const sp = type === "penalty" || type === "freekick" ? (shooter.line.sp ??= { pens: 0, pensScored: 0, fks: 0, fksScored: 0 }) : undefined;
+    if (sp) {
+      if (type === "penalty") sp.pens++;
+      else sp.fks++;
+    }
     const r = this.rng.next();
     if (r < xg) {
+      if (sp) {
+        if (type === "penalty") sp.pensScored++;
+        else sp.fksScored++;
+      }
       shooter.line.onTarget++;
       att.onTarget++;
       if (keeper) keeper.line.xgFaced = (keeper.line.xgFaced ?? 0) + xg;
@@ -1186,8 +1236,10 @@ export class MatchEngine {
     const temper = clamp(1 + (this.val(fouler, "aggression") - REF.aggr) / 140 - (this.spec(fouler, "decisions") - REF.decisions) / 200, 0.6, 1.5);
     const cardMul = (fouler.fx?.card ?? 1) * (def.goals < att.goals ? fouler.fx?.cardBehind ?? 1 : 1) * temper;
     const redP = M.redPerFoul * (dangerous ? 2 : 1) * cardMul;
+    // A booked player stays on his feet more, and a referee thinks twice before a second card.
+    const booked = fouler.line.yellow > 0 ? M.bookedCaution : 1;
     if (card < redP) this.sendOff(def, fouler, "a reckless challenge");
-    else if (card < redP + M.yellowPerFoul * (dangerous ? 1.5 : 1) * cardMul) {
+    else if (card < redP + M.yellowPerFoul * (dangerous ? 1.5 : 1) * cardMul * booked) {
       fouler.line.yellow++;
       def.yellows++;
       this.bump(fouler, -0.35, "card");
@@ -1347,8 +1399,12 @@ export class MatchEngine {
   }
 
   private shootout() {
-    const order = (t: LiveTeam) =>
-      this.onPitch(t).sort((x, y) => this.val(y, "finishing") + this.val(y, "composure") - this.val(x, "finishing") - this.val(x, "composure"));
+    const order = (t: LiveTeam) => {
+      const byQuality = this.onPitch(t).sort((x, y) => this.val(y, "finishing") + this.val(y, "composure") - this.val(x, "finishing") - this.val(x, "composure"));
+      // The designated takers go first, in their order; the rest follow by quality.
+      const named = (t.input.takers?.penalty ?? []).map((id) => byQuality.find((p) => p.input.id === id)).filter((p): p is LivePlayer => !!p);
+      return [...named, ...byQuality.filter((p) => !named.includes(p))];
+    };
     const hs = order(this.teams.home);
     const as = order(this.teams.away);
     const gkOf = (t: LiveTeam) => this.onPitch(t).find((p) => p.input.slot === "GK");
@@ -2139,6 +2195,58 @@ export class MatchEngine {
     return clamp(0.45 + (this.rate(keeper, [["command", 0.4], ["oneOnOnes", 0.4], ["anticipation", 0.2]]) - this.val(shooter, "composure")) / 90, 0.15, 0.9);
   }
 
+  /** The designated taker still on the pitch, if the side named any. */
+  private taker(t: LiveTeam, kind: "penalty" | "freekick"): LivePlayer | undefined {
+    const ids = t.input.takers?.[kind];
+    if (!ids?.length) return undefined;
+    const on = this.onPitch(t);
+    for (const id of ids) {
+      const p = on.find((x) => x.input.id === id);
+      if (p) return p;
+    }
+    return undefined;
+  }
+
+  /** The keeper's chance against a dead ball: reach, reflexes and reading the taker. */
+  private deadBallKeeper(def: LiveTeam): number {
+    const gk = this.onPitch(def).find((p) => p.input.slot === "GK");
+    return gk ? this.rate(gk, [["reflexes", 0.4], ["diving", 0.3], ["anticipation", 0.3]]) : 40;
+  }
+
+  private setPieceOpts(p: LivePlayer, def: LiveTeam, type: "penalty" | "freekick"): (DecisionOption & { mix: Mix; mul: number; keeperMul: number })[] {
+    const g = this.deadBallKeeper(def);
+    if (type === "penalty") {
+      const odds = (mix: Mix, bias: number) => clamp(0.76 + (this.rate(p, mix) - g) / 220 + bias, 0.45, 0.93);
+      const place: Mix = [["finishing", 0.4], ["technique", 0.4], ["composure", 0.2]];
+      const power: Mix = [["finishing", 0.5], ["strength", 0.3], ["composure", 0.2]];
+      const wait: Mix = [["composure", 0.6], ["decisions", 0.25], ["technique", 0.15]];
+      return [
+        { id: "place", label: "Side-foot it into the corner", detail: "Pick a side and place it low.", odds: odds(place, 0), skills: skillNames("finishing", "technique", "composure"), mix: place, mul: 1, keeperMul: 1 },
+        { id: "power", label: "Blast it high", detail: "Unstoppable if it's on target.", odds: odds(power, -0.01), skills: skillNames("finishing", "strength", "composure"), mix: power, mul: 0.95, keeperMul: 0.88 },
+        { id: "wait", label: "Wait for the keeper to move", detail: "Nerve over power: roll it the other way.", odds: odds(wait, -0.02), skills: skillNames("composure", "decisions", "technique"), mix: wait, mul: 0.98, keeperMul: 1 },
+      ];
+    }
+    const est = (mix: Mix, k: number) => clamp(XG_BASE.freekick * Math.exp((this.rate(p, mix) - 62) / 18) * k * 2.4, 0.05, 0.6);
+    const curl: Mix = [["longShots", 0.45], ["technique", 0.35], ["composure", 0.2]];
+    const drive: Mix = [["longShots", 0.5], ["strength", 0.3], ["technique", 0.2]];
+    const cross: Mix = [["crossing", 0.6], ["technique", 0.4]];
+    return [
+      { id: "curl", label: "Curl it over the wall", detail: "Bend it into the top corner.", odds: est(curl, 1.1), skills: skillNames("longShots", "technique", "composure"), mix: curl, mul: 1.08, keeperMul: 1 },
+      { id: "drive", label: "Drive it low and hard", detail: "Through the wall or under it.", odds: est(drive, 0.95), skills: skillNames("longShots", "strength", "technique"), mix: drive, mul: 0.95, keeperMul: 0.95 },
+      { id: "cross", label: "Whip it into the box", detail: "Find a head instead of going for goal.", odds: clamp(0.45 + (this.rate(p, cross) - 62) / 80, 0.15, 0.9), skills: skillNames("crossing", "technique"), mix: cross, mul: 1.1, keeperMul: 1 },
+    ];
+  }
+
+  private askSetPiece(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, type: "penalty" | "freekick") {
+    const full = this.setPieceOpts(shooter, def, type);
+    const options: DecisionOption[] = full.map((o) => ({ id: o.id, label: o.label, detail: o.detail, odds: o.odds, skills: o.skills }));
+    // What each choice is worth in goals, for choosing on the user's behalf: a delivery only scores if someone heads it in.
+    const ev = Object.fromEntries(full.map((o) => [o.id, o.id === "cross" ? o.odds * XG_BASE.header * 1.6 : o.odds]));
+    const keeper = this.onPitch(def).find((p) => p.input.slot === "GK");
+    const prompt = type === "penalty" ? `Penalty! The ball is yours. ${keeper ? this.name(keeper) : "The keeper"} is bouncing on his line.` : "A free kick in range, and it's yours to take.";
+    this.ask({ minute: this.minute, kind: "setpiece", moment: type === "penalty" ? "Penalty" : "Free kick", prompt, options }, { kind: "setpiece", team: att, opp: def, player: shooter, creator: null, type, ev });
+  }
+
   private askShoot(att: LiveTeam, def: LiveTeam, shooter: LivePlayer, creator: LivePlayer | null, type: ChanceType) {
     const gk = this.strength(def).gk;
     const touch = this.touchOdds(shooter);
@@ -2216,6 +2324,20 @@ export class MatchEngine {
     const r = this.rng;
     const p = ctx.player;
     switch (ctx.kind) {
+      case "setpiece": {
+        const opp = ctx.opp as LiveTeam;
+        const type = ctx.type as "penalty" | "freekick";
+        const opt = this.setPieceOpts(p, opp, type).find((o) => o.id === optionId) ?? this.setPieceOpts(p, opp, type)[0];
+        // The chosen technique replaces the generic quality of the kick, within a narrow band either way.
+        const skill = clamp(Math.exp((this.rate(p, opt.mix) - this.shooterQuality(p, type)) / 40), 0.88, 1.12);
+        if (opt.id === "cross") {
+          const ok = r.chance(opt.odds);
+          const header = this.pickWeighted(ctx.team, HEADER_WEIGHT, PICK_HEADER, p);
+          if (ok && header) this.resolveShot(ctx.team, opp, header, p, "header", opt.mul);
+          else this.log({ minute: this.minute, side: ctx.team.side, type: "tackle", text: "Your delivery is headed clear.", playerId: p.input.id, user: true });
+        } else this.resolveShot(ctx.team, opp, p, null, type, opt.mul * skill, opt.keeperMul);
+        break;
+      }
       case "claim": {
         const attTeam = ctx.opp as LiveTeam;
         const shooter = ctx.mate as LivePlayer;

@@ -8,6 +8,7 @@ import { clubName, staticLeague } from "@/engine/data/world";
 import { FORMATIONS } from "@/engine/match/lineup";
 import type { FormationId, PrepFocus, YouthFocus } from "@/engine/types";
 import { useGame, useGameState } from "@/game/store";
+import { CoachTransfers } from "@/components/game/CoachTransfers";
 
 const STYLE_LABELS = {
   pressing: ["Sit off", "Press high"],
@@ -153,6 +154,7 @@ export default function CoachPage() {
             </Card>
           )}
 
+          {c.role === "manager" && <CoachTransfers g={g} />}
           {c.role === "manager" && (
             <Card title="📐 Tactics" className="lg:col-span-2">
               <div className="mb-2 text-sm font-bold">Formation</div>

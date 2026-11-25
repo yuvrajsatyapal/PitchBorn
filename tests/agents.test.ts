@@ -147,3 +147,32 @@ describe("agent personality", () => {
     expect(s.news.some((n) => n.body?.includes("Well connected"))).toBe(true);
   });
 });
+
+describe("firing an agent", () => {
+  it("costs severance by the agent's style, and nothing when he walks", async () => {
+    const { releaseCost } = await import("../src/engine/career/agents");
+    const { BALANCE } = await import("../src/engine/balance");
+    let checked = 0;
+    for (let i = 0; i < 30 && checked < 3; i++) {
+      const s = newCareer({ seed: `ag-fire-${i}` });
+      s.user.bank = 10_000_000;
+      userPlayer(s).reputation = 99;
+      const pick = agentMarket(s).filter((a) => a.weeklyFee > 0 && canHireAgent(s, a).ok).at(-1);
+      if (!pick) continue;
+      hireAgent(s, pick.id);
+      const style = agentStyle(s, s.user.agent);
+      const weeks = style ? BALANCE.agents.styles[style].severanceWeeks : BALANCE.agents.severanceWeeks;
+      expect(releaseCost(s)).toBe(s.user.agent.weeklyFee * weeks);
+      const before = s.user.bank;
+      releaseAgent(s);
+      expect(s.user.bank).toBe(before - pick.weeklyFee * weeks);
+      expect(s.user.agent.id).toBe(NO_AGENT.id);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(0);
+    const t = newCareer({ seed: "ag-walk" });
+    const bank = t.user.bank;
+    releaseAgent(t, "He walks.");
+    expect(t.user.bank).toBe(bank);
+  });
+});

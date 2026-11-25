@@ -128,3 +128,16 @@ baseline). It reports per-type balances, spend, wages, owner injections, elite-p
 - **Moments** (`moments.ts`): contextual choices by position for attacking (`askProgress`) and defending (`askHold`) phases, plus GK claims. Choices reshape the same phase the sim would have played anyway (`contest(..., pMul)`), never add free chances. Ceiling `MAX_DECISIONS`, cooldown by importance; no guaranteed minimum.
 - **Reads for the UI** (`insight.ts`, `feed.ts`): position-aware stat cells, performance label, low-involvement explanation, manager instruction, rating reasons, post-match summary; ALL / YOU / KEY filters over one event stream.
 - **Calibration**: `npx tsx scripts/sim/involvement.ts [matches] [compareMatches]` prints involvement by position and quality and compares fast / detailed / interactive football.
+
+
+## Balance pass (November 2026)
+
+- **Cards:** a booked player's chance of another booking is × `bookedCaution` (0.5). Reds fell from ≈0.22 to ≈0.13 a match
+  with goals and results unchanged (`npm run sim:match`).
+- **Acceleration:** a `burst` special (acceleration 0.7, pace 0.3) for the forwards (weighted by `FINAL_W`) against the back
+  line's `recover` changes how often attacks get in behind (`burstScale` 30, ±30%) and, per shooter, the quality of open-play
+  and one-on-one chances (`burstXgScale` 160). +30 acceleration: own xG +6.4% for attackers, xG against −6.3% for defenders.
+- **Keeper anticipation:** a keeper whose `sweep` is above the reference clears that edge × `sweepClearPerPoint` (0.012, cap
+  0.2) of one-on-ones, and 40% of that of open-play chances built on a pass, before the shot. +40 on anticipation, command
+  and one-on-ones: shots against −4.1% (was −1.2%). Measured with `npm run sim:attribute-effects`.
+- **Set pieces:** named takers take penalties and direct free kicks (penalty goals ≈0.18–0.22 a match, unchanged).

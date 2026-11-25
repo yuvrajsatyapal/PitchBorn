@@ -10,11 +10,27 @@ import { PostMatchCard } from "@/components/game/match/PostMatchCard";
 import { YouCard } from "@/components/game/match/YouCard";
 import { Button, Card, Tabs } from "@/components/ui";
 import type { PreparedMatch } from "@/engine/season/matchday";
+import type { MatchEvent } from "@/engine/match/engine";
+import { cardSting, goalSting, nearMiss, onSoundChange, startCrowd, stopCrowd, whistle } from "@/audio/sound";
+import { SoundToggle } from "@/components/game/SoundToggle";
 import { teamLabel } from "@/game/selectors";
 import { useGame } from "@/game/store";
 import { ConditionsChip } from "@/components/game/Conditions";
 
 type Pane = "commentary" | "stats";
+
+/** The sounds for a batch of match events. */
+function playEvents(evs: MatchEvent[], userSide: "home" | "away" | null) {
+  for (const e of evs) {
+    if (e.type === "kickoff") whistle("short");
+    else if (e.type === "halftime" || e.type === "extratime") whistle("long");
+    else if (e.type === "fulltime") whistle("triple");
+    else if (e.type === "goal") goalSting(!userSide || e.side === userSide);
+    else if (e.type === "woodwork" || (e.type === "save" && e.big) || (e.type === "miss" && e.big)) nearMiss();
+    else if (e.type === "yellow" || e.type === "red") cardSting(e.type === "red");
+    else if (e.type === "foul" || e.type === "penalty") whistle("short");
+  }
+}
 
 export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDone: () => void }) {
   useSuppressAds(true);
@@ -34,11 +50,23 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
   const tick = useCallback(() => {
     if (eng.finished || eng.pending) return;
     const evs = eng.step();
+    playEvents(evs, prepared.userSide);
     if (evs.some((e) => e.type === "goal")) {
       setFlash(true);
       setTimeout(() => setFlash(false), 700);
     }
     force((x) => x + 1);
+  }, [eng, prepared.userSide]);
+
+  // Crowd noise for as long as the match screen is open (when sound is on).
+  useEffect(() => {
+    startCrowd();
+    if (eng.minute === 0) whistle("short");
+    const off = onSoundChange((on) => (on ? startCrowd() : stopCrowd()));
+    return () => {
+      off();
+      stopCrowd();
+    };
   }, [eng]);
 
   const paused = !!eng.pending;
@@ -95,17 +123,16 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-paper/20">
           <div className="h-full bg-sun transition-all" style={{ width: `${Math.min(100, (minute / 90) * 100)}%` }} />
         </div>
-        {eng.input.conditions && (
-          <div className="mt-2 flex justify-center">
-            <ConditionsChip c={eng.input.conditions} />
-          </div>
-        )}
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+          {eng.input.conditions && <ConditionsChip c={eng.input.conditions} />}
+          <SoundToggle />
+        </div>
       </Card>
 
       <DecisionCard
         eng={eng}
         onResolve={(id) => {
-          eng.resolve(id);
+          playEvents(eng.resolve(id), prepared.userSide);
           force((x) => x + 1);
         }}
       />

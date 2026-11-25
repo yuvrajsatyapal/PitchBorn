@@ -91,6 +91,8 @@ interface GameStore {
   chooseIntlNumber: (no: number) => void;
   hireAgent: (agentId: string) => void;
   releaseAgent: () => void;
+  /** Run a small engine action on the game, show its outcome and refresh. */
+  act: (fn: (g: GameState) => { ok: boolean; reason?: string; msg?: string } | void, okMsg?: string) => void;
   acceptSponsor: (offerId: string) => void;
   declineSponsor: (offerId: string) => void;
   retire: () => Promise<void>;
@@ -425,6 +427,15 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!g) return;
     const res = hireAgent(g, agentId);
     get().notify(res.ok ? "You have a new agent." : res.reason ?? "Can't hire this agent.", res.ok ? "good" : "bad");
+    get().bump();
+  },
+
+  act: (fn, okMsg) => {
+    const g = get().game;
+    if (!g) return;
+    const res = fn(g);
+    if (res) get().notify(res.ok ? res.msg ?? okMsg ?? "Done." : res.reason ?? "Not possible right now.", res.ok ? "good" : "bad");
+    else if (okMsg) get().notify(okMsg, "good");
     get().bump();
   },
 

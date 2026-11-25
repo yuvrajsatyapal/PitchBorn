@@ -6,6 +6,7 @@ import { readConsent, writeConsent, type ConsentState } from "@/ads/consent";
 import { Badge, Button, Card, PageTitle, Tabs } from "@/components/ui";
 import { useGame, useGameState } from "@/game/store";
 import { exportSaveBlob, importSaveFile, listBackups, restoreBackup } from "@/persistence/saves";
+import { SoundToggle } from "@/components/game/SoundToggle";
 
 export default function Settings() {
   const g = useGameState();
@@ -98,6 +99,9 @@ export default function Settings() {
             <input type="checkbox" checked={g.settings.autoSave} onChange={(e) => setAutoSave(e.target.checked)} className="h-5 w-5 accent-[var(--pitch)]" />
             Autosave every week
           </label>
+          <div className="mt-3 flex items-center gap-2 text-sm font-semibold">
+            <SoundToggle /> <span>Match sound: crowd, whistle and goal stings</span>
+          </div>
           {backups.length > 0 && (
             <div className="mt-4">
               <div className="mb-1 text-xs font-black uppercase text-muted">Backups</div>

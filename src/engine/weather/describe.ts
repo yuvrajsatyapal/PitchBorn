@@ -28,6 +28,7 @@ export const PITCH_LABEL: Record<PitchKind, string> = {
 
 /** A short, practical line about what the conditions will do to the game. */
 export function conditionsNote(c: MatchConditions): string {
+  if (c.roof) return `The roof is closed: ${WEATHER_LABEL[c.roof.outside].toLowerCase()} and ${Math.round(c.roof.tempC)}°C outside, perfect conditions inside.`;
   if (c.pitch === "frozen") return "Rock-hard, icy surface: footing, touch and tempo will suffer, and tackles hurt more.";
   if (c.weather === "snow") return "Snow falling: the ball holds up and the game slows down.";
   if (c.weather === "heavy-rain") return "Heavy rain: the slick surface may make control difficult. Strong, balanced players cope best.";
@@ -41,6 +42,7 @@ export function conditionsNote(c: MatchConditions): string {
 
 /** "🌧️ Heavy rain · 9°C · Heavy pitch" */
 export function conditionsLine(c: MatchConditions): string {
+  if (c.roof) return `🏟️ Roof closed · ${WEATHER_ICON[c.roof.outside]} ${Math.round(c.roof.tempC)}°C outside · ${PITCH_LABEL[c.pitch]}`;
   return `${WEATHER_ICON[c.weather]} ${WEATHER_LABEL[c.weather]} · ${Math.round(c.tempC)}°C · ${PITCH_LABEL[c.pitch]}`;
 }
 
@@ -51,6 +53,7 @@ export function isAdverse(c: MatchConditions | undefined): boolean {
 
 /** A commentary line for kick-off, or null in ordinary conditions. Chosen by the conditions alone (no randomness). */
 export function kickoffWeatherLine(c: MatchConditions | undefined): string | null {
+  if (c?.roof) return `The roof is closed against the ${WEATHER_LABEL[c.roof.outside].toLowerCase()} outside. Perfect conditions in here.`;
   if (!isAdverse(c) || !c) return null;
   const t = Math.round(c.tempC);
   if (c.weather === "snow") return `Snow is falling and it's ${t}°C${c.pitch === "frozen" ? ", on a rock-hard, frozen pitch" : ""}. The ground staff have cleared the lines.`;

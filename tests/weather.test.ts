@@ -273,3 +273,61 @@ describe("weather integrations", () => {
     expect(s.user.feed?.some((p) => p.id.endsWith(":wx"))).toBe(true);
   });
 });
+
+describe("weather V2: climates, roofs, host nations and postponements", () => {
+  it("every nation in the world has a climate table of its own", async () => {
+    const { hasClimate } = await import("../src/engine/weather/climate");
+    const { WORLD } = await import("../src/engine/data/world");
+    expect(WORLD.countries.filter((c) => !hasClimate(c.code)).map((c) => c.code)).toEqual([]);
+  });
+
+  it("a closed roof plays in clear, good conditions and remembers the weather outside", async () => {
+    const { rollConditions: roll } = await import("../src/engine/weather/conditions");
+    let closed = 0;
+    for (let i = 0; i < 200; i++) {
+      const open = roll("roof", `f${i}`, { countryCode: "GER", lat: 51.5 }, 0);
+      const shut = roll("roof", `f${i}`, { countryCode: "GER", lat: 51.5, roof: true }, 0);
+      if (shut.roof) {
+        closed++;
+        expect(shut.weather).toBe("clear");
+        expect(shut.pitch).toBe("good");
+        expect(shut.roof.outside).toBe(open.weather);
+        expect(shut.roof.tempC).toBe(open.tempC);
+      } else expect(shut).toEqual(open);
+    }
+    expect(closed).toBeGreaterThan(150);
+  });
+
+  it("tournament games take the host nation's weather, not the listed home side's", async () => {
+    const { hostOf, venueOf: venue } = await import("../src/engine/weather/conditions");
+    const comp = { id: "wc-2030", kind: "international" as const, teams: ["BRA", "ENG", "GER", "JPN"] };
+    expect(venue({ home: "ENG", neutral: true }, comp).countryCode).toBe(hostOf(comp));
+    expect(hostOf(comp)).toBe(hostOf({ ...comp, teams: [...comp.teams].reverse() }));
+    expect(venue({ home: "ENG" }, comp).countryCode).toBe("ENG");
+  });
+
+  it("moves a frozen league match of the user's to a free week, once", async () => {
+    const { unplayable } = await import("../src/engine/weather/conditions");
+    const { postponeFrozenFixtures } = await import("../src/engine/season/postpone");
+    expect(unplayable({ weather: "snow", tempC: -2, pitch: "frozen" })).toBe(true);
+    expect(unplayable({ weather: "clear", tempC: -2, pitch: "frozen" })).toBe(false);
+    for (let i = 0; i < 40; i++) {
+      const s = newCareer({ seed: `pp-${i}`, clubId: "ger-dortmund", nationality: "GER", birthCountry: "GER", countries: ["GER"] });
+      const club = s.players[s.user.playerId].clubId as string;
+      const league = Object.values(s.competitions).find((c) => c.kind === "league" && c.teams.includes(club));
+      const winter = league?.fixtures.filter((f) => (f.home === club || f.away === club) && !f.result).find((f) => unplayable(conditionsFor(s, f)));
+      if (!league || !winter) continue;
+      s.turn = winter.turn;
+      const from = winter.turn;
+      expect(postponeFrozenFixtures(s)).toBe(true);
+      expect(winter.turn).toBeGreaterThan(from);
+      expect(winter.postponed).toBe(1);
+      expect(s.news.some((n) => n.title.startsWith("❄️ Postponed"))).toBe(true);
+      s.turn = winter.turn;
+      postponeFrozenFixtures(s);
+      expect(winter.postponed).toBe(1);
+      return;
+    }
+    throw new Error("no frozen fixture found in 40 German careers");
+  });
+});

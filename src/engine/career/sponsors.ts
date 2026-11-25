@@ -16,6 +16,7 @@ import type { GameState, Player, SponsorDeal, SponsorOffer, SponsorState, Sponso
 import { addNews, userPlayer } from "../world/helpers";
 import { agentSkill } from "./agents";
 import { receiveIncome } from "./money";
+import { lifestyleEffects } from "./lifestyle";
 
 const TURNS = BALANCE.calendar.turnsPerSeason;
 const CAL = BALANCE.calendar;
@@ -92,7 +93,8 @@ export function commercialAppeal(state: GameState): number {
     (club?.reputation ?? 20) * 0.1 +
     clamp((p.form - 6.3) * 6, -4, 9) +
     Math.min(14, honours) +
-    hype;
+    hype +
+    lifestyleEffects(state).appeal;
   return Math.round(clamp(v, 0, 100));
 }
 

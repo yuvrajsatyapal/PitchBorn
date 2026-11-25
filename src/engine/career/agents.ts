@@ -180,10 +180,27 @@ export function hireAgent(state: GameState, agentId: string, opts: { force?: boo
   return { ok: true };
 }
 
+/** What firing the current agent costs: weeks of fees by his style (greedy agents hold you to the contract, loyal ones let you go). */
+export function releaseCost(state: GameState): number {
+  const a = state.user.agent;
+  if (!a || a.id === "none" || !a.weeklyFee) return 0;
+  const style = agentStyle(state, a);
+  const weeks = style ? A.styles[style].severanceWeeks : A.severanceWeeks;
+  return a.weeklyFee * weeks;
+}
+
+/** Part with the agent. `why` is set when the agent walks (no severance then); otherwise the player is firing him. */
 export function releaseAgent(state: GameState, why?: string): void {
   const u = state.user;
   if (!u.agent || u.agent.id === "none") return;
   const name = u.agent.name;
+  if (!why) {
+    const cost = releaseCost(state);
+    if (cost) {
+      u.bank = Math.max(0, u.bank - cost);
+      why = `You pay ${formatMoney(cost)} to end the contract and now represent yourself.`;
+    }
+  }
   u.agent = { ...NO_AGENT, skills: { ...NO_AGENT.skills } };
   u.agentUnpaidWeeks = 0;
   addNews(state, { kind: "contract", title: `You part ways with ${name}`, body: why ?? "You now represent yourself.", important: true });

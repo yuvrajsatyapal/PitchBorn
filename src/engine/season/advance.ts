@@ -37,6 +37,10 @@ import { ensureMinimumSquads, listForFinancialReasons, processExpiringContracts,
 import type { ClubState, Competition, GameState, SeasonArchive, SeasonRecord } from "../types";
 import { agentSkill, payAgent } from "../career/agents";
 import { checkCareerAchievements } from "../career/achievements";
+import { checkChallenge } from "../career/challenges";
+import { lifestyleWeekly } from "../career/lifestyle";
+import { postponeFrozenFixtures } from "./postpone";
+import { snapshotChemistry } from "../career/seasonReview";
 import { expirePress, maybePressConference } from "../career/press";
 import { feedWeekly } from "../career/feed";
 import { chemistryWeekly } from "../career/chemistry";
@@ -93,6 +97,7 @@ export function beginTurn(state: GameState): void {
     }
   });
   assignMatchDays(state);
+  if (!state.user.retired && postponeFrozenFixtures(state)) assignMatchDays(state);
   // In the dugout the world runs on, but there is no player to pick: nothing waits for the user on match days.
   if (state.user.retired) {
     state.pending = [];
@@ -289,6 +294,7 @@ function userWeekly(state: GameState, rng: Rng): void {
     receiveIncome(state, p.contract.wage, "wage");
   }
   payAgent(state);
+  lifestyleWeekly(state);
   sponsorWeekly(state);
   weeklyPersonality(state);
   if (u.relationships.manager < 18 && p.clubId && state.turn >= C.seasonStart + 4) rememberManagerConflict(state);
@@ -445,8 +451,10 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
     settleWorldCeremony(state);
   }
   checkCareerAchievements(state);
+  checkChallenge(state);
   feedWeekly(state);
   chemistryWeekly(state);
+  snapshotChemistry(state);
   expirePress(state);
   beginTurn(state);
   refreshRecall(state);
@@ -673,6 +681,7 @@ export function retireUser(state: GameState, reason = "You announce your retirem
   u.legacy = computeLegacy(state);
   rememberRetirement(state);
   checkCareerAchievements(state);
+  checkChallenge(state);
   state.pending = [];
   u.offers = u.offers.map((o) => (o.status === "terms" || o.status === "club-pending" ? { ...o, status: "withdrawn" as const } : o));
 }

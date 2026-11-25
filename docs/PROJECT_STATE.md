@@ -60,7 +60,14 @@ clause; tuning in `BALANCE.sponsors`. Agents have a personality (greedy, loyal, 
 (`BALANCE.agents.styles`). The Hall of Fame (`/hall-of-fame`) keeps retired careers from every save in the kv store
 (`persistence/hallOfFame.ts`), inducted on retirement. No schema bump. Details: `docs/CAREER_SYSTEMS.md` §11–13.
 
+## Set pieces, challenges, lifestyle, sound, weather V2, manager market, season review (Nov 2026)
+All optional on `UserCareer` / `Fixture` / `MatchConditions`, no schema bump: `setPieces`, `challenge`, `lifestyle`,
+`chemistrySnap`, `coach.scouting`, `fixture.postponed`, `conditions.roof`. Takers ride on `TeamInput.takers`; the user's
+own penalties and free kicks are `setpiece` decisions. Sound is client-only (`src/audio/sound.ts`, localStorage key
+`pitchborn:sound`). The managed club is skipped by `runAiTransfers`. Details: `CAREER_SYSTEMS.md` §14–19, `WEATHER.md` V2,
+`SIMULATION.md` balance pass.
+
 ## Known issues / TODO
-- Reds slightly high (~0.2/match); 9+ goal games ~0.5% (acceptable)
+- 9+ goal games ~0.5% (acceptable)
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).
-- Acceleration's automatic-play use is small (a share of the counter-attack chance after a won ball, plus the overall, ageing and the interactive jockey odds); keeper anticipation has no measurable effect on shots against (see docs/ATTRIBUTES.md, docs/SIMULATION.md).
+- Lifestyle prices are absolute: a young lower-league player can't afford even the flat for his first months.

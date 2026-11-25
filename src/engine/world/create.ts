@@ -21,6 +21,7 @@ import { SCHEMA_VERSION, addTimeline, nextId } from "./helpers";
 import { generateAttributes } from "../players/attributes";
 import { initialWeakFoot } from "../players/foot";
 import { NO_FOCUS, isValidFocus, leanAttributes } from "../players/focus";
+import { challengeDef, challengeFits, startChallenge } from "../career/challenges";
 
 export const START_SEASON = 2026;
 
@@ -227,6 +228,8 @@ export interface NewCareerInput {
   priorities?: GameState["user"]["priorities"];
   /** Development focus: the kind of player to grow into (an id from players/focus.ts for the chosen position). Absent or invalid means no preference. */
   focus?: string;
+  /** A challenge scenario to play (career/challenges.ts); ignored when the start does not meet its requirements. */
+  challenge?: { id: string; weekly?: string };
 }
 
 export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInput): Player {
@@ -307,7 +310,8 @@ export function createWorld(input: NewCareerInput): GameState {
   const season = START_SEASON;
   const state: GameState = {
     schemaVersion: SCHEMA_VERSION,
-    id: `save-${seed}`.replace(/[^a-z0-9-]/gi, "").slice(0, 40),
+    // A weekly challenge shares its seed with everyone that week, so its save id also carries the start time.
+    id: `save-${seed}${input.challenge?.weekly ? `-${Date.now().toString(36)}` : ""}`.replace(/[^a-z0-9-]/gi, "").slice(0, 48),
     name: input.saveName || `${input.firstName} ${input.lastName}`,
     createdAt: now,
     updatedAt: now,
@@ -416,6 +420,11 @@ export function createWorld(input: NewCareerInput): GameState {
     title: startProfile(input).youth ? `Joined the ${staticClub(input.clubId)?.shortName} academy` : `Signed first professional deal with ${staticClub(input.clubId)?.shortName}`,
     detail: `Aged ${state.user.startAge}, ${country(input.nationality)?.name} · ${input.position}`,
   });
+  if (input.challenge) {
+    const def = challengeDef(input.challenge.id);
+    const tier = state.user.startTier;
+    if (def && challengeFits(def, { path: input.path, tier, position: input.position }).ok) startChallenge(state, def.id, input.challenge.weekly);
+  }
   void BALANCE;
   return state;
 }

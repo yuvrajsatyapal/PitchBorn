@@ -9,6 +9,7 @@ import { ageOf } from "../players/generate";
 import type { Appearance, GameState } from "../types";
 import { userPlayer } from "../world/helpers";
 import { careerCardData, type CardStat } from "./card";
+import { challengeView } from "./challenges";
 
 export interface HallOfFameEntry {
   /** The save the career came from (one entry per save). */
@@ -34,6 +35,8 @@ export interface HallOfFameEntry {
   honours: string[];
   trophyCount: number;
   awards: string[];
+  /** The challenge the career chased, and whether it was completed. */
+  challenge?: { title: string; icon: string; won: boolean; weekly?: string };
   /** When the entry was first written (ISO). */
   inductedAt: string;
 }
@@ -44,6 +47,7 @@ export function hallOfFameEntry(state: GameState, inductedAt = new Date().toISOS
   if (!u.retired || !u.legacy) return null;
   const p = userPlayer(state);
   const card = careerCardData(state);
+  const cv = challengeView(state);
   const retiredSeason = u.retiredSeason ?? state.season;
   // A career that never reached a first-team game is remembered at the club it started with, not as a free agent.
   const clubId = card.clubId ?? u.startClubId;
@@ -70,6 +74,7 @@ export function hallOfFameEntry(state: GameState, inductedAt = new Date().toISOS
     honours: card.honours.slice(0, 6),
     trophyCount: card.trophyCount,
     awards: card.awards.slice(0, 4),
+    ...(cv ? { challenge: { title: cv.def.title, icon: cv.def.icon, won: cv.state.status === "won", weekly: cv.state.weekly } } : {}),
     inductedAt,
   };
 }

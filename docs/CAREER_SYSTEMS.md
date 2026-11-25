@@ -84,6 +84,50 @@ optional field that older saves simply lack (schema 10, see Persistence).
 - **Storage.** The key-value store (`hallOfFame`), not the save. Removing a career from the Hall is remembered (`hallOfFame:removed`) so it is never inducted again; the save itself is not touched.
 - Linked from the site header, the saves page and the Legacy page.
 
+## 14. Set-piece duties (`career/setPieces.ts`, `components/game/SetPieceCard.tsx`)
+
+Every side names penalty and free-kick takers from its starters (`TeamInput.takers`, best by finishing/composure/technique,
+and long shots/technique/composure). The first one on the pitch takes them; shoot-outs go takers first. The user can ask
+the manager for a duty on the Club page: granted when his score is within 3 (plus a point per 10 of manager relationship
+over 50) of the best teammate, refused for the rest of the season otherwise; displacing a teammate costs 1 teammates point.
+Two misses in his last three penalties drop him for the season. In live matches his own penalties (place, power, wait)
+and direct free kicks (curl, drive, cross) are always his choice, slightly over the moment budget. Record in
+`user.setPieces`; kicks counted in `PlayerLine.sp`.
+
+## 15. Challenge scenarios (`career/challenges.ts`, `ChallengePicker`, `ChallengeCard`)
+
+Six goals with start requirements and deadlines (From the Bottom, One-Club Legend, Golden Before 27, Century by 24,
+Globetrotter, Late Bloomer), chosen on the confirm step of a new career and settled once, weekly and on retirement. The
+weekly challenge (`weeklyChallenge`) picks a scenario and the world seed `weekly-<ISO week>` from the calendar week, so
+everyone starting it that week plays the same world (the save id adds the start time). The outcome is shown on the
+dashboard and kept in the Hall of Fame entry.
+
+## 16. Lifestyle and money (`career/lifestyle.ts`, `/play/lifestyle`)
+
+Homes and cars (one each, sold back at 70%), staff (weekly wages only), a charity foundation, and investments (bonds,
+property fund, start-up stake, settled at the end of each full season from `seed:invest:season:holding`). Effects each
+week: extra fitness, morale, supporters and board relationship; a physio multiplies training-injury risk by 0.8; cars and
+the global foundation add commercial appeal; charity adds reputation each season and a legacy line (a point per
+€250k given, up to 12). Upkeep is paid weekly; when it can't be, staff go first, then charity, the car and the home.
+
+## 17. Firing an agent
+
+Firing costs severance in weeks of fees by style (greedy 8, connected 4, loyal 0, no style 2), confirmed in a dialog.
+An agent who walks over unpaid fees costs nothing.
+
+## 18. Manager transfers and scouting (`career/coachMarket.ts`, `components/game/CoachTransfers.tsx`)
+
+As a manager the AI stops buying for the user's club. He scouts (three reports a week; potential shown as a range whose
+width shrinks with the coaching rating) and, in a window, bids at the asking price (value × 1.1, × 1.45 for key men at
+comparable clubs, less when listed or expiring) inside the budget, or sells at 85% of value to the strongest club that
+needs the position. The player still has to agree (`playerWillJoin`). No random draws.
+
+## 19. Season review (`career/seasonReview.ts`, `/play/review`)
+
+From the end of the league season through the summer: record, goals, assists, average rating and trend, best games,
+the season's strongest memories, trophies and awards, the club's league finish, and the teammates whose bond moved most
+since the snapshot taken as the season began (`user.chemistrySnap`).
+
 ## Known limitations
 - Hall of Fame entries live in this browser only (they are not part of a save export).
 - Sponsor targets count every competition; there are no competition-specific targets (for example "10 league goals").

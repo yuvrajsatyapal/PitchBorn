@@ -14,6 +14,17 @@ export const BALANCE = {
     foulPerMinute: 0.24,
     yellowPerFoul: 0.13,
     redPerFoul: 0.0008,
+    /** Multiplier on a booking for a player already on a yellow (second yellows were driving reds to ~0.22 a match). */
+    bookedCaution: 0.5,
+    /** Points of acceleration edge (forwards over the back line) per e-fold in how often attacks get in behind. */
+    burstScale: 30,
+    /** The same edge on one shooter, per e-fold of shot quality in open play and one-on-ones. */
+    burstXgScale: 160,
+    /** A keeper who reads the game sweeps up this share of through-balls before the shot, per point of `sweep` above the reference, capped. */
+    sweepClearPerPoint: 0.012,
+    sweepClearMax: 0.2,
+    /** Open-play chances built on a pass are swept up at this fraction of the one-on-one rate. */
+    sweepOpenShare: 0.4,
     /** Non-contact injury chance per player per 90 minutes, scaled by proneness and fitness. */
     injuryPerPlayerMatch: 0.016,
     /** Sd of each player's per-match form swing, as a fraction of ability (≈ ±3–4 overall points). */
@@ -118,10 +129,12 @@ export const BALANCE = {
      * commission they take, and how many unpaid weeks they put up with before walking.
      */
     styles: {
-      greedy: { skills: { negotiation: 8, connections: 3, media: 0, care: -6 }, commission: 1.3, unpaidWeeks: 2 },
-      loyal: { skills: { negotiation: 0, connections: -5, media: 0, care: 10 }, commission: 0.75, unpaidWeeks: 8 },
-      connected: { skills: { negotiation: -4, connections: 10, media: 4, care: 0 }, commission: 1, unpaidWeeks: 4 },
+      greedy: { skills: { negotiation: 8, connections: 3, media: 0, care: -6 }, commission: 1.3, unpaidWeeks: 2, severanceWeeks: 8 },
+      loyal: { skills: { negotiation: 0, connections: -5, media: 0, care: 10 }, commission: 0.75, unpaidWeeks: 8, severanceWeeks: 0 },
+      connected: { skills: { negotiation: -4, connections: 10, media: 4, care: 0 }, commission: 1, unpaidWeeks: 4, severanceWeeks: 4 },
     },
+    /** Weeks of fees owed when the player fires an agent with no particular style. */
+    severanceWeeks: 2,
   },
   sponsors: {
     /** A season target pays this share of the deal's yearly value as a one-off bonus. */
@@ -200,6 +213,10 @@ export const BALANCE = {
     heatMaxC: 36,
     /** Precipitation falls as snow at or below this temperature. */
     snowMaxC: 1,
+    /** A frozen pitch is unplayable (the match is postponed once) when it snows or the temperature is at or below this. */
+    postponeC: -4,
+    /** A closed retractable roof keeps the inside at this temperature. */
+    roofC: 16,
     /** A pitch can only freeze at or below this temperature, and does so with this chance (always when it snows this cold). */
     frozenMaxC: -1,
     frozenChance: 0.55,

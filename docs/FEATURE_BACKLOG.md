@@ -16,6 +16,15 @@ Ideas for what to add next. Build them only when the owner says to start one.
 - **Sponsor targets** (#4): season targets with a bonus and a form clause on bigger deals, `engine/career/sponsors.ts` (`docs/CAREER_SYSTEMS.md` §11).
 - **Agent personality** (#8): greedy, loyal and well-connected agents, `engine/career/agents.ts` (§12).
 - **Hall of Fame** (#13): retired careers from every save, `engine/career/hallOfFame.ts`, `/hall-of-fame` (§13).
+- **Set-piece specialist roles** (#6): `engine/career/setPieces.ts`, penalty and free-kick moments (§14).
+- **Challenge scenarios** (#12): six scenarios plus a weekly shared seed, `engine/career/challenges.ts` (§15).
+- **Lifestyle and money** (#3): `engine/career/lifestyle.ts`, `/play/lifestyle` (§16).
+- **Sound** (#14): Web Audio crowd, whistle, goal and card stings, off by default, `src/audio/sound.ts`.
+- **Agent firing with severance** (rest of #8) (§17).
+- **Weather V2**: climates for every nation, tournament hosts, retractable roofs, frozen-pitch postponements (`WEATHER.md`).
+- **Manager transfers and scouting**: `engine/career/coachMarket.ts` (§18).
+- **Season review**: `engine/career/seasonReview.ts`, `/play/review` (§19).
+- **Balance**: fewer second yellows (reds ≈0.13 a match), acceleration and keeper anticipation made measurable (`SIMULATION.md`).
 
 The numbered list below is the original backlog; the items above are done.
 

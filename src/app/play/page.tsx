@@ -17,6 +17,8 @@ import { keeperMetrics } from "@/engine/players/keeper";
 import { fmtRating, seasonTotal, user, userFixtures, userLeague } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
+import { ChallengeCard } from "@/components/game/ChallengeCard";
+import { SeasonReviewCard } from "@/components/game/SeasonReviewCard";
 import { LoanAdviceCard } from "@/components/game/LoanAdviceCard";
 import { loanAdvice } from "@/engine/career/loanAdvice";
 import { ROLE_LABEL } from "@/engine/career/coaching";
@@ -95,6 +97,8 @@ export default function Dashboard() {
           <VaultCard g={g} />
           <AwardsNightCard g={g} />
           <RecentAchievementsCard g={g} />
+          <SeasonReviewCard g={g} />
+          <ChallengeCard g={g} />
           <JerseyChoiceCard g={g} />
           {openOffers.length > 0 && (
             <Card tone="sky" title={`📨 ${openOffers.length} open offer${openOffers.length > 1 ? "s" : ""}`} action={<LinkButton href="/play/transfers" size="sm">Review</LinkButton>}>

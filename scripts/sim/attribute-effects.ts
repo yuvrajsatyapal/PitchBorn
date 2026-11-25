@@ -61,6 +61,8 @@ test("decisions (all)             → own xG", ["decisions"], ALL, 30, "home", (
 test("technique (all)             → own xG", ["technique"], ALL, 30, "home", (t) => pct(t.xgFor, base.xgFor));
 test("jumping (attack + back line)→ own xG", ["jumping"], ["ST", "CB", "RW", "LW"], 30, "home", (t) => pct(t.xgFor, base.xgFor));
 test("agility (attack)            → own xG", ["agility"], ATT, 30, "home", (t) => pct(t.xgFor, base.xgFor));
+test("acceleration (attack)       → own xG", ["acceleration"], ATT, 30, "home", (t) => pct(t.xgFor, base.xgFor));
+test("acceleration (back line)    → xG against", ["acceleration"], DEF, 30, "home", (t) => pct(t.xgAgainst, base.xgAgainst));
 // Defensive attributes move the OPPONENT's chances.
 test("marking (back line)         → xG against", ["marking"], DEF, 30, "home", (t) => pct(t.xgAgainst, base.xgAgainst));
 test("interceptions (back/mid)    → shots against", ["interceptions"], DEF.concat(["CM"]), 30, "home", (t) => pct(t.shotsAgainst, base.shotsAgainst));
