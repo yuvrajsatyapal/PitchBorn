@@ -70,4 +70,3 @@ own penalties and free kicks are `setpiece` decisions. Sound is client-only (`sr
 ## Known issues / TODO
 - 9+ goal games ~0.5% (acceptable)
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).
-- Lifestyle prices are absolute: a young lower-league player can't afford even the flat for his first months.

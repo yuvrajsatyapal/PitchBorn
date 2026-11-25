@@ -168,18 +168,27 @@ export function bidForPlayer(state: GameState, id: PlayerId, fee?: number): { ok
   return { ok: true, msg: `${fullName(p)} signs.` };
 }
 
-/** The club most likely to buy one of the manager's players now: one that needs the position and can afford it. */
-function bestBuyer(state: GameState, p: Player, fee: number): ClubState | undefined {
+/** Clubs in for one of the manager's players now (they need the position and can afford it), most prestigious first. */
+export function interestedBuyers(state: GameState, p: Player, fee: number): ClubState[] {
   const own = managing(state);
-  let best: ClubState | undefined;
+  const out: ClubState[] = [];
   for (const club of Object.values(state.clubs)) {
     if (club.id === own?.id || club.squad.length >= S.max || club.balance < fee) continue;
     const level = clubLevel(club.reputation);
     if (Math.abs(ovr(p) - level) > 6) continue;
     if (!squadNeeds(state, club).some((n) => n.pos === p.position)) continue;
-    if (!best || club.reputation > best.reputation) best = club;
+    out.push(club);
   }
-  return best;
+  return out.sort((a, b) => b.reputation - a.reputation || (a.id < b.id ? -1 : 1));
+}
+
+function saleRole(p: Player, buyer: ClubState): SquadRole {
+  return ovr(p) >= clubLevel(buyer.reputation) + 2 ? "star" : "first";
+}
+
+/** The weekly wage a buying club offers the player. */
+export function saleWage(state: GameState, p: Player, buyer: ClubState): number {
+  return Math.round(playerWage(p, state.season, buyer.reputation, saleRole(p, buyer)) / 100) * 100;
 }
 
 export function salePrice(state: GameState, p: Player): number {
@@ -193,12 +202,12 @@ export function sellPlayer(state: GameState, id: PlayerId): { ok: boolean; reaso
   if (!marketOpen(state)) return { ok: false, reason: "The transfer window is closed" };
   if (club.squad.length <= S.min) return { ok: false, reason: "The squad is too thin to sell" };
   const fee = salePrice(state, p);
-  const buyer = bestBuyer(state, p, fee);
-  if (!buyer) return { ok: false, reason: "No club is in for him right now: list him and wait" };
-  const role: SquadRole = ovr(p) >= clubLevel(buyer.reputation) + 2 ? "star" : "first";
-  const wage = Math.round(playerWage(p, state.season, buyer.reputation, role) / 100) * 100;
-  if (!playerWillJoin(state, p, buyer, wage)) return { ok: false, reason: `${fullName(p)} won't go to ${clubName(buyer.id)}` };
-  executeTransfer(state, p, buyer, fee, wage, 3, role);
+  const buyers = interestedBuyers(state, p, fee);
+  if (!buyers.length) return { ok: false, reason: "No club is in for him right now: list him and wait" };
+  // The best club he'd actually go to: a player who turns down the biggest name may still take the next offer.
+  const buyer = buyers.find((b) => playerWillJoin(state, p, b, saleWage(state, p, b)));
+  if (!buyer) return { ok: false, reason: buyers.length === 1 ? `${fullName(p)} won't go to ${clubName(buyers[0].id)}` : `${fullName(p)} won't go to any of the ${buyers.length} clubs in for him` };
+  executeTransfer(state, p, buyer, fee, saleWage(state, p, buyer), 3, saleRole(p, buyer));
   addNews(state, { kind: "transfer", title: `💰 You sell ${fullName(p)}`, body: `To ${clubName(buyer.id)} for ${formatMoney(fee)}.`, important: true });
   return { ok: true, msg: `Sold to ${clubName(buyer.id)} for ${formatMoney(fee)}.` };
 }

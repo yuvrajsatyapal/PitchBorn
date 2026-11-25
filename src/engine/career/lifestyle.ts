@@ -4,9 +4,13 @@
  * recovery between games, a physio fewer training knocks, a foundation warmer supporters and a line in the legacy. Upkeep comes
  * out of the bank every week; when it can't be paid, staff and the foundation stop first, then the car and the house go back.
  * Investments settle once a season from their own seeded stream, so money never moves the world RNG.
+ *
+ * Prices follow the player's wage (`priceLevel`): the list prices below are what a well-paid player pays, and a youngster in
+ * the lower divisions finds the same kind of home or car for a fraction of it. What was paid is kept on the holding, so upkeep
+ * and resale stay as agreed when the wage later rises or falls.
  */
 import { BALANCE } from "../balance";
-import { formatMoney } from "../players/economy";
+import { formatMoney, roundMoney } from "../players/economy";
 import { clamp, Rng } from "../rng";
 import type { GameState, LifestyleHolding, LifestyleState } from "../types";
 import { addNews, userPlayer } from "../world/helpers";
@@ -81,6 +85,47 @@ export const INVESTMENTS: readonly InvestmentDef[] = [
 
 export const INVEST_AMOUNTS = [50_000, 500_000, 5_000_000] as const;
 
+/** How dear the player's local market is: 1 = list price, down to `BALANCE.lifestyle.minLevel`. */
+export function priceLevel(state: GameState): number {
+  const L = BALANCE.lifestyle;
+  const wage = state.players[state.user.playerId]?.contract?.wage ?? 0;
+  return clamp(Math.sqrt(Math.max(0, wage) / L.fullPriceWage), L.minLevel, 1);
+}
+
+function roundPrice(v: number): number {
+  if (v <= 0) return 0;
+  if (v >= 10_000) return roundMoney(v);
+  if (v >= 1_000) return Math.round(v / 100) * 100;
+  return Math.max(10, Math.round(v / 10) * 10);
+}
+
+/** What one item costs this player right now: the price to buy and the weekly upkeep. */
+export function quote(state: GameState, id: string): { price: number; upkeep: number } {
+  const item = itemById(id);
+  if (!item) return { price: 0, upkeep: 0 };
+  const level = priceLevel(state);
+  return { price: roundPrice(item.price * level), upkeep: roundPrice(item.upkeep * level) };
+}
+
+/** The investment stakes on offer, scaled like everything else. */
+export function investAmounts(state: GameState): number[] {
+  const level = priceLevel(state);
+  return INVEST_AMOUNTS.map((a) => roundPrice(a * level));
+}
+
+type Owned = LifestyleState["owned"][number];
+
+/** What was paid for a holding and what it costs a week (list price for saves from before prices were recorded). */
+function paid(o: Owned): { price: number; upkeep: number } {
+  const item = itemById(o.id);
+  return { price: o.price ?? item?.price ?? 0, upkeep: o.upkeep ?? item?.upkeep ?? 0 };
+}
+
+function resaleOf(o: Owned): number {
+  const item = itemById(o.id);
+  return item && (item.kind === "home" || item.kind === "car") ? Math.round(paid(o).price * RESALE) : 0;
+}
+
 export function lifestyleState(state: GameState): LifestyleState {
   return (state.user.lifestyle ??= { owned: [], investments: [], spent: 0, donated: 0 });
 }
@@ -109,7 +154,7 @@ export function lifestyleEffects(state: GameState): Required<LifestyleEffects> {
 }
 
 export function weeklyUpkeep(state: GameState): number {
-  return ownedItems(state).reduce((s, i) => s + i.upkeep, 0);
+  return (state.user.lifestyle?.owned ?? []).reduce((s, o) => s + paid(o).upkeep, 0);
 }
 
 export function canBuy(state: GameState, id: string): { ok: boolean; reason?: string } {
@@ -118,10 +163,11 @@ export function canBuy(state: GameState, id: string): { ok: boolean; reason?: st
   if (state.user.retired) return { ok: false, reason: "Retired" };
   const ls = state.user.lifestyle;
   if (ls?.owned.some((o) => o.id === id)) return { ok: false, reason: "Already yours" };
-  const old = SINGLE.has(item.kind) ? ownedItems(state).find((o) => o.kind === item.kind) : undefined;
-  const credit = old && old.kind !== "charity" ? Math.round(old.price * RESALE) : 0;
+  const old = SINGLE.has(item.kind) ? ls?.owned.find((o) => itemById(o.id)?.kind === item.kind) : undefined;
+  const credit = old ? resaleOf(old) : 0;
+  const q = quote(state, id);
   // Four weeks of upkeep in hand as well, so a purchase can't empty the bank the week it's made.
-  const need = item.price + item.upkeep * 4 - credit;
+  const need = q.price + q.upkeep * 4 - credit;
   if (state.user.bank < need) return { ok: false, reason: `Needs ${formatMoney(need)} in the bank` };
   return { ok: true };
 }
@@ -133,20 +179,22 @@ export function buyItem(state: GameState, id: string): { ok: boolean; reason?: s
   const ls = lifestyleState(state);
   const old = SINGLE.has(item.kind) ? ownedItems(state).find((o) => o.kind === item.kind) : undefined;
   if (old) sellItem(state, old.id, true);
-  state.user.bank -= item.price;
-  ls.spent += item.price;
-  if (item.kind === "charity") ls.donated += item.price;
-  ls.owned.push({ id, season: state.season, turn: state.turn });
-  addNews(state, { kind: "career", title: `${item.icon} ${item.kind === "staff" ? `You hire a ${item.name.toLowerCase()}` : item.kind === "charity" ? `You launch a ${item.name.toLowerCase()}` : `You buy a ${item.name.toLowerCase()}`}`, body: `${item.blurb}${item.upkeep ? ` · ${formatMoney(item.upkeep)}/wk` : ""}` });
+  const q = quote(state, id);
+  state.user.bank -= q.price;
+  ls.spent += q.price;
+  if (item.kind === "charity") ls.donated += q.price;
+  ls.owned.push({ id, season: state.season, turn: state.turn, price: q.price, upkeep: q.upkeep });
+  addNews(state, { kind: "career", title: `${item.icon} ${item.kind === "staff" ? `You hire a ${item.name.toLowerCase()}` : item.kind === "charity" ? `You launch a ${item.name.toLowerCase()}` : `You buy a ${item.name.toLowerCase()}`}`, body: `${item.blurb}${q.upkeep ? ` · ${formatMoney(q.upkeep)}/wk` : ""}` });
   return { ok: true, msg: `${item.name}: done.` };
 }
 
 export function sellItem(state: GameState, id: string, quiet = false): { ok: boolean; reason?: string; msg?: string } {
   const ls = state.user.lifestyle;
   const item = itemById(id);
-  if (!ls || !item || !ls.owned.some((o) => o.id === id)) return { ok: false, reason: "You don't own that" };
+  const holding = ls?.owned.find((o) => o.id === id);
+  if (!ls || !item || !holding) return { ok: false, reason: "You don't own that" };
   ls.owned = ls.owned.filter((o) => o.id !== id);
-  const back = item.kind === "home" || item.kind === "car" ? Math.round(item.price * RESALE) : 0;
+  const back = resaleOf(holding);
   state.user.bank += back;
   if (!quiet) addNews(state, { kind: "career", title: `${item.icon} ${item.kind === "staff" ? `You let your ${item.name.toLowerCase()} go` : item.kind === "charity" ? `Your ${item.name.toLowerCase()} winds down` : `You sell your ${item.name.toLowerCase()}`}`, body: back ? `${formatMoney(back)} back in the bank.` : "No more weekly costs." });
   return { ok: true, msg: back ? `Sold for ${formatMoney(back)}.` : `${item.name} cancelled.` };
@@ -225,7 +273,7 @@ export function lifestyleWeekly(state: GameState): void {
   const upkeep = weeklyUpkeep(state);
   state.user.bank -= upkeep;
   ls.spent += upkeep;
-  ls.donated += ownedItems(state).filter((i) => i.kind === "charity").reduce((s, i) => s + i.upkeep, 0);
+  ls.donated += ls.owned.filter((o) => itemById(o.id)?.kind === "charity").reduce((s, o) => s + paid(o).upkeep, 0);
   const fx = lifestyleEffects(state);
   const p = userPlayer(state);
   if (fx.recovery && !p.injury) p.fitness = clamp(p.fitness + fx.recovery, 0, 100);
@@ -241,6 +289,6 @@ export function lifestyleWeekly(state: GameState): void {
 /** Net worth: bank plus what homes, cars and investments would fetch. */
 export function netWorth(state: GameState): number {
   const ls = state.user.lifestyle;
-  const assets = ownedItems(state).reduce((s, i) => s + (i.kind === "home" || i.kind === "car" ? Math.round(i.price * RESALE) : 0), 0);
+  const assets = (ls?.owned ?? []).reduce((s, o) => s + resaleOf(o), 0);
   return state.user.bank + assets + (ls?.investments.reduce((s, h) => s + h.value, 0) ?? 0);
 }

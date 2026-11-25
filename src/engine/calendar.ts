@@ -66,14 +66,26 @@ export function fixtureDate(season: number, f: { turn: number; day?: number }): 
   return d;
 }
 
-const fmtDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+// One formatter for every date label: `toLocaleDateString` with options builds a new Intl.DateTimeFormat on each call, which
+// made long schedules and match logs slow to render. Labels are cached by day (a long career needs a few thousand at most).
+const DATE_FMT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const dateLabels = new Map<number, string>();
+const fmtDate = (d: Date): string => {
+  const key = d.getTime();
+  let label = dateLabels.get(key);
+  if (label === undefined) {
+    label = DATE_FMT.format(d);
+    dateLabels.set(key, label);
+  }
+  return label;
+};
 
 export function formatFixtureDate(season: number, f: { turn: number; day?: number }): string {
   return fmtDate(fixtureDate(season, f));
 }
 
 export function formatTurnDate(season: number, turn: number): string {
-  return turnDate(season, turn).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  return fmtDate(turnDate(season, turn));
 }
 
 export function seasonLabel(season: number): string {

@@ -12,9 +12,11 @@ const GAP = 8;
 const PITCH = CARD_W + GAP;
 
 const dateOf = (day: number) => new Date(day * DAY_MS);
-const weekday = (day: number) => dateOf(day).toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" }).toUpperCase();
+const WEEKDAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" });
+const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+const weekday = (day: number) => WEEKDAY.format(dateOf(day)).toUpperCase();
 const dayOfMonth = (day: number) => dateOf(day).getUTCDate();
-const monthLabel = (day: number) => dateOf(day).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }).toUpperCase();
+const monthLabel = (day: number) => MONTH.format(dateOf(day)).toUpperCase();
 
 /** Full-screen "Simulating…" strip: the days slide under a fixed highlight until the run reaches the day that stopped it. */
 export function SimOverlay() {

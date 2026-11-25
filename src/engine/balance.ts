@@ -159,6 +159,15 @@ export const BALANCE = {
     /** Goal, assist and clean-sheet targets aim a little higher than last season (appearances do not). */
     stretch: 1.1,
   },
+  lifestyle: {
+    /**
+     * Prices follow the player's wage: list price at or above this weekly wage, and the square root of the share below it, so
+     * a lower-league youngster on €1.5K a week pays about a fifth (a flat for roughly eight weeks' wages) and a star pays full.
+     */
+    fullPriceWage: 40_000,
+    /** The cheapest the local market gets (the minimum wage pays about this share of list price). */
+    minLevel: 0.12,
+  },
   squad: {
     min: 22,
     target: 25,

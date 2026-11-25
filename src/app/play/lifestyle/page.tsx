@@ -1,7 +1,7 @@
 "use client";
 import { Badge, Button, Card, PageTitle, Stat } from "@/components/ui";
 import {
-  buyItem, canBuy, cashOut, INVEST_AMOUNTS, INVESTMENTS, invest, LIFESTYLE, lifestyleEffects, netWorth, ownedItems, sellItem, weeklyUpkeep,
+  buyItem, canBuy, cashOut, INVESTMENTS, invest, investAmounts, LIFESTYLE, lifestyleEffects, netWorth, ownedItems, priceLevel, quote, sellItem, weeklyUpkeep,
   type LifestyleEffects, type LifestyleKind,
 } from "@/engine/career/lifestyle";
 import { formatMoney } from "@/engine/players/economy";
@@ -34,6 +34,9 @@ export default function Lifestyle() {
   const fx = lifestyleEffects(g);
   const upkeep = weeklyUpkeep(g);
   const holdings = g.user.lifestyle?.investments ?? [];
+  const level = priceLevel(g);
+  const amounts = investAmounts(g);
+  const bought = new Map((g.user.lifestyle?.owned ?? []).map((o) => [o.id, o]));
   return (
     <div className="grid gap-4">
       <PageTitle kicker="Off the pitch" title="Lifestyle & Money" className="-mb-1" />
@@ -43,6 +46,7 @@ export default function Lifestyle() {
         <Stat label="Upkeep" value={`${formatMoney(upkeep)}/wk`} tone={upkeep ? "sun" : undefined} />
         <Stat label="Given to charity" value={formatMoney(g.user.lifestyle?.donated ?? 0)} />
       </div>
+      {level < 1 && <p className="text-sm text-ink-2">Prices follow what you earn: on your wages you pay about <b>{Math.round(level * 100)}%</b> of what a top earner would. Whatever you buy keeps the price and upkeep you agreed.</p>}
       {owned.size > 0 && <p className="text-sm text-ink-2">Right now your lifestyle gives you: <b>{effectText(fx) || "nothing measurable"}</b>.</p>}
       {GROUPS.map((grp) => (
         <Card key={grp.kind} title={grp.title}>
@@ -51,6 +55,8 @@ export default function Lifestyle() {
             {LIFESTYLE.filter((i) => i.kind === grp.kind).map((i) => {
               const mine = owned.has(i.id);
               const check = canBuy(g, i.id);
+              const held = bought.get(i.id);
+              const cost = mine ? { price: held?.price ?? i.price, upkeep: held?.upkeep ?? i.upkeep } : quote(g, i.id);
               return (
                 <li key={i.id} className={`flex flex-col rounded-xl border-2 p-3 ${mine ? "border-pitch bg-pitch-2/20" : "border-line"}`}>
                   <div className="flex items-center justify-between gap-2">
@@ -59,7 +65,7 @@ export default function Lifestyle() {
                   </div>
                   <div className="text-xs text-ink-2">{i.blurb}</div>
                   <div className="mt-1 text-xs">{effectText(i.effects)}</div>
-                  <div className="mt-1 text-xs text-muted">{i.price ? `${formatMoney(i.price)} · ` : ""}{formatMoney(i.upkeep)}/wk</div>
+                  <div className="mt-1 text-xs text-muted">{mine ? "Paid " : ""}{cost.price ? `${formatMoney(cost.price)} · ` : ""}{formatMoney(cost.upkeep)}/wk</div>
                   <div className="mt-auto pt-2">
                     {mine ? (
                       <Button size="sm" tone="paper" onClick={() => act((s) => sellItem(s, i.id))}>{i.kind === "home" || i.kind === "car" ? "Sell (70%)" : "Stop"}</Button>
@@ -84,7 +90,7 @@ export default function Lifestyle() {
               <div className="font-bold"><span aria-hidden>{d.icon}</span> {d.name}</div>
               <div className="text-xs text-ink-2">{d.blurb}{d.exitFee ? ` Early exit fee ${Math.round(d.exitFee * 100)}%.` : ""}</div>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {INVEST_AMOUNTS.map((a) => (
+                {amounts.map((a) => (
                   <Button key={a} size="sm" tone="paper" disabled={g.user.bank < a} onClick={() => act((s) => invest(s, d.id, a))}>{formatMoney(a)}</Button>
                 ))}
               </div>

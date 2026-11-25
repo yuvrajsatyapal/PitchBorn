@@ -1393,7 +1393,8 @@ export interface UserCareer {
 }
 
 export interface LifestyleState {
-  owned: { id: string; season: number; turn: number }[];
+  /** What was bought, and what was paid for it and agreed a week (absent on saves from before prices followed the wage). */
+  owned: { id: string; season: number; turn: number; price?: number; upkeep?: number }[];
   investments: LifestyleHolding[];
   /** Totals over the career: everything spent on lifestyle, and the part given to charity. */
   spent: number;

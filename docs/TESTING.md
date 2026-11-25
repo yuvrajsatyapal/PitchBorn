@@ -19,6 +19,20 @@ and stars, from the game's own start paths) and all eight positions, `--seeds` c
 rates by cohort, position and squad role, form-clause warnings and terminations, and how deals end. Writes
 `data/reports/sponsors-<careers>x<seasons>.md`. Re-run after changing `BALANCE.sponsors` or `targetKindFor`.
 
+## Newer systems — `npm run sim:systems -- [--seeds 4] [--seasons 5] [--managers 4] [--workers N]`
+Autopilot player careers in four cohorts (academy, late starter, established, star) and all eight positions, each with a
+spending policy (frugal, sensible, lavish, investor) and, in half of them, asking the manager for both set-piece duties
+every season; plus manager careers in each English tier running the transfer market with a simple policy. Reports what a
+home costs in weeks of wages, upkeep against wages and forced sales, investment returns, penalty and free-kick duty rates by
+position and cohort, and the managed club's spending, squad size and balance against AI clubs in the same league. Writes
+`data/reports/systems-<careers>x<seasons>.md`. Re-run after changing `BALANCE.lifestyle`, `setPieces.ts` or `coachMarket.ts`.
+
+## UI render cost — `npm run bench:ui` and `npm run bench:render`
+`bench:ui [seasons]` plays a long autopilot career and times the derived data the dashboard and stats pages compute
+(milliseconds per call, early and late). With `BENCH_OUT=<file>` it also writes the career as JSON, which
+`bench:render <file>` renders server-side through the real pages (`BENCH_PAGES=dashboard,club` to pick) to find render hot
+spots. Server renders count first draws (portraits included); client re-renders are cheaper, since portraits are memoised.
+
 ## Calibration — `npm run sim:match`
 Aggregate goals, results, shots, cards, injuries for equal and mismatched teams.
 

@@ -110,6 +110,13 @@ week: extra fitness, morale, supporters and board relationship; a physio multipl
 the global foundation add commercial appeal; charity adds reputation each season and a legacy line (a point per
 €250k given, up to 12). Upkeep is paid weekly; when it can't be, staff go first, then charity, the car and the home.
 
+**Prices follow the wage.** The table holds list prices: what a player on `BALANCE.lifestyle.fullPriceWage` (€40K a week)
+or more pays. Below that, every price, upkeep and investment stake is scaled by `priceLevel` = √(wage ÷ €40K), never under
+`minLevel` (0.12). A lower-league youngster on €1.5K a week sees the city flat at about €12K and €60 a week, roughly eight
+weeks' wages; an established pro on €18K pays about two thirds. The price and upkeep agreed are stored on the holding
+(`owned[].price`, `owned[].upkeep`), so a later raise or cut changes neither, and resale is 70% of what was paid (saves
+from before this change fall back to list price). Checked with `npm run sim:systems`.
+
 ## 17. Firing an agent
 
 Firing costs severance in weeks of fees by style (greedy 8, connected 4, loyal 0, no style 2), confirmed in a dialog.
@@ -119,8 +126,10 @@ An agent who walks over unpaid fees costs nothing.
 
 As a manager the AI stops buying for the user's club. He scouts (three reports a week; potential shown as a range whose
 width shrinks with the coaching rating) and, in a window, bids at the asking price (value × 1.1, × 1.45 for key men at
-comparable clubs, less when listed or expiring) inside the budget, or sells at 85% of value to the strongest club that
-needs the position. The player still has to agree (`playerWillJoin`). No random draws.
+comparable clubs, less when listed or expiring) inside the budget, or sells at 85% of value. A sale goes to the most
+prestigious of the clubs in for him (`interestedBuyers`: they need the position, can afford the fee and sit within six
+points of his level) that he agrees to join (`playerWillJoin` at `saleWage`); until November 2026 only the top club was
+tried, and a refusal there ended the sale, which `npm run sim:systems` showed blocking most sales. No random draws.
 
 ## 19. Season review (`career/seasonReview.ts`, `/play/review`)
 

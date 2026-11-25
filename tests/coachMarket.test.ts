@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { acceptCoachOffer, startCoaching } from "../src/engine/career/coaching";
-import { askingPrice, bidForPlayer, managerBudget, managing, reportFor, reportsLeft, scoutPlayer, scoutTargets, sellPlayer, SCOUT_REPORTS_PER_WEEK } from "../src/engine/career/coachMarket";
+import { askingPrice, bidForPlayer, interestedBuyers, managerBudget, managing, reportFor, reportsLeft, salePrice, saleWage, scoutPlayer, scoutTargets, sellPlayer, SCOUT_REPORTS_PER_WEEK } from "../src/engine/career/coachMarket";
+import { playerWillJoin } from "../src/engine/transfers/market";
 import { BALANCE } from "../src/engine/balance";
 import { advanceTurn, retireUser } from "../src/engine/season/advance";
 import type { GameState } from "../src/engine/types";
@@ -53,5 +54,27 @@ describe("manager transfers and scouting", () => {
     const t = scoutTargets(s, "ST")[0];
     expect(bidForPlayer(s, t.player.id).reason).toMatch(/window/);
     expect(sellPlayer(s, club?.squad[0] as string).reason).toMatch(/window/);
+  });
+
+  it("a sale goes to the next interested club when the first one doesn't suit the player", () => {
+    let refusedTop = 0;
+    for (const seed of ["cm-sell-1", "cm-sell-2", "cm-sell-3"]) {
+      const base = managerCareer(seed);
+      base.turn = BALANCE.calendar.summerWindow[0];
+      const club = managing(base);
+      if (!club) throw new Error("not managing");
+      for (const id of club.squad.slice(0, 12)) {
+        const s = structuredClone(base);
+        const p = s.players[id];
+        const buyers = interestedBuyers(s, p, salePrice(s, p));
+        const willing = buyers.filter((b) => playerWillJoin(s, p, b, saleWage(s, p, b)));
+        if (buyers.length && !playerWillJoin(s, p, buyers[0], saleWage(s, p, buyers[0]))) refusedTop++;
+        const res = sellPlayer(s, id);
+        if (willing.length) expect(res.ok, `${id}: ${res.reason}`).toBe(true);
+        else expect(res.ok).toBe(false);
+      }
+    }
+    // The case this guards: the most prestigious buyer is refused but someone else would do.
+    expect(refusedTop).toBeGreaterThan(0);
   });
 });
