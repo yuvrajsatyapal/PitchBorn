@@ -1398,6 +1398,8 @@ export interface UserCareer {
   chemistrySnap?: { season: number; values: Record<PlayerId, number> };
   /** Injury history by body area and recovery choices (see career/recovery.ts). */
   recovery?: RecoveryState;
+  /** The tactical role asked of the manager at the current club (see career/roles.ts). */
+  tacticalRole?: { id: string; clubId: ClubId; season: number; askedTurn: number; agreed: boolean };
   /** Off-pitch stories: stand-offs, cliques, fall-outs and the captaincy race (see career/drama.ts). */
   drama?: DramaState;
   /** Set by a decision that ends the career (e.g. a career-threatening injury); the store retires the player. */

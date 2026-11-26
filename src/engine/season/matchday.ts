@@ -34,6 +34,7 @@ import { applyChemistry, chemistryAfterMatch, chemistryBenchRivals } from "../ca
 import { applyCoaching } from "../career/coaching";
 import { conditionsFor } from "../weather/conditions";
 import { onUserInjury, recoveryRiskFactor } from "../career/recovery";
+import { activeRole, roleFit, roleSelectionBonus, withRoleFx } from "../career/roles";
 import { weatherFx } from "../weather/effects";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
@@ -116,7 +117,7 @@ export function selectionSetup(state: GameState, teamId: string, fixture: Fixtur
     const rotate = comp?.kind === "cup" && !!opp && opp.reputation < club.reputation - 12 && (fixture.stage ?? "").startsWith("Round");
     // A request to start this match nudges the manager's view of the user for this fixture only.
     const asked = state.user.preMatch?.requestedStart?.fixtureId === fixture.id ? ASKED_START_BIAS : 0;
-    return { squad, formation: club.formation, opts: { rotate, managerBias: managerBias(state) + asked, style: club.style }, resting };
+    return { squad, formation: club.formation, opts: { rotate, managerBias: managerBias(state) + asked + roleSelectionBonus(state), style: club.style }, resting };
   }
   const nt = state.nationalTeams[teamId];
   const squad = (nt?.squad ?? []).map((id) => state.players[id]).filter((p): p is Player => Boolean(p));
@@ -178,6 +179,13 @@ export function matchImportance(state: GameState, comp: Competition | undefined,
 
 export function buildTeamInput(state: GameState, teamId: string, sel: Selection): TeamInput {
   const starters = sel.starters.map((s) => toInput(s.player, s.slot));
+  const bench = sel.bench.map((p) => toInput(p, p.position));
+  // The role the user agreed with his club manager shapes where his involvement comes from.
+  const role = state.clubs[teamId] ? activeRole(state) : undefined;
+  if (role) {
+    const me = state.players[state.user.playerId];
+    for (const inp of [...starters, ...bench]) if (inp.isUser && me) inp.fx = withRoleFx(inp.fx, role, roleFit(me, role));
+  }
   // Partnerships (and feuds) with the user change how sharply they link up when they start together.
   if (state.clubs[teamId]) {
     applyChemistry(state, starters);
@@ -188,7 +196,7 @@ export function buildTeamInput(state: GameState, teamId: string, sel: Selection)
     name: teamName(state, teamId),
     short: state.clubs[teamId]?.id ? staticClub(teamId)?.abbreviation ?? teamId : teamId,
     starters,
-    bench: sel.bench.map((p) => toInput(p, p.position)),
+    bench,
     mentality: 0,
     color: teamColor(state, teamId),
     style: state.clubs[teamId]?.style,
