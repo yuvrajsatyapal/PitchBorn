@@ -1431,6 +1431,10 @@ export interface UserCareer {
   leakedWindow?: "summer" | "january";
   /** The tactical role asked of the manager at the current club (see career/roles.ts). */
   tacticalRole?: { id: string; clubId: ClubId; season: number; askedTurn: number; agreed: boolean };
+  /** Weekly goals (see career/goals.ts). */
+  goals?: { active: CareerGoal[]; completed: number; drawn: number };
+  /** Cosmetics owned and worn: boots, a personal kit colour, a goal celebration. */
+  cosmetics?: { owned: string[]; equipped: Partial<Record<CosmeticKind, string>>; newly?: string[] };
   /** Started at 15 in an academy: trials and the first professional contract (see career/youth.ts). */
   youth?: YouthState;
   /** Off-pitch stories: stand-offs, cliques, fall-outs and the captaincy race (see career/drama.ts). */
@@ -1456,6 +1460,22 @@ export interface RecoveryState {
 }
 
 export type RecoveryChoice = "rush" | "plan" | "rest" | "clinic" | "surgery" | "conservative" | "retire" | "fight-on";
+
+export type CosmeticKind = "boots" | "kit" | "celebration";
+
+/** One running weekly goal (see career/goals.ts). */
+export interface CareerGoal {
+  id: string;
+  template: string;
+  label: string;
+  target: number;
+  /** When it was set: only matches from then on count. */
+  season: number;
+  turn: number;
+  expiresIndex: number;
+  /** The cosmetic it unlocks. */
+  reward?: string;
+}
 
 export interface YouthState {
   /** "academy" until the first professional contract is decided. */

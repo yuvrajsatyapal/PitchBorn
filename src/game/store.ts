@@ -117,6 +117,20 @@ interface GameStore {
   nextGeneration: (input: NextGenInput) => Promise<{ ok: boolean; reason?: string }>;
 }
 
+/** Unlocked cosmetics are kept for the browser too, so new careers start with them. */
+export const COSMETICS_KEY = "cosmetics:owned";
+async function syncProfileCosmetics(g: GameState): Promise<void> {
+  const owned = g.user.cosmetics?.owned;
+  if (!owned?.length) return;
+  try {
+    const have = await getKv<string[]>(COSMETICS_KEY, []);
+    const next = [...new Set([...(Array.isArray(have) ? have : []), ...owned])];
+    if (next.length !== have.length) await setKv(COSMETICS_KEY, next);
+  } catch (err) {
+    console.warn("Could not store cosmetics", err);
+  }
+}
+
 const yieldFrame = () => new Promise<void>((r) => setTimeout(r, 16));
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -294,6 +308,7 @@ export const useGame = create<GameStore>((set, get) => ({
       if (g.settings.autoSave || seasonRolled) await saveGame(g, { backup: seasonRolled, label: seasonRolled ? `Season ${g.season} start` : undefined });
       // A forced retirement happens inside the week; induct it here (later weeks in the dugout just refresh the entry).
       if (g.user.retired) await inductCareer(g).catch((err) => console.warn("Hall of Fame induction failed", err));
+      await syncProfileCosmetics(g);
       set({ lastSavedAt: new Date().toISOString() });
     } catch (err) {
       console.error(err);

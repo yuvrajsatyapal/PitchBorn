@@ -22,6 +22,7 @@ export const NAV: NavItem[] = [
   { href: "/play/review", label: "Season Review", icon: "📋" },
   { href: "/play/awards", label: "Awards", icon: "🥇" },
   { href: "/play/achievements", label: "Achievements", icon: "🏅" },
+  { href: "/play/goals", label: "Goals & Kit Room", icon: "🎯" },
   { href: "/play/card", label: "Career Card", icon: "🪪" },
   { href: "/play/memories", label: "Iconic Moments", icon: "🎞️" },
   { href: "/play/history", label: "History & Records", icon: "📜" },

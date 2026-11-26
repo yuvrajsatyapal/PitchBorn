@@ -18,6 +18,7 @@ import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { dramaWeekly } from "../career/drama";
 import { youthWeekly } from "../career/youth";
 import { boardWeekly, settleBoard } from "../career/board";
+import { goalsWeekly } from "../career/goals";
 import { marketWeekly } from "../career/market";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
@@ -466,6 +467,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
   }
   checkCareerAchievements(state);
   checkChallenge(state);
+  goalsWeekly(state);
   feedWeekly(state);
   chemistryWeekly(state);
   snapshotChemistry(state);
