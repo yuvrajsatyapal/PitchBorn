@@ -4,7 +4,9 @@ import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { PublicFooter, PublicHeader } from "@/components/app/PublicHeader";
-import { Badge, Button, Empty, LinkButton, Modal, PageTitle } from "@/components/ui";
+import { Badge, Button, Card, Empty, LinkButton, Modal, PageTitle, Tabs } from "@/components/ui";
+import { AllTimeRecords, CompareCareers, GreatestXI } from "@/components/game/HallCompare";
+import { WeeklyLeaderboard } from "@/components/game/WeeklyLeaderboard";
 import { rankHallOfFame, type HallOfFameEntry } from "@/engine/career/hallOfFame";
 import { removeFromHallOfFame, syncHallOfFame } from "@/persistence/hallOfFame";
 
@@ -66,6 +68,7 @@ export default function HallOfFamePage() {
   const [entries, setEntries] = useState<HallOfFameEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<HallOfFameEntry | null>(null);
+  const [view, setView] = useState<"ranking" | "compare" | "records" | "weekly">("ranking");
   const refresh = () =>
     syncHallOfFame()
       .then((e) => setEntries(rankHallOfFame(e)))
@@ -94,11 +97,29 @@ export default function HallOfFamePage() {
             Retire a career and it takes its place here, ranked against every other career you play.
           </Empty>
         ) : (
-          <ol className="grid gap-3">
-            {entries.map((e, i) => (
-              <Inductee key={e.saveId} e={e} rank={i + 1} onRemove={() => setConfirm(e)} />
-            ))}
-          </ol>
+          <>
+            <Tabs className="mb-3" value={view} onChange={setView} items={[{ id: "ranking", label: "Ranking" }, { id: "compare", label: "Compare" }, { id: "records", label: "Records & XI" }, { id: "weekly", label: "Weekly board" }]} />
+            {view === "ranking" && (
+              <ol className="grid gap-3">
+                {entries.map((e, i) => (
+                  <Inductee key={e.saveId} e={e} rank={i + 1} onRemove={() => setConfirm(e)} />
+                ))}
+              </ol>
+            )}
+            {view === "compare" && (entries.length >= 2 ? <CompareCareers entries={entries} /> : <Empty title="One career so far" icon="⚖️">Retire a second career to compare them side by side.</Empty>)}
+            {view === "records" && (
+              <div className="grid gap-4">
+                <AllTimeRecords entries={entries} />
+                <GreatestXI entries={entries} />
+              </div>
+            )}
+            {view === "weekly" && (
+              <Card title="Weekly challenge board">
+                <p className="mb-2 text-sm text-ink-2">Paste friends&apos; weekly challenge codes to rank your runs against theirs. Codes stay in this browser.</p>
+                <WeeklyLeaderboard />
+              </Card>
+            )}
+          </>
         )}
         <Modal open={!!confirm} onClose={() => setConfirm(null)} title="Remove from the Hall?">
           <p className="mb-4 text-sm">

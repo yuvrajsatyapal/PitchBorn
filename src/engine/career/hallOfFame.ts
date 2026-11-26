@@ -92,3 +92,102 @@ export function upsertEntry(entries: HallOfFameEntry[], entry: HallOfFameEntry):
   next.push(old ? { ...entry, inductedAt: old.inductedAt } : entry);
   return next;
 }
+
+// ------------------------------------------------------------------ comparing careers
+
+/** A stat from an entry's card as a number (absent or "–" counts as 0). */
+export function statValue(e: HallOfFameEntry, label: string): number {
+  const v = e.stats.find((s) => s.label === label)?.value;
+  const n = v === undefined ? NaN : parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export interface CompareRow {
+  label: string;
+  a: number;
+  b: number;
+  /** Which side is better: "a", "b" or "tie". */
+  better: "a" | "b" | "tie";
+  decimals?: number;
+}
+
+const ROW_LABELS: { label: string; get: (e: HallOfFameEntry) => number; decimals?: number }[] = [
+  { label: "Legacy", get: (e) => e.legacyScore },
+  { label: "Peak overall", get: (e) => e.peak },
+  { label: "Apps", get: (e) => statValue(e, "Apps") },
+  { label: "Goals", get: (e) => statValue(e, "Goals") },
+  { label: "Assists", get: (e) => statValue(e, "Assists") },
+  { label: "Clean sheets", get: (e) => statValue(e, "Clean sheets") },
+  { label: "Avg rating", get: (e) => statValue(e, "Avg rating"), decimals: 2 },
+  { label: "Caps", get: (e) => statValue(e, "Caps") },
+  { label: "Trophies", get: (e) => e.trophyCount },
+  { label: "Season awards", get: (e) => e.awards.length },
+];
+
+/** Side by side: every row both careers have something in, with the better side marked. */
+export function compareEntries(a: HallOfFameEntry, b: HallOfFameEntry): CompareRow[] {
+  return ROW_LABELS.map((r) => {
+    const x = r.get(a);
+    const y = r.get(b);
+    return { label: r.label, a: x, b: y, better: x === y ? "tie" : x > y ? "a" : "b", decimals: r.decimals } as CompareRow;
+  }).filter((r) => r.a > 0 || r.b > 0);
+}
+
+export interface AllTimeRecord {
+  label: string;
+  value: string;
+  name: string;
+  saveId: string;
+}
+
+/** The best mark in the Hall for each stat. */
+export function allTimeRecords(entries: HallOfFameEntry[]): AllTimeRecord[] {
+  const out: AllTimeRecord[] = [];
+  for (const r of ROW_LABELS) {
+    let best: HallOfFameEntry | undefined;
+    for (const e of entries) if (r.get(e) > 0 && (!best || r.get(e) > r.get(best))) best = e;
+    if (best) out.push({ label: r.label, value: r.decimals ? r.get(best).toFixed(r.decimals) : String(Math.round(r.get(best))), name: best.name, saveId: best.saveId });
+  }
+  return out;
+}
+
+/** 4-3-3 slots, with the positions that can fill each one in order of preference. */
+const XI_SLOTS: { slot: string; fits: string[] }[] = [
+  { slot: "GK", fits: ["GK"] },
+  { slot: "RB", fits: ["RB", "LB", "CB"] },
+  { slot: "CB", fits: ["CB", "DM"] },
+  { slot: "CB", fits: ["CB", "DM", "RB", "LB"] },
+  { slot: "LB", fits: ["LB", "RB", "CB"] },
+  { slot: "CM", fits: ["CM", "DM", "AM"] },
+  { slot: "CM", fits: ["CM", "AM", "DM"] },
+  { slot: "AM", fits: ["AM", "CM", "RW", "LW"] },
+  { slot: "RW", fits: ["RW", "LW", "AM", "ST"] },
+  { slot: "ST", fits: ["ST", "RW", "LW", "AM"] },
+  { slot: "LW", fits: ["LW", "RW", "AM", "ST"] },
+];
+
+/** The greatest XI from the Hall: natural positions are filled first by highest legacy, then gaps by the best fit left. */
+export function greatestXI(entries: HallOfFameEntry[]): { slot: string; entry?: HallOfFameEntry; natural: boolean }[] {
+  const used = new Set<string>();
+  const ranked = rankHallOfFame(entries);
+  const out: { slot: string; entry?: HallOfFameEntry; natural: boolean }[] = XI_SLOTS.map(({ slot }) => ({ slot, natural: false }));
+  XI_SLOTS.forEach(({ fits }, i) => {
+    const e = ranked.find((x) => !used.has(x.saveId) && x.position === fits[0]);
+    if (e) {
+      used.add(e.saveId);
+      out[i] = { slot: out[i].slot, entry: e, natural: true };
+    }
+  });
+  XI_SLOTS.forEach(({ fits }, i) => {
+    if (out[i].entry) return;
+    for (const pos of fits.slice(1)) {
+      const e = ranked.find((x) => !used.has(x.saveId) && x.position === pos);
+      if (e) {
+        used.add(e.saveId);
+        out[i] = { slot: out[i].slot, entry: e, natural: false };
+        return;
+      }
+    }
+  });
+  return out;
+}
