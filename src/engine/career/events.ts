@@ -14,6 +14,7 @@ import { addStintEvent } from "../managers/history";
 import { adjustRel } from "./relationships";
 import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
 import { resolveRecovery } from "./recovery";
+import { resolveDrama } from "./drama";
 
 const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
 
@@ -649,6 +650,12 @@ export function resolveDecision(state: GameState, decisionId: string, optionId: 
   if (d.jerseyNo !== undefined) {
     state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
     return resolveJerseyDecision(state, d.jerseyNo, optionId);
+  }
+  if (d.handler === "drama") {
+    state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
+    const msg = resolveDrama(state, d, optionId);
+    addNews(state, { kind: "event", title: d.title, body: msg });
+    return msg;
   }
   if (d.handler === "recovery") {
     state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);

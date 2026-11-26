@@ -80,6 +80,12 @@ function announce(state: GameState, mate: Player, before: number, after: number)
   }
 }
 
+/** Move one bond by `delta` (used by dressing-room stories). */
+export function nudgeBond(state: GameState, mateId: PlayerId, delta: number): void {
+  const mate = state.players[mateId];
+  if (mate && mate.id !== state.user.playerId) move(state, mate, delta);
+}
+
 /** After one of the user's club matches: playing together, goal combinations and battles for a shirt. */
 export function chemistryAfterMatch(state: GameState, res: MatchResult, userLine: PlayerLine, won: boolean, lost: boolean): void {
   const me = userPlayer(state);

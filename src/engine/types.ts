@@ -1398,6 +1398,8 @@ export interface UserCareer {
   chemistrySnap?: { season: number; values: Record<PlayerId, number> };
   /** Injury history by body area and recovery choices (see career/recovery.ts). */
   recovery?: RecoveryState;
+  /** Off-pitch stories: stand-offs, cliques, fall-outs and the captaincy race (see career/drama.ts). */
+  drama?: DramaState;
   /** Set by a decision that ends the career (e.g. a career-threatening injury); the store retires the player. */
   retireRequested?: string;
 }
@@ -1419,6 +1421,32 @@ export interface RecoveryState {
 }
 
 export type RecoveryChoice = "rush" | "plan" | "rest" | "clinic" | "surgery" | "conservative" | "retire" | "fight-on";
+
+export type DramaKind = "standoff" | "clique" | "fallout" | "captaincy";
+
+export interface DramaStory {
+  id: string;
+  kind: DramaKind;
+  stage: number;
+  started: number;
+  /** Turn index of the next beat. */
+  next: number;
+  clubId: ClubId;
+  /** Captaincy race: the teammate competing for the armband, and the running score (user minus rival). */
+  rivalId?: PlayerId;
+  score?: number;
+  /** Clique: the two camps. */
+  camps?: { a: { name: string; ids: PlayerId[] }; b: { name: string; ids: PlayerId[] } };
+  /** What the user chose at the first beat. */
+  choice?: string;
+}
+
+export interface DramaState {
+  active?: DramaStory;
+  log: { season: number; kind: DramaKind; title: string; outcome: string }[];
+  /** Turn index before which no new story starts. */
+  quietUntil: number;
+}
 
 export interface LifestyleState {
   /** What was bought, and what was paid for it and agreed a week (absent on saves from before prices followed the wage). */
