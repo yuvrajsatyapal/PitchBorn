@@ -90,7 +90,7 @@ export function computeLegacy(state: GameState): LegacyResult {
   let trophyPts = 0;
   for (const t of u.trophies) {
     if (t.kind === "league") trophyPts += t.compId.match(/-1-/) ? 12 : 4;
-    else if (t.kind === "continental") trophyPts += t.compId.startsWith("ccup") ? 20 : 8;
+    else if (t.kind === "continental") trophyPts += t.compId.startsWith("ccup") ? 20 : t.compId.startsWith("acup") ? 14 : 8;
     else if (t.kind === "international") trophyPts += t.compId.startsWith("world") ? 30 : 22;
     else trophyPts += 5;
   }

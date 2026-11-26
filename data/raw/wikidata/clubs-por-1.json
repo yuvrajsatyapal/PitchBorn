@@ -1,0 +1,2297 @@
+{
+  "head" : {
+    "vars" : [ "club", "clubLabel", "start", "venue", "venueLabel", "venueStart", "venueEnd", "cap", "inception", "color", "colorLabel", "hex", "short", "cityLabel", "coord", "dissolved" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q75684"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1975-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1921-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q849239"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "30286"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.4308 41.5624)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.C. Braga"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Municipal de Braga"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Braga"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q75729"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1906-07-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q287359"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "52095"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.160783333 38.761194444)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sporting CP"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio José Alvalade"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q75729"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3133"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "00FF00"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1906-07-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q287359"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "52095"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.160783333 38.761194444)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sporting CP"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio José Alvalade"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "green"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q75729"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1906-07-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3059094"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "75200"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.1586173 38.7628177)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sporting CP"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio José Alvalade (1956)"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1956-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q75729"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3133"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "00FF00"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1906-07-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3059094"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "75200"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.1586173 38.7628177)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sporting CP"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio José Alvalade (1956)"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "green"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1956-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q128446"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1893-09-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q271454"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "50033"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.583933 41.161758)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Porto"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Dragão"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-11-16T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q128446"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1088"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "0000FF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1893-09-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q271454"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "50033"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.583933 41.161758)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Porto"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Dragão"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "blue"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-11-16T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q128446"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1893-09-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q387691"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "50000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.586666666 41.164444444)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Porto"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio das Antas"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1952-05-28T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-11-16T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q128446"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1088"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "0000FF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1893-09-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q387691"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "50000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.586666666 41.164444444)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Porto"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio das Antas"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "blue"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1952-05-28T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-11-16T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2736585"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "120000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.182639 38.753611)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio da Luz (1954)"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1953-06-14T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-03-22T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2736585"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "120000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.182639 38.753611)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio da Luz (1954)"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1953-06-14T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-03-22T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5028461"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.205551 38.751778)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Campo da Feiteira"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1907-05-26T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1911-12-31T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5028461"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.205551 38.751778)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Campo da Feiteira"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1907-05-26T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1911-12-31T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5028467"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.195848 38.748193)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Campo de Benfica"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1916-09-17T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1926-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5028467"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.195848 38.748193)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Campo de Benfica"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1916-09-17T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1926-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5028478"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.165672 38.740017)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Campo de Sete Rios"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1917-12-31T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5028478"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.165672 38.740017)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Campo de Sete Rios"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1917-12-31T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402203"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "20000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.16328 38.724124)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio das Amoreiras"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1923-02-04T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402203"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "20000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.16328 38.724124)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio das Amoreiras"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1923-02-04T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402218"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "25000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.159573 38.759158)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Campo Grande"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1972-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402218"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "25000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.159573 38.759158)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Campo Grande"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1972-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7703316"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.197093 38.699829)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Terras do Desembargador"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1907-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7703316"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.197093 38.699829)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Terras do Desembargador"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1907-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7875112"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "68100"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.184722222 38.752777777)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio da Luz"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131499"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1934-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-02-28T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7875112"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "68100"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.184722222 38.752777777)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.L. Benfica"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio da Luz"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2003-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q216459"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2024-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1910-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1370765"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5200"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-16.883525 32.670625)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "C.D. Nacional"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio da Madeira"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Funchal"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q216503"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1910-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1272724"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10600"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-16.928331 32.645561)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "C.S. Marítimo"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Marítimo"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Funchal"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q223450"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2007-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1922-09-22T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1057274"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "30029"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.300972222 41.445833333)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Vitória S.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio D. Afonso Henriques"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Guimarães"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q223450"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2007-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1922-09-22T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1057274"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "30029"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.300972222 41.445833333)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Vitória S.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio D. Afonso Henriques"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Guimarães"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q622432"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2022-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1939-01-18T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q550041"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5300"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.740186 41.362756)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio Ave F.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Rio Ave FC"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Vila do Conde"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q634829"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1088"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "0000FF"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2021-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1939-05-17T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1370647"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5094"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.406 38.716)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "G.D. Estoril Praia"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio António Coimbra da Mota"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "blue"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estoril"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q740637"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2024-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1927-05-12T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3514858"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "12500"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-25.622589 37.763708)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "C.D. Santa Clara"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio de São Miguel"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ponta Delgada"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q838134"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2023-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1932-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3059095"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "9288"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-9.227967 38.752036)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "C.F. Estrela da Amadora"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio José Gomes"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Amadora"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q926438"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2019-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1924-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1167583"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "12046"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.622777777 41.551111111)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Gil Vicente F.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Cidade de Barcelos"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Barcelos"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1023227"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2025-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1933-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q16632396"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.08282 40.512)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "CD Tondela"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio João Cardoso"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Tondela"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1046440"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2022-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1920-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Casa Pia A.C."
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lisbon"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1346314"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2023-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1938-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q256588"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "6150"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.354761 41.378089)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Moreirense F.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Parque de Jogos Comendador Joaquim de Almeida Freitas"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Moreira de Cónegos"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1386850"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2025-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1939-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "F.C. Alverca"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Alverca do Ribatejo"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1386869"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q943"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFF00"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2021-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1951-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1370706"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5600"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.24861111 40.92833333)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "F.C. Arouca"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Municipal de Arouca"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "yellow"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arouca"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1387105"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2019-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1931-01-01T00:00:00Z"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1293399"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5186"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-8.52242222 41.40127778)"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Famalicão"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Municipal 22 de Junho"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Vila Nova de Famalicão"
+      }
+    } ]
+  }
+}

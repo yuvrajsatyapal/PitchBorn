@@ -1,7 +1,7 @@
 import { BALANCE } from "../balance";
 import { moveScoreDelta, stayBonus } from "../traits/career";
 import { noteApproachDeclined, noteRenewal } from "../traits/stay";
-import { clubName, staticClub, staticLeague } from "../data/world";
+import { clubName, country, staticClub, staticLeague } from "../data/world";
 import { annualRevenue, distressDiscount, forcedSales, refusalChance, spendWillingness, transferBudget as ownedBudget, wageTolerance } from "../club/ownership";
 import { overallFor, positionGroup } from "../players/attributes";
 import { tacticalFit } from "../match/lineup";
@@ -358,7 +358,7 @@ export function refreshVirtualPools(state: GameState, rng: Rng): void {
 }
 
 function staticNationTarget(code: string): number {
-  return ["ENG", "ESP", "GER", "ITA", "FRA"].includes(code) ? 8 : 24;
+  return country(code)?.hasLeagues ? 8 : 24;
 }
 
 /** Fill thin squads after windows so every club can field a team. */

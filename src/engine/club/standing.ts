@@ -3,7 +3,7 @@
  */
 import { BALANCE } from "../balance";
 import { staticClub, staticLeague } from "../data/world";
-import { leagueCompId } from "../competitions/setup";
+import { CONTINENTAL_SLOTS, leagueCompId } from "../competitions/setup";
 import type { Competition, GameState, TableRow } from "../types";
 
 export type Zone = "title" | "continental" | "promotion" | "safe" | "relegation" | "preseason";
@@ -34,9 +34,11 @@ export interface Standing {
 /** Continental places by country, matching continentalQualifiers() in competitions/setup.ts. */
 export function continentalSlots(countryCode: string, tier: number): { champions: number; continental: number } {
   if (tier !== 1) return { champions: 0, continental: 0 };
-  if (countryCode === "ENG") return { champions: 4, continental: 2 };
-  if (countryCode === "ESP" || countryCode === "ITA") return { champions: 3, continental: 4 };
-  return { champions: 3, continental: 3 };
+  const s = CONTINENTAL_SLOTS[countryCode];
+  if (!s) return { champions: 0, continental: 0 };
+  // American leagues have one continental competition; it is shown as the top places.
+  if (s.americas) return { champions: s.americas, continental: 0 };
+  return { champions: s.champions, continental: s.continental };
 }
 
 export function standingOf(state: GameState, clubId: string): Standing | null {

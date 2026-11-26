@@ -6,7 +6,8 @@ import { KnockoutView } from "@/components/game/KnockoutView";
 import { LeagueTable } from "@/components/game/LeagueTable";
 import { Badge, Card, Empty, PageTitle, Table, Tabs } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
-import { leagueCompId } from "@/engine/competitions/setup";
+import { isAmericas, leagueCompId } from "@/engine/competitions/setup";
+import { continentalSlots } from "@/engine/club/standing";
 import { previousPositions } from "@/engine/competitions/table";
 import { WORLD, country, leaguesInPlay } from "@/engine/data/world";
 import type { Competition } from "@/engine/types";
@@ -41,6 +42,15 @@ export default function Competitions() {
   if (!g || !p) return null;
   const comp = g.competitions[leagueCompId(leagueId, g.season)];
   const lg = WORLD.leagues.find((l) => l.id === leagueId);
+  const below = lg ? leaguesInPlay(g).find((l) => l.countryCode === lg.countryCode && l.tier === lg.tier + 1) : undefined;
+  const slots = lg ? continentalSlots(lg.countryCode, lg.tier) : { champions: 0, continental: 0 };
+  const zones = {
+    promo: lg && lg.tier > 1 ? lg.promoted : 0,
+    // Relegation is only a zone when there is a division below in this world for the club to drop into.
+    releg: lg && below && lg.relegated > 0 && below.promoted > 0 ? lg.relegated : 0,
+    continental: slots.champions + slots.continental,
+    cup: lg && isAmericas(lg.countryCode) ? "Americas Cup" : "Continental places",
+  };
   const highlight = [p.clubId ?? "", intlTeam(p)];
   const cups = Object.values(g.competitions).filter((c) => c.kind === "cup");
   const conts = Object.values(g.competitions).filter((c) => c.kind === "continental");
@@ -86,11 +96,12 @@ export default function Competitions() {
           </div>
           {comp?.table ? (
             <Card title={<span className="flex items-center gap-2"><Flag code={lg?.countryCode} /> {comp.name}</span>} action={lg?.abstraction ? <Badge>single-table abstraction</Badge> : undefined}>
-              <LeagueTable rows={comp.table} prevPos={previousPositions(comp.teams, comp.fixtures)} highlight={p.clubId} promo={lg && lg.tier > 1 ? 3 : 0} continental={lg?.tier === 1 ? 3 : 0} releg={lg && lg.tier < 3 ? 3 : 0} />
+              <LeagueTable rows={comp.table} prevPos={previousPositions(comp.teams, comp.fixtures)} highlight={p.clubId} promo={zones.promo} continental={zones.continental} releg={zones.releg} />
               <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
-                {lg?.tier === 1 && <span><span className="inline-block h-2 w-2 bg-sky" /> Champions Cup</span>}
-                {lg && lg.tier > 1 && <span><span className="inline-block h-2 w-2 bg-pitch" /> Promotion</span>}
-                {lg && lg.tier < 3 && <span><span className="inline-block h-2 w-2 bg-coral" /> Relegation</span>}
+                {zones.continental > 0 && <span><span className="inline-block h-2 w-2 bg-sky" /> {zones.cup}</span>}
+                {zones.promo > 0 && <span><span className="inline-block h-2 w-2 bg-pitch" /> Promotion</span>}
+                {zones.releg > 0 && <span><span className="inline-block h-2 w-2 bg-coral" /> Relegation</span>}
+                {lg && !zones.promo && !zones.releg && lg.tier === 1 && lg.relegated === 0 && <span>Closed league: no relegation</span>}
               </div>
             </Card>
           ) : (

@@ -279,7 +279,7 @@ const leagueNameOf = (compId: string) => staticLeague(leagueOfComp(compId))?.nam
 
 function honourKind(compId: string): ClubHonour["kind"] {
   if (compId.startsWith("cup-")) return "cup";
-  if (compId.startsWith("ccup") || compId.startsWith("ecup")) return "continental";
+  if (compId.startsWith("ccup") || compId.startsWith("ecup") || compId.startsWith("acup")) return "continental";
   return "league";
 }
 

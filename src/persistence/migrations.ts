@@ -1,3 +1,4 @@
+import { LEAGUE_COUNTRIES, WORLD } from "../engine/data/world";
 /**
  * Game-state schema migrations. Each step upgrades a raw decoded state by one
  * version. Never edit a released step — add a new one and bump
@@ -205,6 +206,17 @@ function sanitizeFootedness(state: GameState): void {
 
 export class MigrationError extends Error {}
 
+/**
+ * Saves made before the world grew past the big five never stored which countries they simulate. Pin them to the
+ * leagues they actually have clubs for, so a new league in world.json never appears in an old save without clubs.
+ */
+export function pinWorldCountries(state: GameState): void {
+  if (!state.settings || state.settings.countries?.length) return;
+  const have = new Set(Object.keys(state.leagueClubs ?? {}).filter((id) => (state.leagueClubs[id]?.length ?? 0) > 0));
+  const codes = [...new Set(WORLD.leagues.filter((l) => have.has(l.id)).map((l) => l.countryCode))];
+  if (codes.length && codes.length < LEAGUE_COUNTRIES.length) state.settings.countries = codes;
+}
+
 export function migrateState(raw: RawState): GameState {
   let s = raw;
   let v = typeof s.schemaVersion === "number" ? s.schemaVersion : 1;
@@ -217,6 +229,7 @@ export function migrateState(raw: RawState): GameState {
     s.schemaVersion = v;
   }
   const state = s as unknown as GameState;
+  pinWorldCountries(state);
   // Saga state is cheap to check and the one part of a save the engine reads as a state machine, so it is
   // sanitised on every load, not only when migrating.
   try {

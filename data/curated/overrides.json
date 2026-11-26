@@ -4,7 +4,9 @@
     "Q97905930",
     "Q1387764",
     "Q2205582",
-    "Q135451504"
+    "Q135451504",
+    "Q309095",
+    "Q482262"
   ],
   "assign": {},
   "names": {
@@ -155,6 +157,387 @@
     },
     "Q608988": {
       "shortName": "Sedan"
+    },
+    "Q338285": {
+      "name": "América Mineiro",
+      "shortName": "América-MG",
+      "abbreviation": "AMG"
+    },
+    "Q15799": {
+      "name": "River Plate",
+      "shortName": "River Plate",
+      "abbreviation": "RIV"
+    },
+    "Q1022939": {
+      "name": "Talleres de Córdoba",
+      "shortName": "Talleres",
+      "abbreviation": "TAL"
+    },
+    "Q327172": {
+      "shortName": "Huracán",
+      "abbreviation": "HUR"
+    },
+    "Q324589": {
+      "shortName": "Lanús",
+      "abbreviation": "LAN"
+    },
+    "Q318307": {
+      "name": "Rosario Central",
+      "shortName": "Rosario Central",
+      "abbreviation": "ROS"
+    },
+    "Q215163": {
+      "shortName": "Vélez Sarsfield",
+      "abbreviation": "VEL"
+    },
+    "Q221882": {
+      "shortName": "Newell's",
+      "abbreviation": "NOB"
+    },
+    "Q218282": {
+      "shortName": "San Lorenzo",
+      "abbreviation": "SLO"
+    },
+    "Q59962": {
+      "shortName": "Belgrano",
+      "abbreviation": "BEL"
+    },
+    "Q18640": {
+      "name": "Gimnasia y Esgrima La Plata",
+      "shortName": "Gimnasia LP",
+      "abbreviation": "GLP"
+    },
+    "Q1421829": {
+      "shortName": "Instituto",
+      "abbreviation": "INS"
+    },
+    "Q214940": {
+      "shortName": "Estudiantes",
+      "abbreviation": "EST"
+    },
+    "Q80899": {
+      "shortName": "Unión",
+      "abbreviation": "UNI"
+    },
+    "Q220621": {
+      "shortName": "Argentinos",
+      "abbreviation": "ARG"
+    },
+    "Q80886": {
+      "shortName": "Tigre",
+      "abbreviation": "TIG"
+    },
+    "Q692646": {
+      "shortName": "Banfield",
+      "abbreviation": "BAN"
+    },
+    "Q1024338": {
+      "shortName": "Defensa y Justicia",
+      "abbreviation": "DYJ"
+    },
+    "Q80897": {
+      "shortName": "Colón",
+      "abbreviation": "COL"
+    },
+    "Q775966": {
+      "shortName": "Quilmes",
+      "abbreviation": "QUI"
+    },
+    "Q3781627": {
+      "name": "Chaco For Ever",
+      "shortName": "Chaco For Ever",
+      "abbreviation": "CFE"
+    },
+    "Q2778591": {
+      "shortName": "Temperley",
+      "abbreviation": "TEM"
+    },
+    "Q910444": {
+      "shortName": "Ferro Carril Oeste",
+      "abbreviation": "FCO"
+    },
+    "Q5487437": {
+      "shortName": "Mitre",
+      "abbreviation": "MIT"
+    },
+    "Q2333719": {
+      "name": "Estudiantes de Buenos Aires",
+      "shortName": "Estudiantes BA",
+      "abbreviation": "EBA"
+    },
+    "Q80882": {
+      "shortName": "Godoy Cruz",
+      "abbreviation": "GOD"
+    },
+    "Q646088": {
+      "name": "Club Atlético All Boys",
+      "shortName": "All Boys",
+      "abbreviation": "ALB"
+    },
+    "Q632805": {
+      "shortName": "Racing de Córdoba",
+      "abbreviation": "RCO"
+    },
+    "Q1022904": {
+      "shortName": "Atlanta",
+      "abbreviation": "ATL"
+    },
+    "Q5772949": {
+      "shortName": "Agropecuario",
+      "abbreviation": "AGR"
+    },
+    "Q1102931": {
+      "shortName": "Almirante Brown",
+      "abbreviation": "ALM"
+    },
+    "Q2317584": {
+      "shortName": "Los Andes",
+      "abbreviation": "LAN"
+    },
+    "Q17479": {
+      "name": "Flamengo",
+      "shortName": "Flamengo",
+      "abbreviation": "FLA"
+    },
+    "Q270995": {
+      "name": "Atlético Mineiro",
+      "shortName": "Atlético-MG",
+      "abbreviation": "CAM"
+    },
+    "Q188277": {
+      "name": "Cruzeiro",
+      "shortName": "Cruzeiro",
+      "abbreviation": "CRU"
+    },
+    "Q221695": {
+      "name": "Grêmio",
+      "shortName": "Grêmio",
+      "abbreviation": "GRE"
+    },
+    "Q80958": {
+      "name": "Botafogo",
+      "shortName": "Botafogo",
+      "abbreviation": "BOT"
+    },
+    "Q198032": {
+      "name": "Bahia",
+      "shortName": "Bahia",
+      "abbreviation": "BAH"
+    },
+    "Q35933": {
+      "name": "Corinthians",
+      "shortName": "Corinthians",
+      "abbreviation": "COR"
+    },
+    "Q80845": {
+      "name": "Internacional",
+      "shortName": "Internacional",
+      "abbreviation": "INT"
+    },
+    "Q80964": {
+      "name": "Palmeiras",
+      "shortName": "Palmeiras",
+      "abbreviation": "PAL"
+    },
+    "Q506832": {
+      "name": "Athletico Paranaense",
+      "shortName": "Athletico-PR",
+      "abbreviation": "CAP"
+    },
+    "Q478317": {
+      "shortName": "Coritiba",
+      "abbreviation": "CFC"
+    },
+    "Q274465": {
+      "name": "Vitória",
+      "shortName": "Vitória",
+      "abbreviation": "VIT"
+    },
+    "Q5014111": {
+      "name": "Vasco da Gama",
+      "shortName": "Vasco",
+      "abbreviation": "VAS"
+    },
+    "Q2536715": {
+      "name": "Chapecoense",
+      "shortName": "Chapecoense",
+      "abbreviation": "CHA"
+    },
+    "Q2552872": {
+      "name": "Remo",
+      "shortName": "Remo",
+      "abbreviation": "REM"
+    },
+    "Q198034": {
+      "name": "Atlético Goianiense",
+      "shortName": "Atlético-GO",
+      "abbreviation": "ACG"
+    },
+    "Q188841": {
+      "name": "Fortaleza",
+      "shortName": "Fortaleza",
+      "abbreviation": "FOR"
+    },
+    "Q816779": {
+      "name": "Goiás",
+      "shortName": "Goiás",
+      "abbreviation": "GOI"
+    },
+    "Q2945011": {
+      "name": "Cuiabá",
+      "shortName": "Cuiabá",
+      "abbreviation": "CUI"
+    },
+    "Q1633430": {
+      "name": "Londrina",
+      "shortName": "Londrina",
+      "abbreviation": "LON"
+    },
+    "Q219098": {
+      "name": "Sport Recife",
+      "shortName": "Sport",
+      "abbreviation": "SPO"
+    },
+    "Q2332493": {
+      "name": "Botafogo-SP",
+      "shortName": "Botafogo-SP",
+      "abbreviation": "BSP"
+    },
+    "Q910453": {
+      "name": "Juventude",
+      "shortName": "Juventude",
+      "abbreviation": "JUV"
+    },
+    "Q1052219": {
+      "name": "Ceará",
+      "shortName": "Ceará",
+      "abbreviation": "CEA"
+    },
+    "Q1024264": {
+      "name": "CRB",
+      "shortName": "CRB",
+      "abbreviation": "CRB"
+    },
+    "Q219120": {
+      "name": "Ponte Preta",
+      "shortName": "Ponte Preta",
+      "abbreviation": "PON"
+    },
+    "Q73971": {
+      "name": "Náutico",
+      "shortName": "Náutico",
+      "abbreviation": "NAU"
+    },
+    "Q598834": {
+      "name": "Criciúma",
+      "shortName": "Criciúma",
+      "abbreviation": "CRI"
+    },
+    "Q9636189": {
+      "name": "Athletic Club",
+      "shortName": "Athletic-MG",
+      "abbreviation": "ATH"
+    },
+    "Q2580083": {
+      "name": "Operário Ferroviário",
+      "shortName": "Operário-PR",
+      "abbreviation": "OPE"
+    },
+    "Q1143000": {
+      "shortName": "Pumas",
+      "abbreviation": "PUM"
+    },
+    "Q13408349": {
+      "name": "Atlético San Luis",
+      "shortName": "San Luis",
+      "abbreviation": "ASL"
+    },
+    "Q96045907": {
+      "name": "Mazatlán",
+      "shortName": "Mazatlán",
+      "abbreviation": "MAZ"
+    },
+    "Q131499": {
+      "name": "Benfica",
+      "shortName": "Benfica",
+      "abbreviation": "SLB"
+    },
+    "Q838134": {
+      "shortName": "Estrela Amadora",
+      "abbreviation": "EST"
+    },
+    "Q216503": {
+      "name": "Marítimo",
+      "shortName": "Marítimo",
+      "abbreviation": "MAR"
+    },
+    "Q543467": {
+      "name": "Chaves",
+      "shortName": "Chaves",
+      "abbreviation": "CHA"
+    },
+    "Q120775987": {
+      "name": "AVS",
+      "shortName": "AVS",
+      "abbreviation": "AVS"
+    },
+    "Q370712": {
+      "name": "Excelsior",
+      "shortName": "Excelsior",
+      "abbreviation": "EXC"
+    },
+    "Q318348": {
+      "name": "NEC Nijmegen",
+      "shortName": "NEC",
+      "abbreviation": "NEC"
+    },
+    "Q113517128": {
+      "shortName": "New England",
+      "abbreviation": "NER"
+    },
+    "Q78944434": {
+      "name": "Charlotte FC",
+      "shortName": "Charlotte",
+      "abbreviation": "CLT"
+    },
+    "Q13361030": {
+      "name": "New York City FC",
+      "shortName": "NYCFC",
+      "abbreviation": "NYC"
+    },
+    "Q20855983": {
+      "name": "FC Cincinnati",
+      "shortName": "Cincinnati",
+      "abbreviation": "CIN"
+    },
+    "Q60643348": {
+      "name": "Austin FC",
+      "shortName": "Austin",
+      "abbreviation": "ATX"
+    },
+    "Q18380286": {
+      "name": "Los Angeles FC",
+      "shortName": "LAFC",
+      "abbreviation": "LAF"
+    },
+    "Q204220": {
+      "name": "New York Red Bulls",
+      "shortName": "NY Red Bulls",
+      "abbreviation": "NYR"
+    },
+    "Q1046445": {
+      "shortName": "Tampa Bay Rowdies",
+      "abbreviation": "TBR"
+    },
+    "Q22025437": {
+      "name": "San Antonio FC",
+      "shortName": "San Antonio",
+      "abbreviation": "SAN"
+    },
+    "Q64884": {
+      "name": "Orange County SC",
+      "shortName": "Orange County",
+      "abbreviation": "OCS"
     }
   },
   "colors": {

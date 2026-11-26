@@ -74,6 +74,74 @@
     }, {
       "coach" : {
         "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q17500"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Xavi (footballer, born 1980)"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q47050"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-08-12T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Netherlands national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Xavi Hernández"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Spain"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q46347"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Patrick Vieira"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q207441"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-08-18T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Senegal national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Patrick Vieira"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "France"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
         "value" : "http://www.wikidata.org/entity/Q57902"
       },
       "coachTitle" : {
@@ -138,74 +206,6 @@
         "xml:lang" : "en",
         "type" : "literal",
         "value" : "Italy"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q46347"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Patrick Vieira"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q207441"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2026-08-18T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Senegal national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Patrick Vieira"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "France"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q17500"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Xavi (footballer, born 1980)"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q47050"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2026-08-12T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Netherlands national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Xavi Hernández"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Spain"
       }
     }, {
       "coach" : {
@@ -303,176 +303,6 @@
         "xml:lang" : "en",
         "type" : "literal",
         "value" : "Santi Denia"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Spain"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q115547102"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Brian Riemer"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q131785"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2024-10-24T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Denmark national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Brian Riemer"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Kingdom of Denmark"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q15229580"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Heimir Hallgrímsson"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q163547"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2024-07-10T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Republic of Ireland national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Heimir Hallgrímsson"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Iceland"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q139607401"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Andrea Maldera"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q170403"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2026-05-18T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Ukraine national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Andrea Maldera"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Italy"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q20973387"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Mohamed Ouahbi"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q207337"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2026-03-05T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Morocco national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Mohamed Ouahbi"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Morocco"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q63969036"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Robert Moreno"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q543842"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2026-09-01T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "South Korea national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Robert Moreno"
       },
       "citLabel" : {
         "xml:lang" : "en",
@@ -618,6 +448,210 @@
     }, {
       "coach" : {
         "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q139607401"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Andrea Maldera"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q170403"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-05-18T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ukraine national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Andrea Maldera"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Italy"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q115547102"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Brian Riemer"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131785"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2024-10-24T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Denmark national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Brian Riemer"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Kingdom of Denmark"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q15229580"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Heimir Hallgrímsson"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q163547"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2024-07-10T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Republic of Ireland national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Heimir Hallgrímsson"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Iceland"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q20973387"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Mohamed Ouahbi"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q207337"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-03-05T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Morocco national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Mohamed Ouahbi"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Morocco"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q63969036"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Robert Moreno"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q543842"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-09-01T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "South Korea national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Robert Moreno"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Spain"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q16214501"
+      },
+      "coachTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ali Maher (footballer)"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q28089"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-11-07T00:00:00Z"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Egypt national football team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ali Maher"
+      },
+      "citLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Egypt"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
         "value" : "http://www.wikidata.org/entity/Q562409"
       },
       "coachTitle" : {
@@ -710,7 +744,7 @@
       "coachLabel" : {
         "xml:lang" : "en",
         "type" : "literal",
-        "value" : "Veljko Paunovićhshsjs"
+        "value" : "Veljko Paunović"
       },
       "citLabel" : {
         "xml:lang" : "en",
@@ -744,7 +778,7 @@
       "coachLabel" : {
         "xml:lang" : "en",
         "type" : "literal",
-        "value" : "Veljko Paunovićhshsjs"
+        "value" : "Veljko Paunović"
       },
       "citLabel" : {
         "xml:lang" : "en",
@@ -886,6 +920,25 @@
         "xml:lang" : "en",
         "type" : "literal",
         "value" : "Germany"
+      }
+    }, {
+      "coach" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q108437605"
+      },
+      "team" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q164134"
+      },
+      "teamTitle" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "United States men's national soccer team"
+      },
+      "coachLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "position not filled"
       }
     }, {
       "coach" : {
@@ -1122,80 +1175,12 @@
       "coachLabel" : {
         "xml:lang" : "en",
         "type" : "literal",
-        "value" : "Rafael Márquez El piojo"
+        "value" : "Rafael Márquez"
       },
       "citLabel" : {
         "xml:lang" : "en",
         "type" : "literal",
         "value" : "Mexico"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q313000"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Mauricio Pochettino"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q164134"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2024-09-10T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "United States men's national soccer team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Mauricio Pochettino"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Argentina"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q313000"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Mauricio Pochettino"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q164134"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2024-09-10T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "United States men's national soccer team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Mauricio Pochettino"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Spain"
       }
     }, {
       "coach" : {
@@ -1468,40 +1453,6 @@
         "xml:lang" : "en",
         "type" : "literal",
         "value" : "Italy"
-      }
-    }, {
-      "coach" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q448937"
-      },
-      "coachTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Hossam Hassan"
-      },
-      "team" : {
-        "type" : "uri",
-        "value" : "http://www.wikidata.org/entity/Q28089"
-      },
-      "start" : {
-        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
-        "type" : "literal",
-        "value" : "2024-02-06T00:00:00Z"
-      },
-      "teamTitle" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Egypt national football team"
-      },
-      "coachLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Hossam Hassan"
-      },
-      "citLabel" : {
-        "xml:lang" : "en",
-        "type" : "literal",
-        "value" : "Egypt"
       }
     }, {
       "coach" : {

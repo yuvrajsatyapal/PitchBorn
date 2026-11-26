@@ -69,6 +69,8 @@ export interface LeagueSourceDef {
   footballJson?: string;
   /** True when the real division is split into groups and Pitchborn simulates a single-table abstraction. */
   abstraction?: boolean;
+  /** Closed league system (no promotion or relegation between this tier and the one above), e.g. MLS and Liga MX. */
+  closed?: boolean;
 }
 
 export const LEAGUE_SOURCES: LeagueSourceDef[] = [
@@ -87,6 +89,18 @@ export const LEAGUE_SOURCES: LeagueSourceDef[] = [
   { id: "fra-1", countryCode: "FRA", tier: 1, name: "Ligue 1", shortName: "L1F", wikidata: "Q13394", size: 18, footballJson: "fr.1" },
   { id: "fra-2", countryCode: "FRA", tier: 2, name: "Ligue 2", shortName: "L2F", wikidata: "Q217374", size: 18, footballJson: "fr.2" },
   { id: "fra-3", countryCode: "FRA", tier: 3, name: "National", shortName: "NAT", wikidata: "Q864298", size: 18, abstraction: true },
+  { id: "por-1", countryCode: "POR", tier: 1, name: "Liga Portugal", shortName: "LPT", wikidata: "Q182994", size: 18, footballJson: "pt.1" },
+  { id: "por-2", countryCode: "POR", tier: 2, name: "Liga Portugal 2", shortName: "LP2", wikidata: "Q754488", size: 18 },
+  { id: "ned-1", countryCode: "NED", tier: 1, name: "Eredivisie", shortName: "ERE", wikidata: "Q167541", size: 18, footballJson: "nl.1" },
+  { id: "ned-2", countryCode: "NED", tier: 2, name: "Eerste Divisie", shortName: "EED", wikidata: "Q610823", size: 20 },
+  { id: "bra-1", countryCode: "BRA", tier: 1, name: "Série A", shortName: "BSA", wikidata: "Q206813", size: 20 },
+  { id: "bra-2", countryCode: "BRA", tier: 2, name: "Série B", shortName: "BSB", wikidata: "Q610175", size: 20 },
+  { id: "arg-1", countryCode: "ARG", tier: 1, name: "Primera División", shortName: "APD", wikidata: "Q223170", size: 20, abstraction: true },
+  { id: "arg-2", countryCode: "ARG", tier: 2, name: "Primera Nacional", shortName: "APN", wikidata: "Q934724", size: 20, abstraction: true },
+  { id: "usa-1", countryCode: "USA", tier: 1, name: "Major League Soccer", shortName: "MLS", wikidata: "Q18543", size: 20, abstraction: true },
+  { id: "usa-2", countryCode: "USA", tier: 2, name: "USL Championship", shortName: "USL", wikidata: "Q1362411", size: 20, abstraction: true, closed: true },
+  // Liga MX has had no relegation since 2020 and Wikidata lists too few Liga de Expansión clubs to build a second tier.
+  { id: "mex-1", countryCode: "MEX", tier: 1, name: "Liga MX", shortName: "LMX", wikidata: "Q764690", size: 18, footballJson: "mx.1", closed: true },
 ];
 
 export const OPENFOOTBALL_CLUB_FILES: Record<string, string> = {
@@ -95,6 +109,12 @@ export const OPENFOOTBALL_CLUB_FILES: Record<string, string> = {
   GER: "europe/germany/de.clubs.txt",
   ITA: "europe/italy/it.clubs.txt",
   FRA: "europe/france/fr.clubs.txt",
+  POR: "europe/portugal/pt.clubs.txt",
+  NED: "europe/netherlands/nl.clubs.txt",
+  BRA: "south-america/brazil/br.clubs.txt",
+  ARG: "south-america/argentina/ar.clubs.txt",
+  USA: "north-america/united-states/us.clubs.txt",
+  MEX: "north-america/mexico/mx.clubs.txt",
 };
 
 export const FOOTBALL_JSON_SEASONS = ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25"];

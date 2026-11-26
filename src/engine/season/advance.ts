@@ -562,6 +562,8 @@ function seasonEnd(state: GameState, rng: Rng): void {
       const lower = state.competitions[leagueCompId(tiers[i + 1].id, state.season)];
       if (!upper?.table || !lower?.table) continue;
       const n = Math.min(tiers[i].relegated, tiers[i + 1].promoted);
+      // Closed leagues (MLS, Liga MX) move nobody; slice(-0) would take the whole table.
+      if (n <= 0) continue;
       const down = upper.table.slice(-n).map((r) => r.team);
       const up = lower.table.slice(0, n).map((r) => r.team);
       archive.relegated[upper.id] = down;

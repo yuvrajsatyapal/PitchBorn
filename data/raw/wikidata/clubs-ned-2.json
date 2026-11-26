@@ -1,0 +1,1824 @@
+{
+  "head" : {
+    "vars" : [ "club", "clubLabel", "start", "venue", "venueLabel", "venueStart", "venueEnd", "cap", "inception", "color", "colorLabel", "hex", "short", "cityLabel", "coord", "dissolved" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q24689"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "VVV"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2262017"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.179722 51.351944)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2021-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1903-02-07T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "7500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "VVV-Venlo"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Koel"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Venlo"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q24719"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "RJC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q476674"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.005833333 50.856944444)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1962-06-27T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19979"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Roda JC Kerkrade"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Parkstad Limburg Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Kerkrade"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2000-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q221927"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "GRA"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q606265"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.309722 51.955833)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2019-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1954-02-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "12600"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Graafschap"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Vijverberg"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Doetinchem"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2132300"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.750278 51.595556)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rat Verlegh Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2132300"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.750278 51.595556)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rat Verlegh Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q943"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFF00"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "yellow"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2132300"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.75028 51.5956)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rat Verlegh Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2132300"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.75028 51.5956)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rat Verlegh Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q943"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFF00"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "yellow"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q6952179"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.745833 51.576389)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC stadion Heuvelstraat"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1931-01-01T00:00:00Z"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q6952179"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.745833 51.576389)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC stadion Heuvelstraat"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1931-01-01T00:00:00Z"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q943"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFF00"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "yellow"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7703383"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.789167 51.584722)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Terrein achter de Watertoren"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-01-01T00:00:00Z"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1916-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q332642"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7703383"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.789167 51.584722)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "NAC Breda"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Terrein achter de Watertoren"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Breda"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-01-01T00:00:00Z"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q943"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFF00"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "yellow"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1916-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q653119"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "ALM"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q255387"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.240556 52.394444)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2025-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2001-09-14T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "4501"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Almere City FC"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Yanmar Hanasaka Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Almere"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q738060"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "VOL"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q953663"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.066389 52.494444)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1977-06-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "6200"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Volendam"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Kras Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Volendam"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q875169"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "DBO"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1855763"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.329722 51.701667)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1965-08-18T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "9000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Den Bosch"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Vliert"
+      },
+      "cityLabel" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Bolduque"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q876568"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "MVV"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q391473"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.717778 50.8575)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1902-04-02T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "MVV Maastricht"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Geusselt"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Maastricht"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q24068131"
+      },
+      "short" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "JUT"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3264211"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.146111 52.075833)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1970-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "450"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Jong FC Utrecht"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sportcomplex Zoudenbalch"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q11961"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q11969"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.649722 52.338611)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1903-05-03T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "12080"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Heracles Almelo"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Asito Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Almelo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1999-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q11961"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2019176"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.686058 52.344753)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1903-05-03T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "8000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Heracles Almelo"
+      },
+      "venueLabel" : {
+        "type" : "literal",
+        "value" : "Q2019176"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Almelo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1999-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q24699"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q942073"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.088611 51.686944)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2025-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-08-26T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "7500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "RKC Waalwijk"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Mandemakers Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Waalwijk"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q219233"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1067235"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.893056 51.9625)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2024-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1892-05-14T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "21000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "SBV Vitesse"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "GelreDome"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arnhem"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1998-03-25T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q219233"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1067235"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.893056 51.9625)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2024-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1892-05-14T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "41000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "SBV Vitesse"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "GelreDome"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arnhem"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1998-03-25T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q219233"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q14852091"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2024-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1892-05-14T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "SBV Vitesse"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Klarenbeek"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arnhem"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1896-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1915-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q516795"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q18088831"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.68611 51.965)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1911-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Wageningen"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Wageningse Berg"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Wageningen"
+      },
+      "dissolved" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1992-06-30T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q636315"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1140346"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.68 51.486389)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1967-07-27T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "4100"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Helmond Sport"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Stadion De Braak"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Helmond"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2025-02-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q636315"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q132997935"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.679116 51.487363)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1967-07-27T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "3600"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Helmond Sport"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "MySteel Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Helmond"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2025-02-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q648382"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1140546"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.864444 53.108611)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1894-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "6500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "SC Veendam"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Langeleegte"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Veendam"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1954-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2013-01-01T00:00:00Z"
+      },
+      "dissolved" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2013-03-25T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q854141"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2195733"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.648889 52.410278)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1889-10-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "3442"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "HFC Haarlem"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Haarlem Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Haarlem"
+      },
+      "dissolved" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2010-01-25T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q876699"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q643426"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.479444 51.411667)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1909-11-16T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "4500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Eindhoven"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Jan Louwers Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Eindhoven"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1045811"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1139863"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.69 51.8025)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1883-08-16T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "4077"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Dordrecht"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "M-Scores Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Dordrecht"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1045811"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1139863"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.69 51.8025)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1883-08-16T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "4235"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Dordrecht"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "M-Scores Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Dordrecht"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1053450"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1575684"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.454167 51.540556)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1927-07-16T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "4995"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "RBC Roosendaal"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Atik Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Roosendaal"
+      },
+      "dissolved" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2011-06-14T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1061627"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2093331"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.945556 52.774722)"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2023-01-01T00:00:00Z"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1925-08-21T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "8600"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "FC Emmen"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Oude Meerdijk"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Emmen"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1149034"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1320629"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.528056 51.755)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1928-04-09T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "4560"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "TOP Oss"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Heesen Yachts Stadion"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Oss"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1770361"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2200744"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(4.928914 52.313522)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1900-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "5000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Jong Ajax"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sportpark De Toekomst"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Amsterdam"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q13534332"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1958120"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.4389 51.4608)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-01-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "2500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Jong PSV"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Herdgang"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Eindhoven"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q13534332"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1958120"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(5.4389 51.4608)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-08-31T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "2500"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Jong PSV"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Herdgang"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Eindhoven"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q14229572"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q727389"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(6.8375 52.236666666)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1965-07-01T00:00:00Z"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "30000"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Jong FC Twente"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "De Grolsch Veste"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Enschede"
+      }
+    } ]
+  }
+}

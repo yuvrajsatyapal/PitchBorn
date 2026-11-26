@@ -16,12 +16,42 @@ export const CUP_NAMES: Record<string, string> = {
   GER: "DFB-Pokal",
   ITA: "Coppa Italia",
   FRA: "Coupe de France",
+  POR: "Taça de Portugal",
+  NED: "KNVB Cup",
+  BRA: "Copa do Brasil",
+  ARG: "Copa Argentina",
+  USA: "U.S. Open Cup",
+  MEX: "Copa MX",
 };
 export const CUP_STAGES = ["Round 1", "Round 2", "Round of 16", "Quarter-final", "Semi-final", "Final"];
 
 /** Original Pitchborn-branded continental competitions. */
 export const CHAMPIONS_CUP = { prefix: "ccup", name: "Champions Cup", short: "CC" };
 export const CONTINENTAL_CUP = { prefix: "ecup", name: "Continental Cup", short: "ECC" };
+/** Original Pitchborn cup for the top clubs of the CONMEBOL and CONCACAF leagues. */
+export const AMERICAS_CUP = { prefix: "acup", name: "Americas Cup", short: "AMC" };
+
+/**
+ * Continental places per top league (Pitchborn's own allocation). European leagues feed the Champions Cup and the
+ * Continental Cup; American leagues feed the Americas Cup. When a save simulates fewer countries, the empty places go
+ * to the next-ranked clubs of the strongest leagues in play (see fillSlots).
+ */
+export const CONTINENTAL_SLOTS: Record<string, { champions: number; continental: number; americas?: number }> = {
+  ENG: { champions: 4, continental: 2 },
+  ESP: { champions: 3, continental: 2 },
+  GER: { champions: 2, continental: 3 },
+  ITA: { champions: 2, continental: 3 },
+  FRA: { champions: 2, continental: 2 },
+  POR: { champions: 2, continental: 2 },
+  NED: { champions: 1, continental: 2 },
+  BRA: { champions: 0, continental: 0, americas: 5 },
+  ARG: { champions: 0, continental: 0, americas: 5 },
+  MEX: { champions: 0, continental: 0, americas: 3 },
+  USA: { champions: 0, continental: 0, americas: 3 },
+};
+const EUROPE_ORDER = ["ENG", "ESP", "GER", "ITA", "FRA", "POR", "NED"];
+const AMERICAS_ORDER = ["BRA", "ARG", "MEX", "USA"];
+export const isAmericas = (cc: string) => AMERICAS_ORDER.includes(cc) || country(cc)?.confederation === "CONMEBOL" || country(cc)?.confederation === "CONCACAF";
 
 export const leagueCompId = (leagueId: string, season: number) => `${leagueId}-${season}`;
 export const cupCompId = (countryCode: string, season: number) => `cup-${countryCode.toLowerCase()}-${season}`;
@@ -105,7 +135,7 @@ function previousTable(state: GameState, leagueId: string): string[] | null {
   return t ? t.map((r) => r.team) : null;
 }
 
-export function continentalQualifiers(state: GameState): { champions: string[]; continental: string[] } {
+export function continentalQualifiers(state: GameState): { champions: string[]; continental: string[]; americas: string[] } {
   const tops = leaguesInPlay(state).filter((l) => l.tier === 1);
   const ranked: Record<string, string[]> = {};
   for (const l of tops) {
@@ -114,24 +144,34 @@ export function continentalQualifiers(state: GameState): { champions: string[]; 
       (c) => state.clubs[c],
     );
   }
-  const champions: string[] = [];
-  const continental: string[] = [];
-  for (const cc of Object.keys(ranked)) champions.push(...ranked[cc].slice(0, 3));
-  if (ranked.ENG) champions.push(ranked.ENG[3]);
-  for (const cc of Object.keys(ranked)) {
-    if (cc === "ENG") continental.push(...ranked[cc].slice(4, 6));
-    else continental.push(...ranked[cc].slice(3, 6));
-  }
-  if (ranked.ESP) continental.push(ranked.ESP[6]);
-  if (ranked.ITA) continental.push(ranked.ITA[6]);
-  return { champions: champions.filter(Boolean).slice(0, 16), continental: continental.filter(Boolean).slice(0, 16) };
+  const extra = (wantAmericas: boolean, list: string[]) => Object.keys(ranked).filter((cc) => !list.includes(cc) && isAmericas(cc) === wantAmericas);
+  const europe = [...EUROPE_ORDER.filter((cc) => ranked[cc]), ...extra(false, EUROPE_ORDER)];
+  const americas = [...AMERICAS_ORDER.filter((cc) => ranked[cc]), ...extra(true, AMERICAS_ORDER)];
+  const taken = new Map<string, number>();
+  const pick = (cc: string, n: number, out: string[]) => {
+    const from = taken.get(cc) ?? 0;
+    out.push(...ranked[cc].slice(from, from + n));
+    taken.set(cc, from + n);
+  };
+  const fillSlots = (countries: string[], key: "champions" | "continental" | "americas") => {
+    const out: string[] = [];
+    for (const cc of countries) pick(cc, CONTINENTAL_SLOTS[cc]?.[key] ?? (key === "americas" ? 2 : 2), out);
+    // Fewer countries in play: hand the spare places to the strongest leagues, one club at a time.
+    for (let guard = 0; out.length < 16 && guard < 64 && countries.length; guard++) pick(countries[guard % countries.length], 1, out);
+    return out.filter(Boolean).slice(0, 16);
+  };
+  const champions = fillSlots(europe, "champions");
+  const continental = fillSlots(europe, "continental");
+  const americasTeams = americas.length >= 2 ? fillSlots(americas, "americas") : [];
+  return { champions, continental, americas: americasTeams };
 }
 
 function setupContinental(state: GameState, rng: Rng) {
-  const { champions, continental } = continentalQualifiers(state);
+  const { champions, continental, americas } = continentalQualifiers(state);
   for (const [def, teams, prestige] of [
     [CHAMPIONS_CUP, champions, 10],
     [CONTINENTAL_CUP, continental, 6],
+    [AMERICAS_CUP, americas, 8],
   ] as const) {
     if (teams.length < 16) continue;
     const compId = `${def.prefix}-${state.season}`;

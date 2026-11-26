@@ -1,6 +1,6 @@
 # Dataset build report
 
-Generated from raw snapshot fetched 2026-10-06T16:09:23.151Z.
+Generated from raw snapshot fetched 2026-11-26T09:07:52.148Z.
 
 | League | Clubs | Avg prestige |
 |---|---|---|
@@ -19,8 +19,19 @@ Generated from raw snapshot fetched 2026-10-06T16:09:23.151Z.
 | Ligue 1 (fra-1) | 18/18 | 78.1 |
 | Ligue 2 (fra-2) | 18/18 | 60.2 |
 | National (fra-3) | 18/18 | 42.4 |
+| Liga Portugal (por-1) | 18/18 | 74.1 |
+| Liga Portugal 2 (por-2) | 18/18 | 49.2 |
+| Eredivisie (ned-1) | 17/17 | 72.8 |
+| Eerste Divisie (ned-2) | 16/16 | 49.7 |
+| Série A (bra-1) | 20/20 | 72.0 |
+| Série B (bra-2) | 20/20 | 50.8 |
+| Primera División (arg-1) | 20/20 | 68.4 |
+| Primera Nacional (arg-2) | 20/20 | 46.6 |
+| Major League Soccer (usa-1) | 20/20 | 62.6 |
+| USL Championship (usa-2) | 20/20 | 37.9 |
+| Liga MX (mex-1) | 17/17 | 67.9 |
 
-Stadiums: 290. Historical seasons: 44.
+Stadiums: 490. Historical seasons: 56.
 Validation: 0 errors, 0 warnings.
 
 ## Pipeline decisions
@@ -52,6 +63,22 @@ Validation: 0 errors, 0 warnings.
 - excluded non-club item Unione Sportiva Grosseto 1912 2020-2021 (Q101423729)
 - excluded reserve team Atalanta Bergamasca Calcio U23 (Q121213625)
 - excluded dissolved club CA Bastia (Q670795)
+- excluded reserve team Sporting CP B (Q3494112)
+- excluded reserve team C.S. Marítimo B (Q5006215)
+- excluded reserve team FC Porto B (Q5423714)
+- excluded reserve team S.C. Braga B (Q7387158)
+- excluded reserve team S.L. Benfica B (Q7387221)
+- excluded reserve team Vitória S.C. B (Q17518847)
+- excluded reserve team Willem II (Q332664)
+- excluded reserve team Jong FC Utrecht (Q24068131)
+- excluded dissolved club FC Wageningen (Q516795)
+- excluded dissolved club SC Veendam (Q648382)
+- excluded dissolved club HFC Haarlem (Q854141)
+- excluded dissolved club RBC Roosendaal (Q1053450)
+- excluded reserve team Jong Ajax (Q1770361)
+- excluded reserve team Jong PSV (Q13534332)
+- excluded reserve team Jong FC Twente (Q14229572)
+- excluded dissolved club Miami Fusion (Q862647)
 - esp-2: trimmed 3 stale entries: AD Ceuta FC, CD Eldense, Fundación Albacete
 - esp-3: trimmed 1 stale entries: Club Recreativo Granada
 - fra-2: trimmed 5 stale entries: US Boulogne, Gazélec Ajaccio, USL Dunkerque, Rodez AF, Foot club de Pau
@@ -62,6 +89,8 @@ Validation: 0 errors, 0 warnings.
 - ita-2: demoted 2 surplus clubs to ita-3: Ascoli Calcio 1898 FC, Associazione Sportiva Cittadella
 - ita-2: trimmed 6 stale entries: Unione Sportiva Catanzaro, S.S. Arezzo, S.S. Juve Stabia, F.C. Südtirol, Pordenone FC, Carrarese Calcio
 - ita-3: trimmed 14 stale entries: Associazione Sportiva Cittadella, Lucchese 1905, F.C. Trapani 1905, Potenza Calcio, A.S. Gubbio 1910, Feralpisalò, S.S. Maceratese 1922, U.S. Vibonese Calcio, A.S. Ostiamare 1945, Virtus Verona, F.C. Legnago Salus S.S.D., Pol. Arzachena, A.S. Giana Erminio, Milan Futuro
+- por-2: trimmed 8 stale entries: S.C. Freamunde, S.C. Covilhã, Gondomar S.C., C.F. União, U.D. Oliveirense, C.D. Fátima, UD Vilafranquense, C.D. Cova da Piedade
+- usa-1: trimmed 10 stale entries: FC Dallas, Real Salt Lake, Columbus Crew, Chicago Fire FC, CF Montréal, San Jose Earthquakes, Inter Miami CF, Colorado Rapids, San Diego FC, Nashville SC
 - history 2020-21 de.2: 1 teams not in current world (relegated/renamed)
 - history 2020-21 de.3: 7 teams not in current world (relegated/renamed)
 - history 2020-21 en.2: 1 teams not in current world (relegated/renamed)
@@ -71,17 +100,27 @@ Validation: 0 errors, 0 warnings.
 - history 2020-21 fr.1: 2 teams not in current world (relegated/renamed)
 - history 2020-21 fr.2: 5 teams not in current world (relegated/renamed)
 - history 2020-21 it.2: 5 teams not in current world (relegated/renamed)
+- history 2020-21 mx.1: 1 teams not in current world (relegated/renamed)
+- history 2020-21 nl.1: 1 teams not in current world (relegated/renamed)
+- history 2020-21 pt.1: 1 teams not in current world (relegated/renamed)
 - history 2021-22 de.2: 1 teams not in current world (relegated/renamed)
 - history 2021-22 fr.1: 1 teams not in current world (relegated/renamed)
+- history 2021-22 nl.1: 1 teams not in current world (relegated/renamed)
+- history 2021-22 pt.1: 1 teams not in current world (relegated/renamed)
 - history 2022-23 de.2: 1 teams not in current world (relegated/renamed)
 - history 2022-23 en.2: 1 teams not in current world (relegated/renamed)
+- history 2022-23 pt.1: 1 teams not in current world (relegated/renamed)
 - history 2023-24 de.2: 1 teams not in current world (relegated/renamed)
 - history 2023-24 en.2: 1 teams not in current world (relegated/renamed)
+- history 2023-24 pt.1: 1 teams not in current world (relegated/renamed)
 - history 2024-25 de.2: 1 teams not in current world (relegated/renamed)
 - history 2024-25 en.3: 6 teams not in current world (relegated/renamed)
 - history 2024-25 es.2: 3 teams not in current world (relegated/renamed)
 - history 2024-25 fr.2: 3 teams not in current world (relegated/renamed)
 - history 2024-25 it.2: 6 teams not in current world (relegated/renamed)
-- Managers: 295/298 clubs and 40/41 national teams have a real head coach (Wikidata P286 + curated corrections); the rest are generated in-game.
+- history 2024-25 mx.1: 1 teams not in current world (relegated/renamed)
+- history 2024-25 nl.1: 1 teams not in current world (relegated/renamed)
+- history 2024-25 pt.1: 1 teams not in current world (relegated/renamed)
+- Managers: 447/504 clubs and 40/41 national teams have a real head coach (Wikidata P286 + curated corrections); the rest are generated in-game.
 
 ## Errors

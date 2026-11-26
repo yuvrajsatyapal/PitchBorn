@@ -579,7 +579,14 @@ export function resolveSagaDecision(state: GameState, d: CareerDecision, optionI
     return r.message;
   }
   if (optionId === "decline") {
-    negotiate(state, offer.id, { type: "reject" }, rng);
+    // "Stay where you are" turns the move down, not just one club: every live offer in the saga goes.
+    for (const o of offersOf(state, s)) {
+      if (o.status === "terms") negotiate(state, o.id, { type: "reject" }, rng);
+      else if (isLive(o)) {
+        o.status = "rejected";
+        o.history.push("You turned the move down.");
+      }
+    }
     if (lean.loyalty >= 0.35) s.flags.committed = true;
     syncSaga(state, s);
     return "You turn the move down.";

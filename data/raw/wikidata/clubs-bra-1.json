@@ -1,0 +1,2686 @@
+{
+  "head" : {
+    "vars" : [ "club", "clubLabel", "start", "venue", "venueLabel", "venueStart", "venueEnd", "cap", "inception", "color", "colorLabel", "hex", "short", "cityLabel", "coord", "dissolved" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q17479"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q155174"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "78838"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.230277777 -22.912222222)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1895-11-15T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube de Regatas do Flamengo"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Maracanã Stadium"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio de Janeiro"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q35933"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q655175"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "37730"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.665111 -23.548639)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1910-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.C. Corinthians Paulista"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Pacaembu"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1940-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2014-05-18T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q35933"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1362236"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "47252"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.474 -23.545555555)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1910-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.C. Corinthians Paulista"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Neo Química Arena"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2020-05-18T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q38568"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q821761"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "67052"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.720155555 -23.600125)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1930-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo FC"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Morumbi"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1960-10-02T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q38568"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q821761"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "71200"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.720155555 -23.600125)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1930-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo FC"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Morumbi"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1960-10-02T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q38568"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q821761"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "120000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.720155555 -23.600125)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1930-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo FC"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Morumbi"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1960-10-02T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q73971"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q640421"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19800"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-34.896667 -8.040556)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1901-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube Náutico Capibaribe"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio dos Aflitos"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Recife"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80845"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1050224"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "49055"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-51.236086 -30.065614)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1909-04-04T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.C. Internacional"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Beira-Rio"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto Alegre"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80845"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1050224"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "49055"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-51.236086 -30.065614)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1909-04-04T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "S.C. Internacional"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Beira-Rio"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto Alegre"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80955"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q741755"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "16068"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.338889 -23.951111)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1912-04-14T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Santos F.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Urbano Caldeira"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Santos"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1916-10-12T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80958"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q17489"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "46931"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.292269 -22.893172)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-08-12T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Botafogo F.R."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Nilton Santos"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio de Janeiro"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80958"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q10277365"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.330539246 -10.282057778)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1904-08-12T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Botafogo F.R."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Nilton Santos"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio de Janeiro"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80964"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1370747"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "27650"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.678417 -23.527556)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1914-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sociedade Esportiva Palmeiras"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Palestra Itália"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1917-01-01T00:00:00Z"
+      },
+      "venueEnd" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2010-07-10T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80964"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q4788902"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "43713"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.678417 -23.527556)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1914-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sociedade Esportiva Palmeiras"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Allianz Parque"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2014-11-19T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80987"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q155174"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "78838"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.230277777 -22.912222222)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1902-07-21T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Fluminense F.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Maracanã Stadium"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio de Janeiro"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q188277"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q910370"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "66658"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.970833 -19.865833)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1921-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Cruzeiro E.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Mineirão"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belo Horizonte"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q188841"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q958185"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "57876"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-38.522481 -3.807267)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1918-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Fortaleza E.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Castelão"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Fortaleza"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q198032"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q6499360"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "47915"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-38.504252777 -12.978819444)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1931-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Esporte Clube Bahia"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Fonte Nova"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Salvador"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q198032"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q6499360"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "47915"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-38.504252777 -12.978819444)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1931-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Esporte Clube Bahia"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Fonte Nova"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Salvador"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q198032"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q6499360"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "47915"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-38.504252777 -12.978819444)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1931-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Esporte Clube Bahia"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Fonte Nova"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Salvador"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1088"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "0000FF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "blue"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q198034"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q924172"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "54084"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-49.233889 -16.698889)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1937-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Atlético Clube Goianiense"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Serra Dourada"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Goiânia"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q204675"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1343230"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "21004"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.6187083 -23.520525)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1920-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Associação Portuguesa de Desportos"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Canindé"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1956-01-11T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q204675"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1343230"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "21004"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.618333 -23.520556)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1920-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Associação Portuguesa de Desportos"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio do Canindé"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "São Paulo"
+      },
+      "venueStart" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1956-01-11T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q219098"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1370676"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "35020"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-34.902888888 -8.062888888)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1905-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sport Club do Recife"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Ilha do Retiro"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Recife"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q219120"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q691270"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19728"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-47.051389 -22.913611)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1900-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Associação Atlética Ponte Preta"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Moisés Lucarelli"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Campinas"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q221695"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q655753"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "60540"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-51.194403 -29.973444)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1903-09-15T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Grêmio FBPA"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena do Grêmio"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto Alegre"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q221695"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q655753"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "60540"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-51.194403 -29.973444)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1903-09-15T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Grêmio FBPA"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena do Grêmio"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto Alegre"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q221695"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q655753"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "60540"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-51.194403 -29.973444)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1903-09-15T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Grêmio FBPA"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena do Grêmio"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Porto Alegre"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1088"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "0000FF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "blue"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q270995"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q909851"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "23018"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.917778 -19.908333)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1908-03-25T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube Atlético Mineiro"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Independência"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belo Horizonte"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q270995"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q909851"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "23018"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.917778 -19.908333)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1908-03-25T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube Atlético Mineiro"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Independência"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belo Horizonte"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q270995"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q910370"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "66658"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.970833 -19.865833)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1908-03-25T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube Atlético Mineiro"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Mineirão"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belo Horizonte"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q270995"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q910370"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "66658"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.970833 -19.865833)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1908-03-25T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube Atlético Mineiro"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Mineirão"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belo Horizonte"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q270995"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q97177489"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-44.016111111 -19.930555555)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1908-03-25T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube Atlético Mineiro"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena MRV"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belo Horizonte"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q270995"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q97177489"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-44.016111111 -19.930555555)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1908-03-25T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube Atlético Mineiro"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena MRV"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belo Horizonte"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q274465"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q176157"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "35632"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-38.428117 -12.917926)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1899-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "E.C. Vitória"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Barradão"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Salvador"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q274465"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q176157"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "35632"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-38.428117 -12.917926)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1899-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "E.C. Vitória"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Barradão"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Salvador"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q478317"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1327235"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "34872"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-49.2595 -25.421111)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1909-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Coritiba F.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Couto Pereira"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Curitiba"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q506832"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q606803"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "42372"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-49.276944 -25.448333)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1924-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Club Athletico Paranaense"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena da Baixada"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Curitiba"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q506832"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q606803"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "42372"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-49.276944 -25.448333)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1924-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Club Athletico Paranaense"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena da Baixada"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Curitiba"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q541744"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402133"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "21209"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-46.536936 -22.965414)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1928-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Red Bull Bragantino"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Nabi Abi Chedid"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Bragança Paulista"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q598834"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q219506"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "19300"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-49.3675 -28.684167)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1947-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Criciúma Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Heriberto Hülse"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Criciúma"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q816779"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q924172"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "54084"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-49.233889 -16.698889)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1943-04-06T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Goiás Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Serra Dourada"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Goiânia"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3133"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "00FF00"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "green"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q910453"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3311998"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "30519"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-51.176 -29.162)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-06-29T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Esporte Clube Juventude"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Alfredo Jaconi"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Caxias do Sul"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q910453"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3311998"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "30519"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-51.176 -29.162)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1913-06-29T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Esporte Clube Juventude"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Alfredo Jaconi"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Caxias do Sul"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3133"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "00FF00"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "green"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1052219"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q10277413"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "20600"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-38.536667 -3.745833)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1914-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ceará Sporting Club"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Presidente Vargas"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Fortaleza"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1534448"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402144"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "10000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-49.2625 -16.670833)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1938-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Goiânia Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Olímpico Pedro Ludovico"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Goiânia"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1857213"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1370705"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "53350"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.2325 -18.913889)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1922-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Uberlândia E.C."
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Parque do Sabiá"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Uberlândia"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2035444"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q4788896"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "22400"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.833611 -26.316667)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1976-01-29T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joinville Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Joinville"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joinville"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2035444"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q4788896"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "22400"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.833611 -26.316667)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1976-01-29T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joinville Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Joinville"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joinville"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2035444"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q4788896"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "22400"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.833611 -26.316667)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1976-01-29T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joinville Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Joinville"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joinville"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3142"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FF0000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "red"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2536715"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q14928349"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "22600"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-52.607 -27.1041)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1973-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Associação Chapecoense de Futebol"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Condá"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Chapecó"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3133"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "00FF00"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "green"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2552872"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q4841281"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "17518"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.465833 -1.445)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1905-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube do Remo"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Baenão"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Belém"
+      },
+      "start" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2026-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2857911"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402063"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "20000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.955761 -16.346347)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1946-05-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Anápolis Futebol Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Jonas Duarte"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Anápolis"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2857911"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5402063"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "20000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-48.955584 -16.346499)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1946-05-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Anápolis Futebol Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio Jonas Duarte"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Anápolis"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2945011"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q641448"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "42968"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-56.1216 -15.604)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "2001-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Cuiabá Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Arena Pantaloneta"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Cuiabá"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2946171"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q18476082"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-47.97075 -15.82668)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1968-01-01T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Centro de Ensino Unificado de Brasília Esporte Clube"
+      },
+      "venueLabel" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Estadio Edson Arantes do Nascimento"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Brasília"
+      },
+      "dissolved" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1976-01-01T00:00:00Z"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5014111"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q721419"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "25000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.228252777 -22.890916666)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1898-08-21T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "CR Vasco da Gama"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio São Januário"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio de Janeiro"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23445"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "000000"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "black"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5014111"
+      },
+      "venue" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q721419"
+      },
+      "cap" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#decimal",
+        "type" : "literal",
+        "value" : "25000"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(-43.228252777 -22.890916666)"
+      },
+      "inception" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#dateTime",
+        "type" : "literal",
+        "value" : "1898-08-21T00:00:00Z"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "CR Vasco da Gama"
+      },
+      "venueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Estádio São Januário"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio de Janeiro"
+      },
+      "color" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q23444"
+      },
+      "hex" : {
+        "type" : "literal",
+        "value" : "FFFFFF"
+      },
+      "colorLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "white"
+      }
+    }, {
+      "club" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5136515"
+      },
+      "clubLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Clube de Regatas do Flamengo"
+      },
+      "cityLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rio de Janeiro"
+      }
+    } ]
+  }
+}

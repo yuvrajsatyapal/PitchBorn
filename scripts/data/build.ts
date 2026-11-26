@@ -43,7 +43,7 @@ const readJson = <T>(p: string): T => JSON.parse(readFileSync(p, "utf8")) as T;
 const overrides = readJson<Overrides>(join(ROOT, "data", "curated", "overrides.json"));
 const countries = readJson<{ countries: Country[] }>(join(ROOT, "data", "curated", "countries.json")).countries;
 
-const RESERVE_RE = /(\bB$|\bII$|Atl[eè]tic$|U-?2[13]$|Next Gen|Promesas|Mestalla|Castilla|Deportivo Fabril|\bC$)/i;
+const RESERVE_RE = /(\bReserves?\b|\bAcademy$|^Jong |\bSub-?2[0-3]\b|\bU-?19$|\bB$|\bII$|Atl[eè]tic$|U-?2[13]$|Next Gen|Promesas|Mestalla|Castilla|Deportivo Fabril|\bC$)/i;
 const report: string[] = [];
 const log = (s: string) => {
   report.push(s);
@@ -51,10 +51,15 @@ const log = (s: string) => {
 
 // ---------------------------------------------------------------- Wikidata
 const candidates = new Map<string, WikidataClub[]>();
+/** Leagues with a curated roster (data/curated/rosters.json → wikidata/roster-<id>.json) ignore Wikidata membership. */
+const rosterForced = new Map<string, string>();
 for (const league of LEAGUE_SOURCES) {
-  const file = join(RAW, "wikidata", `clubs-${league.id}.json`);
+  const rosterFile = join(RAW, "wikidata", `roster-${league.id}.json`);
+  const roster = existsSync(rosterFile);
+  const file = roster ? rosterFile : join(RAW, "wikidata", `clubs-${league.id}.json`);
   const raw = readJson<{ results: { bindings: [] } }>(file);
   for (const club of reduceWikidata(league.id, raw.results.bindings)) {
+    if (roster) rosterForced.set(club.qid, league.id);
     const list = candidates.get(club.qid) ?? [];
     list.push(club);
     candidates.set(club.qid, list);
@@ -80,13 +85,19 @@ for (const [qid, list] of candidates) {
     log(`- excluded reserve team ${label} (${qid})`);
     continue;
   }
-  const forced = overrides.assign[qid];
+  const forced = overrides.assign[qid] ?? rosterForced.get(qid);
   let chosen: WikidataClub | undefined;
   if (forced) chosen = list.find((c) => c.leagueId === forced) ?? { ...list[0], leagueId: forced };
   else {
     chosen = [...list].sort(
       (a, b) => (b.membershipStart ?? "").localeCompare(a.membershipStart ?? "") || tierOf(a.leagueId) - tierOf(b.leagueId),
     )[0];
+  }
+  // A roster league only takes its roster: stale members it still lists stay out of it.
+  if (!forced && existsSync(join(RAW, "wikidata", `roster-${chosen.leagueId}.json`))) {
+    const other = list.find((c) => !existsSync(join(RAW, "wikidata", `roster-${c.leagueId}.json`)));
+    if (!other) continue;
+    chosen = other;
   }
   assigned.set(qid, chosen);
 }
@@ -101,7 +112,7 @@ for (const c of assigned.values()) {
 const sortedLeagues = [...LEAGUE_SOURCES].sort((a, b) => a.countryCode.localeCompare(b.countryCode) || a.tier - b.tier);
 for (const league of sortedLeagues) {
   const list = byLeague.get(league.id) ?? [];
-  const forcedHere = (c: WikidataClub) => overrides.assign[c.qid] === league.id;
+  const forcedHere = (c: WikidataClub) => (overrides.assign[c.qid] ?? rosterForced.get(c.qid)) === league.id;
   list.sort(
     (a, b) =>
       Number(forcedHere(b)) - Number(forcedHere(a)) ||
@@ -190,7 +201,10 @@ for (const league of LEAGUE_SOURCES) {
     const shortAlias = (of?.aliases ?? [])
       .filter((a) => a.length >= 4 && a.length <= 14 && !a.includes(".") && !/\b(FC|CF|AFC|Football|Club)\b/.test(a))
       .sort((a, b) => b.length - a.length)[0];
-    const shortName = ov.shortName ?? (stripped.length <= 16 ? stripped : shortAlias ?? stripped.split(" ").slice(0, 2).join(" "));
+    const twoWords = stripped.split(" ").slice(0, 2);
+    // "Académico de Viseu" must not become "Académico de": end on a real word.
+    const clipped = /^(de|do|da|dos|das|del|y|e|of)$/i.test(twoWords[1] ?? "") ? stripped.split(" ").slice(-1)[0] : twoWords.join(" ");
+    const shortName = ov.shortName ?? (stripped.length <= 16 ? stripped : shortAlias ?? clipped);
     const abbrSet = takenAbbr.get(league.countryCode) ?? new Set<string>();
     takenAbbr.set(league.countryCode, abbrSet);
     const wdShort = w.shortNames.find((s) => /^[A-Z]{3}$/.test(s) && !abbrSet.has(s));
@@ -291,7 +305,8 @@ for (const season of FOOTBALL_JSON_SEASONS) {
  */
 const tierBase: Record<number, number> = { 1: 66, 2: 46, 3: 30 };
 /** Pitchborn's editorial view of relative league depth (own values). */
-const LEAGUE_FACTOR: Record<string, number> = { ENG: 1.0, ESP: 0.975, GER: 0.96, ITA: 0.96, FRA: 0.93 };
+const LEAGUE_FACTOR: Record<string, number> = { ENG: 1.0, ESP: 0.975, GER: 0.96, ITA: 0.96, FRA: 0.93, POR: 0.88, NED: 0.87, BRA: 0.88, ARG: 0.84, MEX: 0.8, USA: 0.79 };
+const BIG_FIVE = new Set(["ENG", "ESP", "GER", "ITA", "FRA"]);
 const leagueTierById = new Map(LEAGUE_SOURCES.map((l) => [l.id, l.tier]));
 for (const club of clubs) {
   const tier = leagueTierById.get(club.leagueId) ?? 3;
@@ -313,6 +328,11 @@ for (const club of clubs) {
   const histWeight = Math.min(0.85, 0.35 + results.length * 0.1);
   const base = (tierBase[tier] ?? 25) + 10 + capScore * 0.6;
   let prestige = (hist * histWeight + base * (1 - histWeight)) * (LEAGUE_FACTOR[club.countryCode] ?? 0.9);
+  // Leagues added after the big five often have no historical tables in the sources; there the stadium is the best
+  // signal of a club's size (Maracanã, Monumental, Bombonera), so it spreads the clubs instead of leaving them level.
+  if (!results.length && !BIG_FIVE.has(club.countryCode)) {
+    prestige = ((tierBase[tier] ?? 25) + 8 + (capScore - 15) * 1.8) * (LEAGUE_FACTOR[club.countryCode] ?? 0.9);
+  }
   // A club in a lower tier cannot be more prestigious than the tier allows.
   const cap = tier === 1 ? 99 : tier === 2 ? 78 : 60;
   prestige = Math.max(8, Math.min(cap, prestige));
@@ -330,8 +350,9 @@ const leagues: League[] = LEAGUE_SOURCES.map((l) => {
     countryCode: l.countryCode,
     tier: l.tier,
     size: Math.min(l.size, (byLeague.get(l.id) ?? []).length),
-    promoted: l.tier === 1 ? 0 : 3,
-    relegated: below ? 3 : 3,
+    // Closed systems (MLS, Liga MX) neither promote into nor relegate out of the top flight.
+    promoted: l.tier === 1 || l.closed ? 0 : 3,
+    relegated: below ? (below.closed ? 0 : 3) : l.closed ? 0 : 3,
     abstraction: Boolean(l.abstraction),
   };
 });

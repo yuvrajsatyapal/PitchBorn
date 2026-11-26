@@ -12,7 +12,7 @@ Read this first after any context reset. Keep it short and current.
 - Design: neo-retro — cream paper, ink outlines, hard offset shadows, chunky display type, pixel scoreboard font (inspired by huggaplanet.com / riddlebox / shoppu.mochi).
 
 ## Status
-- [x] Scaffold, deps, data pipeline, world.json (15 leagues, 3 tiers × 5 countries, 300 clubs, 44 historical seasons)
+- [x] Scaffold, deps, data pipeline, world.json (26 leagues in 11 countries, 504 clubs, 56 historical seasons; see DATA_PIPELINE.md)
 - [x] Engine core (rng, types, generation, match engine, season/advance) — src/engine/**
 - [x] Career systems (dev, training, transfers, contracts, injuries, national, awards, events, legacy, autopilot)
 - [x] Persistence (codec, Dexie db, migrations, import/export) — src/persistence/**
@@ -66,6 +66,14 @@ All optional on `UserCareer` / `Fixture` / `MatchConditions`, no schema bump: `s
 own penalties and free kicks are `setpiece` decisions. Sound is client-only (`src/audio/sound.ts`, localStorage key
 `pitchborn:sound`). The managed club is skipped by `runAiTransfers`. Details: `CAREER_SYSTEMS.md` §14–19, `WEATHER.md` V2,
 `SIMULATION.md` balance pass.
+
+## Bigger world (Nov 2026)
+Portugal, Netherlands, Brazil, Argentina, US and Mexico joined the big five. The new-career screen picks the world size
+(full, Europe, Americas, big five) into `settings.countries`; saves from before are pinned to the countries they already
+simulate on load (`pinWorldCountries` in `persistence/migrations.ts`). Continental places come from `CONTINENTAL_SLOTS`
+(`competitions/setup.ts`): Champions Cup and Continental Cup for Europe, the Americas Cup (`acup-`) for BRA/ARG/MEX/USA.
+Closed leagues (`promoted`/`relegated` 0) skip the rollover move. Full world ≈ 420 ms a simulated week in Node, big five ≈ 300
+(`npx tsx scripts/sim/world-check.ts`).
 
 ## Known issues / TODO
 - 9+ goal games ~0.5% (acceptable)

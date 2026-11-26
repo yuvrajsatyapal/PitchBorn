@@ -87,6 +87,7 @@ export default function Stats() {
     if (key.startsWith("cup-")) return fallback.startsWith("cup-") ? "Domestic cup" : fallback;
     if (key.startsWith("ccup")) return "Champions Cup";
     if (key.startsWith("ecup")) return "Continental Cup";
+    if (key.startsWith("acup")) return "Americas Cup";
     if (key.startsWith("intl")) return "International matches";
     if (key.startsWith("world")) return "World Championship";
     if (key.startsWith("euro")) return "European Nations Championship";

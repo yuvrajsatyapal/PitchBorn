@@ -10,7 +10,7 @@ import { PublicHeader } from "@/components/app/PublicHeader";
 import { LoadingScreen } from "@/components/app/GameShell";
 import { Badge, Button, Card, Tabs } from "@/components/ui";
 import { NAME_POOLS } from "@/engine/data/names";
-import { WORLD, country, stadium } from "@/engine/data/world";
+import { LEAGUE_COUNTRIES, WORLD, country, stadium } from "@/engine/data/world";
 import { POSITION_LABEL } from "@/engine/players/attributes";
 import { NO_FOCUS, focusFor, focusOptions } from "@/engine/players/focus";
 import { POSITIONS, type Appearance, type Position } from "@/engine/types";
@@ -19,7 +19,15 @@ import { useGame } from "@/game/store";
 import { ChallengePicker, type ChallengePick } from "@/components/game/ChallengePicker";
 
 const STEPS = ["Identity", "Player", "Playstyle", "Path & club", "Confirm"];
-const LEAGUE_COUNTRIES = ["ENG", "ESP", "GER", "ITA", "FRA"];
+const CLASSIC = ["ENG", "ESP", "GER", "ITA", "FRA"];
+const AMERICAS = ["BRA", "ARG", "MEX", "USA"];
+/** Bigger worlds cost more per simulated week; the choice is fixed for the save. */
+const WORLD_SIZES = [
+  { id: "full", label: "Full world", countries: LEAGUE_COUNTRIES, hint: "Every league. Most transfer paths; weeks sim a little slower." },
+  { id: "europe", label: "Europe", countries: LEAGUE_COUNTRIES.filter((c) => !AMERICAS.includes(c)), hint: "The seven European leagues." },
+  { id: "americas", label: "Americas", countries: LEAGUE_COUNTRIES.filter((c) => AMERICAS.includes(c)), hint: "Brazil, Argentina, Mexico and the US, with the Americas Cup." },
+  { id: "classic", label: "Big five", countries: CLASSIC, hint: "England, Spain, Germany, Italy and France. Fastest." },
+] as const;
 
 function pick<T>(xs: T[]): T {
   return xs[Math.floor(Math.random() * xs.length)];
@@ -44,6 +52,7 @@ export default function NewCareer() {
   const [clubCountry, setClubCountry] = useState("ENG");
   const [tier, setTier] = useState(2);
   const [clubId, setClub] = useState<string>("");
+  const [worldSize, setWorldSize] = useState<(typeof WORLD_SIZES)[number]["id"]>("full");
   const [difficulty, setDiff] = useState<"relaxed" | "standard" | "hardcore">("standard");
   const [err, setErr] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<ChallengePick | null>(null);
@@ -64,11 +73,24 @@ export default function NewCareer() {
   };
   const canNext = step === 0 ? firstName.trim().length >= 2 && lastName.trim().length >= 2 : step === 3 ? !!clubId : true;
 
+  const worldCountries = [...(WORLD_SIZES.find((w) => w.id === worldSize)?.countries ?? LEAGUE_COUNTRIES)];
+  const clubCountries = LEAGUE_COUNTRIES.filter((c) => worldCountries.includes(c));
+  const chooseCountry = (c: string) => {
+    setClubCountry(c);
+    setClub("");
+    const tiers = WORLD.leagues.filter((l) => l.countryCode === c).map((l) => l.tier);
+    if (!tiers.includes(tier)) setTier(Math.max(...tiers));
+  };
+  const chooseWorld = (id: (typeof WORLD_SIZES)[number]["id"]) => {
+    setWorldSize(id);
+    const list = WORLD_SIZES.find((w) => w.id === id)?.countries ?? LEAGUE_COUNTRIES;
+    if (!list.includes(clubCountry)) chooseCountry(list[0]);
+  };
   const start = async () => {
     setErr(null);
     setStarting(true);
     try {
-      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty, ...(challenge ? { challenge: { id: challenge.id, weekly: challenge.weekly }, ...(challenge.seed ? { seed: challenge.seed } : {}) } : {}) });
+      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty, countries: worldCountries, ...(challenge ? { challenge: { id: challenge.id, weekly: challenge.weekly }, ...(challenge.seed ? { seed: challenge.seed } : {}) } : {}) });
       router.push("/play");
     } catch (e) {
       setStarting(false);
@@ -230,7 +252,10 @@ export default function NewCareer() {
               <Tabs value={difficulty} onChange={setDiff} items={[{ id: "relaxed", label: "Easy" }, { id: "standard", label: "Medium" }, { id: "hardcore", label: "Hard" }]} />
             </Card>
             <Card title="Choose your first club">
-              <Tabs value={clubCountry} onChange={(c) => (setClubCountry(c), setClub(""))} items={LEAGUE_COUNTRIES.map((c) => ({ id: c, label: <span className="flex items-center gap-1.5"><Flag code={c} />{country(c)?.name}</span> }))} />
+              <div className="text-sm font-bold">World</div>
+              <Tabs value={worldSize} onChange={chooseWorld} items={WORLD_SIZES.map((w) => ({ id: w.id, label: w.label }))} />
+              <p className="mb-3 text-xs text-muted">{WORLD_SIZES.find((w) => w.id === worldSize)?.hint}</p>
+              <Tabs value={clubCountry} onChange={chooseCountry} items={clubCountries.map((c) => ({ id: c, label: <span className="flex items-center gap-1.5"><Flag code={c} />{country(c)?.name}</span> }))} />
               <Tabs
                 className="mt-2"
                 value={String(tier)}

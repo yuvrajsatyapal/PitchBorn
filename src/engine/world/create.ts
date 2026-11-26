@@ -386,7 +386,7 @@ export function createWorld(input: NewCareerInput): GameState {
     records: [],
     legends: [],
     transferLog: [],
-    settings: { difficulty: input.difficulty ?? "standard", autoSave: true, countries: input.countries },
+    settings: { difficulty: input.difficulty ?? "standard", autoSave: true, countries: input.countries?.length ? input.countries : undefined },
     pending: [],
   };
 

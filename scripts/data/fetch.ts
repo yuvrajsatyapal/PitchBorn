@@ -17,6 +17,12 @@ import {
 } from "./sources";
 
 const RAW_DIR = join(process.cwd(), "data", "raw");
+/** `--leagues=por-1,ned-1` limits league/OpenFootball fetching to those leagues (and their countries). */
+const ONLY = process.argv.find((a) => a.startsWith("--leagues="))?.split("=")[1]?.split(",");
+const LEAGUES = ONLY ? LEAGUE_SOURCES.filter((l) => ONLY.includes(l.id)) : LEAGUE_SOURCES;
+const ONLY_COUNTRIES = new Set(LEAGUES.map((l) => l.countryCode));
+/** Wikidata Query Service throttles hard during outages; WD_DELAY_MS=61000 keeps under 1 request a minute. */
+const WD_DELAY = Number(process.env.WD_DELAY_MS ?? 1200);
 
 async function save(rel: string, body: string) {
   const path = join(RAW_DIR, rel);
@@ -28,8 +34,8 @@ async function save(rel: string, body: string) {
 async function fetchText(url: string, init?: RequestInit, attempt = 1): Promise<string> {
   const res = await fetch(url, { ...init, headers: { "User-Agent": USER_AGENT, ...(init?.headers ?? {}) } });
   if (!res.ok) {
-    if (attempt < 4 && (res.status === 429 || res.status >= 500)) {
-      await new Promise((r) => setTimeout(r, 2000 * attempt));
+    if (attempt < 6 && (res.status === 429 || res.status >= 500)) {
+      await new Promise((r) => setTimeout(r, Math.max(2000 * attempt, res.status === 429 ? 65000 : 0)));
       return fetchText(url, init, attempt + 1);
     }
     throw new Error(`${res.status} ${res.statusText} for ${url}`);
@@ -38,12 +44,16 @@ async function fetchText(url: string, init?: RequestInit, attempt = 1): Promise<
 }
 
 function clubQuery(leagueQid: string): string {
-  return `
-SELECT ?club ?clubLabel ?start ?venue ?venueLabel ?venueStart ?venueEnd ?cap ?inception ?color ?colorLabel ?hex ?short ?cityLabel ?coord ?dissolved WHERE {
-  ?club p:P118 ?st . ?st ps:P118 wd:${leagueQid} .
+  return clubFields(`?club p:P118 ?st . ?st ps:P118 wd:${leagueQid} .
   FILTER NOT EXISTS { ?st pq:P582 ?end }
   OPTIONAL { ?st pq:P580 ?start }
-  ?club wdt:P31/wdt:P279* wd:Q476028 .
+  ?club wdt:P31/wdt:P279* wd:Q476028 .`);
+}
+
+function clubFields(membership: string, extraVars = ""): string {
+  return `
+SELECT ${extraVars}?club ?clubLabel ?start ?venue ?venueLabel ?venueStart ?venueEnd ?cap ?inception ?color ?colorLabel ?hex ?short ?cityLabel ?coord ?dissolved WHERE {
+  ${membership}
   OPTIONAL {
     ?club p:P115 ?vs . ?vs ps:P115 ?venue .
     OPTIONAL { ?vs pq:P580 ?venueStart }
@@ -62,12 +72,12 @@ SELECT ?club ?clubLabel ?start ?venue ?venueLabel ?venueStart ?venueEnd ?cap ?in
 
 async function fetchWikidata() {
   console.log("Wikidata clubs per league…");
-  for (const league of LEAGUE_SOURCES) {
+  for (const league of LEAGUES) {
     const body = await fetchText(`${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(clubQuery(league.wikidata))}`, {
       headers: { Accept: "application/sparql-results+json" },
     });
     await save(`wikidata/clubs-${league.id}.json`, body);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, WD_DELAY));
   }
 }
 
@@ -96,7 +106,7 @@ async function fetchManagers() {
     const q = `SELECT ?team ?coach ?coachLabel ?coachTitle ?start ?citLabel WHERE { VALUES ?team { ${values} } ${coachFields} }`;
     const body = await fetchText(`${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(q)}`, { headers: { Accept: "application/sparql-results+json" } });
     bindings.push(...(JSON.parse(body) as { results: { bindings: unknown[] } }).results.bindings);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, WD_DELAY));
   }
   await save("wikidata/managers-clubs.json", JSON.stringify({ results: { bindings } }));
 
@@ -114,14 +124,19 @@ async function fetchManagers() {
 async function fetchOpenFootballClubs() {
   console.log("OpenFootball clubs…");
   for (const [country, path] of Object.entries(OPENFOOTBALL_CLUB_FILES)) {
-    const body = await fetchText(`https://raw.githubusercontent.com/openfootball/clubs/master/${path}`);
+    if (!ONLY_COUNTRIES.has(country)) continue;
+    const body = await fetchText(`https://raw.githubusercontent.com/openfootball/clubs/master/${path}`).catch((err: Error) => {
+      console.warn(`  skipped clubs ${country}: ${err.message}`);
+      return null;
+    });
+    if (body === null) continue;
     await save(`openfootball/clubs/${country}.txt`, body);
   }
 }
 
 async function fetchFootballJson() {
   console.log("OpenFootball football.json historical results…");
-  const codes = LEAGUE_SOURCES.flatMap((l) => (l.footballJson ? [l.footballJson] : []));
+  const codes = LEAGUES.flatMap((l) => (l.footballJson ? [l.footballJson] : []));
   for (const season of FOOTBALL_JSON_SEASONS) {
     for (const code of codes) {
       try {
@@ -134,7 +149,34 @@ async function fetchFootballJson() {
   }
 }
 
+/**
+ * Curated rosters (data/curated/rosters.json): English Wikipedia titles → Wikidata items → the same club fields as the
+ * league query. Saved as wikidata/roster-<league>.json in the league query's format so the build reads them the same way.
+ */
+async function fetchRosters() {
+  console.log("Wikidata curated rosters…");
+  const rosters = JSON.parse(await readFile(join(process.cwd(), "data", "curated", "rosters.json"), "utf8")) as Record<string, string[] | string>;
+  const titles = Object.entries(rosters).filter(([k]) => !k.startsWith("_")).flatMap(([, v]) => (v as string[]).flatMap((t) => t.split("|")));
+  const values = titles.map((t) => `"${t.replace(/"/g, '\\"')}"@en`).join(" ");
+  const q = clubFields(`VALUES ?title { ${values} } ?article schema:name ?title ; schema:isPartOf <https://en.wikipedia.org/> ; schema:about ?club .`, "?title ");
+  const body = await fetchText(`${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(q)}`, { headers: { Accept: "application/sparql-results+json" } });
+  const all = JSON.parse(body) as { head: unknown; results: { bindings: { title?: { value: string } }[] } };
+  for (const [league, list] of Object.entries(rosters)) {
+    if (league.startsWith("_")) continue;
+    const want = new Set((list as string[]).flatMap((t) => t.split("|")));
+    const bindings = all.results.bindings.filter((b) => b.title && want.has(b.title.value));
+    const found = new Set(bindings.map((b) => b.title?.value));
+    const missing = (list as string[]).filter((t) => !t.split("|").some((x) => found.has(x)));
+    if (missing.length) console.warn(`  ${league}: no Wikidata item for ${missing.join(", ")}`);
+    await save(`wikidata/roster-${league}.json`, JSON.stringify({ head: all.head, results: { bindings } }));
+  }
+}
+
 async function main() {
+  if (process.argv.includes("--rosters")) {
+    await fetchRosters();
+    return;
+  }
   if (process.argv.includes("--managers-only")) {
     await fetchManagers();
     return;
