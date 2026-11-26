@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSuppressAds } from "@/ads/AdContext";
 import { Crest } from "@/components/art/Crest";
 import { Commentary, SpeedControl } from "@/components/game/match/Commentary";
@@ -11,7 +11,7 @@ import { YouCard } from "@/components/game/match/YouCard";
 import { Button, Card, Tabs } from "@/components/ui";
 import type { PreparedMatch } from "@/engine/season/matchday";
 import type { MatchEvent } from "@/engine/match/engine";
-import { cardSting, goalSting, nearMiss, onSoundChange, startCrowd, stopCrowd, whistle } from "@/audio/sound";
+import { cardSting, finalWhistleCrowd, goalSting, nearMiss, onSoundChange, startCrowd, stopCrowd, whistle } from "@/audio/sound";
 import { SoundToggle } from "@/components/game/SoundToggle";
 import { teamLabel } from "@/game/selectors";
 import { useGame } from "@/game/store";
@@ -20,12 +20,17 @@ import { ConditionsChip } from "@/components/game/Conditions";
 type Pane = "commentary" | "stats";
 
 /** The sounds for a batch of match events. */
-function playEvents(evs: MatchEvent[], userSide: "home" | "away" | null) {
+function playEvents(evs: MatchEvent[], userSide: "home" | "away" | null, clubs?: { home: string; away: string }) {
   for (const e of evs) {
     if (e.type === "kickoff") whistle("short");
     else if (e.type === "halftime" || e.type === "extratime") whistle("long");
-    else if (e.type === "fulltime") whistle("triple");
-    else if (e.type === "goal") goalSting(!userSide || e.side === userSide);
+    else if (e.type === "fulltime") {
+      whistle("triple");
+      if (userSide && e.score) {
+        const [mine, theirs] = userSide === "home" ? e.score : [e.score[1], e.score[0]];
+        setTimeout(() => finalWhistleCrowd(mine > theirs ? "win" : mine === theirs ? "draw" : "loss"), 1600);
+      }
+    } else if (e.type === "goal") goalSting(!userSide || e.side === userSide, clubs && e.side ? clubs[e.side] : undefined);
     else if (e.type === "woodwork" || (e.type === "save" && e.big) || (e.type === "miss" && e.big)) nearMiss();
     else if (e.type === "yellow" || e.type === "red") cardSting(e.type === "red");
     else if (e.type === "foul" || e.type === "penalty") whistle("short");
@@ -46,28 +51,34 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
   const players = game?.players;
   const compKind = game?.competitions[prepared.fixture.compId]?.kind;
   const clubGame = compKind !== "international" && compKind !== "friendly";
+  // Club chants only (national teams have anthems, not terrace songs); neutral venues have no home end.
+  const fx = prepared.fixture;
+  const chantClubs = useMemo(() => (clubGame ? { home: fx.home, away: fx.away } : undefined), [clubGame, fx.home, fx.away]);
+  const crowdOpts = { away: prepared.userSide === "away" && !fx.neutral, homeClub: chantClubs && !fx.neutral ? fx.home : undefined, awayClub: chantClubs?.away };
+  const crowdKey = JSON.stringify(crowdOpts);
 
   const tick = useCallback(() => {
     if (eng.finished || eng.pending) return;
     const evs = eng.step();
-    playEvents(evs, prepared.userSide);
+    playEvents(evs, prepared.userSide, chantClubs);
     if (evs.some((e) => e.type === "goal")) {
       setFlash(true);
       setTimeout(() => setFlash(false), 700);
     }
     force((x) => x + 1);
-  }, [eng, prepared.userSide]);
+  }, [eng, prepared.userSide, chantClubs]);
 
   // Crowd noise for as long as the match screen is open (when sound is on).
   useEffect(() => {
-    startCrowd();
+    const opts = JSON.parse(crowdKey);
+    startCrowd(0.25, opts);
     if (eng.minute === 0) whistle("short");
-    const off = onSoundChange((on) => (on ? startCrowd() : stopCrowd()));
+    const off = onSoundChange((on) => (on ? startCrowd(0.25, opts) : stopCrowd()));
     return () => {
       off();
       stopCrowd();
     };
-  }, [eng]);
+  }, [eng, crowdKey]);
 
   const paused = !!eng.pending;
   useEffect(() => {
@@ -132,7 +143,7 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
       <DecisionCard
         eng={eng}
         onResolve={(id) => {
-          playEvents(eng.resolve(id), prepared.userSide);
+          playEvents(eng.resolve(id), prepared.userSide, chantClubs);
           force((x) => x + 1);
         }}
       />
