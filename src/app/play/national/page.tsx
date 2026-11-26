@@ -74,11 +74,11 @@ export default function National() {
                 {squad.map((x) => (
                   <tr key={x.id} className={`cursor-pointer ${x.isUser ? "bg-sun-2 font-bold" : ""}`} onClick={() => setSel(x)}>
                     <td><span className={`rounded-md border-2 border-line px-1 text-xs font-black ${POS_TONE[x.position]}`}>{x.position}</span></td>
-                    <td>{name(x)}</td>
-                    <td><span className="flex items-center gap-1.5 text-xs"><Crest clubId={x.clubId} size={16} /> {x.clubId ? teamLabel(x.clubId, true) : "Abroad"}</span></td>
+                    <td><span className="block max-w-[8rem] truncate sm:max-w-none">{name(x)}</span></td>
+                    <td><span className="flex items-center gap-1.5 text-xs"><Crest clubId={x.clubId} size={16} /> <span className="hidden sm:inline">{x.clubId ? teamLabel(x.clubId, true) : "Abroad"}</span></span></td>
                     <td className="text-right">{age(g, x)}</td>
                     <td className="text-right font-bold">{ovr(x)}</td>
-                    <td className="text-right text-xs">{x.intl.caps} caps</td>
+                    <td className="text-right text-xs">{x.intl.caps}<span className="hidden sm:inline"> caps</span></td>
                   </tr>
                 ))}
               </tbody>

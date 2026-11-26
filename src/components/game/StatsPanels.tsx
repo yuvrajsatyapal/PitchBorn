@@ -292,14 +292,14 @@ function SplitTable({ title, rows }: { title: string; rows: SplitRow[] }) {
       {rows.length ? (
         <Table>
           <thead>
-            <tr><th /><th className="text-right">Apps</th><th className="text-right">Mins</th><th className="text-right">G</th><th className="text-right">A</th><th className="text-right">Avg</th></tr>
+            <tr><th /><th className="text-right">Apps</th><th className="hidden text-right sm:table-cell">Mins</th><th className="text-right">G</th><th className="text-right">A</th><th className="text-right">Avg</th></tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.key}>
                 <td>{r.label}</td>
                 <td className="text-right tabular-nums">{r.apps}</td>
-                <td className="text-right tabular-nums">{r.minutes}</td>
+                <td className="hidden text-right tabular-nums sm:table-cell">{r.minutes}</td>
                 <td className="text-right font-bold tabular-nums">{r.goals}</td>
                 <td className="text-right tabular-nums">{r.assists}</td>
                 <td className="text-right tabular-nums">{r.avg.toFixed(2)}</td>

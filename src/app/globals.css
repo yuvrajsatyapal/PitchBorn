@@ -176,6 +176,15 @@ body::before {
 /* Accent colours used as text get their darker, readable versions (fills keep the bright ones). */
 .text-pitch { color: var(--pitch-ink); }
 .text-coral { color: var(--coral-ink); }
+/* A wide table that scrolls sideways shows a soft shadow at the edge that has more to see (the shadows scroll away). */
+.pb-scroll-x {
+  background:
+    linear-gradient(to right, var(--card) 30%, transparent) left / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--card) 30%, transparent) right / 2.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(27 23 18 / 0.22), transparent) left / 0.9rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(27 23 18 / 0.22), transparent) right / 0.9rem 100% no-repeat scroll,
+    var(--card);
+}
 .pb-skip { position: absolute; left: 0.75rem; top: -4rem; z-index: 100; border: 2px solid var(--line); border-radius: 999px; background: var(--sun); color: #1b1712; padding: 0.5rem 1rem; font-weight: 800; }
 .pb-skip:focus { top: 0.75rem; }
 

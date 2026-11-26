@@ -259,7 +259,7 @@ export function TimelineRecapCard({ recap, fileStem, notify }: { recap: Recap; f
         height={H}
         className="mx-auto block aspect-[4/5] w-full max-w-sm rounded-2xl border-2 border-line"
         role="img"
-        aria-label={`Career timeline of ${recap.name}: ${recap.frames.length} seasons, ${recap.totals.apps} appearances, ${recap.totals.goals} goals, ${recap.totals.trophies} trophies.`}
+        aria-label={`Career timeline of ${recap.name}: ${recap.frames.length} season${recap.frames.length === 1 ? "" : "s"}, ${recap.totals.apps} appearance${recap.totals.apps === 1 ? "" : "s"}, ${recap.totals.goals} goal${recap.totals.goals === 1 ? "" : "s"}, ${recap.totals.trophies} troph${recap.totals.trophies === 1 ? "y" : "ies"}.`}
       />
       <div className="mt-3 flex flex-wrap justify-center gap-2">
         <Button tone="sun" onClick={saveVideo} disabled={!canVideo || recording || !recap.frames.length}>

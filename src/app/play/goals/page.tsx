@@ -21,7 +21,7 @@ export default function GoalsPage() {
   const cel = cosmeticDef(c.equipped.celebration);
   return (
     <div className="grid gap-4">
-      <PageTitle kicker="Retention" title="Goals & Kit Room">
+      <PageTitle kicker="Rewards" title="Goals & Kit Room">
         Three small goals at a time. Each one you finish unlocks boots, a kit colour or a goal celebration.
       </PageTitle>
       <div className="grid gap-4 lg:grid-cols-[1fr_1.3fr]">

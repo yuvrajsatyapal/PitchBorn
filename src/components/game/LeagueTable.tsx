@@ -32,7 +32,9 @@ export function LeagueTable({ rows, highlight, promo = 0, releg = 0, continental
               <td className={zone}>{pos}</td>
               <td>
                 <span className="flex items-center gap-2">
-                  <Crest clubId={r.team} size={20} /> {teamLabel(r.team)}
+                  <Crest clubId={r.team} size={20} />
+                  <span className="max-w-[8.5rem] truncate sm:hidden">{teamLabel(r.team, true)}</span>
+                  <span className="hidden sm:inline">{teamLabel(r.team)}</span>
                   {move > 0 && <span className="text-[11px] font-black text-pitch" title={`Up ${move} from last round`}>▲{move}</span>}
                   {move < 0 && <span className="text-[11px] font-black text-coral" title={`Down ${-move} from last round`}>▼{-move}</span>}
                   {prev !== undefined && move === 0 && <span className="text-[11px] text-muted">–</span>}

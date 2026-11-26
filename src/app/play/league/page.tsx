@@ -118,9 +118,9 @@ export default function Competitions() {
                     <tr key={x.id} className={x.isUser ? "bg-sun-2 font-bold" : ""}>
                       <td className="w-6">{i + 1}</td>
                       <td>
-                        <span className="flex items-center gap-1.5"><Flag code={x.nationality} /> {name(x)}</span>
+                        <span className="flex items-center gap-1.5"><Flag code={x.nationality} /> <span className="max-w-[10rem] truncate sm:max-w-none">{name(x)}</span></span>
                       </td>
-                      <td><span className="flex items-center gap-1.5"><Crest clubId={x.clubId} size={16} /> {teamLabel(x.clubId ?? "", true)}</span></td>
+                      <td><span className="flex items-center gap-1.5"><Crest clubId={x.clubId} size={16} /> <span className="hidden sm:inline">{teamLabel(x.clubId ?? "", true)}</span></span></td>
                       <td className="text-right font-black">{x.season[comp!.id]?.[leaderStat]}</td>
                     </tr>
                   ))}

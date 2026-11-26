@@ -123,7 +123,7 @@ export default function ClubPage() {
         <Table>
           <thead>
             <tr>
-              <th className="w-12 text-center">No.</th>
+              <th className="w-8 text-center sm:w-12">No.</th>
               <th>Pos</th>
               <th>Player</th>
               <th className="text-right">Age</th>
@@ -138,12 +138,12 @@ export default function ClubPage() {
             {sorted.map((x) => {
               const s = Object.values(x.season).reduce((a, b) => ({ apps: a.apps + b.apps, goals: a.goals + b.goals }), { apps: 0, goals: 0 });
               return (
-                <tr key={x.id} className={`cursor-pointer ${x.isUser ? "bg-sun-2 font-bold" : ""}`} onClick={() => setSel(x)}>
+                <tr key={x.id} className={`cursor-pointer ${x.isUser ? "bg-sun-2 font-bold" : ""}`} onClick={() => setSel(x)} tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSel(x))} aria-label={`${name(x)}, ${x.position}, overall ${ovr(x)}: open profile`}>
                   <td className="text-center font-black tabular-nums text-muted">{x.squadNo ?? "–"}</td>
                   <td><span className={`rounded-md border-2 border-line px-1 text-xs font-black ${POS_TONE[x.position]}`}>{x.position}</span></td>
                   <td>
                     <span className="flex items-center gap-1.5">
-                      <Flag code={x.nationality} /> {name(x)}
+                      <Flag code={x.nationality} /> <span className="max-w-[6.5rem] truncate sm:max-w-none">{name(x)}</span>
                       {x.injury && <Badge tone="coral">in</Badge>}
                       {club.captain === x.id && <Badge tone="sun">C</Badge>}
                     </span>
