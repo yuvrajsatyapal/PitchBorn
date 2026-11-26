@@ -220,6 +220,7 @@ export function prepareMatch(state: GameState, fixture: Fixture, rng: Rng, opts:
     interactive: opts.interactive,
     // Only the user's matches feel the weather: the rest of the world plays exactly as it always has.
     ...(involvesUserTeam(state, fixture) ? { conditions: conditionsFor(state, fixture) } : {}),
+    ...(opts.detail ? { flavour: { seed: fixture.id, country: comp?.countryCode ?? staticClub(fixture.home)?.countryCode } } : {}),
   };
   const uid = state.user.playerId;
   const inHome = home.starters.some((s) => s.player.id === uid) || home.bench.some((p) => p.id === uid);

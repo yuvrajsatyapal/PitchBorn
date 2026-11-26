@@ -19,6 +19,7 @@ import { clamp, type Rng } from "../rng";
 import type { Attributes, AttrKey, MatchConditions, Position } from "../types";
 import { attrMultipliers, drainMultiplier, weatherFx, type WeatherFx } from "../weather/effects";
 import { halftimeWeatherLine, kickoffWeatherLine } from "../weather/describe";
+import { Commentary } from "./commentary";
 import { ATTR_LABEL } from "../players/model";
 import {
   ATTACK_K, BUILD_W, CARRY_W, CLEAR_WEIGHT, CROSSERS, DEFEND_K, DRIB_MIX, DUEL_MIX, FINAL_W, FINISHERS,
@@ -80,6 +81,8 @@ export interface MatchInput {
   interactive?: boolean;
   /** Weather and pitch (see engine/weather). Absent, or clear on a good pitch, the match plays exactly as without weather. */
   conditions?: MatchConditions;
+  /** Commentary colour for detailed matches: a stable fixture key and the competition's country (no effect on play). */
+  flavour?: { seed: string; country?: string };
 }
 
 export type Side = "home" | "away";
@@ -478,6 +481,7 @@ export class MatchEngine {
   private irng?: Rng;
   /** Wording and rationing of the user's commentary lines: kept off the flow stream so being the user never changes how a match plays. */
   private crng?: Rng;
+  private cm?: Commentary;
   /** The manager's own stream: substitution choices never draw from, or shift, the football's. */
   private srng: Rng;
   private userId: string | undefined;
@@ -497,6 +501,7 @@ export class MatchEngine {
     this.rng = rng;
     this.wx = weatherFx(input.conditions);
     this.srng = rng.fork("subs");
+    if (input.detail) this.cm = new Commentary({ seed: input.flavour?.seed ?? `${input.home.name}-${input.away.name}`, country: input.flavour?.country, conditions: input.conditions });
     if (input.detail || input.interactive) {
       this.irng = rng.fork("flow");
       this.crng = rng.fork("notes");
@@ -745,6 +750,10 @@ export class MatchEngine {
     this.tickEnergy();
     if (this.minute % 6 === 0 || this.minute === 20) this.invalidate();
     this.playPhase();
+    if (this.cm && (this.minute === 25 || this.minute === 70) && !this.pending) {
+      const line = this.cm.ambient(this.minute);
+      if (line) this.log({ minute: this.minute, type: "info", text: line });
+    }
     if (!this.pending) this.afterPhase();
     if (this.irng) this.watch();
     return this.events.slice(before);
@@ -1157,12 +1166,12 @@ export class MatchEngine {
       }
       this.bump(shooter, 0.04, "shot");
       if (this.rng.chance(0.3)) att.corners++;
-      this.log({ minute: this.minute, side: sideTag, type: "save", text: `${desc} — ${keeper ? this.name(keeper) : "the keeper"} saves!`, playerId: shooter.input.id, otherId: keeper?.input.id, user: shooter.input.isUser || keeper?.input.isUser, big: xg >= 0.15 });
+      this.log({ minute: this.minute, side: sideTag, type: "save", text: `${desc} — ${keeper ? this.name(keeper) : "the keeper"} ${this.cm?.save(this.minute) ?? "saves!"}`, playerId: shooter.input.id, otherId: keeper?.input.id, user: shooter.input.isUser || keeper?.input.isUser, big: xg >= 0.15 });
       return;
     }
     const miss = this.rng.next();
     if (miss < 0.06) {
-      this.log({ minute: this.minute, side: sideTag, type: "woodwork", text: `${desc} — off the woodwork!`, playerId: shooter.input.id, user: shooter.input.isUser });
+      this.log({ minute: this.minute, side: sideTag, type: "woodwork", text: `${desc} — ${this.cm?.woodwork(this.minute) ?? "off the woodwork!"}`, playerId: shooter.input.id, user: shooter.input.isUser });
     } else if (miss < 0.4) {
       const blocker = this.pickWeighted(def, DEFEND_WEIGHT, PICK_BLOCK);
       if (blocker) {
@@ -1177,7 +1186,7 @@ export class MatchEngine {
         this.bump(shooter, -0.18, "missed");
         if (shooter.line.inv) shooter.line.inv.errors++;
       }
-      this.log({ minute: this.minute, side: sideTag, type: "miss", text: `${desc} — ${xg > 0.3 ? "a huge chance wasted!" : "wide of the target."}`, playerId: shooter.input.id, user: shooter.input.isUser, big: xg > 0.25 });
+      this.log({ minute: this.minute, side: sideTag, type: "miss", text: `${desc} — ${this.cm?.miss(this.minute, xg > 0.3) ?? (xg > 0.3 ? "a huge chance wasted!" : "wide of the target.")}`, playerId: shooter.input.id, user: shooter.input.isUser, big: xg > 0.25 });
     }
   }
 
@@ -1218,7 +1227,7 @@ export class MatchEngine {
       minute: this.minute,
       side: att.side,
       type: "goal",
-      text: this.input.detail ? `GOAL! ${desc} — ${this.name(shooter)} scores! ${score}` : `${this.name(shooter)} ${score}`,
+      text: this.input.detail ? `GOAL! ${desc} — ${this.name(shooter)} scores! ${score} ${this.cm?.goalCry(this.minute) ?? ""}`.trim() : `${this.name(shooter)} ${score}`,
       playerId: shooter.input.id,
       otherId: creator?.input.id,
       user: shooter.input.isUser || creator?.input.isUser,
