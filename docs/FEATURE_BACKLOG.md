@@ -26,6 +26,14 @@ Ideas for what to add next. Build them only when the owner says to start one.
 - **Season review**: `engine/career/seasonReview.ts`, `/play/review` (§19).
 - **Balance**: fewer second yellows (reds ≈0.13 a match), acceleration and keeper anticipation made measurable (`SIMULATION.md`).
 
+- **Six more countries** (Portugal, Netherlands, Brazil, Argentina, US, Mexico), closed leagues and the Americas Cup (`DATA_PIPELINE.md`).
+- **Youth start at 15**, **generational saves**, **off-pitch drama**, **injury and recovery choices**, **tactical roles**, **transfer
+  drama**, **managed club board** (`CAREER_SYSTEMS.md` §20–26).
+- **Weekly goals and cosmetics**, **share codes and Hall of Fame comparisons**, **timeline export** (§27–29).
+- **Key-moment notes** for weather and fatigue (`match/momentNotes.ts`), **commentary variety** (`match/commentary.ts`), **Sound V2**.
+- **Encyclopedia** (`/help`) and tutorial replay, **accessibility pass**, **mobile table layout**.
+- Not planned: a women's football world.
+
 The numbered list below is the original backlog; the items above are done.
 
 Already in the game: match engine with key moments and substitutions, training, transfers, contracts, loans, national team, awards and the gala, rivalries, memories, legacy, appearance editor, decisions, simulation.

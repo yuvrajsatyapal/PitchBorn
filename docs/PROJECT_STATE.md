@@ -75,6 +75,13 @@ simulate on load (`pinWorldCountries` in `persistence/migrations.ts`). Continent
 Closed leagues (`promoted`/`relegated` 0) skip the rollover move. Full world ≈ 420 ms a simulated week in Node, big five ≈ 300
 (`npx tsx scripts/sim/world-check.ts`).
 
+## Feature batch (Nov 2026)
+All optional on `UserCareer` / `GameState`, no schema bump: `recovery`, `drama`, `tacticalRole`, `leakedSeason/Window`, `youth`,
+`goals`, `cosmetics`, `tipsReplaySeason`, `retireRequested`, `coach.board`, `generation`, `lineage`. Career decisions can carry a
+`handler` (`recovery`, `drama`, `youth`) that `career/events.ts` routes to the owning module. New weekly steps in `advanceTurn`:
+`marketWeekly`, `dramaWeekly`, `youthWeekly` (player), `boardWeekly` (manager), `goalsWeekly` (both). Each module draws from its own
+`Rng.fromSeed(seed:<module>:…)` stream. Details: `CAREER_SYSTEMS.md` §20–29.
+
 ## Known issues / TODO
 - 9+ goal games ~0.5% (acceptable)
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).

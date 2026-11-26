@@ -143,6 +143,62 @@ From the end of the league season through the summer: record, goals, assists, av
 the season's strongest memories, trophies and awards, the club's league finish, and the teammates whose bond moved most
 since the snapshot taken as the season began (`user.chemistrySnap`).
 
+## 20. Injury and recovery choices (`career/recovery.ts`, `BodyReport`)
+Moderate or worse injuries raise a `recovery` decision: rush back (×0.6 weeks, then a re-injury risk ×2.2 for six weeks after the
+return), follow the plan, or rest fully (×1.3, the area counts for less). Serious and severe injuries offer surgery (×1.15, safest)
+or conservative treatment (×0.75, the area stays fragile). A specialist clinic costs three weeks' wages (min €15k) from the bank and
+cuts the time to ×0.7. Every injury to an area adds +18% to the user's injury chance (up to three repeats). A third severe injury
+to one area at 30+ can (45%) bring a career-ending choice; retiring sets `user.retireRequested` and the store retires the player.
+
+## 21. Off-pitch drama (`career/drama.ts`, `DramaCard`)
+One multi-beat story at a time, 7% a week when eligible, ten quiet weeks after each: a contract stand-off in the final year
+(going public costs board, fans and manager standing; the club then blinks with a +15% offer or digs in), dressing-room cliques
+(young guns v senior pros; picking a side moves bonds ±8, bridging works on leadership and teammate standing), a falling-out with
+the manager (apologise, stand firm and risk being frozen out, or go to the board), and a six-week captaincy race against the
+strongest non-captain teammate, decided by form, standing and a campaign. Draws use `seed:drama:` streams.
+
+## 22. Tactical roles (`career/roles.ts`, `TacticalRoleCard`)
+Nineteen roles by position. A role is a `MatchFx` merged into the user's trait fx (preferences in full, effect terms scaled by fit),
+so it changes who shoots, creates and tackles without adding free quality. The manager agrees when `fit/3 + styleMatch×2 +
+(trust−50)/10 ≥ 0` or trust ≥ 70; one request per six weeks. An agreed role adds ±2 selection points from fit and club style.
+
+## 23. Transfer drama (`career/market.ts`)
+During a window a club of similar standing may join an open bid (30% a week) with a 10–25% higher fee and better wages; the first
+club can answer (55%) up to twice. The last week of each window is deadline day: late bids that expire that week. Once a window the
+agent can leak interest: −5 manager; a club that values the player (80%) tables a renewal at least 15% above the current wage.
+
+## 24. Youth start (`career/youth.ts`)
+The `youth` path starts at 15 on a scholarship (a fifth of a prospect's wage, contract to the end of the season he turns 16).
+Development-squad games are youth-league games against U18 opposition until 17. Trial invitations (7% a week, form-weighted, two a
+season) either impress a club or not. At the end of the season he turns 16 the first pro contract is decided: the academy (if it
+rates him), a club that was impressed (compensation paid), or free agency.
+
+## 25. Managed club board (`career/board.ts`, `BoardCard`)
+Objectives each season: finish at or above the expectation, a cup run (quarter-finals in the top flight, round of 16 below), two
+academy debuts, and a wage bill under the cap (58% of revenue a week, never below the inherited bill). Signings over the cap are
+refused. Spring intake day adds two prospects shaped by the academy focus; academy players can be promoted to first-team plans.
+Settled at the season's end (met +4/+8, missed −6, league missed −16); a missed league target with confidence under 25 is a sacking.
+
+## 26. Generational saves (`career/generations.ts`, `NextGenerationCard`)
+After retirement the child takes over the save: same world, the parent's surname and nationality, skin and some features, and up
+to two of the parent's established playing traits (50% each) in their first stage. The parent can be the agent (no fee, no
+commission, skills from the legacy score) or, when managing, the manager at the child's club; the parent's coaching career then
+continues as an AI manager. `state.lineage` keeps each past generation; Hall of Fame ids get a `~g<n>` suffix.
+
+## 27. Weekly goals and cosmetics (`career/goals.ts`, `/play/goals`, `KitRoom`)
+Three goals at a time from eight templates judged on the match log since the goal was set, each with a deadline and a cosmetic
+reward (8 boots, 6 kit colours, 8 celebrations). Unlocks are mirrored to the browser profile (`cosmetics:owned` in the kv store)
+and offered in the appearance editor for new careers. Cosmetics never touch the simulation.
+
+## 28. Share codes and comparisons (`career/shareCode.ts`, `WeeklyLeaderboard`, `HallCompare`)
+Weekly-challenge results encode as `PB-<yyWww>-<challenge>-<W|F|A>-<score base36>-<NAME>-<checksum>`; codes pasted by friends are
+ranked locally (localStorage `pitchborn:weekly-codes`). The weekly challenge always plays the big-five world. The Hall of Fame
+compares two careers, lists all-time records and picks a greatest XI (natural positions first).
+
+## 29. Timeline export (`career/timeline.ts`, `TimelineRecap`)
+One frame per season from the history plus the season in progress, drawn on a 1080×1350 canvas: an animated recap recorded with
+`MediaRecorder` (WebM where supported) or a single poster PNG.
+
 ## Known limitations
 - Hall of Fame entries live in this browser only (they are not part of a save export).
 - Sponsor targets count every competition; there are no competition-specific targets (for example "10 league goals").
