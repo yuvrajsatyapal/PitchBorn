@@ -7,7 +7,7 @@ export default function Privacy() {
   return (
     <div className="min-h-dvh">
       <PublicHeader />
-      <main className="prose-sm mx-auto max-w-3xl px-4">
+      <main id="main" className="prose-sm mx-auto max-w-3xl px-4">
         <h1 className="mb-4 font-display text-4xl">Privacy</h1>
         <div className="pb-card grid gap-3 p-5 text-sm leading-relaxed">
           <p><b>No account, no server.</b> PitchBorn runs entirely in your browser. Your careers are stored locally in IndexedDB on this device and never uploaded by the game.</p>

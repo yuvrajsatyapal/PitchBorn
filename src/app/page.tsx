@@ -23,7 +23,7 @@ export default function Landing() {
   return (
     <div className="min-h-dvh">
       <PublicHeader wide />
-      <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4">
+      <main id="main" className="mx-auto flex max-w-7xl flex-col gap-6 px-4">
         <section aria-labelledby="hero-title" className="grid items-center gap-6 py-2 sm:py-6 lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)] lg:gap-10 xl:gap-12">
           <div>
             <span className="inline-block -rotate-2 rounded-lg border-2 border-line bg-card px-2.5 py-1 text-xs font-black uppercase tracking-widest shadow-[3px_3px_0_var(--shadow)]">

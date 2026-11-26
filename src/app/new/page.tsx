@@ -122,7 +122,7 @@ export default function NewCareer() {
   return (
     <div className="min-h-dvh pb-16">
       <PublicHeader />
-      <main className="mx-auto max-w-4xl px-4">
+      <main id="main" className="mx-auto max-w-4xl px-4">
         <ol className="mb-5 flex flex-wrap gap-2" aria-label="Steps">
           {STEPS.map((s, i) => (
             <li key={s} className={`rounded-full border-2 border-line px-3 py-1 text-sm font-bold ${i === step ? "bg-sun text-[#1b1712]" : i < step ? "bg-pitch-2" : "bg-card text-muted"}`}>

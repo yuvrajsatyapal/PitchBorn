@@ -121,12 +121,28 @@ export function Rating({ v, size = "md" }: { v: number | undefined; size?: "sm" 
 
 export function Tabs<T extends string>({ value, onChange, items, className = "", compact }: { value: T; onChange: (v: T) => void; items: { id: T; label: ReactNode }[]; className?: string; compact?: boolean }) {
   return (
-    <div role="tablist" className={`no-scrollbar flex ${compact ? "gap-1.5" : "gap-2"} overflow-x-auto pb-1 ${className}`}>
+    <div
+      role="tablist"
+      className={`no-scrollbar flex ${compact ? "gap-1.5" : "gap-2"} overflow-x-auto pb-1 ${className}`}
+      onKeyDown={(e) => {
+        // Arrow keys move between tabs, as screen-reader and keyboard users expect from a tab list.
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft" && e.key !== "Home" && e.key !== "End") return;
+        const i = items.findIndex((it) => it.id === value);
+        const n = items.length;
+        const next = e.key === "Home" ? 0 : e.key === "End" ? n - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + n) % n;
+        e.preventDefault();
+        onChange(items[next].id);
+        const tabs = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+        tabs[next]?.focus();
+      }}
+    >
       {items.map((it) => (
         <button
           key={it.id}
           role="tab"
+          type="button"
           aria-selected={value === it.id}
+          tabIndex={value === it.id || (!items.some((x) => x.id === value) && it === items[0]) ? 0 : -1}
           onClick={() => onChange(it.id)}
           className={`shrink-0 rounded-full border-2 border-line ${compact ? "px-2.5 py-1 text-xs" : "px-3.5 py-2 text-sm"} font-bold transition ${value === it.id ? "bg-ink text-paper" : "bg-card hover:bg-paper-2"}`}
         >
@@ -168,10 +184,29 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    // Focus goes into the dialog, Tab stays inside it, and it returns to whatever opened it when it closes.
+    const opener = document.activeElement as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return onClose();
+      if (e.key !== "Tab" || !ref.current) return;
+      const items = [...ref.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     ref.current?.focus();
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      opener?.focus?.();
+    };
   }, [open, onClose]);
   if (!open) return null;
   // Rendered into <body>: inside a parent with backdrop-filter (the sticky top bar) `position: fixed` is relative to

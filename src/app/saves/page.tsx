@@ -32,7 +32,7 @@ export default function SavesPage() {
   return (
     <div className="min-h-dvh">
       <PublicHeader />
-      <main className="mx-auto max-w-4xl px-4">
+      <main id="main" className="mx-auto max-w-4xl px-4">
         <PageTitle kicker="Save management" title="Your careers">
           <Button tone="paper" onClick={() => file.current?.click()}>
             Import save

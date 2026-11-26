@@ -33,6 +33,13 @@ const pct = (r: number) => Math.max(4, Math.min(100, ((r - LO) / (HI - LO)) * 10
  * The match-rating chart, one column per rated game on a fixed 4–10 scale (so 6.0 and 8.5 are clearly different),
  * coloured by band. The column details appear on hover, focus or tap in a reserved strip, so nothing jumps.
  */
+/** What a chart shows, in words, for screen readers. */
+function chartSummary(label: string, matches: ChartMatch[], average?: number): string {
+  const r = matches.map((m) => m.rating);
+  const last = matches[matches.length - 1];
+  return `${label}: ${matches.length} matches, best ${Math.max(...r).toFixed(1)}, lowest ${Math.min(...r).toFixed(1)}${average ? `, average ${average.toFixed(2)}` : ""}${last ? `, latest ${last.rating.toFixed(1)} against ${last.opponent}` : ""}.`;
+}
+
 export function RatingChart({ matches, size = "compact", average, label = "Match ratings", variant = "bars" }: { matches: ChartMatch[]; size?: "compact" | "large"; average?: number; label?: string; variant?: "bars" | "line" }) {
   const [active, setActive] = useState<number | null>(null);
   const h = size === "large" ? 168 : variant === "line" ? 128 : 96;
@@ -54,7 +61,7 @@ export function RatingChart({ matches, size = "compact", average, label = "Match
   if (variant === "line") return <LineChart matches={matches} size={size} average={average} label={label} h={h} active={active} setActive={setActive} cur={cur} shown={shown} />;
   return (
     <div data-testid="rating-chart">
-      <div className="relative" style={{ height: h }} role="group" aria-label={label}>
+      <div className="relative" style={{ height: h }} role="group" aria-label={chartSummary(label, matches, average)}>
         {/* Reference lines: the average display (6.6) and a good one (8). */}
         {[6, 7, 8].map((r) => (
           <div key={r} className="pointer-events-none absolute inset-x-0 flex items-center" style={{ bottom: `${pct(r)}%` }}>
@@ -186,7 +193,7 @@ function LineChart({ matches, size, average, label, h, active, setActive, cur, s
         <span>Best <b className="tabular-nums text-ink">{best.toFixed(1)}</b></span>
         {average !== undefined && average > 0 && <span>Average <b className="tabular-nums text-ink">{average.toFixed(2)}</b></span>}
       </div>
-      <div className="relative" style={{ height: h }} role="group" aria-label={label}>
+      <div className="relative" style={{ height: h }} role="group" aria-label={chartSummary(label, matches, average)}>
         <div className="absolute inset-y-0 left-6 right-1">
           {ticks.map((r) => (
             <div key={r} className="pointer-events-none absolute inset-x-0" style={{ top: `${y(r)}%` }}>

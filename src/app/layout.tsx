@@ -38,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="relative min-h-full">
+        <a href="#main" className="pb-skip">Skip to content</a>
         <Providers>{children}</Providers>
         <Analytics />
       </body>

@@ -9,7 +9,7 @@ export default function Credits() {
   return (
     <div className="min-h-dvh">
       <PublicHeader />
-      <main className="mx-auto max-w-4xl px-4">
+      <main id="main" className="mx-auto max-w-4xl px-4">
         <h1 className="mb-2 font-display text-4xl">Data sources & credits</h1>
         <p className="mb-6 text-ink-2">
           PitchBorn uses open football facts so the world feels real, and creates everything else itself. All players are fictional. All ratings, potentials,
