@@ -711,6 +711,12 @@ export interface TransferOffer {
   history: string[];
   /** Set when a transfer saga opened this offer; the saga, not the weekly offer logic, decides its fate. */
   sagaId?: string;
+  /** Bidding war: the other club's offer this one is competing with (see career/market.ts). */
+  warWith?: string;
+  /** Times this club raised its bid during a war. */
+  raises?: number;
+  /** A deadline-day bid: it has to be answered the week it arrives. */
+  deadline?: boolean;
 }
 
 export type SagaStage =
@@ -1398,6 +1404,9 @@ export interface UserCareer {
   chemistrySnap?: { season: number; values: Record<PlayerId, number> };
   /** Injury history by body area and recovery choices (see career/recovery.ts). */
   recovery?: RecoveryState;
+  /** Season and window in which the agent last leaked transfer interest (once a window). */
+  leakedSeason?: number;
+  leakedWindow?: "summer" | "january";
   /** The tactical role asked of the manager at the current club (see career/roles.ts). */
   tacticalRole?: { id: string; clubId: ClubId; season: number; askedTurn: number; agreed: boolean };
   /** Off-pitch stories: stand-offs, cliques, fall-outs and the captaincy race (see career/drama.ts). */

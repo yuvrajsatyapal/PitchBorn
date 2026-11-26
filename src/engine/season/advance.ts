@@ -16,6 +16,7 @@ import { awardTrophy, playerOfTheMonth, teamOfTheWeek, totalSeason } from "./awa
 import { prepareWorldCeremony, settleWorldCeremony } from "../awards/world";
 import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { dramaWeekly } from "../career/drama";
+import { marketWeekly } from "../career/market";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
 import { divertToSaga, stepSagas } from "../career/saga/engine";
@@ -422,6 +423,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
         generateUserOffers(state, rng, (club, draft, r) => divertToSaga(state, club, draft, r), true);
       }
       checkUserContract(state, rng);
+      marketWeekly(state);
       stepSagas(state, rng);
       stepInvitations(state, rng);
       weeklyRivalry(state);

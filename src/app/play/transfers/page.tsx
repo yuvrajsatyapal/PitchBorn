@@ -1,4 +1,5 @@
 "use client";
+import { leakBlock, leakInterest } from "@/engine/career/market";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Crest } from "@/components/art/Crest";
@@ -47,6 +48,8 @@ function OfferCard({ o }: { o: TransferOffer }) {
             <span className="font-display text-xl">{clubName(o.fromClubId)}</span>
             <Badge tone={statusTone}>{statusLabel}</Badge>
             <Badge>{o.kind === "renewal" ? "Contract renewal" : o.kind === "loan" ? "Loan" : o.kind === "free" ? "Free transfer" : "Transfer"}</Badge>
+            {o.warWith && <Badge tone="coral">⚔️ Bidding war</Badge>}
+            {o.deadline && <Badge tone="sun">📺 Deadline day: answer this week</Badge>}
           </div>
           <div className="text-xs text-muted">
             {league?.name} · reputation {Math.round(club?.reputation ?? 0)}
@@ -96,6 +99,7 @@ export default function CareerPage() {
   const g = useGameState();
   const transferRequest = useGame((s) => s.transferRequest);
   const requestRenewal = useGame((s) => s.requestRenewal);
+  const act = useGame((s) => s.act);
   const setWantsLoan = useGame((s) => s.setWantsLoan);
   const retire = useGame((s) => s.retire);
   const retireIntl = useGame((s) => s.retireInternational);
@@ -150,7 +154,7 @@ export default function CareerPage() {
       <LoanAdviceCard g={g} />
       <SponsorPanel g={g} />
       <Card title="Career moves">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
             <div className="font-bold">New contract</div>
             <p className="mb-3 text-xs text-ink-2">{renewalBlock ?? "Ask your club to open renewal talks."}</p>
@@ -163,6 +167,13 @@ export default function CareerPage() {
             <p className="mb-3 text-xs text-ink-2">Tell clubs you&apos;re available. Fans and board won&apos;t like it.</p>
             <Button size="sm" className="mt-auto max-w-full whitespace-normal text-left leading-tight" tone={g.user.transferRequest ? "coral" : "paper"} disabled={!p.clubId || !!p.loan} onClick={() => transferRequest(!g.user.transferRequest)}>
               {g.user.transferRequest ? "Withdraw request" : "Hand in request"}
+            </Button>
+          </div>
+          <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
+            <div className="font-bold">Leak interest</div>
+            <p className="mb-3 text-xs text-ink-2">{leakBlock(g) ?? "Your agent tells the press who has called. Your club may improve your deal; the manager won't like it."}</p>
+            <Button size="sm" className="mt-auto max-w-full whitespace-normal text-left leading-tight" tone="paper" disabled={!!leakBlock(g)} onClick={() => act((gm) => leakInterest(gm))} data-testid="leak-interest">
+              Tell your agent to leak it
             </Button>
           </div>
           <div className="flex flex-col items-start rounded-xl border-2 border-line p-3">
