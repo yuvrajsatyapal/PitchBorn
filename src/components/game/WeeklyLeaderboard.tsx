@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Badge, Button } from "@/components/ui";
 import { challengeDef } from "@/engine/career/challenges";
 import { decodeShare, rankShares } from "@/engine/career/shareCode";
@@ -17,11 +17,11 @@ function readCodes(): string[] {
 
 /** Paste friends' weekly-challenge codes to compare runs. Codes are stored in this browser only. */
 export function WeeklyLeaderboard({ week, mine }: { week?: string; mine?: string | null }) {
-  const [codes, setCodes] = useState<string[]>([]);
+  // Only rendered once a save is loaded on the client, so reading storage up front is safe.
+  const [codes, setCodes] = useState<string[]>(() => (typeof window === "undefined" ? [] : readCodes()));
   const [text, setText] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  useEffect(() => setCodes(readCodes()), []);
   const save = (next: string[]) => {
     setCodes(next);
     try {
