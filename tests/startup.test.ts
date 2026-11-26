@@ -4,6 +4,8 @@ import { teamRun } from "../src/engine/competitions/run";
 import { advanceTurn } from "../src/engine/season/advance";
 import { overallFor } from "../src/engine/players/attributes";
 import { userPlayer } from "../src/engine/world/helpers";
+import { expectedRole } from "../src/engine/career/offers";
+import { playerWage } from "../src/engine/players/economy";
 import type { Competition, Fixture } from "../src/engine/types";
 import { newCareer } from "./helpers";
 
@@ -49,6 +51,28 @@ describe("custom start", () => {
     const u = userPlayer(s);
     expect(s.season - u.birthYear).toBe(16);
     expect(u.hidden.potential).toBeGreaterThanOrEqual(overallFor(u.attrs, u.position) - 2);
+  });
+
+  it("signs the first contract for the player's real place in the squad, at that role's wage", () => {
+    const star = newCareer({ seed: "custom-4", path: "custom", custom: { age: 24, overall: 85, potential: 90 }, clubId: "eng-ipswich-town" });
+    const u = userPlayer(star);
+    const club = star.clubs[u.clubId as string];
+    expect(u.contract?.role).toBe("star");
+    expect(u.contract?.wage).toBe(playerWage(u, star.season, club.reputation, "star"));
+    expect(u.squadNo).toBeLessThan(30); // numbered as a star, not in the prospects' 30–49
+    for (const [seed, path, custom, clubId] of [
+      ["custom-5", "custom", { age: 25, overall: 79, potential: 83 }, "eng-aston-villa"],
+      ["custom-6", "late", undefined, "eng-millwall"],
+      ["custom-7", "academy", undefined, "eng-arsenal"],
+    ] as const) {
+      const s = newCareer({ seed, path, custom, clubId });
+      const p = userPlayer(s);
+      const role = expectedRole(s, s.clubs[clubId], p);
+      expect(p.contract?.role, seed).toBe(role);
+      expect(p.contract?.wage, seed).toBe(playerWage(p, s.season, s.clubs[clubId].reputation, role));
+    }
+    // An academy kid at a top club starts where he should: at the bottom.
+    expect(userPlayer(newCareer({ seed: "custom-7", path: "academy", clubId: "eng-arsenal" })).contract?.role).toBe("prospect");
   });
 
   it("plays on without trouble", () => {

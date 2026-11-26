@@ -8,6 +8,7 @@ import type { StaticManager } from "../data/schema";
 import { bestFormation } from "../match/lineup";
 import { overallFor } from "../players/attributes";
 import { clubLevel, clubRevenue, marketValue, playerWage } from "../players/economy";
+import { expectedRole } from "../career/offers";
 import { emptyStat, generatePlayer, randomHidden, randomName } from "../players/generate";
 import { jerseyOf, recordNumber, repairAllSquads } from "../jersey/numbers";
 import { managerPool } from "./managers";
@@ -303,6 +304,19 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   return p;
 }
 
+/**
+ * The first contract names the role the player actually has in the squad, as every later offer does (`expectedRole`), and
+ * pays that role's wage: a custom-start star walks in as the star, an academy kid at a big club as a prospect. Called once
+ * the squads are full (so the pecking order is complete) and before shirt numbers are handed out. Deterministic.
+ */
+function signForStanding(state: GameState, p: Player): void {
+  const c = p.contract;
+  const club = p.clubId ? state.clubs[p.clubId] : undefined;
+  if (!c || !club) return;
+  c.role = expectedRole(state, club, p);
+  c.wage = playerWage(p, state.season, club.reputation, c.role);
+}
+
 export function createWorld(input: NewCareerInput): GameState {
   const seed = input.seed ?? `${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
   const rng = Rng.fromSeed(seed);
@@ -411,6 +425,8 @@ export function createWorld(input: NewCareerInput): GameState {
   managerPool(state);
   ensureManagerIds(state);
   openStint(state, input.clubId);
+  // Before numbering, which hands out shirts by role: a star shouldn't start in the 30s.
+  signForStanding(state, user);
   repairAllSquads(state);
   recordNumber(state, input.clubId, user.squadNo as number);
   jerseyOf(state).choice = true;
