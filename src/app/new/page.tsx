@@ -96,9 +96,14 @@ export default function NewCareer() {
   };
   const start = async () => {
     setErr(null);
+    // Everyone who plays the weekly challenge shares one world: the big five, as it was when the challenge began.
+    if (challenge?.weekly && club && !CLASSIC.includes(club.countryCode)) {
+      setErr("The weekly challenge is played in the big-five world: pick a club in England, Spain, Germany, Italy or France.");
+      return;
+    }
     setStarting(true);
     try {
-      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty, countries: worldCountries, cosmetics: { owned: ownedCosmetics, equipped: equippedCosmetics }, ...(challenge ? { challenge: { id: challenge.id, weekly: challenge.weekly }, ...(challenge.seed ? { seed: challenge.seed } : {}) } : {}) });
+      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty, countries: challenge?.weekly ? CLASSIC : worldCountries, cosmetics: { owned: ownedCosmetics, equipped: equippedCosmetics }, ...(challenge ? { challenge: { id: challenge.id, weekly: challenge.weekly }, ...(challenge.seed ? { seed: challenge.seed } : {}) } : {}) });
       router.push("/play");
     } catch (e) {
       setStarting(false);

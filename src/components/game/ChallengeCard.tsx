@@ -1,5 +1,8 @@
+"use client";
 import { Badge, Card } from "@/components/ui";
 import { challengeView } from "@/engine/career/challenges";
+import { shareCodeFor } from "@/engine/career/shareCode";
+import { WeeklyLeaderboard } from "@/components/game/WeeklyLeaderboard";
 import type { GameState } from "@/engine/types";
 
 /** Dashboard and profile: the challenge this career is chasing, and how it stands. */
@@ -14,6 +17,11 @@ export function ChallengeCard({ g }: { g: GameState }) {
         {v.state.status === "active" ? `${v.progress} · deadline ${v.deadline}` : v.state.note}
         {v.state.weekly && ` · weekly challenge ${v.state.weekly}`}
       </p>
+      {v.state.weekly && (
+        <div className="mt-3">
+          <WeeklyLeaderboard week={v.state.weekly} mine={shareCodeFor(g)} />
+        </div>
+      )}
     </Card>
   );
 }
