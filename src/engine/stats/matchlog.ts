@@ -72,7 +72,7 @@ export function backfillMatchLog(state: GameState): void {
     turn: r.turn,
     fixtureId: `legacy-${i}`,
     compId: r.compId,
-    compKind: /^intl|^world|^euro/.test(r.compId) ? "international" : /^ccup|^ecup/.test(r.compId) ? "continental" : /^cup/.test(r.compId) ? "cup" : "league",
+    compKind: /^intl|^world|^euro/.test(r.compId) ? "international" : /^ccup|^ecup|^acup/.test(r.compId) ? "continental" : /^cup/.test(r.compId) ? "cup" : "league",
     team: "",
     opponent: r.opponent,
     home: true,
