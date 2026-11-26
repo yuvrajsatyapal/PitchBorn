@@ -4,6 +4,8 @@ import { CareerCard, cardToPng } from "@/components/game/CareerCard";
 import { Button, Card, PageTitle } from "@/components/ui";
 import { careerCaption, careerCardData } from "@/engine/career/card";
 import { user } from "@/game/selectors";
+import { TimelineRecapCard } from "@/components/game/TimelineRecap";
+import { timelineRecap } from "@/engine/career/timeline";
 import { useGame, useGameState } from "@/game/store";
 
 const noop = () => () => {};
@@ -95,6 +97,7 @@ export default function CareerCardPage() {
           </Card>
         </div>
       </div>
+      <TimelineRecapCard recap={timelineRecap(g)} fileStem={fileName.replace(/-pitchborn\.png$/, "")} notify={notify} />
     </div>
   );
 }
