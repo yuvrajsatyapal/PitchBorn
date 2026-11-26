@@ -32,6 +32,7 @@ export function DecisionCard({ eng, onResolve }: { eng: MatchEngine; onResolve: 
               </span>
               <span className="text-xs font-normal text-ink-2">{o.detail}</span>
               {o.skills && o.skills.length > 0 && <span className="text-[11px] font-semibold text-muted">{o.skills.slice(0, 3).join(" · ")}</span>}
+              {o.note && <span className="text-[11px] font-semibold text-ink-2">{o.note}</span>}
               {o.suits && <span className="text-[11px] font-black text-pitch">★ Suits your game</span>}
             </button>
           );

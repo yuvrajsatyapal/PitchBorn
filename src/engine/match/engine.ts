@@ -20,6 +20,7 @@ import type { Attributes, AttrKey, MatchConditions, Position } from "../types";
 import { attrMultipliers, drainMultiplier, weatherFx, type WeatherFx } from "../weather/effects";
 import { halftimeWeatherLine, kickoffWeatherLine } from "../weather/describe";
 import { Commentary } from "./commentary";
+import { momentNote } from "./momentNotes";
 import { ATTR_LABEL } from "../players/model";
 import {
   ATTACK_K, BUILD_W, CARRY_W, CLEAR_WEIGHT, CROSSERS, DEFEND_K, DRIB_MIX, DUEL_MIX, FINAL_W, FINISHERS,
@@ -177,6 +178,8 @@ export interface DecisionOption {
   skills?: string[];
   /** One of the player's traits makes this the natural thing for him to try. */
   suits?: boolean;
+  /** How the conditions or fatigue bear on this option right now (already in the odds; see match/momentNotes.ts). */
+  note?: string;
 }
 
 export interface PendingDecision {
@@ -2162,6 +2165,10 @@ export class MatchEngine {
   }
 
   private ask(d: PendingDecision, ctx: PendingContext) {
+    for (const o of d.options) {
+      const note = momentNote(o.skills, this.input.conditions, this.minute, ctx.player.energy);
+      if (note) o.note = note;
+    }
     this.pending = d;
     this.pendingCtx = ctx;
     this.lastDecisionMinute = this.minute;
