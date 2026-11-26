@@ -1,4 +1,5 @@
 "use client";
+import { BoardCard } from "@/components/game/BoardCard";
 import { Crest } from "@/components/art/Crest";
 import { Badge, Bar, Button, Card, Empty, LinkButton, PageTitle, Stat, Table, Tabs } from "@/components/ui";
 import { seasonLabel } from "@/engine/calendar";
@@ -137,6 +138,7 @@ export default function CoachPage() {
             )}
           </Card>
 
+          {c.role === "manager" && <BoardCard g={g} />}
           {c.role === "youth" && (
             <Card title="🎓 Academy focus">
               <p className="mb-3 text-sm text-ink-2">What you work on with the club&apos;s under-21s each week.</p>

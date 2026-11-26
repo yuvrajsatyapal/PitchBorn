@@ -252,6 +252,17 @@ function boardReview(state: GameState, c: CoachCareer): void {
   }
 }
 
+/** The board ends the job at the season's end after a missed league target (see career/board.ts). */
+export function sackedByBoard(state: GameState): void {
+  const c = coaching(state);
+  const club = coachClub(state);
+  if (!c || !club || c.role !== "manager") return;
+  const name = clubName(club.id);
+  leaveClub(state, "sacked");
+  c.reputation = Math.round(clamp(c.reputation - 6, 5, 100));
+  addNews(state, { kind: "career", title: `🚪 Sacked by ${name}`, body: "The board's season review: the league target was missed by too much.", important: true });
+}
+
 /** Clubs that would hire the coach for a role: around his reputation, best first. */
 function suitors(state: GameState, c: CoachCareer, role: CoachRole, rng: Rng): ClubState[] {
   const cap = c.reputation + (role === "manager" ? 8 : 18);

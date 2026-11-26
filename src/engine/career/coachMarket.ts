@@ -18,6 +18,7 @@ import { clubLevel } from "../world/create";
 import { addNews, fullName, squadOf } from "../world/helpers";
 import { executeTransfer, playerWillJoin, squadNeeds } from "../transfers/market";
 import { coachClub, coaching } from "./coaching";
+import { wageBill, wageCap } from "./board";
 
 const S = BALANCE.squad;
 export const SCOUT_REPORTS_PER_WEEK = 3;
@@ -162,6 +163,8 @@ export function bidForPlayer(state: GameState, id: PlayerId, fee?: number): { ok
   if (seller && seller.squad.length <= S.min && !p.listed) return { ok: false, reason: `${clubName(seller.id)} can't spare him` };
   const role = roleFor(state, p);
   const wage = offerWage(state, p, role);
+  const cap = wageCap(state, club);
+  if (wageBill(state, club.id) + wage > cap) return { ok: false, reason: `His ${formatMoney(wage)}/wk would break the board's wage cap of ${formatMoney(cap)}/wk` };
   if (!playerWillJoin(state, p, club, wage)) return { ok: false, reason: `${fullName(p)} doesn't want to join` };
   executeTransfer(state, p, club, bid, wage, 3, role);
   addNews(state, { kind: "transfer", title: `✍️ You sign ${fullName(p)}`, body: `${seller ? `From ${clubName(seller.id)}` : "On a free"} for ${bid ? formatMoney(bid) : "nothing"} · ${formatMoney(wage)}/wk`, important: true });

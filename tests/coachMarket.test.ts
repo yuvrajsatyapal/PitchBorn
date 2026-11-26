@@ -42,7 +42,7 @@ describe("manager transfers and scouting", () => {
     if (!target) return;
     expect(bidForPlayer(s, target.player.id, target.asking - 100_000).ok).toBe(false);
     const res = bidForPlayer(s, target.player.id);
-    if (!res.ok) expect(res.reason).toMatch(/doesn't want|can't spare|full/);
+    if (!res.ok) expect(res.reason).toMatch(/doesn't want|can't spare|full|wage cap/);
     else expect(target.player.clubId).toBe(club.id);
     expect(askingPrice(s, target.player)).toBeGreaterThanOrEqual(0);
   });

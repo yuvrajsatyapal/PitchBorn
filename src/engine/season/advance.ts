@@ -17,6 +17,7 @@ import { prepareWorldCeremony, settleWorldCeremony } from "../awards/world";
 import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { dramaWeekly } from "../career/drama";
 import { youthWeekly } from "../career/youth";
+import { boardWeekly, settleBoard } from "../career/board";
 import { marketWeekly } from "../career/market";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
@@ -47,7 +48,7 @@ import { snapshotChemistry } from "../career/seasonReview";
 import { expirePress, maybePressConference } from "../career/press";
 import { feedWeekly } from "../career/feed";
 import { chemistryWeekly } from "../career/chemistry";
-import { coachSeasonEnd, coachWeekly, coaching, isUserManagedClub } from "../career/coaching";
+import { coachSeasonEnd, coachWeekly, coaching, isUserManagedClub, sackedByBoard } from "../career/coaching";
 import { refreshRecall } from "../memory/recall";
 import { captainScore, weeklyPersonality, mentorsOf } from "../traits/career";
 import { reviewAllTraits, trainingTick, fadeProgress } from "../traits/develop";
@@ -434,11 +435,17 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       dramaWeekly(state);
       youthWeekly(state);
       expireDecisions(state);
-    } else coachWeekly(state);
+    } else {
+      coachWeekly(state);
+      boardWeekly(state);
+    }
 
     if (state.turn === C.endOfSeasonTurn) {
       seasonEnd(state, rng);
-      if (coach) coachSeasonEnd(state);
+      if (coach) {
+        if (settleBoard(state)) sackedByBoard(state);
+        coachSeasonEnd(state);
+      }
       report.seasonEnded = true;
     }
     if (state.turn >= C.turnsPerSeason) {

@@ -621,6 +621,26 @@ export interface CoachOffer {
   note: string;
 }
 
+export interface BoardObjective {
+  id: "league" | "cup" | "youth" | "wages";
+  label: string;
+  target: number;
+  weight: number;
+}
+
+/** The managed club's board: this season's objectives, the wage cap and the academy pipeline (see career/board.ts). */
+export interface BoardState {
+  season: number;
+  clubId: ClubId;
+  objectives: BoardObjective[];
+  wageCap: number;
+  graduatesAtStart: number;
+  promoted: PlayerId[];
+  intakeSeason?: number;
+  ultimatumSeason?: number;
+  settled?: number;
+}
+
 /** The career after retirement (see engine/career/coaching.ts). */
 export interface CoachCareer {
   active: boolean;
@@ -645,6 +665,8 @@ export interface CoachCareer {
   unemployedSince?: number;
   /** Academy players still waiting for a first-team debut (graduate tracking). */
   watch: PlayerId[];
+  /** The board of the managed club (see career/board.ts). */
+  board?: BoardState;
   /** Scouting as a manager: reports used this week, and every report on file (see career/coachMarket.ts). */
   scouting?: { turnIndex: number; used: number; reports: Record<PlayerId, { season: number; low: number; high: number }> };
 }
