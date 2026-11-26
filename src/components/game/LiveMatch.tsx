@@ -13,6 +13,7 @@ import type { PreparedMatch } from "@/engine/season/matchday";
 import type { MatchEvent } from "@/engine/match/engine";
 import { cardSting, finalWhistleCrowd, goalSting, nearMiss, onSoundChange, startCrowd, stopCrowd, whistle } from "@/audio/sound";
 import { SoundToggle } from "@/components/game/SoundToggle";
+import { cosmeticDef } from "@/engine/career/goals";
 import { teamLabel } from "@/game/selectors";
 import { useGame } from "@/game/store";
 import { ConditionsChip } from "@/components/game/Conditions";
@@ -44,6 +45,7 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
   // The speed the user chose. A key moment pauses play without touching it, so the match carries on at the same pace afterwards.
   const [speed, setSpeed] = useState(1);
   const [flash, setFlash] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
   const [pane, setPane] = useState<Pane>("commentary");
   const game = useGame((s) => s.game);
   const uid = game?.user.playerId;
@@ -51,6 +53,7 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
   const players = game?.players;
   const compKind = game?.competitions[prepared.fixture.compId]?.kind;
   const clubGame = compKind !== "international" && compKind !== "friendly";
+  const celebration = cosmeticDef(game?.user.cosmetics?.equipped.celebration);
   // Club chants only (national teams have anthems, not terrace songs); neutral venues have no home end.
   const fx = prepared.fixture;
   const chantClubs = useMemo(() => (clubGame ? { home: fx.home, away: fx.away } : undefined), [clubGame, fx.home, fx.away]);
@@ -65,8 +68,12 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
       setFlash(true);
       setTimeout(() => setFlash(false), 700);
     }
+    if (celebration && evs.some((e) => e.type === "goal" && e.playerId === uid)) {
+      setCelebrating(true);
+      setTimeout(() => setCelebrating(false), 2600);
+    }
     force((x) => x + 1);
-  }, [eng, prepared.userSide, chantClubs]);
+  }, [eng, prepared.userSide, chantClubs, celebration, uid]);
 
   // Crowd noise for as long as the match screen is open (when sound is on).
   useEffect(() => {
@@ -115,6 +122,11 @@ export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDon
   return (
     <div className="grid gap-4">
       <Card className="!bg-[#1b1712] !text-[#fff5e6]" flat>
+        {celebrating && celebration && (
+          <div role="status" className="anim-pop mb-2 rounded-xl border-2 border-sun bg-sun px-3 py-1.5 text-center font-bold text-[#1b1712]">
+            <span aria-hidden>{celebration.icon}</span> You {celebration.line}!
+          </div>
+        )}
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Crest clubId={home.id} size={44} />

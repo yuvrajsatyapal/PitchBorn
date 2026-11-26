@@ -2,6 +2,7 @@
  * The facts on a shareable career card, gathered once so the picture, the caption and the tests agree.
  * Pure: no React, no DOM.
  */
+import { cosmeticDef } from "./goals";
 import { achievementScore } from "./achievements";
 import { seasonLabel } from "../calendar";
 import { clubName, country, staticClub } from "../data/world";
@@ -26,6 +27,8 @@ export interface CareerCardData {
   clubId: string | null;
   club: string;
   clubColors: { primary: string; secondary: string };
+  /** The personal kit colours equipped in the Kit Room, when not the club's. */
+  kitColors?: { primary: string; secondary: string };
   span: string;
   retired: boolean;
   headline: string;
@@ -83,6 +86,7 @@ export function careerCardData(state: GameState): CareerCardData {
     clubId,
     club: clubId ? clubName(clubId) : "Free agent",
     clubColors: colors,
+    ...(personalKit(state) ? { kitColors: personalKit(state) } : {}),
     span: `${seasonLabel(u.startSeason)} – ${retired ? seasonLabel(end) : "present"}`,
     retired,
     headline,
@@ -103,4 +107,9 @@ export function careerCaption(d: CareerCardData, url?: string): string {
   if (d.honours.length) lines.push(`Honours: ${d.honours.slice(0, 4).join(", ")}`);
   lines.push(`My PitchBorn career${url ? `: ${url}` : ""}`);
   return lines.join("\n");
+}
+
+function personalKit(state: GameState): { primary: string; secondary: string } | undefined {
+  const def = cosmeticDef(state.user.cosmetics?.equipped.kit);
+  return def?.colors ? { primary: def.colors[0], secondary: def.colors[1] } : undefined;
 }

@@ -1,4 +1,5 @@
 import { startYouth } from "../career/youth";
+import { equipCosmetic, mergeOwned } from "../career/goals";
 import { BALANCE } from "../balance";
 import { agentMarket, NO_AGENT } from "../career/agents";
 import { initialTraits } from "../traits/assign";
@@ -17,7 +18,7 @@ import { ensureManagerIds } from "../managers/registry";
 import { openStint } from "../managers/history";
 import { clamp, Rng } from "../rng";
 import type {
-  Appearance, ClubState, UserCareer, CountryCode, FormationId, GameState, NationalTeamState, Player, Position, SquadRole,
+  Appearance, ClubState, CosmeticKind, UserCareer, CountryCode, FormationId, GameState, NationalTeamState, Player, Position, SquadRole,
 } from "../types";
 import { SCHEMA_VERSION, addTimeline, nextId } from "./helpers";
 import { generateAttributes } from "../players/attributes";
@@ -233,6 +234,8 @@ export interface NewCareerInput {
   focus?: string;
   /** A challenge scenario to play (career/challenges.ts); ignored when the start does not meet its requirements. */
   challenge?: { id: string; weekly?: string };
+  /** Cosmetics already unlocked in this browser, and the ones chosen in the appearance editor. */
+  cosmetics?: { owned: string[]; equipped: Partial<Record<CosmeticKind, string>> };
 }
 
 export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInput): Player {
@@ -446,6 +449,10 @@ export function createWorld(input: NewCareerInput): GameState {
     detail: `Aged ${state.user.startAge}, ${country(input.nationality)?.name} · ${input.position}`,
   });
   if (input.path === "youth") startYouth(state);
+  if (input.cosmetics) {
+    mergeOwned(state, input.cosmetics.owned);
+    for (const id of Object.values(input.cosmetics.equipped)) if (id) equipCosmetic(state, id);
+  }
   if (input.challenge) {
     const def = challengeDef(input.challenge.id);
     const tier = state.user.startTier;

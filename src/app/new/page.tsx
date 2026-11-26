@@ -1,6 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { STARTER_COSMETICS, cosmeticDef } from "@/engine/career/goals";
+import type { CosmeticKind } from "@/engine/types";
+import { getKv } from "@/persistence/saves";
 import { Crest } from "@/components/art/Crest";
 import { Flag } from "@/components/art/Flag";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
@@ -15,7 +18,7 @@ import { POSITION_LABEL } from "@/engine/players/attributes";
 import { NO_FOCUS, focusFor, focusOptions } from "@/engine/players/focus";
 import { POSITIONS, type Appearance, type Position } from "@/engine/types";
 import { CUSTOM_LIMITS, playingTimeOutlook, sanitizeCustom, type CustomStart, type StartPath } from "@/engine/world/create";
-import { useGame } from "@/game/store";
+import { COSMETICS_KEY, useGame } from "@/game/store";
 import { ChallengePicker, type ChallengePick } from "@/components/game/ChallengePicker";
 
 const STEPS = ["Identity", "Player", "Playstyle", "Path & club", "Confirm"];
@@ -52,6 +55,11 @@ export default function NewCareer() {
   const [clubCountry, setClubCountry] = useState("ENG");
   const [tier, setTier] = useState(2);
   const [clubId, setClub] = useState<string>("");
+  const [ownedCosmetics, setOwnedCosmetics] = useState<string[]>(STARTER_COSMETICS);
+  const [equippedCosmetics, setEquipped] = useState<Partial<Record<CosmeticKind, string>>>({ boots: "boots-classic", kit: "kit-club", celebration: "cel-point" });
+  useEffect(() => {
+    void getKv<string[]>(COSMETICS_KEY, []).then((ids) => setOwnedCosmetics([...new Set([...STARTER_COSMETICS, ...(Array.isArray(ids) ? ids : [])])])).catch(() => undefined);
+  }, []);
   const [worldSize, setWorldSize] = useState<(typeof WORLD_SIZES)[number]["id"]>("full");
   const [difficulty, setDiff] = useState<"relaxed" | "standard" | "hardcore">("standard");
   const [err, setErr] = useState<string | null>(null);
@@ -90,7 +98,7 @@ export default function NewCareer() {
     setErr(null);
     setStarting(true);
     try {
-      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty, countries: worldCountries, ...(challenge ? { challenge: { id: challenge.id, weekly: challenge.weekly }, ...(challenge.seed ? { seed: challenge.seed } : {}) } : {}) });
+      await newCareer({ saveName: `${firstName} ${lastName}`, firstName, lastName, nationality, birthCountry, position, foot, height, look, clubId, path, focus, custom: path === "custom" ? sanitizeCustom(custom) : undefined, difficulty, countries: worldCountries, cosmetics: { owned: ownedCosmetics, equipped: equippedCosmetics }, ...(challenge ? { challenge: { id: challenge.id, weekly: challenge.weekly }, ...(challenge.seed ? { seed: challenge.seed } : {}) } : {}) });
       router.push("/play");
     } catch (e) {
       setStarting(false);
@@ -183,7 +191,12 @@ export default function NewCareer() {
               <p className="mt-1 text-xs text-muted">Taller helps heading and strength; shorter helps pace and agility.</p>
             </Card>
             <Card title="Look">
-              <AppearanceEditor value={look} onChange={setLook} kit={club?.colors.primary} />
+              <AppearanceEditor
+                value={look}
+                onChange={setLook}
+                kit={club?.colors.primary}
+                cosmetics={{ owned: ownedCosmetics, equipped: equippedCosmetics, onEquip: (id) => { const k = cosmeticDef(id)?.kind; if (k) setEquipped({ ...equippedCosmetics, [k]: id }); } }}
+              />
             </Card>
           </div>
         )}

@@ -34,8 +34,8 @@ function initials(club: string): string {
  * so it can be serialised and drawn onto a canvas for download or sharing.
  */
 export const CareerCard = forwardRef<SVGSVGElement, { d: CareerCardData; look: Appearance; footer?: string; className?: string }>(function CareerCard({ d, look, footer, className }, ref) {
-  const bg = d.clubColors.primary;
-  const accent = d.clubColors.secondary;
+  const bg = d.kitColors?.primary ?? d.clubColors.primary;
+  const accent = d.kitColors?.secondary ?? d.clubColors.secondary;
   const onBg = isLight(bg) ? INK : "#ffffff";
   const nameSize = Math.min(104, Math.floor(1900 / Math.max(10, d.name.length)));
   const honours = d.honours.slice(0, 5);

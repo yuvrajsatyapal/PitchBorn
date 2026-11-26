@@ -1,4 +1,6 @@
 "use client";
+import { KitRoom } from "@/components/game/KitRoom";
+import type { CosmeticKind } from "@/engine/types";
 import { useEffect, useState, type ReactNode } from "react";
 import { PlayerPortrait } from "@/components/art/PlayerPortrait";
 import { Button, Tabs } from "@/components/ui";
@@ -11,7 +13,7 @@ import { POC_IDS } from "@/components/art/portrait-next/hair";
 import { Rng } from "@/engine/rng";
 import type { Appearance } from "@/engine/types";
 
-type Cat = "face" | "skin" | "hair" | "hairColor" | "eyes" | "brows" | "nose" | "mouth" | "facial" | "details";
+type Cat = "face" | "skin" | "hair" | "hairColor" | "eyes" | "brows" | "nose" | "mouth" | "facial" | "details" | "kitroom";
 const CATS: { id: Cat; label: string }[] = [
   { id: "face", label: "Face" },
   { id: "skin", label: "Skin" },
@@ -86,7 +88,13 @@ function Slider({ label, value, onChange }: { label: string; value: number; onCh
 }
 
 /** Character creator "Look" panel: big portrait on top, category tabs, one panel of options at a time. */
-export function AppearanceEditor({ value, onChange, kit, previewAge = 17 }: { value: Appearance; onChange: (a: Appearance) => void; kit?: string; previewAge?: number }) {
+export interface EditorCosmetics {
+  owned: readonly string[];
+  equipped: Partial<Record<CosmeticKind, string>>;
+  onEquip: (id: string) => void;
+}
+
+export function AppearanceEditor({ value, onChange, kit, previewAge = 17, cosmetics }: { value: Appearance; onChange: (a: Appearance) => void; kit?: string; previewAge?: number; cosmetics?: EditorCosmetics }) {
   const [cat, setCat] = useState<Cat>("face");
   const [age, setAge] = useState<string>("");
   const set = (k: AppearanceKey, v: number) => onChange({ ...value, [k]: v });
@@ -103,6 +111,7 @@ export function AppearanceEditor({ value, onChange, kit, previewAge = 17 }: { va
   }, [value, onChange]);
 
   const panel: Record<Cat, ReactNode> = {
+    kitroom: cosmetics ? <KitRoom owned={cosmetics.owned} equipped={cosmetics.equipped} onEquip={cosmetics.onEquip} clubKit={kit} kinds={["boots", "celebration", "kit"]} /> : null,
     face: (
       <div className="grid gap-3">
         <Stepper label="Face shape" value={value.face} names={FACE_SHAPES.map((f) => f.name)} onChange={(v) => set("face", v)} />
@@ -195,7 +204,7 @@ export function AppearanceEditor({ value, onChange, kit, previewAge = 17 }: { va
               Hair
             </Button>
           </div>
-          <Tabs value={cat} onChange={setCat} items={CATS} />
+          <Tabs value={cat} onChange={setCat} items={cosmetics ? [...CATS, { id: "kitroom" as const, label: "Boots & celebrations" }] : CATS} />
           <div className="min-h-[150px] rounded-2xl border-2 border-line/30 bg-paper-2/50 p-3">{panel[cat]}</div>
         </div>
       </div>
