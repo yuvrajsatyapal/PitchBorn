@@ -89,7 +89,7 @@ export function tipsEnabled(state: GameState): boolean {
 }
 
 export function activeTip(state: GameState, page: TipPage): Tip | null {
-  if (!tipsEnabled(state) || state.user.retired || !inFirstSeason(state)) return null;
+  if (!tipsEnabled(state) || state.user.retired || !(inFirstSeason(state) || state.user.tipsReplaySeason === state.season)) return null;
   const seen = new Set(state.user.tipsSeen ?? []);
   for (const t of TIPS) {
     if (t.page !== page || seen.has(t.id)) continue;
@@ -107,6 +107,13 @@ export function activeTip(state: GameState, page: TipPage): Tip | null {
 export function dismissTip(state: GameState, id: string): void {
   const seen = (state.user.tipsSeen ??= []);
   if (!seen.includes(id) && TIPS.some((t) => t.id === id)) seen.push(id);
+}
+
+/** Replay the tutorial: every tip shows again, this season, wherever it is relevant. */
+export function replayTips(state: GameState): void {
+  state.settings.tips = true;
+  state.user.tipsSeen = [];
+  state.user.tipsReplaySeason = state.season;
 }
 
 export function setTipsEnabled(state: GameState, on: boolean): void {

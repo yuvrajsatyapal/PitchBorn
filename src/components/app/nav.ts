@@ -26,5 +26,6 @@ export const NAV: NavItem[] = [
   { href: "/play/memories", label: "Iconic Moments", icon: "🎞️" },
   { href: "/play/history", label: "History & Records", icon: "📜" },
   { href: "/play/world", label: "World News", icon: "📰" },
+  { href: "/help", label: "Help & Encyclopedia", icon: "❓" },
   { href: "/play/settings", label: "Settings & Saves", icon: "⚙️" },
 ];

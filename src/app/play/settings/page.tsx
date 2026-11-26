@@ -7,6 +7,7 @@ import { Badge, Button, Card, PageTitle, Tabs } from "@/components/ui";
 import { useGame, useGameState } from "@/game/store";
 import { exportSaveBlob, importSaveFile, listBackups, restoreBackup } from "@/persistence/saves";
 import { SoundToggle } from "@/components/game/SoundToggle";
+import { replayTips } from "@/engine/career/tips";
 
 export default function Settings() {
   const g = useGameState();
@@ -17,6 +18,7 @@ export default function Settings() {
   const setDifficulty = useGame((s) => s.setDifficulty);
   const setAutoSave = useGame((s) => s.setAutoSave);
   const setTips = useGame((s) => s.setTips);
+  const act = useGame((s) => s.act);
   const lastSavedAt = useGame((s) => s.lastSavedAt);
   const router = useRouter();
   const file = useRef<HTMLInputElement>(null);
@@ -135,6 +137,14 @@ export default function Settings() {
             <input type="checkbox" checked={g.settings.tips !== false} onChange={(e) => setTips(e.target.checked)} className="h-5 w-5 accent-[var(--pitch)]" data-testid="tips-toggle" />
             Show first-season tips
           </label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button size="sm" tone="paper" onClick={() => act((gm) => replayTips(gm), "Tutorial tips will show again this season.")} data-testid="replay-tutorial">
+              Replay tutorial
+            </Button>
+            <a href="/help" className="inline-flex items-center rounded-full border-2 border-line bg-card px-3 py-1.5 text-sm font-bold">
+              Open the encyclopedia
+            </a>
+          </div>
           <div className="mb-2 mt-4 text-sm font-bold">Theme</div>
           <Tabs value={theme} onChange={applyTheme} items={[{ id: "system", label: "System" }, { id: "light", label: "Light" }, { id: "dark", label: "Dark" }]} />
         </Card>

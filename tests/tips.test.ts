@@ -46,3 +46,23 @@ describe("first-season tips", () => {
     expect(new Set(TIPS.map((t) => t.id)).size).toBe(TIPS.length);
   });
 });
+
+describe("tutorial replay and encyclopedia", () => {
+  it("replaying shows tips again later in the career", async () => {
+    const { newCareer } = await import("./helpers");
+    const { activeTip, replayTips } = await import("../src/engine/career/tips");
+    const s = newCareer();
+    s.season += 2;
+    expect(activeTip(s, "dashboard")).toBeNull();
+    replayTips(s);
+    expect(activeTip(s, "dashboard")).not.toBeNull();
+  });
+  it("search finds attributes, traits and systems", async () => {
+    const { encyclopedia, searchHelp } = await import("../src/engine/help/encyclopedia");
+    const all = encyclopedia();
+    expect(searchHelp(all, "stamina")[0].title).toBe("Stamina");
+    expect(searchHelp(all, "false nine").length).toBeGreaterThan(0);
+    expect(searchHelp(all, "", "Traits").length).toBeGreaterThan(30);
+    expect(searchHelp(all, "zzzqqq")).toEqual([]);
+  });
+});

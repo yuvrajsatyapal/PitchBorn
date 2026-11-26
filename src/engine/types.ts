@@ -1370,6 +1370,8 @@ export interface UserCareer {
   achievements?: AchievementUnlock[];
   /** First-season tips the player has dismissed. */
   tipsSeen?: string[];
+  /** Season in which the player asked to replay the tutorial (tips show again all that season). */
+  tipsReplaySeason?: number;
   /** The current press conference, answered or not, and the headlines from past ones. */
   press?: PressConference;
   pressLog?: PressLogEntry[];
