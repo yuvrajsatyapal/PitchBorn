@@ -866,6 +866,10 @@ export interface CareerDecision {
   intlCode?: string;
   /** Set for an offer to take a vacated squad number (see engine/jersey/numbers.ts). */
   jerseyNo?: number;
+  /** Which career module resolves this decision (recovery, drama, youth, market); absent for classic career events. */
+  handler?: "recovery" | "drama" | "youth" | "market";
+  /** Free-form context for the handler (e.g. a drama story id or a trial club). */
+  ref?: string;
 }
 
 export interface Relationships {
@@ -1392,7 +1396,29 @@ export interface UserCareer {
   lifestyle?: LifestyleState;
   /** Teammate bonds as they stood when the season began (for the season review). */
   chemistrySnap?: { season: number; values: Record<PlayerId, number> };
+  /** Injury history by body area and recovery choices (see career/recovery.ts). */
+  recovery?: RecoveryState;
+  /** Set by a decision that ends the career (e.g. a career-threatening injury); the store retires the player. */
+  retireRequested?: string;
 }
+
+export interface RecoveryState {
+  /** Injuries per body area over the career. */
+  areas: Record<string, number>;
+  /** Until this turn index a rushed return carries extra re-injury risk. */
+  rushedUntil?: number;
+  /** Area of the injury the player rushed back from (a re-injury there is worse). */
+  rushedArea?: string;
+  /** Times the player paid for a specialist clinic, and what it cost. */
+  clinics: number;
+  clinicSpent: number;
+  /** The choice made for the current injury. */
+  current?: { type: string; choice: RecoveryChoice; season: number };
+  /** Set when the body has given up: the player was offered retirement. */
+  careerThreat?: { area: string; season: number };
+}
+
+export type RecoveryChoice = "rush" | "plan" | "rest" | "clinic" | "surgery" | "conservative" | "retire" | "fight-on";
 
 export interface LifestyleState {
   /** What was bought, and what was paid for it and agreed a week (absent on saves from before prices followed the wage). */

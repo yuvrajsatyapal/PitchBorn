@@ -13,6 +13,7 @@ import { receiveIncome } from "./money";
 import { addStintEvent } from "../managers/history";
 import { adjustRel } from "./relationships";
 import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
+import { resolveRecovery } from "./recovery";
 
 const superAgent = (s: GameState) => agentMarket(s).find((a) => a.tier === "super" && a.id !== s.user.agent.id);
 
@@ -648,6 +649,13 @@ export function resolveDecision(state: GameState, decisionId: string, optionId: 
   if (d.jerseyNo !== undefined) {
     state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
     return resolveJerseyDecision(state, d.jerseyNo, optionId);
+  }
+  if (d.handler === "recovery") {
+    state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);
+    const out = resolveRecovery(state, d, optionId);
+    if (out.retire) state.user.retireRequested = "Your body could not take another comeback. You retire from professional football.";
+    addNews(state, { kind: "injury", title: d.title, body: out.msg });
+    return out.msg;
   }
   if (d.intlCode) {
     state.user.decisions = state.user.decisions.filter((x) => x.id !== decisionId);

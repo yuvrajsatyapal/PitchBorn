@@ -23,6 +23,7 @@ import { seasonLabel } from "@/engine/calendar";
 import { age, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
 import { TipCard } from "@/components/game/TipCard";
+import { BodyReport } from "@/components/game/BodyReport";
 
 export default function Profile() {
   const g = useGameState();
@@ -133,7 +134,7 @@ export default function Profile() {
             </dl>
           </Card>
         </div>
-        <div className="grid content-start gap-4 xl:grid-rows-[auto_auto_1fr] xl:[&>*:last-child]:h-full">
+        <div className="grid content-start gap-4 xl:grid-rows-[auto_auto_auto_1fr] xl:[&>*:last-child]:h-full">
           <Card title="Scouting report">
             <div className="mb-2 flex items-center gap-2 text-sm">
               Potential: <Stars value={scoutStars(g, p)} />
@@ -153,6 +154,7 @@ export default function Profile() {
             </div>
           </Card>
           <PlayIdentityCard g={g} p={p} />
+          <BodyReport g={g} />
           <IconicShowcase g={g} limit={4} title="Memories" />
         </div>
       </div>

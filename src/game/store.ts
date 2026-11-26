@@ -362,6 +362,12 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!g) return;
     const msg = resolveDecision(g, decisionId, optionId);
     syncSagas(g);
+    if (g.user.retireRequested && !g.user.retired) {
+      const reason = g.user.retireRequested;
+      g.user.retireRequested = undefined;
+      retireUser(g, reason);
+      void saveGame(g, { backup: true, label: "Retirement" }).then(() => inductCareer(g)).catch((err) => console.warn("Retirement save failed", err));
+    }
     get().bump();
     get().notify(msg);
   },

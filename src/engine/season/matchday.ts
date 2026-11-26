@@ -33,6 +33,7 @@ import { feedAfterMatch } from "../career/feed";
 import { applyChemistry, chemistryAfterMatch, chemistryBenchRivals } from "../career/chemistry";
 import { applyCoaching } from "../career/coaching";
 import { conditionsFor } from "../weather/conditions";
+import { onUserInjury, recoveryRiskFactor } from "../career/recovery";
 import { weatherFx } from "../weather/effects";
 
 export function fixturesForTurn(state: GameState): Fixture[] {
@@ -376,7 +377,7 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
     const p = state.players[line.id];
     const mins = lineMinutes(line);
     if (!p || hurt.has(p.id) || p.injury || mins <= 0) continue;
-    if (rng.chance(BALANCE.match.injuryPerPlayerMatch * (mins / 90) * injuryRiskFactor(p) * pitchInjury)) hurt.add(p.id);
+    if (rng.chance(BALANCE.match.injuryPerPlayerMatch * (mins / 90) * injuryRiskFactor(p) * pitchInjury * (p.id === userId ? recoveryRiskFactor(state) : 1))) hurt.add(p.id);
   }
   for (const id of hurt) {
     const p = state.players[id];
@@ -389,6 +390,7 @@ export function applyMatchResult(state: GameState, fixture: Fixture, res: MatchR
       rememberMajorInjury(state, injury.type, injury.totalWeeks);
       addNews(state, { kind: "injury", title: `Injury: ${injury.type}`, body: `Expected out for ${injury.totalWeeks} week${injury.totalWeeks === 1 ? "" : "s"}.`, important: true });
       if (injury.totalWeeks >= 8) addTimeline(state, { kind: "injury", title: `${injury.type}`, detail: `Out for ${injury.totalWeeks} weeks` });
+      onUserInjury(state, injury);
     }
   }
   // Table + club form

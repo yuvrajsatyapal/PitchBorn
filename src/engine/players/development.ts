@@ -1,3 +1,4 @@
+import { onUserInjury, recoveryRiskFactor } from "../career/recovery";
 import { BALANCE } from "../balance";
 import { clamp, r1, r2, Rng } from "../rng";
 import type { AttrKey, ClubState, GameState, Player, TrainingFocus, TrainingPlan } from "../types";
@@ -181,11 +182,12 @@ export function runTraining(state: GameState, rng: Rng, p: Player, plan: Trainin
   const streak = plan.intensity === "intense" ? (state.user.intenseStreak ?? 0) + 1 : plan.intensity === "normal" ? Math.max(0, (state.user.intenseStreak ?? 0) - 1) : 0;
   state.user.intenseStreak = streak;
   const overload = overloadMultiplier(streak);
-  const risk = BALANCE.injuries.trainingBase * int.injury * overload * injuryRiskFactor(p) * (p.isUser ? lifestyleEffects(state).injury : 1);
+  const risk = BALANCE.injuries.trainingBase * int.injury * overload * injuryRiskFactor(p) * (p.isUser ? lifestyleEffects(state).injury * recoveryRiskFactor(state) : 1);
   if (rng.chance(risk)) {
     const injury = rollInjury(rng, p, { context: "training", seriousAllowed: false });
     applyInjury(rng, p, injury);
     state.user.injuryHistory.push({ season: state.season, type: injury.type, weeks: injury.totalWeeks });
+    if (p.isUser) onUserInjury(state, injury);
     return { fitnessDelta: -int.fatigue, growthMultiplier: 0, injured: injury.type, note: `Picked up a ${injury.type.toLowerCase()} in training.` };
   }
   // Focused drills add small direct gains on top of monthly development. Primary attributes gain at full rate, related ones at half,
