@@ -1409,6 +1409,8 @@ export interface UserCareer {
   leakedWindow?: "summer" | "january";
   /** The tactical role asked of the manager at the current club (see career/roles.ts). */
   tacticalRole?: { id: string; clubId: ClubId; season: number; askedTurn: number; agreed: boolean };
+  /** Started at 15 in an academy: trials and the first professional contract (see career/youth.ts). */
+  youth?: YouthState;
   /** Off-pitch stories: stand-offs, cliques, fall-outs and the captaincy race (see career/drama.ts). */
   drama?: DramaState;
   /** Set by a decision that ends the career (e.g. a career-threatening injury); the store retires the player. */
@@ -1432,6 +1434,14 @@ export interface RecoveryState {
 }
 
 export type RecoveryChoice = "rush" | "plan" | "rest" | "clinic" | "surgery" | "conservative" | "retire" | "fight-on";
+
+export interface YouthState {
+  /** "academy" until the first professional contract is decided. */
+  stage: "academy" | "pro";
+  startSeason: number;
+  trials: { clubId: ClubId; season: number; impressed: boolean; declined?: boolean }[];
+  proDecisionSeason?: number;
+}
 
 export type DramaKind = "standoff" | "clique" | "fallout" | "captaincy";
 

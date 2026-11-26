@@ -209,8 +209,9 @@ export default function NewCareer() {
         {step === 3 && (
           <div className="grid gap-4">
             <Card title="How does it start?">
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
+                  { id: "youth" as const, t: "Youth academy · age 15", d: "Start on a scholarship. Youth-league games, trials at other clubs, then your first pro contract at 17." },
                   { id: "academy" as const, t: "Academy prospect · age 17", d: "Raw but full of potential. Expect to fight for minutes — loans can help." },
                   { id: "late" as const, t: "Late starter · age 20", d: "Closer to the first team now, a little less ceiling." },
                   { id: "custom" as const, t: "Custom", d: "Set your own starting age, ability and potential." },
@@ -291,7 +292,7 @@ export default function NewCareer() {
         {step === 4 && club && (
           <Card title="Ready?">
             <div className="flex flex-wrap items-center gap-5">
-              <PlayerPortrait appearance={look} age={path === "custom" ? custom.age : path === "academy" ? 17 : 20} size="large" kit={club.colors.primary} />
+              <PlayerPortrait appearance={look} age={path === "custom" ? custom.age : path === "youth" ? 15 : path === "academy" ? 17 : 20} size="large" kit={club.colors.primary} />
               <div>
                 <div className="font-display text-3xl">
                   {firstName} {lastName}
@@ -302,9 +303,9 @@ export default function NewCareer() {
                 </div>
                 <div className="mt-1 text-sm">Desired playstyle: <b>{focusFor(position, focus)?.name ?? "No preference"}</b></div>
                 <div className="mt-2 flex items-center gap-2 text-sm">
-                  <Crest clubId={club.id} size={28} /> {path === "academy" || (path === "custom" && custom.age <= 18) ? "Academy" : "First-team squad"} at <b>{club.name}</b>
+                  <Crest clubId={club.id} size={28} /> {path === "youth" ? "Youth academy" : path === "academy" || (path === "custom" && custom.age <= 18) ? "Academy" : "First-team squad"} at <b>{club.name}</b>
                 </div>
-                <div className="mt-1 text-xs text-muted">Season 2026/27 · {path === "custom" ? `age ${custom.age}, ${custom.overall} overall, ${custom.potential} potential` : path === "academy" ? "age 17" : "age 20"} · difficulty {{ relaxed: "Easy", standard: "Medium", hardcore: "Hard" }[difficulty]}. Your true potential is hidden — scouts will give you hints.</div>
+                <div className="mt-1 text-xs text-muted">Season 2026/27 · {path === "custom" ? `age ${custom.age}, ${custom.overall} overall, ${custom.potential} potential` : path === "youth" ? "age 15, on a scholarship" : path === "academy" ? "age 17" : "age 20"} · difficulty {{ relaxed: "Easy", standard: "Medium", hardcore: "Hard" }[difficulty]}. Your true potential is hidden — scouts will give you hints.</div>
               </div>
             </div>
             <ChallengePicker value={challenge} onChange={setChallenge} start={{ path, tier, position }} />

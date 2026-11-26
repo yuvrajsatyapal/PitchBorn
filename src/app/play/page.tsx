@@ -146,7 +146,7 @@ export default function Dashboard() {
             </div>
             {g.user.reserves && g.user.reserves.season === g.season && g.user.reserves.apps > 0 && (
               <p className="mt-2 text-xs text-ink-2">
-                Development squad: {g.user.reserves.apps} apps · {g.user.reserves.goals} goals · {g.user.reserves.assists} assists · avg {(g.user.reserves.ratingSum / g.user.reserves.apps).toFixed(2)}
+                {g.user.youth?.stage === "academy" ? "Youth league" : "Development squad"}: {g.user.reserves.apps} apps · {g.user.reserves.goals} goals · {g.user.reserves.assists} assists · avg {(g.user.reserves.ratingSum / g.user.reserves.apps).toFixed(2)}
               </p>
             )}
             <div className="mt-3">

@@ -16,6 +16,7 @@ import { awardTrophy, playerOfTheMonth, teamOfTheWeek, totalSeason } from "./awa
 import { prepareWorldCeremony, settleWorldCeremony } from "../awards/world";
 import { maybeCareerEvent, expireDecisions } from "../career/events";
 import { dramaWeekly } from "../career/drama";
+import { youthWeekly } from "../career/youth";
 import { marketWeekly } from "../career/market";
 import { computeLegacy } from "../career/legacy";
 import { checkUserContract, expireOffers, generateUserOffers, processBids, rolloverUserContract } from "../career/offers";
@@ -252,7 +253,8 @@ function reserveMatch(state: GameState, rng: Rng, trainingMul: number): void {
   if (state.turn < C.seasonStart || state.turn > C.seasonEnd || u.lastMatchTurn === state.turn) return;
   const clubPlayed = Object.values(state.competitions).some((c) => c.kind === "league" && c.season === state.season && c.fixtures.some((f) => f.turn === state.turn && (f.home === p.clubId || f.away === p.clubId)));
   if (!clubPlayed) return;
-  const level = clubLevel(state.clubs[p.clubId].reputation) - 12; // U21 opposition
+  // U21 opposition, or the U18 youth league for players not yet 17.
+  const level = clubLevel(state.clubs[p.clubId].reputation) - (ageOf(p, state.season) < 17 ? 22 : 12);
   const ovr = overallFor(p.attrs, p.position);
   const rating = Math.round(clamp(rng.normal(6.5 + (ovr - level) / 12, 0.7), 4.5, 9.8) * 10) / 10;
   const att = ["ST", "RW", "LW", "AM"].includes(p.position);
@@ -269,7 +271,7 @@ function reserveMatch(state: GameState, rng: Rng, trainingMul: number): void {
   recordReserveLog(state, { rating, goals, assists });
   // Counts as meaningful minutes for development (feeds monthly growth).
   u.trainingHistory[u.trainingHistory.length - 1] = trainingMul + 0.25;
-  if (goals || rating >= 7.8) addNews(state, { kind: "match", title: `Development squad: ${goals ? `${goals} goal${goals > 1 ? "s" : ""} for you` : "standout display"}`, body: `Rating ${rating.toFixed(1)} · the manager was watching.` });
+  if (goals || rating >= 7.8) addNews(state, { kind: "match", title: `${ageOf(p, state.season) < 17 ? "Youth league" : "Development squad"}: ${goals ? `${goals} goal${goals > 1 ? "s" : ""} for you` : "standout display"}`, body: `Rating ${rating.toFixed(1)} · the manager was watching.` });
 }
 
 function userWeekly(state: GameState, rng: Rng): void {
@@ -430,6 +432,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       expireOffers(state);
       maybeCareerEvent(state, rng);
       dramaWeekly(state);
+      youthWeekly(state);
       expireDecisions(state);
     } else coachWeekly(state);
 

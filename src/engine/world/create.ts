@@ -1,3 +1,4 @@
+import { startYouth } from "../career/youth";
 import { BALANCE } from "../balance";
 import { agentMarket, NO_AGENT } from "../career/agents";
 import { initialTraits } from "../traits/assign";
@@ -9,7 +10,7 @@ import { bestFormation } from "../match/lineup";
 import { overallFor } from "../players/attributes";
 import { clubLevel, clubRevenue, marketValue, playerWage } from "../players/economy";
 import { expectedRole } from "../career/offers";
-import { emptyStat, generatePlayer, randomHidden, randomName } from "../players/generate";
+import { ageOf, emptyStat, generatePlayer, randomHidden, randomName } from "../players/generate";
 import { jerseyOf, recordNumber, repairAllSquads } from "../jersey/numbers";
 import { managerPool } from "./managers";
 import { ensureManagerIds } from "../managers/registry";
@@ -29,7 +30,7 @@ export const START_SEASON = 2026;
 export { clubLevel };
 
 /** Starting overall for a new career depends only on the path, never on the club. */
-export const STARTING_OVERALL = { academy: 61, late: 67 } as const;
+export const STARTING_OVERALL = { youth: 50, academy: 61, late: 67 } as const;
 
 const SQUAD_TEMPLATE: Position[] = [
   "GK", "GK", "GK", "CB", "CB", "CB", "CB", "RB", "RB", "LB", "LB", "DM", "DM", "CM", "CM", "CM", "AM", "AM", "RW", "RW", "LW", "LW", "ST", "ST", "ST",
@@ -173,7 +174,7 @@ export function playingTimeOutlook(prestige: number, path: StartPath, custom?: C
   return { outlook: gap <= 9 ? "good" : gap <= 15 ? "fight" : "few", level: Math.round(level), start: Math.round(start) };
 }
 
-export type StartPath = "academy" | "late" | "custom";
+export type StartPath = "youth" | "academy" | "late" | "custom";
 
 /** Fully player-chosen starting point. */
 export interface CustomStart {
@@ -204,6 +205,7 @@ function startProfile(input: NewCareerInput): StartProfile {
     const c = sanitizeCustom(input.custom);
     return { age: c.age, overall: c.overall, potential: c.potential, reputation: clamp((c.overall - 55) * 2, 5, 90), youth: c.age <= 18, contractYears: c.age <= 21 ? 2 : 3 };
   }
+  if (input.path === "youth") return { age: 15, overall: STARTING_OVERALL.youth, potential: null, reputation: 3, youth: true, contractYears: 1 };
   const academy = input.path === "academy";
   return { age: academy ? 17 : 20, overall: STARTING_OVERALL[academy ? "academy" : "late"], potential: null, reputation: academy ? 8 : 15, youth: academy, contractYears: 2 };
 }
@@ -240,10 +242,10 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
   const age = start.age;
   const level = clubLevel(club.reputation);
   // Starting ability: academy kids are raw; late starters are closer to the senior squad.
-  const startOvr = start.potential === null ? clamp(start.overall + rng.normal(0, 1.2), 56, 72) : start.overall;
+  const startOvr = start.potential === null ? clamp(start.overall + rng.normal(0, 1.2), input.path === "youth" ? 44 : 56, 72) : start.overall;
   void level;
   const diff = input.difficulty ?? "standard";
-  const potBase = input.path === "academy" ? 89 : 85;
+  const potBase = input.path === "youth" ? 90 : input.path === "academy" ? 89 : 85;
   const potential = start.potential ?? clamp(potBase + rng.normal(0, 4) + (diff === "relaxed" ? 2 : diff === "hardcore" ? -2 : 0), 76, 97);
   const hidden = randomHidden(rng, input.position, potential);
   hidden.professionalism = Math.max(hidden.professionalism, 55);
@@ -315,6 +317,8 @@ function signForStanding(state: GameState, p: Player): void {
   if (!c || !club) return;
   c.role = expectedRole(state, club, p);
   c.wage = playerWage(p, state.season, club.reputation, c.role);
+  // A 15-year-old is on a scholarship, not a professional wage.
+  if (state.user.youth || ageOf(p, state.season) < 16) c.wage = Math.max(100, Math.round((c.wage * 0.2) / 50) * 50);
 }
 
 export function createWorld(input: NewCareerInput): GameState {
@@ -436,6 +440,7 @@ export function createWorld(input: NewCareerInput): GameState {
     title: startProfile(input).youth ? `Joined the ${staticClub(input.clubId)?.shortName} academy` : `Signed first professional deal with ${staticClub(input.clubId)?.shortName}`,
     detail: `Aged ${state.user.startAge}, ${country(input.nationality)?.name} · ${input.position}`,
   });
+  if (input.path === "youth") startYouth(state);
   if (input.challenge) {
     const def = challengeDef(input.challenge.id);
     const tier = state.user.startTier;
