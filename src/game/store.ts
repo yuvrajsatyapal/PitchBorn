@@ -20,7 +20,7 @@ import { negotiate, requestRenewal, setTransferRequest, type NegotiationAction }
 import { syncSagas } from "@/engine/career/saga/engine";
 import type { MatchResult } from "@/engine/match/engine";
 import { retireFromInternational } from "@/engine/national/national";
-import { advanceTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
+import { advanceTurn, beginTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
 import { interruptReason, snapshotAttention, type InterruptReason } from "@/engine/season/interrupts";
 import { prepareMatch, type PreparedMatch } from "@/engine/season/matchday";
 import { chooseIntlNumber as chooseIntlNumberAction, chooseSquadNumber } from "@/engine/jersey/numbers";
@@ -32,6 +32,7 @@ import { withRng } from "@/engine/world/helpers";
 import { Rng } from "@/engine/rng";
 import { loadSave, saveGame, setKv, getKv } from "@/persistence/saves";
 import { inductCareer } from "@/persistence/hallOfFame";
+import { startNextGeneration, type NextGenInput } from "@/engine/career/generations";
 
 export type RewardKind = "training" | "recovery" | "morale";
 
@@ -112,6 +113,8 @@ interface GameStore {
   answerPress: (questionId: string, answerId: string) => string;
   skipPress: () => void;
   setTips: (on: boolean) => void;
+  /** Start the retired player's child's career in this save. */
+  nextGeneration: (input: NextGenInput) => Promise<{ ok: boolean; reason?: string }>;
 }
 
 const yieldFrame = () => new Promise<void>((r) => setTimeout(r, 16));
@@ -624,6 +627,20 @@ export const useGame = create<GameStore>((set, get) => ({
     dismissTipAction(g, id);
     get().bump();
     void get().save();
+  },
+
+  nextGeneration: async (input) => {
+    const g = get().game;
+    if (!g) return { ok: false, reason: "No game loaded." };
+    // Keep the parent's career in the Hall of Fame before the save moves on to the child.
+    await inductCareer(g).catch((err) => console.warn("Hall of Fame induction failed", err));
+    const res = startNextGeneration(g, input);
+    if (!res.ok) return res;
+    beginTurn(g);
+    get().bump();
+    await saveGame(g, { backup: true, label: "Next generation" });
+    get().notify(res.msg ?? "A new career begins.", "good");
+    return { ok: true };
   },
 
   setTips: (on) => {

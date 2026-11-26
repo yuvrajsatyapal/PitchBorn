@@ -53,7 +53,8 @@ export function hallOfFameEntry(state: GameState, inductedAt = new Date().toISOS
   const clubId = card.clubId ?? u.startClubId;
   const colors = card.clubId ? card.clubColors : staticClub(clubId)?.colors ?? card.clubColors;
   return {
-    saveId: state.id,
+    // Each generation of a family save is its own career in the Hall.
+    saveId: state.generation && state.generation > 1 ? `${state.id}~g${state.generation}` : state.id,
     name: card.name,
     position: card.position,
     positionLong: card.positionLong,

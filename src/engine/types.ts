@@ -1640,6 +1640,30 @@ export interface GameState {
   /** Promotion/relegation decided at season end, applied at rollover. */
   pendingMoves?: { clubId: string; to: string }[];
   lastTurnSummary?: TurnSummary;
+  /** Which generation of the family the user is playing (absent = the first). */
+  generation?: number;
+  /** Earlier generations of the family, oldest first. */
+  lineage?: LineageEntry[];
+}
+
+/** A past generation of the family in this save (see career/generations.ts). */
+export interface LineageEntry {
+  generation: number;
+  playerId: PlayerId;
+  name: string;
+  nationality: CountryCode;
+  position: Position;
+  startSeason: number;
+  retiredSeason: number;
+  legacyScore: number;
+  legacyTier: string;
+  peak: number;
+  apps: number;
+  goals: number;
+  trophies: number;
+  look: Appearance;
+  coachRole?: CoachRole;
+  coachClubId?: ClubId;
 }
 
 export interface TurnSummary {

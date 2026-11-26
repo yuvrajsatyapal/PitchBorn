@@ -13,6 +13,7 @@ import { clubName } from "@/engine/data/world";
 import { avgRating } from "@/engine/players/generate";
 import { name, user } from "@/game/selectors";
 import { useGameState } from "@/game/store";
+import { NextGenerationCard } from "@/components/game/NextGenerationCard";
 
 export default function Legacy() {
   const g = useGameState();
@@ -122,6 +123,7 @@ export default function Legacy() {
           </tbody>
         </Table>
       </Card>
+      {g.user.retired && <NextGenerationCard g={g} />}
       <div className="flex flex-wrap gap-2">
         <Link href="/play/history" className="pb-btn bg-card px-5">Full timeline</Link>
         <LinkButton href="/play/card" tone="sun">🪪 Share career card</LinkButton>

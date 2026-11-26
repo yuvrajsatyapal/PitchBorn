@@ -17,7 +17,7 @@ import { ensureManagerIds } from "../managers/registry";
 import { openStint } from "../managers/history";
 import { clamp, Rng } from "../rng";
 import type {
-  Appearance, ClubState, CountryCode, FormationId, GameState, NationalTeamState, Player, Position, SquadRole,
+  Appearance, ClubState, UserCareer, CountryCode, FormationId, GameState, NationalTeamState, Player, Position, SquadRole,
 } from "../types";
 import { SCHEMA_VERSION, addTimeline, nextId } from "./helpers";
 import { generateAttributes } from "../players/attributes";
@@ -311,7 +311,7 @@ export function createUserPlayer(state: GameState, rng: Rng, input: NewCareerInp
  * pays that role's wage: a custom-start star walks in as the star, an academy kid at a big club as a prospect. Called once
  * the squads are full (so the pecking order is complete) and before shirt numbers are handed out. Deterministic.
  */
-function signForStanding(state: GameState, p: Player): void {
+export function signForStanding(state: GameState, p: Player): void {
   const c = p.contract;
   const club = p.clubId ? state.clubs[p.clubId] : undefined;
   if (!c || !club) return;
@@ -319,6 +319,50 @@ function signForStanding(state: GameState, p: Player): void {
   c.wage = playerWage(p, state.season, club.reputation, c.role);
   // A 15-year-old is on a scholarship, not a professional wage.
   if (state.user.youth || ageOf(p, state.season) < 16) c.wage = Math.max(100, Math.round((c.wage * 0.2) / 50) * 50);
+}
+
+/** A brand-new career record for the user's player (also used when the next generation takes over the save). */
+export function freshUserCareer(season: number, input: NewCareerInput): UserCareer {
+  return {
+    playerId: "",
+    startSeason: season,
+    startAge: startProfile(input).age,
+    startClubId: input.clubId,
+    startTier: staticLeague(staticClub(input.clubId)?.leagueId ?? "")?.tier ?? 1,
+    agent: NO_AGENT,
+    memories: [],
+    traitLog: [],
+    bank: BALANCE.agents.startingBank,
+    relationships: { manager: 55, teammates: 55, supporters: 50, board: 50, agent: 60 },
+    priorities: input.priorities ?? { money: 1, playingTime: 1, ambition: 1, loyalty: 1 },
+    training: { focus: "balanced", intensity: "normal" },
+    timeline: [],
+    offers: [],
+    sagas: [],
+    rivalry: { rivals: [], candidates: {}, transferScan: 0, lastFormedIndex: -999 },
+    decisions: [],
+    awards: [],
+    trophies: [],
+    transfers: [],
+    earnings: 0,
+    peakOverall: 0,
+    peakSeason: season,
+    transferRequest: false,
+    wantsLoan: false,
+    eventCooldowns: {},
+    boosts: [],
+    milestones: [],
+    retired: false,
+    recentRatings: [],
+    matchLog: [],
+    reserveLog: [],
+    relLog: [],
+    pay: { career: {}, season: { season, amounts: {} }, paid: [] },
+    intl: { history: [], cooldownUntil: 0 },
+    injuryHistory: [],
+    rewardCooldowns: {},
+    trainingHistory: [],
+  };
 }
 
 export function createWorld(input: NewCareerInput): GameState {
@@ -345,46 +389,7 @@ export function createWorld(input: NewCareerInput): GameState {
     competitions: {},
     leagueClubs: {},
     nationalTeams: {},
-    user: {
-      playerId: "",
-      startSeason: season,
-      startAge: startProfile(input).age,
-      startClubId: input.clubId,
-      startTier: staticLeague(staticClub(input.clubId)?.leagueId ?? "")?.tier ?? 1,
-      agent: NO_AGENT,
-      memories: [],
-      traitLog: [],
-      bank: BALANCE.agents.startingBank,
-      relationships: { manager: 55, teammates: 55, supporters: 50, board: 50, agent: 60 },
-      priorities: input.priorities ?? { money: 1, playingTime: 1, ambition: 1, loyalty: 1 },
-      training: { focus: "balanced", intensity: "normal" },
-      timeline: [],
-      offers: [],
-      sagas: [],
-      rivalry: { rivals: [], candidates: {}, transferScan: 0, lastFormedIndex: -999 },
-      decisions: [],
-      awards: [],
-      trophies: [],
-      transfers: [],
-      earnings: 0,
-      peakOverall: 0,
-      peakSeason: season,
-      transferRequest: false,
-      wantsLoan: false,
-      eventCooldowns: {},
-      boosts: [],
-      milestones: [],
-      retired: false,
-      recentRatings: [],
-      matchLog: [],
-      reserveLog: [],
-      relLog: [],
-      pay: { career: {}, season: { season, amounts: {} }, paid: [] },
-      intl: { history: [], cooldownUntil: 0 },
-      injuryHistory: [],
-      rewardCooldowns: {},
-      trainingHistory: [],
-    },
+    user: freshUserCareer(season, input),
     news: [],
     archive: [],
     records: [],
