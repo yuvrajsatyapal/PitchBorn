@@ -72,7 +72,7 @@ function FocusBlock({ p, season }: { p: Player; season: number }) {
   const r = focusReading(p, season);
   const open = r.focus.id === NO_FOCUS;
   return (
-    <div className="mb-3 grid grid-cols-2 gap-x-3 gap-y-3 rounded-xl border-2 border-line bg-paper-2/60 p-3 sm:gap-x-6" data-testid="development-focus">
+    <div className="mb-3 grid gap-x-3 gap-y-3 rounded-xl border-2 border-line bg-paper-2/60 p-3 min-[480px]:grid-cols-2 sm:gap-x-6" data-testid="development-focus">
       <div className="min-w-0 break-words">
         <div className="text-xs font-black uppercase tracking-wider text-muted">Desired playstyle</div>
         <div className="font-display text-lg uppercase leading-tight">{r.focus.name}</div>

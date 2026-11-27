@@ -57,7 +57,6 @@ export function FormPanel({ g, version }: { g: GameState; version: number }) {
     <Card
       title="Form & match ratings"
       action={<Tabs compact value={n} onChange={setN} items={[{ id: "5", label: "Last 5" }, { id: "10", label: "Last 10" }, { id: "season", label: "Season" }]} />}
-      headerNoWrap
     >
       {data.dev.entries.length > 0 && <Tabs compact className="mb-1 justify-end" value={series} onChange={setSeries} items={[{ id: "senior", label: "Senior" }, { id: "dev", label: "Development" }]} />}
       <RatingChart size="large" variant="line" matches={series === "senior" ? data.picked.map((e) => toChart(e, g)) : devChart} average={series === "senior" ? avg : data.dev.average} label="Match ratings" />
@@ -192,9 +191,9 @@ export function RecordsPanel({ g }: { g: GameState }) {
                   {b.label}
                   {b.note && <span className="block text-[11px] text-muted">{b.note}</span>}
                 </span>
-                <span className="text-right">
+                <span className="shrink-0 text-right">
                   <b className="tabular-nums">{b.display}</b>
-                  <span className="block text-[11px] text-muted">{sl(b.season)}{b.current ? " · in progress" : ""}</span>
+                  <span className="block whitespace-nowrap text-[11px] text-muted">{sl(b.season)}{b.current ? " · in progress" : ""}</span>
                 </span>
               </li>
             ))}

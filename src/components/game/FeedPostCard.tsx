@@ -19,11 +19,13 @@ export function FeedPostCard({ post, now }: { post: FeedPost; now?: { season: nu
     <li className="flex gap-3 rounded-2xl border-2 border-line/20 bg-card px-3 py-2.5" data-testid="feed-post">
       <span aria-hidden className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-line text-lg ${k.bg}`}>{k.icon}</span>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-1.5 text-sm">
-          <span className="font-bold">{post.author}</span>
-          <span className="truncate text-muted">{post.handle}</span>
-          <span className="text-muted">· {ago}</span>
-          <span className="ml-auto text-[10px] font-black uppercase tracking-wider text-muted">{k.label}</span>
+        <div className="flex items-baseline gap-x-2 text-sm">
+          <span className="min-w-0 font-bold">{post.author}</span>
+          <span className="ml-auto shrink-0 whitespace-nowrap text-[10px] font-black uppercase tracking-wider text-muted">{k.label}</span>
+        </div>
+        <div className="flex min-w-0 items-baseline gap-x-1.5 text-xs text-muted">
+          <span className="min-w-0 truncate">{post.handle}</span>
+          <span className="shrink-0 whitespace-nowrap">· {ago}</span>
         </div>
         <p className="mt-0.5 break-words text-[15px] leading-snug">{post.text}</p>
         <div className="mt-1.5 flex gap-4 text-xs text-muted" aria-label={`${post.likes} likes, ${post.reposts} reposts`}>

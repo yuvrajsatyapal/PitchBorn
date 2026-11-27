@@ -68,7 +68,7 @@ export default function Schedule() {
                           comp={comp}
                           stage={f.stage}
                           stacked
-                          full
+                          full={f.stage ? "sm" : true}
                           className="col-start-2 row-start-2 pl-[30px] sm:col-start-2 sm:row-start-1 sm:pl-0"
                         />
                         <span className={`col-start-3 row-start-1 flex items-center justify-end gap-2 sm:col-start-4 row-span-2 sm:row-span-1`}>

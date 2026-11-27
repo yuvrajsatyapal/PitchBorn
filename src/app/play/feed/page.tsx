@@ -25,7 +25,7 @@ export default function Feed() {
     <div className="grid gap-4">
       <PageTitle kicker="What they're saying" title="Social Feed" className="-mb-1" />
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="Posts this season" value={recent.length} />
+        <Stat label="Posts" value={recent.length} sub="this season" />
         <Stat label="Positive" value={mood === null ? "–" : `${mood}%`} tone={mood !== null && mood >= 50 ? "pitch" : "coral"} />
         <Stat label="Most liked" value={all.length ? Math.max(...all.map((p) => p.likes)).toLocaleString() : "–"} tone="sun" />
       </div>

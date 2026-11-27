@@ -4,7 +4,7 @@ Read this first after any context reset. Keep it short and current.
 
 ## Stack / decisions
 - Next.js 16 (App Router, **static export** `output: 'export'`) + React 19 + TS + Tailwind 4. No server; deploy anywhere static ($0).
-- Engine: `src/engine/**` pure TS, no React. Persistence: Dexie (`src/persistence`). App layer: Zustand (`src/game`). Ads: `src/ads` (presentation only).
+- Engine: `src/engine/**` pure TS, no React. Persistence: Dexie (`src/persistence`). App layer: Zustand (`src/game`).
 - Data pipeline: `scripts/data/fetch.ts` (Wikidata SPARQL + OpenFootball clubs + football.json → `data/raw/`, committed) → `scripts/data/build.ts` → `src/data/world.json` (validated with zod + cross-ref checks). Curation: `data/curated/overrides.json`, `countries.json`.
 - Players are **fictional/generated** by default (right-of-publicity risk for real names in an ad-supported game). Clubs, leagues, stadiums, capacities, founding years, colours and historical results are real (CC0).
 - No official crests/logos bundled (trademark); generated crests/kits/portraits. Flags from `flag-icons` (MIT).
@@ -19,7 +19,7 @@ Read this first after any context reset. Keep it short and current.
 - [x] Stress tools: scripts/sim/calibrate-match.ts, scripts/sim/careers.mts (worker threads, --count, --full)
 - [x] Zustand store / app layer (src/game)
 - [x] UI screens: landing, new, saves, credits, privacy, /play/{dashboard, match, schedule, profile, training, club, league, transfers, national, stats, awards, history, world, settings, legacy}
-- [x] Ads architecture (src/ads) — placeholder in dev, none in prod by default
+- [x] Ads and sponsor sections removed (2026-11-27)
 - [x] PWA/offline (manifest, icons, generated sw.js)
 - [x] Tests: vitest (see docs/TESTING.md), Playwright e2e (desktop+mobile), stress sims (100 careers done; rebalanced after)
 - [x] Docs (docs/*.md, README)

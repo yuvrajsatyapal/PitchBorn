@@ -1,14 +1,14 @@
 "use client";
 import { useState } from "react";
-import { AD_RULES, PORTFOLIO_URL } from "./config";
+
+const PORTFOLIO_URL = "https://yuvraj-satyapal.vercel.app/";
 
 /**
  * Optional boost. Clicking opens the developer's portfolio in a new tab and
  * grants the reward. `onReward` returns false when the boost is refused (cooldown).
  */
-export function RewardedButton({ label, onReward, disabled, hint }: { label: string; onReward: () => boolean; disabled?: boolean; hint?: string }) {
+export function BoostButton({ label, onReward, disabled, hint }: { label: string; onReward: () => boolean; disabled?: boolean; hint?: string }) {
   const [state, setState] = useState<"idle" | "done" | "failed">("idle");
-  if (!AD_RULES.rewarded.enabled) return null;
   const run = () => {
     // Opened synchronously inside the click so popup blockers allow it.
     window.open(PORTFOLIO_URL, "_blank", "noopener,noreferrer");

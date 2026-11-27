@@ -64,7 +64,7 @@ Already in the game: match engine with key moments and substitutions, training, 
 
 14. **Sound.** Crowd noise, the whistle and goal stings, with a mute toggle. There's no audio yet.
 15. **Tutorial for the first season.** A short guided first week for new players. There's no onboarding flow yet.
-16. **Ad and sponsor slot.** Still pending from earlier deployment notes (see `ADVERTISING.md`).
+16. **Ad and sponsor slot.** Removed on 2026-11-27: the site carries no ads or sponsor sections.
 
 ## Suggested starting points
 

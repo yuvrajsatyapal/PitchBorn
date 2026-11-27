@@ -19,24 +19,24 @@ export function SetPieceCard({ g }: { g: GameState }) {
           const d = dutyStatus(g, k);
           const label = SET_PIECE_LABEL[k];
           return (
-            <li key={k} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border-2 border-line/20 px-2.5 py-1.5 text-sm">
-              <div>
-                <div className="font-bold">{label.many}</div>
-                <div className="text-xs text-ink-2">
-                  {d.mine ? (d.granted ? "Yours: the manager handed you the duty." : "Yours: you're the best taker in the side.") : `${d.current?.name ?? "A teammate"} takes them.`}
+            <li key={k} className="rounded-lg border-2 border-line/20 px-2.5 py-1.5 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-bold">{label.many}</div>
+                  <div className="text-xs text-ink-2">
+                    {d.mine ? (d.granted ? "Yours: the manager handed you the duty." : "Yours: you're the best taker in the side.") : `${d.current?.name ?? "A teammate"} takes them.`}
+                  </div>
                 </div>
-              </div>
-              {d.mine ? (
-                <Badge tone="pitch">Your duty</Badge>
-              ) : (
-                <div className="text-right">
-                  <Button size="sm" tone="sun" disabled={!d.canAsk} onClick={() => act((s) => askForDuty(s, k), `You're the new ${label.duty}.`)}>
+                {d.mine ? (
+                  <Badge tone="pitch">Your duty</Badge>
+                ) : (
+                  <Button size="sm" tone="sun" className="shrink-0 whitespace-nowrap" disabled={!d.canAsk} onClick={() => act((s) => askForDuty(s, k), `You're the new ${label.duty}.`)}>
                     Ask for it
                   </Button>
-                  {!d.canAsk && d.reason && <div className="mt-0.5 text-[11px] text-muted">{d.reason}</div>}
-                  {d.canAsk && <div className="mt-0.5 text-[11px] text-muted">{d.likely ? "The manager would probably agree." : `Long shot: work on ${k === "penalty" ? "finishing and composure" : "long shots and technique"}.`}</div>}
-                </div>
-              )}
+                )}
+              </div>
+              {!d.mine && !d.canAsk && d.reason && <div className="mt-1 text-[11px] text-muted">{d.reason}</div>}
+              {!d.mine && d.canAsk && <div className="mt-1 text-[11px] text-muted">{d.likely ? "The manager would probably agree." : `Long shot: work on ${k === "penalty" ? "finishing and composure" : "long shots and technique"}.`}</div>}
             </li>
           );
         })}

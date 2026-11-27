@@ -404,13 +404,11 @@ flowchart TB
         IDB[("IndexedDB")]
         SW["Service worker<br/>offline precache"]
     end
-    Ads["Ads / sponsor slots<br/>src/ads (presentation only)"]
     World[("world.json<br/>clubs, leagues, stadiums")]
 
     Pages --> UI --> Store --> Engine
     Store --> Persist --> IDB
     Engine --> World
-    Pages -.-> Ads
     SW -.-> Pages
 ```
 
@@ -423,9 +421,8 @@ Key decisions:
 | Mutable `GameState` plus a version counter | Fast for ~9k players; the store bumps `version` after each action. UI derives values every render and never memoises on the game object |
 | Seeded RNG stored in the state | Same seed and same choices give the same career; live matches fork a stream per fixture |
 | Main-thread simulation | ~115 ms per week in Node, ~150–250 ms in the browser including autosave; a Web Worker did not justify moving state ownership across threads |
-| Fictional players | Avoids right-of-publicity risk for an ad-supported game |
+| Fictional players | Avoids right-of-publicity risk |
 | No bundled crests or logos | Trademark safety: crests, kits and portraits are generated |
-| Ads are presentation-only | The engine never imports `src/ads` |
 
 * * *
 
@@ -471,7 +468,6 @@ PitchBorn/
 │   │   ├── balance.ts        # every balancing constant in one place
 │   │   └── rng.ts            # seeded sfc32 RNG
 │   ├── persistence/          # codec, migrations, Dexie db, save service
-│   ├── ads/                  # ad config, providers, consent, sponsor slots
 │   └── data/                 # generated world.json and asset manifests
 ├── scripts/
 │   ├── data/                 # fetch + build the open-data pipeline
@@ -590,14 +586,12 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 * * *
 
-## Advertising & Privacy
+## Privacy
 
-- Ads are presentation-only and never touch the simulation
-- `NEXT_PUBLIC_AD_PROVIDER` selects `none`, `placeholder` or `adsense` (default: placeholder in dev, none in production)
-- A consent integration point is available via `NEXT_PUBLIC_ADS_REQUIRE_CONSENT`
-- Never commit real ad IDs
+- No ads, sponsor spaces or ad providers
+- Careers are stored only in the browser
 
-See [`docs/ADVERTISING.md`](docs/ADVERTISING.md) and [`docs/PRIVACY.md`](docs/PRIVACY.md).
+See [`docs/PRIVACY.md`](docs/PRIVACY.md).
 
 * * *
 

@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { SponsorRail } from "@/ads/SponsorSections";
 import { Logo } from "@/components/art/Logo";
 import { Crest } from "@/components/art/Crest";
 import { Button, LinkButton, Modal } from "@/components/ui";
@@ -305,7 +304,6 @@ export function GameShell({ children }: { children: ReactNode }) {
             {error && <div className="pb-card mb-4 bg-coral-2 p-3 text-sm">Something went wrong: {error}</div>}
             {children}
           </main>
-          <SponsorRail />
         </div>
       </div>
       <BottomNav />

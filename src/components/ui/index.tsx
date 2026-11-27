@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { SponsorSlot } from "@/ads/SponsorSections";
 
 type Tone = "sun" | "pitch" | "plum" | "coral" | "sky" | "paper" | "ink";
 const TONE_BG: Record<Tone, string> = {
@@ -63,18 +62,19 @@ export function Card({ children, className = "", tone, title, action, flat, head
 }
 
 export function Badge({ children, tone = "paper", className = "" }: { children: ReactNode; tone?: Tone; className?: string }) {
-  return <span className={`inline-flex items-center gap-1 rounded-full border-2 border-line px-2 py-0.5 text-xs font-bold ${TONE_SOFT[tone]} ${className}`}>{children}</span>;
+  return <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-2 border-line px-2 py-0.5 text-xs font-bold ${TONE_SOFT[tone]} ${className}`}>{children}</span>;
 }
 
 const COMP_TONE: Record<string, Tone> = { league: "pitch", cup: "sun", continental: "plum", international: "sky", friendly: "paper" };
 const STAGE_SHORT: Record<string, string> = { "Quarter-final": "QF", "Semi-final": "SF", "Round of 16": "R16", "Group stage": "Groups" };
 
 /** Competition tag: a colour-coded code chip by kind, with the stage (Group B, QF…) as quiet text beside it. */
-export function CompChip({ comp, stage, stacked, full, hideOnMobile, className = "" }: { comp: { kind: string; shortName: string; name: string }; stage?: string | null; stacked?: boolean; full?: boolean; hideOnMobile?: boolean; className?: string }) {
+/** `full="sm"` shows the short code on phones and the full competition name from the sm breakpoint up. */
+export function CompChip({ comp, stage, stacked, full, hideOnMobile, className = "" }: { comp: { kind: string; shortName: string; name: string }; stage?: string | null; stacked?: boolean; full?: boolean | "sm"; hideOnMobile?: boolean; className?: string }) {
   const label = stage ? (stacked ? stage : (STAGE_SHORT[stage] ?? stage)) : null;
   return (
     <span title={stage ? `${comp.name} · ${stage}` : comp.name} className={`${hideOnMobile ? "max-sm:hidden sm:inline-flex" : "inline-flex"} min-w-0 ${stacked ? "flex-row items-center gap-2" : "items-center gap-1.5"} ${className}`}>
-      <span className={`max-w-full shrink-0 truncate rounded-md border-2 border-line px-1.5 text-[10px] font-black leading-4 tracking-wide sm:text-[11px] sm:leading-5 ${comp.kind === "league" || comp.kind === "friendly" ? "bg-paper-2 text-ink-2" : TONE_BG[COMP_TONE[comp.kind] ?? "paper"]}`}>{full ? comp.name : comp.shortName}</span>
+      <span className={`max-w-full shrink-0 truncate rounded-md border-2 border-line px-1.5 text-[10px] font-black leading-4 tracking-wide sm:text-[11px] sm:leading-5 ${comp.kind === "league" || comp.kind === "friendly" ? "bg-paper-2 text-ink-2" : TONE_BG[COMP_TONE[comp.kind] ?? "paper"]}`}>{full === "sm" ? (<><span className="sm:hidden">{comp.shortName}</span><span className="max-sm:hidden">{comp.name}</span></>) : full ? comp.name : comp.shortName}</span>
       {label && <span className="truncate text-[11px] font-semibold leading-none text-muted">{label}</span>}
     </span>
   );
@@ -82,9 +82,9 @@ export function CompChip({ comp, stage, stacked, full, hideOnMobile, className =
 
 export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: Tone }) {
   return (
-    <div className={`flex h-full flex-col justify-center rounded-xl border-2 border-line px-3 py-2 ${tone ? TONE_SOFT[tone] : "bg-card"}`}>
+    <div className={`flex h-full flex-col justify-start rounded-xl border-2 border-line px-3 py-2 ${tone ? TONE_SOFT[tone] : "bg-card"}`}>
       <div className="text-[11px] font-bold uppercase tracking-wider text-muted">{label}</div>
-      <div className="num text-xl leading-tight">{value}</div>
+      <div className="num text-lg leading-tight sm:text-xl">{value}</div>
       {sub && <div className="text-xs text-ink-2">{sub}</div>}
     </div>
   );
@@ -175,7 +175,6 @@ export function PageTitle({ kicker, title, children, className = "mb-5" }: { kic
         </div>
         {children && <div className="flex flex-wrap gap-2">{children}</div>}
       </div>
-      <SponsorSlot className="mb-5" />
     </>
   );
 }

@@ -37,7 +37,10 @@ export const CareerCard = forwardRef<SVGSVGElement, { d: CareerCardData; look: A
   const bg = d.kitColors?.primary ?? d.clubColors.primary;
   const accent = d.kitColors?.secondary ?? d.clubColors.secondary;
   const onBg = isLight(bg) ? INK : "#ffffff";
-  const nameSize = Math.min(104, Math.floor(1900 / Math.max(10, d.name.length)));
+  const nameSize = Math.min(104, Math.floor(1500 / Math.max(10, d.name.length)));
+  // Fallback fonts run wider than the size estimate: squeeze a long name onto the plate rather than spill past it.
+  const NAME_MAX_W = CARD_W - 160;
+  const nameFit = d.name.length * nameSize * 0.62 > NAME_MAX_W ? NAME_MAX_W : undefined;
   const honours = d.honours.slice(0, 5);
   const extra = d.honours.length - honours.length;
   const awards = d.awards.slice(0, 3);
@@ -88,7 +91,7 @@ export const CareerCard = forwardRef<SVGSVGElement, { d: CareerCardData; look: A
 
       {/* Name plate */}
       <rect x="40" y="770" width={CARD_W - 80} height="150" rx="28" fill={INK} />
-      <text x={CARD_W / 2} y={770 + 82} textAnchor="middle" fill="#ffffff" fontFamily={DISPLAY} fontSize={nameSize}>{d.name}</text>
+      <text x={CARD_W / 2} y={770 + 82} textAnchor="middle" fill="#ffffff" fontFamily={DISPLAY} fontSize={nameSize} textLength={nameFit} lengthAdjust={nameFit ? "spacingAndGlyphs" : undefined}>{d.name}</text>
       <text x={CARD_W / 2} y={770 + 128} textAnchor="middle" fill="#ffc62b" fontFamily={BODY} fontWeight="700" fontSize="28">
         {d.positionLong} · {d.nation} · {d.club}
       </text>

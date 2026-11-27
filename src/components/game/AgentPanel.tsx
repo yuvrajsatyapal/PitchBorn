@@ -95,12 +95,17 @@ export function AgentPanel({ g }: { g: GameState }) {
             const current = me.id === a.id;
             return (
               <li key={a.id} className={`rounded-xl border-2 p-3 ${current ? "border-pitch bg-pitch-2/20" : "border-line"}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 font-bold">
-                    <Flag code={a.nationality} /> {a.name} <Badge tone={TIER_TONE[a.tier]}>{AGENT_TIER_LABEL[a.tier]}</Badge> <StyleBadge g={g} agent={a} />
-                    <span className="text-xs text-ink-2">{a.rating}</span>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 font-bold">
+                      <Flag code={a.nationality} /> <span className="min-w-0">{a.name}</span>
+                      <span className="text-xs text-ink-2">{a.rating}</span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      <Badge tone={TIER_TONE[a.tier]}>{AGENT_TIER_LABEL[a.tier]}</Badge> <StyleBadge g={g} agent={a} />
+                    </div>
                   </div>
-                  <Button size="sm" tone={current ? "paper" : "pitch"} disabled={!check.ok} onClick={() => hire(a.id)}>
+                  <Button size="sm" tone={current ? "paper" : "pitch"} className="shrink-0 whitespace-nowrap" disabled={!check.ok} onClick={() => hire(a.id)}>
                     {current ? "Current agent" : "Hire"}
                   </Button>
                 </div>

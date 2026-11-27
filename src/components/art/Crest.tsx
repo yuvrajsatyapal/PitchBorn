@@ -11,9 +11,9 @@ export function Crest({ clubId, size = 40, className = "" }: { clubId: string | 
   const club = clubId ? staticClub(clubId) : undefined;
   if (!club) {
     const nation = clubId ? country(clubId) : undefined;
-    if (nation) return <span className={`fi fi-${nation.flag} rounded-sm ${className}`} style={{ width: size, height: size * 0.75, display: "inline-block", backgroundSize: "cover", border: "2px solid var(--line)" }} aria-label={nation.name} />;
+    if (nation) return <span className={`fi fi-${nation.flag} shrink-0 rounded-sm ${className}`} style={{ width: size, height: size * 0.75, display: "inline-block", backgroundSize: "cover", border: "2px solid var(--line)" }} aria-label={nation.name} />;
     return (
-      <svg width={size} height={size} viewBox="0 0 40 40" className={className} aria-hidden>
+      <svg width={size} height={size} viewBox="0 0 40 40" className={`shrink-0 ${className}`} aria-hidden>
         <circle cx="20" cy="20" r="17" fill="var(--paper-2)" stroke="var(--line)" strokeWidth="2" strokeDasharray="4 3" />
       </svg>
     );
@@ -34,7 +34,7 @@ export function Crest({ clubId, size = 40, className = "" }: { clubId: string | 
           : "M20 1 L38 12 V28 L20 39 L2 28 V12 Z";
   const letters = club.abbreviation.length > 3 ? club.abbreviation.slice(0, 3) : club.abbreviation;
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" className={className} role="img" aria-label={`${club.name} emblem`}>
+    <svg width={size} height={size} viewBox="0 0 40 40" className={`shrink-0 ${className}`} role="img" aria-label={`${club.name} emblem`}>
       <defs>
         <clipPath id={id}>
           <path d={outline} />

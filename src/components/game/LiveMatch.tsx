@@ -1,6 +1,5 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSuppressAds } from "@/ads/AdContext";
 import { Crest } from "@/components/art/Crest";
 import { Commentary, SpeedControl } from "@/components/game/match/Commentary";
 import { DecisionCard } from "@/components/game/match/DecisionCard";
@@ -39,7 +38,6 @@ function playEvents(evs: MatchEvent[], userSide: "home" | "away" | null, clubs?:
 }
 
 export function LiveMatch({ prepared, onDone }: { prepared: PreparedMatch; onDone: () => void }) {
-  useSuppressAds(true);
   const eng = prepared.engine;
   const [, force] = useState(0);
   // The speed the user chose. A key moment pauses play without touching it, so the match carries on at the same pace afterwards.

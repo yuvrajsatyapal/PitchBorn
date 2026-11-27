@@ -1,5 +1,5 @@
 "use client";
-import { RewardedButton } from "@/ads/RewardedButton";
+import { BoostButton } from "@/components/game/BoostButton";
 import { PlayIdentityCard } from "@/components/game/PlayIdentity";
 import { AttrValue, Badge, Card, PageTitle } from "@/components/ui";
 import { BALANCE } from "@/engine/balance";
@@ -88,8 +88,8 @@ export default function Training() {
       <Card title="Optional boosts">
         <p className="mb-3 text-sm text-ink-2">Small, temporary bonuses. Never required — the game is fully playable without them.</p>
         <div className="flex flex-wrap gap-4">
-          <RewardedButton label="Focused session (+12% training, 6 wks)" hint={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) ? `Available in ${cd("training", BALANCE.rewards.trainingBoost.cooldownTurns)} weeks` : undefined} disabled={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) > 0} onReward={() => { const ok = grant("training"); if (ok) notify("Training boost active.", "good"); return ok; }} />
-          <RewardedButton label="Physio session (+12 fitness)" disabled={cd("recovery", BALANCE.rewards.recoveryBoost.cooldownTurns) > 0} onReward={() => { const ok = grant("recovery"); if (ok) notify("Recovery boost active.", "good"); return ok; }} />
+          <BoostButton label="Focused session (+12% training, 6 wks)" hint={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) ? `Available in ${cd("training", BALANCE.rewards.trainingBoost.cooldownTurns)} weeks` : undefined} disabled={cd("training", BALANCE.rewards.trainingBoost.cooldownTurns) > 0} onReward={() => { const ok = grant("training"); if (ok) notify("Training boost active.", "good"); return ok; }} />
+          <BoostButton label="Physio session (+12 fitness)" disabled={cd("recovery", BALANCE.rewards.recoveryBoost.cooldownTurns) > 0} onReward={() => { const ok = grant("recovery"); if (ok) notify("Recovery boost active.", "good"); return ok; }} />
         </div>
         {boosts.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">

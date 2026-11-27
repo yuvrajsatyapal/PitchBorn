@@ -14,7 +14,7 @@ Persistence (src/persistence)                ← codec, migrations, Dexie/Indexe
 IndexedDB
 ```
 
-Advertising (`src/ads`) is a presentation concern wired into page layouts only; the engine never imports it.
+The site carries no ads or sponsor sections.
 
 ## Directory map
 | Path | Purpose |
@@ -34,7 +34,6 @@ Advertising (`src/ads`) is a presentation concern wired into page layouts only; 
 | `src/engine/validate.ts` | Save-shape schema and game invariants |
 | `src/persistence/` | Codec, migrations, Dexie DB, save service |
 | `src/game/` | Zustand store and UI selectors |
-| `src/ads/` | Ad config, provider abstraction, consent, slot components |
 | `scripts/data/` | Data pipeline |
 | `scripts/sim/` | Calibration and stress simulation |
 | `scripts/pwa/` | Icon rendering and service-worker generation |

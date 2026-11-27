@@ -26,7 +26,6 @@
   --sky: #4d7fe8;
   --sky-2: #dfe8fd;
   --shadow: #1b1712;
-  --ad-bg: #f1ece3;
 }
 
 :root[data-theme="dark"] {
@@ -50,7 +49,6 @@
   --sky: #7da2f5;
   --sky-2: #1d2a45;
   --shadow: #000000;
-  --ad-bg: #262019;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -75,7 +73,6 @@
     --sky: #7da2f5;
     --sky-2: #1d2a45;
     --shadow: #000000;
-    --ad-bg: #262019;
   }
 }
 
@@ -195,7 +192,8 @@ body::before {
   input[type="checkbox"], input[type="radio"] { min-width: 1.5rem; min-height: 1.5rem; }
 }
 
-.font-display { letter-spacing: 0.01em; overflow-wrap: anywhere; }
+/* Long names break between words (or at a hyphen), never mid-word; break-word still splits a single word too wide for its box. */
+.font-display { letter-spacing: 0.01em; overflow-wrap: break-word; }
 /* Numerals (ratings, scores, dates, money, shirt numbers): Chakra Petch with fixed-width digits so columns line up. */
 .num, .scoreboard { font-family: var(--font-num); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 

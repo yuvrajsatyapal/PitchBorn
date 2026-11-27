@@ -1,5 +1,4 @@
 "use client";
-import { SponsorSlot } from "@/ads/SponsorSections";
 import { intlTeam } from "@/engine/national/identity";
 import Link from "next/link";
 import { Crest } from "@/components/art/Crest";
@@ -89,7 +88,6 @@ export default function Dashboard() {
     <div className="grid gap-4">
       <PlayerHero g={g} p={p} />
       <TipCard page="dashboard" />
-      <SponsorSlot />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-4">
           <PendingMatchCard g={g} />

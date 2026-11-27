@@ -124,7 +124,7 @@ export default function CareerPage() {
         <Card title="Contract" className="lg:col-span-2">
           {p.contract ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Club" value={<span className="flex items-center gap-1.5 text-lg"><Crest clubId={p.contract.clubId} size={22} />{clubName(p.contract.clubId, true)}</span>} />
+              <Stat label="Club" value={<span className="flex min-w-0 items-center gap-1.5 text-lg"><Crest clubId={p.contract.clubId} size={22} className="max-sm:hidden" /><span className="min-w-0 break-words">{clubName(p.contract.clubId, true)}</span></span>} />
               <Stat label="Wage" value={formatMoney(p.contract.wage)} sub="per week" />
               <Stat label="Expires" value={`Summer ${p.contract.expires + 1}`} sub={`${p.contract.expires - g.season + 1} season(s) left`} />
               <Stat label="Role" value={<span className="text-lg">{ROLE_LABEL[p.contract.role]}</span>} />

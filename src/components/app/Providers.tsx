@@ -1,7 +1,5 @@
 "use client";
 import { useEffect, type ReactNode } from "react";
-import { AdProviderRoot } from "@/ads/AdContext";
-import { ConsentBanner } from "@/ads/ConsentBanner";
 import { Toaster } from "./Toaster";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -11,10 +9,9 @@ export function Providers({ children }: { children: ReactNode }) {
     }
   }, []);
   return (
-    <AdProviderRoot>
+    <>
       <div className="relative z-[1]">{children}</div>
       <Toaster />
-      <ConsentBanner />
-    </AdProviderRoot>
+    </>
   );
 }

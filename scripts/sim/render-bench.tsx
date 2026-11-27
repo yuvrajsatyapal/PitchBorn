@@ -9,7 +9,6 @@ import { createElement, type ComponentType } from "react";
 import { renderToString } from "react-dom/server";
 import type { GameState } from "@/engine/types";
 import { useGame } from "@/game/store";
-import { AdProviderRoot } from "@/ads/AdContext";
 
 const file = process.argv[2];
 const g = JSON.parse(readFileSync(file, "utf8")) as GameState;
@@ -36,7 +35,7 @@ for (const [name, load] of pages) {
   let size = 0;
   for (let i = 0; i < 8; i++) {
     const t = performance.now();
-    size = renderToString(createElement(AdProviderRoot, null, createElement(Page))).length;
+    size = renderToString(createElement(Page)).length;
     times.push(performance.now() - t);
   }
   times.sort((a, b) => a - b);

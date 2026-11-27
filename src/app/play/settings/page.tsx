@@ -1,9 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AD_PLACEMENTS, adProviderId, consentRequired } from "@/ads/config";
-import { readConsent, writeConsent, type ConsentState } from "@/ads/consent";
-import { Badge, Button, Card, PageTitle, Tabs } from "@/components/ui";
+import { Button, Card, PageTitle, Tabs } from "@/components/ui";
 import { useGame, useGameState } from "@/game/store";
 import { exportSaveBlob, importSaveFile, listBackups, restoreBackup } from "@/persistence/saves";
 import { SoundToggle } from "@/components/game/SoundToggle";
@@ -30,7 +28,6 @@ export default function Settings() {
     }
   });
   const [backups, setBackups] = useState<{ id: string; createdAt: string; label: string }[]>([]);
-  const [consent, setConsent] = useState<ConsentState>(() => (typeof window === "undefined" ? { status: "unknown", personalised: false } : readConsent()));
   useEffect(() => {
     if (g) listBackups(g.id).then(setBackups).catch(() => setBackups([]));
   }, [g, lastSavedAt]);
@@ -148,27 +145,8 @@ export default function Settings() {
           <div className="mb-2 mt-4 text-sm font-bold">Theme</div>
           <Tabs value={theme} onChange={applyTheme} items={[{ id: "system", label: "System" }, { id: "light", label: "Light" }, { id: "dark", label: "Dark" }]} />
         </Card>
-        <Card title="Ads, sponsors & privacy">
-          <p className="text-sm text-ink-2">
-            PitchBorn is free. Ad and sponsor spaces are optional: the game works fully if they are blocked, fail or are disabled.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <Badge>Provider: {adProviderId()}</Badge>
-            <Badge>{AD_PLACEMENTS.filter((p) => p.enabled).length} placements configured</Badge>
-            <Badge tone={consent.status === "granted" ? "pitch" : "paper"}>Consent: {consent.status}</Badge>
-          </div>
-          {consentRequired() ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" tone="paper" onClick={() => { writeConsent({ status: "denied", personalised: false }); setConsent(readConsent()); }}>
-                Non-personalised ads only
-              </Button>
-              <Button size="sm" onClick={() => { writeConsent({ status: "granted", personalised: true }); setConsent(readConsent()); }}>
-                Allow personalised ads
-              </Button>
-            </div>
-          ) : (
-            <p className="mt-3 text-xs text-muted">No third-party ad provider is configured in this build, so nothing is loaded and no consent is needed.</p>
-          )}
+        <Card title="Privacy">
+          <p className="text-sm text-ink-2">PitchBorn is free and shows no ads. Your careers stay in this browser.</p>
           <p className="mt-3 text-xs">
             <a href="/privacy/" className="underline">Privacy notice</a> · <a href="/credits/" className="underline">Data sources & licences</a>
           </p>
