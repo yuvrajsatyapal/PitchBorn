@@ -20,7 +20,7 @@ import { negotiate, requestRenewal, setTransferRequest, type NegotiationAction }
 import { syncSagas } from "@/engine/career/saga/engine";
 import type { MatchResult } from "@/engine/match/engine";
 import { retireFromInternational } from "@/engine/national/national";
-import { advanceTurn, beginTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
+import { advanceTurnSteps, beginTurn, completeUserMatch, findFixture, liveMatchRng, requestRest, retireUser, simUserMatch } from "@/engine/season/advance";
 import { interruptReason, snapshotAttention, type InterruptReason } from "@/engine/season/interrupts";
 import { prepareMatch, type PreparedMatch } from "@/engine/season/matchday";
 import { chooseIntlNumber as chooseIntlNumberAction, chooseSquadNumber } from "@/engine/jersey/numbers";
@@ -132,6 +132,35 @@ async function syncProfileCosmetics(g: GameState): Promise<void> {
 }
 
 const yieldFrame = () => new Promise<void>((r) => setTimeout(r, 16));
+
+/** A macrotask without the 4 ms clamp nested timeouts get: lets the browser paint and handle input between slices. */
+const yieldTask = (() => {
+  if (typeof MessageChannel === "undefined") return () => new Promise<void>((r) => setTimeout(r, 0));
+  const ch = new MessageChannel();
+  const waiting: (() => void)[] = [];
+  ch.port1.onmessage = () => waiting.shift()?.();
+  return () =>
+    new Promise<void>((r) => {
+      waiting.push(r);
+      ch.port2.postMessage(0);
+    });
+})();
+
+/** Budget for one slice of a simulated week, in ms: well under a frame, so the overlay keeps animating. */
+const SLICE_MS = 10;
+
+/** Runs a sliced week (`advanceTurnSteps`) a few milliseconds at a time, giving the page room to breathe in between. */
+async function runSliced<T>(steps: Generator<void, T>): Promise<T> {
+  let began = performance.now();
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+    if (performance.now() - began >= SLICE_MS) {
+      await yieldTask();
+      began = performance.now();
+    }
+  }
+}
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
@@ -249,10 +278,11 @@ export const useGame = create<GameStore>((set, get) => ({
       const beforeSeasonEnd = g.turn <= BALANCE.calendar.endOfSeasonTurn;
       const baseOf = (week: number) => (reduced ? 0 : stepMsFor(week, weeks));
 
-      // Plays one week and says how the run stands on its new date.
-      const step = () => {
+      // Plays one week and says how the run stands on its new date. The week is worked out in slices so the page
+      // keeps painting (a week of the full world takes several hundred milliseconds on a phone).
+      const step = async () => {
         const fromDay = dayNumber(g.season, g.turn, g.turnDay);
-        const report = advanceTurn(g, { byDay: true });
+        const report = await runSliced(advanceTurnSteps(g, { byDay: true }));
         if (report.newSeason) seasonRolled = true;
         const toDay = dayNumber(g.season, g.turn, g.turnDay);
         const why = interruptReason(g, before, { newSeason: report.newSeason, stopOnMatch: untilEvent, stopForNews: untilEvent });
@@ -266,11 +296,11 @@ export const useGame = create<GameStore>((set, get) => ({
 
       // The first week is worked out before the strip moves: it is the heaviest (one frame of waiting beats a stutter).
       await yieldFrame();
-      let cur = step();
+      let cur = await step();
       for (let week = 0; ; week++) {
         reason = cur.why;
         const base = baseOf(week);
-        let next: ReturnType<typeof step> | null = null;
+        let next: Awaited<ReturnType<typeof step>> | null = null;
         for (let day = cur.fromDay + 1; day <= cur.toDay; day++) {
           const began = performance.now();
           const stopping = stopRequested;
@@ -282,7 +312,7 @@ export const useGame = create<GameStore>((set, get) => ({
           // so doing it any earlier would make a Stop run on past the day it was pressed.
           if (day === cur.toDay && !ending && !stopRequested) {
             await yieldFrame();
-            if (!stopRequested) next = step();
+            if (!stopRequested) next = await step();
           }
           const left = ms - (performance.now() - began);
           if (left > 0) await sleep(left);
@@ -290,7 +320,7 @@ export const useGame = create<GameStore>((set, get) => ({
         }
         // A Stop ends the run on the week being shown: the days that remain of it still play out, at the normal pace.
         if (cur.last || stopRequested) break;
-        cur = next ?? step();
+        cur = next ?? (await step());
       }
       // Landed: show why it stopped, and only then refresh the page behind (the repaint is the slow part, and
       // doing it any earlier would show the new date there before the strip has reached it).
@@ -327,6 +357,8 @@ export const useGame = create<GameStore>((set, get) => ({
     try {
       const res = simUserMatch(g, fixtureId);
       set({ version: get().version + 1 });
+      // Like a watched match: keep the result if the tab is closed or reloaded straight after.
+      if (g.settings.autoSave) await saveGame(g).catch((err) => console.warn("Autosave failed", err));
       return res;
     } finally {
       set({ busy: null });
@@ -678,4 +710,5 @@ export { Rng };
 // Debug/testing handle (dev and E2E builds only).
 if (typeof window !== "undefined" && (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_E2E === "1")) {
   (window as unknown as { __pitchborn: typeof useGame }).__pitchborn = useGame;
+  void import("./testHooks").then((m) => ((window as unknown as { __pitchbornTest: unknown }).__pitchbornTest = m.testHooks));
 }

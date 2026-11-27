@@ -48,9 +48,9 @@ export function LinkButton({ href, tone = "sun", size = "md", className = "", ch
   );
 }
 
-export function Card({ children, className = "", tone, title, action, flat, headerNoWrap }: { children: ReactNode; className?: string; tone?: Tone; title?: ReactNode; action?: ReactNode; flat?: boolean; headerNoWrap?: boolean }) {
+export function Card({ children, className = "", tone, title, action, flat, headerNoWrap, "data-testid": testId }: { children: ReactNode; className?: string; tone?: Tone; title?: ReactNode; action?: ReactNode; flat?: boolean; headerNoWrap?: boolean; "data-testid"?: string }) {
   return (
-    <section className={`${flat ? "pb-card-flat" : "pb-card"} ${tone ? TONE_SOFT[tone] : ""} p-4 sm:p-5 ${className}`}>
+    <section className={`${flat ? "pb-card-flat" : "pb-card"} ${tone ? TONE_SOFT[tone] : ""} p-4 sm:p-5 ${className}`} data-testid={testId}>
       {(title || action) && (
         <header className={`mb-4 flex ${headerNoWrap ? "flex-nowrap" : "flex-wrap"} items-center justify-between gap-x-3 gap-y-2`}>
           {title && <h2 className="font-display text-xl leading-none">{title}</h2>}

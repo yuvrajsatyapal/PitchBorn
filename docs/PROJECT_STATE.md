@@ -12,7 +12,7 @@ Read this first after any context reset. Keep it short and current.
 - Design: neo-retro — cream paper, ink outlines, hard offset shadows, chunky display type, pixel scoreboard font (inspired by huggaplanet.com / riddlebox / shoppu.mochi).
 
 ## Status
-- [x] Scaffold, deps, data pipeline, world.json (26 leagues in 11 countries, 504 clubs, 56 historical seasons; see DATA_PIPELINE.md)
+- [x] Scaffold, deps, data pipeline, world.json (26 leagues in 11 countries, 506 clubs, 56 historical seasons; see DATA_PIPELINE.md)
 - [x] Engine core (rng, types, generation, match engine, season/advance) — src/engine/**
 - [x] Career systems (dev, training, transfers, contracts, injuries, national, awards, events, legacy, autopilot)
 - [x] Persistence (codec, Dexie db, migrations, import/export) — src/persistence/**
@@ -73,7 +73,12 @@ Portugal, Netherlands, Brazil, Argentina, US and Mexico joined the big five. The
 simulate on load (`pinWorldCountries` in `persistence/migrations.ts`). Continental places come from `CONTINENTAL_SLOTS`
 (`competitions/setup.ts`): Champions Cup and Continental Cup for Europe, the Americas Cup (`acup-`) for BRA/ARG/MEX/USA.
 Closed leagues (`promoted`/`relegated` 0) skip the rollover move. Full world ≈ 420 ms a simulated week in Node, big five ≈ 300
-(`npx tsx scripts/sim/world-check.ts`).
+(`npx tsx scripts/sim/world-check.ts`). The UI runs weeks through `advanceTurnSteps` (a generator: the same week, same draws,
+pausing every six matches and between heavy steps) in ~10 ms slices (`runSliced` in the store), so the page keeps painting;
+`advanceTurn` runs the same generator straight through. A Web Worker was ruled out: the full-world state is ~35 MB and
+cloning it each way costs ~140 ms per direction, about as long as the freeze it would remove. Phones and small tablets
+(coarse pointer or ≤4 cores) default the new-career world to Europe. Clubs dropped from the data stay readable for older
+saves through `src/data/legacy-clubs.json`.
 
 ## Feature batch (Nov 2026)
 All optional on `UserCareer` / `GameState`, no schema bump: `recovery`, `drama`, `tacticalRole`, `leakedSeason/Window`, `youth`,
@@ -82,6 +87,17 @@ All optional on `UserCareer` / `GameState`, no schema bump: `recovery`, `drama`,
 `marketWeekly`, `dramaWeekly`, `youthWeekly` (player), `boardWeekly` (manager), `goalsWeekly` (both). Each module draws from its own
 `Rng.fromSeed(seed:<module>:…)` stream. Details: `CAREER_SYSTEMS.md` §20–29.
 
+## Balance and E2E pass (Nov 2026)
+`npm run sim:systems` covers drama, recovery choices, transfer drama, youth starts, late starters abroad and the managed club's
+board (report: `data/reports/systems-204x5.md`). Tuned from it: drama frequency and mix, the rushed-return risk, the wage-cap
+floor, youth trial difficulty and in-season sackings (CAREER_SYSTEMS.md §20–25). New achievements, tips and season-review
+sections tie the systems together (§27b). The E2E suite was brought up to date and `e2e/systems.spec.ts` plays the new flows
+through the UI with `src/game/testHooks.ts`. `Card` now forwards `data-testid` (it silently dropped it). A quick-simmed match
+is autosaved like a watched one. Save size: a full-world save is ~14 MB encoded at the start and ~24 MB after three seasons,
+almost all players; the new per-career fields add under 10 KB, and the archive grows ~0.3 MB a season.
+
 ## Known issues / TODO
 - 9+ goal games ~0.5% (acceptable)
+- Late starters at top-flight clubs (Flamengo, Monterrey, Braga, and equally Brentford or Everton) rarely play in season one;
+  the new-career screen already warns "fight for a place". Two-tier countries also give top clubs a cup bye, so fewer cup ties.
 - UI derives from the mutable GameState on every render; never useMemo on the game object (identity never changes).

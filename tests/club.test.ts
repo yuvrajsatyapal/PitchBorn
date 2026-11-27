@@ -295,7 +295,7 @@ describe("history, transfers and finances", () => {
     const s = newCareer({ seed: "cl-hist2" });
     for (let i = 0; i < 46; i++) advanceTurn(s);
     const arch = s.archive[0];
-    const [leagueId, c] = Object.entries(arch.champions).find(([id]) => /-1-/.test(id))!;
+    const [, c] = Object.entries(arch.champions).find(([id]) => /-1-/.test(id))!;
       expect(clubHistory(s, c.winner).simulated.leagueTitles).toBeGreaterThanOrEqual(1);
     expect(clubHistory(s, c.winner).simulated.seasons).toBe(1);
   });

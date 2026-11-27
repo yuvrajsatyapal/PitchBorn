@@ -8,7 +8,9 @@ Trait systems have their own files: `traits.test.ts`, `traitsExpansion.test.ts`,
 Sanity sims: `npm run sim:traits`, `npx tsx scripts/sim/loyalty.ts`, `npx tsx scripts/sim/focus.ts`, `npm run sim:wages` (renewal and wage sanity; see `docs/CAREER_SYSTEMS.md` §10). `tests/wages.test.ts` covers the wage model: no automatic raise, retention premium bands, the loyalty discount cap, loyalty pull, rival poaching, NPC renewals and determinism.
 
 ## E2E (Playwright) — `npm run e2e`
-Runs against the static export on desktop (1440×900) and mobile (Pixel 7): new career, advancing weeks and match days, live match to full time, persistence across reloads, a full season to rollover, retirement/legacy, ad labels/placement rules (no ads in nav/negotiation/training, rail only on desktop), gameplay with ad requests blocked, main column width with the rail, no horizontal overflow, layout shift under 0.15, offline play after first load.
+Runs against the static export on desktop (1440×900) and mobile (Pixel 7): new career, advancing weeks and match days, live match to full time, persistence across reloads, a full season to rollover, retirement/legacy, sponsor labels/placement rules (sections never in nav, never on transfers or training, four in the rail on wide screens and one per page on phones), gameplay with ad requests blocked, main column width with the rail, no horizontal overflow, layout shift under 0.15, offline play after first load.
+
+`e2e/systems.spec.ts` plays the newer systems through the real UI: a youth start at 15 through to the first professional contract, injury choices (rush back; surgery for a serious injury) and the Body report, a row with the manager over several weeks, a bidding war and a deadline-day bid on the Transfers page, the timeline poster and WebM video downloads, and handing the save to the next generation. Where a natural run would take seasons, `src/game/testHooks.ts` (dev and E2E builds only, as `window.__pitchbornTest`) sets the state up with the same engine calls a played week makes, and the decisions that follow are answered in the UI. Helpers answer decision pop-ups (`answerDecisions`) and wait for the store to go idle (`settled`) so autosaves land before a page load.
 
 ## Stress simulation — `npm run sim:careers -- --count N [--workers 8] [--full]`
 Simulates complete careers with the autopilot policy in worker threads and reports distributions (seasons, retirement age, apps, goals, peak overall, clubs, trophies, awards, caps, injuries, legacy) plus world metrics (goals/match, home-win/draw %, extreme scorelines, top-scorer extremes, club balances, player counts, invariant issues) and balance flags. Default "lite" world simulates only the career's country so 1,000-career runs are practical; `--full` simulates all five. Reports in `data/reports/sim-N.md`.
@@ -19,13 +21,23 @@ and stars, from the game's own start paths) and all eight positions, `--seeds` c
 rates by cohort, position and squad role, form-clause warnings and terminations, and how deals end. Writes
 `data/reports/sponsors-<careers>x<seasons>.md`. Re-run after changing `BALANCE.sponsors` or `targetKindFor`.
 
-## Newer systems — `npm run sim:systems -- [--seeds 4] [--seasons 5] [--managers 4] [--workers N]`
+## Newer systems — `npm run sim:systems -- [--seeds 4] [--seasons 5] [--managers 4] [--workers N] [--only players|managers] [--cohorts a,b]`
 Autopilot player careers in four cohorts (academy, late starter, established, star) and all eight positions, each with a
 spending policy (frugal, sensible, lavish, investor) and, in half of them, asking the manager for both set-piece duties
 every season; plus manager careers in each English tier running the transfer market with a simple policy. Reports what a
 home costs in weeks of wages, upkeep against wages and forced sales, investment returns, penalty and free-kick duty rates by
 position and cohort, and the managed club's spending, squad size and balance against AI clubs in the same league. Writes
 `data/reports/systems-<careers>x<seasons>.md`. Re-run after changing `BALANCE.lifestyle`, `setPieces.ts` or `coachMarket.ts`.
+
+It also covers the systems from §20–25 of `CAREER_SYSTEMS.md`: every career follows one recovery policy (rush, plan, rest,
+clinic; serious injuries map to conservative or surgery) and the report gives weeks out per injury and how often the player
+breaks down again within ten weeks of the return; drama beats are answered at random and the report counts stories per
+season, by kind and cohort, with their outcomes; the "asks" half also leaks interest once a window, and bidding wars and
+deadline-day bids are counted. Two more cohorts start on the youth path at 15 (half go on every trial) and as late starters
+in the six newer countries (first-team minutes in season one, by club). Managers promote two academy prospects after intake
+day, and the report adds the board's objectives, ultimatums, sackings in season and at the review, bids blocked by the wage
+cap, and how often AI clubs around them change manager. `--only` and `--cohorts` narrow a run while tuning; narrowed runs
+don't overwrite the report.
 
 ## UI render cost — `npm run bench:ui` and `npm run bench:render`
 `bench:ui [seasons]` plays a long autopilot career and times the derived data the dashboard and stats pages compute

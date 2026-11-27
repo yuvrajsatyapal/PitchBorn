@@ -141,17 +141,25 @@ tried, and a refusal there ended the sale, which `npm run sim:systems` showed bl
 
 From the end of the league season through the summer: record, goals, assists, average rating and trend, best games,
 the season's strongest memories, trophies and awards, the club's league finish, and the teammates whose bond moved most
-since the snapshot taken as the season began (`user.chemistrySnap`).
+since the snapshot taken as the season began (`user.chemistrySnap`), the weekly goals completed that season (`goals.done`,
+the last thirty kept) and the off-pitch stories that ended in it.
 
 ## 20. Injury and recovery choices (`career/recovery.ts`, `BodyReport`)
-Moderate or worse injuries raise a `recovery` decision: rush back (×0.6 weeks, then a re-injury risk ×2.2 for six weeks after the
-return), follow the plan, or rest fully (×1.3, the area counts for less). Serious and severe injuries offer surgery (×1.15, safest)
+Moderate or worse injuries raise a `recovery` decision: rush back (×0.6 weeks, then a re-injury risk ×3 for eight weeks after the
+return, and a re-injury to the same area lasts 60% longer), follow the plan, or rest fully (×1.3, the area counts for less).
+In the balance run a rushed return is back in ~2 weeks but breaks down again within ten weeks 31% of the time, against 26%
+on the plan, 21% resting and 14% with the clinic.
+The first balance run had rushing nearly free (3% broke down again, against 0% for the other choices) because the window and
+multiplier were small next to a weekly injury chance of about 1%; they were raised so rushing is a real gamble. Serious and severe injuries offer surgery (×1.15, safest)
 or conservative treatment (×0.75, the area stays fragile). A specialist clinic costs three weeks' wages (min €15k) from the bank and
 cuts the time to ×0.7. Every injury to an area adds +18% to the user's injury chance (up to three repeats). A third severe injury
 to one area at 30+ can (45%) bring a career-ending choice; retiring sets `user.retireRequested` and the store retires the player.
 
 ## 21. Off-pitch drama (`career/drama.ts`, `DramaCard`)
-One multi-beat story at a time, 7% a week when eligible, ten quiet weeks after each: a contract stand-off in the final year
+One multi-beat story at a time, 2.5% a week when eligible, fourteen quiet weeks after each, and the same kind not again for
+45 weeks (cliques 95). Eligible kinds are weighted stand-off 3, captaincy 3, fall-out 2, cliques 1. (At 7% a week the balance
+run found 1.7 stories a season, two in three of them cliques; now about one season in two has a story.) The older random
+career events wait while a story runs. The stories: a contract stand-off in the final year (reputation 30+, weeks 10–42)
 (going public costs board, fans and manager standing; the club then blinks with a +15% offer or digs in), dressing-room cliques
 (young guns v senior pros; picking a side moves bonds ±8, bridging works on leadership and teammate standing), a falling-out with
 the manager (apologise, stand firm and risk being frozen out, or go to the board), and a six-week captaincy race against the
@@ -165,19 +173,26 @@ so it changes who shoots, creates and tackles without adding free quality. The m
 ## 23. Transfer drama (`career/market.ts`)
 During a window a club of similar standing may join an open bid (30% a week) with a 10–25% higher fee and better wages; the first
 club can answer (55%) up to twice. The last week of each window is deadline day: late bids that expire that week. Once a window the
-agent can leak interest: −5 manager; a club that values the player (80%) tables a renewal at least 15% above the current wage.
+agent can leak interest while the window is open (before, nothing stopped a leak every week between windows): −5 manager;
+a club that values the player (80%) tables a renewal at least 15% above the current wage.
 
 ## 24. Youth start (`career/youth.ts`)
 The `youth` path starts at 15 on a scholarship (a fifth of a prospect's wage, contract to the end of the season he turns 16).
 Development-squad games are youth-league games against U18 opposition until 17. Trial invitations (7% a week, form-weighted, two a
-season) either impress a club or not. At the end of the season he turns 16 the first pro contract is decided: the academy (if it
+season) either impress a club or not: ability plus promise against the club's level, with a margin of 8 (it was 14, and the
+balance run had 77% of trials impressing; now about half do). At the end of the season he turns 16 the first pro contract is decided: the academy (if it
 rates him), a club that was impressed (compensation paid), or free agency.
 
 ## 25. Managed club board (`career/board.ts`, `BoardCard`)
 Objectives each season: finish at or above the expectation, a cup run (quarter-finals in the top flight, round of 16 below), two
-academy debuts, and a wage bill under the cap (58% of revenue a week, never below the inherited bill). Signings over the cap are
-refused. Spring intake day adds two prospects shaped by the academy focus; academy players can be promoted to first-team plans.
+academy debuts, and a wage bill under the cap (60% of revenue a week, never below 112% of the inherited bill). Signings over
+the cap are refused. With the old floor of 105% the inherited bill nearly filled the cap in the lower leagues, and the balance
+run had 97% of third-tier bids blocked; at 112% about half are, and the rest fail on budget or the player's wishes. Spring intake day adds two prospects shaped by the academy focus; academy players can be promoted to first-team plans.
 Settled at the season's end (met +4/+8, missed −6, league missed −16); a missed league target with confidence under 25 is a sacking.
+In season, confidence moves 13% a week towards a target set by the league position against expectation and recent form,
+and below 12 (after ten weeks in the job) the manager is sacked. A passive policy in the balance run was sacked in about a
+quarter of seasons, against roughly one AI club in five changing manager a season. A sacked coach whose reputation no longer
+reaches any manager's job is offered an assistant's or youth job instead (before, no offer came at all).
 
 ## 26. Generational saves (`career/generations.ts`, `NextGenerationCard`)
 After retirement the child takes over the save: same world, the parent's surname and nationality, skin and some features, and up
@@ -189,6 +204,14 @@ continues as an AI manager. `state.lineage` keeps each past generation; Hall of 
 Three goals at a time from eight templates judged on the match log since the goal was set, each with a deadline and a cosmetic
 reward (8 boots, 6 kit colours, 8 celebrations). Unlocks are mirrored to the browser profile (`cosmetics:owned` in the kv store)
 and offered in the appearance editor for new careers. Cosmetics never touch the simulation.
+
+## 27b. Achievements, tips and the season review
+New achievements tie the systems in: Leader of Men (win a captaincy race), Peacemaker (unite a split dressing room), Holding
+Out (secret: go public and make the club blink), Wanted Man (a bidding war), Deadline Day (a deadline-day transfer), Made It
+(a youth start signs a first professional contract), Second Generation and Dynasty (secret, a third generation), Goal Setter
+(ten weekly goals) and, for managers, The Board's Favourite (every objective met in a season). First-season tips point at
+weekly goals, a story in progress and agreeing a tactical role. The season review lists the goals completed and the stories
+that ended.
 
 ## 28. Share codes and comparisons (`career/shareCode.ts`, `WeeklyLeaderboard`, `HallCompare`)
 Weekly-challenge results encode as `PB-<yyWww>-<challenge>-<W|F|A>-<score base36>-<NAME>-<checksum>`; codes pasted by friends are

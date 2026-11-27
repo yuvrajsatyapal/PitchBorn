@@ -39,7 +39,7 @@ export const PREP_FOCUS: Record<PrepFocus, { label: string; attrs: AttrKey[]; no
 /** Coaching XP needed before the next step up is offered. */
 export const XP_FOR = { assistant: 45, manager: 110 } as const;
 const ACADEMY_AGE = 20;
-const SACK_CONFIDENCE = 15;
+const SACK_CONFIDENCE = 12;
 
 export function coaching(state: GameState): CoachCareer | null {
   const c = state.user.coach;
@@ -238,8 +238,9 @@ function boardReview(state: GameState, c: CoachCareer): void {
   const pos = idx + 1;
   const exp = club.expectation ?? pos;
   const formBoost = club.form.slice(-5).reduce((n, r) => n + (r === "W" ? 2 : r === "L" ? -2 : 0), 0);
-  const target = clamp(55 + ((exp - pos) / table.length) * 120 + formBoost * 2, 0, 100);
-  c.confidence = Math.round(clamp(c.confidence + (target - c.confidence) * 0.18, 0, 100));
+  // Slow to move, so a bad month at a club sitting where it should doesn't cost the job on its own.
+  const target = clamp(55 + ((exp - pos) / table.length) * 120 + formBoost * 1.5, 0, 100);
+  c.confidence = Math.round(clamp(c.confidence + (target - c.confidence) * 0.13, 0, 100));
   const s = stint(c);
   const weeksIn = s ? (state.season - s.from.season) * BALANCE.calendar.turnsPerSeason + state.turn - s.from.turn : 99;
   if (c.confidence < SACK_CONFIDENCE && weeksIn >= 10) {
@@ -287,9 +288,14 @@ function generateOffers(state: GameState, c: CoachCareer, rng: Rng, seasonEnd: b
   if (!c.clubId) {
     const weeks = state.turnIndex - (c.unemployedSince ?? state.turnIndex);
     if (weeks >= 1 && rng.chance(0.35)) {
-      const role: CoachRole = next ?? "youth";
-      const club = suitors(state, c, role, rng)[0];
-      if (club) offer(state, c, club.id, role, role === "manager" ? "The board wants a fresh voice in the dugout." : "A chance to get back into the game.");
+      // A coach whose name has slipped below every manager's job still hears from clubs: a step down, but back in the game.
+      const ladder: CoachRole[] = next === "manager" ? ["manager", "assistant", "youth"] : next === "assistant" ? ["assistant", "youth"] : ["youth"];
+      for (const role of ladder) {
+        const club = suitors(state, c, role, rng)[0];
+        if (!club) continue;
+        offer(state, c, club.id, role, role === "manager" ? "The board wants a fresh voice in the dugout." : "A chance to get back into the game.");
+        break;
+      }
     }
     return;
   }

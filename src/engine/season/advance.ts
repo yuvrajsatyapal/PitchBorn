@@ -189,13 +189,18 @@ export function liveMatchRng(state: GameState, fixtureId: string): Rng {
   return withRng(state, (rng) => rng.fork(`live:${fixtureId}`));
 }
 
-function simulateWorldFixtures(state: GameState, rng: Rng, ratings: TurnRatings): void {
+/** Matches played between two pauses when a week is run in slices (see `advanceTurnSteps`). */
+const FIXTURES_PER_SLICE = 6;
+
+function* simulateWorldFixtures(state: GameState, rng: Rng, ratings: TurnRatings): Generator<void, void> {
   const fixtures = fixturesForTurn(state);
+  let n = 0;
   for (const f of fixtures) {
     if (f.result) continue;
     const prepared = prepareMatch(state, f, rng, { interactive: false, detail: false });
     const res = prepared.engine.runToEnd();
     applyMatchResult(state, f, res, rng, ratings);
+    if (++n % FIXTURES_PER_SLICE === 0) yield;
   }
 }
 
@@ -373,6 +378,19 @@ export interface AdvanceReport {
 
 /** Simulate the rest of the current week and move to the next one. */
 export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): AdvanceReport {
+  const steps = advanceTurnSteps(state, opts);
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+  }
+}
+
+/**
+ * `advanceTurn` in slices: the same week, worked out in the same order with the same random draws, but pausing (`yield`)
+ * every few matches and between the heavy weekly steps. The UI runs it a few milliseconds at a time so the page keeps
+ * painting and answering input while a week is simulated. Nothing else may touch the state until it has finished.
+ */
+export function* advanceTurnSteps(state: GameState, opts: { byDay?: boolean } = {}): Generator<void, AdvanceReport> {
   const coach = state.user.retired && !!coaching(state);
   if (state.user.retired && !coach) return { season: state.season, turn: state.turn, seasonEnded: false, newSeason: false };
   settleCeremony(state);
@@ -386,10 +404,13 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       return report;
     }
   } while (loadUserDay(state));
-  withRng(state, (rng) => {
+  {
+    // The week's draws come from one generator saved back at the end (what `withRng` does, spelled out so it can pause).
+    const rng = new Rng(state.rng);
     if (state.turn === 1 && state.season === state.user.startSeason) setExpectations(state);
     const ratings: TurnRatings = {};
-    simulateWorldFixtures(state, rng, ratings);
+    yield* simulateWorldFixtures(state, rng, ratings);
+    yield;
     refreshLeagueTables(state);
     progressKnockouts(state, rng);
     progressTournament(state, rng);
@@ -407,14 +428,19 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       }
       weeklyCondition(p, played.has(p.id) || (p.id === uid && state.user.lastMatchTurn === state.turn));
     }
+    yield;
     if (!coach) userWeekly(state, rng);
     weeklyFinances(state);
-    if (state.turn % 4 === 0) monthlyDevelopment(state, rng);
+    if (state.turn % 4 === 0) {
+      yield;
+      monthlyDevelopment(state, rng);
+    }
     if (isMonthEnd(state.turn)) playerOfTheMonth(state);
     if (state.turn % 4 === 2 && state.turn > 10 && state.turn <= C.seasonEnd) sackManagers(state, rng);
 
     // Transfers
     if (isTransferWindow(state.turn)) {
+      yield;
       listForFinancialReasons(state);
       runAiTransfers(state, rng, windowName(state.turn) === "summer" ? 0.3 : 0.15);
       repairAllSquads(state);
@@ -442,6 +468,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
     }
 
     if (state.turn === C.endOfSeasonTurn) {
+      yield;
       seasonEnd(state, rng);
       if (coach) {
         if (settleBoard(state)) sackedByBoard(state);
@@ -450,6 +477,7 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       report.seasonEnded = true;
     }
     if (state.turn >= C.turnsPerSeason) {
+      yield;
       const world = prepareWorldCeremony(state);
       state.archive[state.archive.length - 1]?.awards.push(...world);
       rollover(state, rng);
@@ -458,7 +486,9 @@ export function advanceTurn(state: GameState, opts: { byDay?: boolean } = {}): A
       state.turn++;
     }
     state.turnIndex++;
-  });
+    state.rng = rng.state();
+  }
+  yield;
   if (state.user.retired && !coach) report.retiredForced = true;
   // A coach has no awards night of his own to attend: the season's ceremonies are applied as they come.
   if (coach) {

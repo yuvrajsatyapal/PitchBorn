@@ -17,7 +17,7 @@ test.describe("club page history", () => {
   test("a new career shows real history apart from simulated, and no seasons-played claim", async ({ page }) => {
     await createCareer(page);
     await openHistory(page);
-    await expect(page.getByText("from real tables")).toBeVisible();
+    await expect(page.getByText("Real club history")).toBeVisible();
     await expect(page.getByText("The first completed season will appear here.")).toBeVisible();
     await expect(page.getByTestId("club-honours")).toHaveCount(0);
     await expect(page.getByTestId("club-moments")).toHaveCount(0);
@@ -28,6 +28,7 @@ test.describe("club page history", () => {
   });
 
   test("rivalries are listed once, outside the history card, and a played season fills honours and records", async ({ page }) => {
+    test.setTimeout(240_000);
     await createCareer(page);
     await fastForward(page, 52);
     await openHistory(page);

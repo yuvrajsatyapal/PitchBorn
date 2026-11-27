@@ -1,0 +1,77 @@
+{
+ "_note": "Clubs that have left the bundled world (Toronto FC and Vancouver Whitecaps: Canadian members of MLS, dropped from the US league in Nov 2026). Saves made before keep simulating them, so their names, colours and grounds stay readable. Never used to build a new world.",
+ "clubs": [
+  {
+   "id": "usa-vancouver-whitecaps",
+   "name": "Vancouver Whitecaps",
+   "shortName": "Vancouver Whitecaps",
+   "abbreviation": "VAW",
+   "city": "Vancouver",
+   "countryCode": "USA",
+   "founded": 2009,
+   "stadiumId": "bc-place",
+   "colors": {
+    "primary": "#0000ff",
+    "secondary": "#f4f1ea"
+   },
+   "leagueId": "usa-1",
+   "prestige": 67,
+   "wikidata": "Q196107",
+   "sources": [
+    "wikidata"
+   ],
+   "manager": {
+    "name": "Jesper Sørensen",
+    "nationality": "DEN",
+    "since": 2025,
+    "wikidata": "Q6185885"
+   }
+  },
+  {
+   "id": "usa-toronto",
+   "name": "Toronto",
+   "shortName": "Toronto",
+   "abbreviation": "TOR",
+   "city": "Toronto",
+   "countryCode": "USA",
+   "founded": 2006,
+   "stadiumId": "bmo-field",
+   "colors": {
+    "primary": "#ff0000",
+    "secondary": "#f4f1ea"
+   },
+   "leagueId": "usa-1",
+   "prestige": 60,
+   "wikidata": "Q327238",
+   "sources": [
+    "wikidata"
+   ]
+  }
+ ],
+ "stadiums": [
+  {
+   "id": "bc-place",
+   "name": "BC Place",
+   "capacity": 54500,
+   "city": "Vancouver",
+   "countryCode": "USA",
+   "lat": 49.276666666,
+   "lon": -123.111944444,
+   "sources": [
+    "wikidata"
+   ]
+  },
+  {
+   "id": "bmo-field",
+   "name": "BMO Field",
+   "capacity": 21566,
+   "city": "Toronto",
+   "countryCode": "USA",
+   "lat": 43.632778,
+   "lon": -79.418611,
+   "sources": [
+    "wikidata"
+   ]
+  }
+ ]
+}

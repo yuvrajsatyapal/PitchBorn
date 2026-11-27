@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { advanceWeeks, createCareer, fastForward, gameInfo } from "./helpers";
+import { advanceWeeks, answerDecisions, createCareer, fastForward, finishMatch, gameInfo, openMatchDay, settled } from "./helpers";
 
 test.describe("core career flow", () => {
   test("landing → new career → dashboard", async ({ page }) => {
@@ -14,15 +14,18 @@ test.describe("core career flow", () => {
   test("weeks advance and match days can be simulated", async ({ page }) => {
     await createCareer(page);
     for (let i = 0; i < 8 && !(await page.getByTestId("matchday").isVisible().catch(() => false)); i++) {
+      await answerDecisions(page);
       const before = (await gameInfo(page))?.turn;
       await page.getByTestId("continue").click();
       await expect.poll(async () => (await gameInfo(page))?.turn, { timeout: 20_000 }).not.toBe(before);
     }
     expect((await gameInfo(page))!.turn).toBeGreaterThanOrEqual(4);
-    await page.getByTestId("matchday").click();
-    await expect(page).toHaveURL(/\/play\/match\/?$/);
+    await answerDecisions(page);
+    await openMatchDay(page);
     await page.getByTestId("sim-match").click();
     await expect(page.getByText("Full time").first()).toBeVisible();
+    // The quick sim is autosaved: let the save land before leaving the page.
+    await settled(page);
     await page.goto("/play/schedule/");
     await expect(page.getByText(/\d–\d/).first()).toBeVisible();
   });
@@ -42,21 +45,23 @@ test.describe("core career flow", () => {
       if (await opt.isVisible().catch(() => false)) await opt.click();
       const skip = page.getByRole("button", { name: /Skip to full time/ });
       if (await skip.isVisible().catch(() => false)) await skip.click();
-      if (await page.getByTestId("finish-match").isVisible().catch(() => false)) break;
+      if (await finishMatch(page).isVisible().catch(() => false)) break;
     }
-    await page.getByTestId("finish-match").click();
+    await finishMatch(page).click();
     await expect(page.getByText("Player ratings")).toBeVisible();
   });
 
   test("career persists across reloads", async ({ page }) => {
     await createCareer(page);
     await advanceWeeks(page, 2);
+    // The week's autosave lands after the run: wait for it rather than a fixed pause.
+    await settled(page);
     const before = await gameInfo(page);
-    await page.waitForTimeout(800);
     await page.reload();
+    // The reload lands wherever the run stopped (often Match Day): wait for the save to load, then compare.
+    await expect.poll(() => gameInfo(page).catch(() => null), { timeout: 15_000 }).toEqual(before);
+    await page.goto("/play/");
     await expect(page.getByTestId("overall")).toBeVisible();
-    const after = await gameInfo(page);
-    expect(after).toEqual(before);
     await page.goto("/saves/");
     await expect(page.getByText("Test Striker")).toBeVisible();
   });
@@ -81,6 +86,7 @@ test.describe("core career flow", () => {
     // The first day of the new season belongs to the gala: Continue is replaced until it is attended or skipped.
     await expect(page.getByTestId("gala-button")).toBeVisible();
     await expect(page.getByTestId("continue")).toHaveCount(0);
+    await answerDecisions(page);
     await page.getByTestId("gala-button").click();
     await expect(page).toHaveURL(/\/play\/gala\/?$/);
     await page.getByTestId("watch-gala").click();

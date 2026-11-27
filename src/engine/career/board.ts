@@ -26,7 +26,9 @@ import { coachClub, coaching } from "./coaching";
 
 const B = {
   /** Share of yearly revenue the board lets wages take. */
-  wageShare: 0.58,
+  wageShare: 0.6,
+  /** Room the board allows above the bill the manager inherited: enough for a signing or two. */
+  headroom: 1.12,
   intakeTurn: 36,
   intakeSize: 2,
   met: 8,
@@ -53,7 +55,7 @@ export function wageCap(state: GameState, club: ClubState): number {
 
 function computeCap(state: GameState, club: ClubState): number {
   const byRevenue = (annualRevenue(club) * B.wageShare) / 52;
-  return Math.round(Math.max(byRevenue, wageBill(state, club.id) * 1.05) / 1000) * 1000;
+  return Math.round(Math.max(byRevenue, wageBill(state, club.id) * B.headroom) / 1000) * 1000;
 }
 
 function cupStageIndex(state: GameState, clubId: string, cc: string): number {

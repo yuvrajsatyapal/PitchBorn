@@ -1,7 +1,15 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
-import { SPONSOR_EMAIL, SPONSOR_ROTATE_MS, SPONSOR_SECTIONS } from "./config";
+import { AD_RULES, SPONSOR_EMAIL, SPONSOR_ROTATE_MS, SPONSOR_SECTIONS } from "./config";
 import { useAds } from "./AdContext";
+
+/** Forms, negotiations and decisions never carry sponsors (AD_RULES.neverOn), nor does a live match (suppressed). */
+function useHidden(): boolean {
+  const { suppressed } = useAds();
+  const path = usePathname() ?? "";
+  return suppressed || AD_RULES.neverOn.some((p) => path === p || path.startsWith(`${p}/`));
+}
 
 function sponsorHref(n: number) {
   const subject = encodeURIComponent(`Sponsor PitchBorn - Section ${n}`);
@@ -43,8 +51,7 @@ function Grid({ className }: { className: string }) {
  * same four sections flow in a 2x2 grid at the bottom of the page instead.
  */
 export function SponsorRail() {
-  const { suppressed } = useAds();
-  if (suppressed) return null;
+  if (useHidden()) return null;
   return (
     <div className="hidden w-[300px] shrink-0 min-[1440px]:block">
       <Grid className="sticky top-[4.75rem] flex h-[calc(100dvh-5.75rem)] max-h-[900px] flex-col gap-3" />
@@ -82,9 +89,9 @@ function subscribePick(cb: () => void) {
 }
 
 export function SponsorSlot({ className = "" }: { className?: string }) {
-  const { suppressed } = useAds();
+  const hidden = useHidden();
   const n = useSyncExternalStore(subscribePick, () => pick, () => SERVER_PICK);
-  if (suppressed) return null;
+  if (hidden) return null;
   return (
     <aside aria-label="Ad / Sponsor" className={`min-[1440px]:hidden ${className}`}>
       <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Ad / Sponsor</div>

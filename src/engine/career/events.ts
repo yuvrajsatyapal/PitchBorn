@@ -1,5 +1,4 @@
 import { clubName } from "../data/world";
-import { formatMoney } from "../players/economy";
 import { ageOf } from "../players/generate";
 import { clamp, type Rng } from "../rng";
 import type { GameState, Player, Relationships } from "../types";
@@ -12,7 +11,7 @@ import { resolveJerseyDecision } from "../jersey/numbers";
 import { receiveIncome } from "./money";
 import { addStintEvent } from "../managers/history";
 import { adjustRel } from "./relationships";
-import { agentMarket, agentRating, agentSkill, hireAgent } from "./agents";
+import { agentMarket, agentRating, hireAgent } from "./agents";
 import { resolveRecovery } from "./recovery";
 import { resolveDrama } from "./drama";
 import { resolveYouth } from "./youth";
@@ -615,7 +614,9 @@ function apply(state: GameState, p: Player, e: Effect, cause = "A career event")
 export function maybeCareerEvent(state: GameState, rng: Rng): void {
   const p = userPlayer(state);
   if (state.user.retired || state.user.decisions.length >= 2) return;
-  if (!rng.chance(0.11)) return;
+  // One story at a time: no stray dressing-room event in the middle of a stand-off, a split or a fall-out.
+  const storyRunning = !!state.user.drama?.active;
+  if (!rng.chance(0.11) || storyRunning) return;
   const idx = state.turnIndex;
   const eligible = EVENTS.filter((e) => (state.user.eventCooldowns[e.id] ?? -999) + e.cooldown <= idx && e.when(state, p));
   if (!eligible.length) return;

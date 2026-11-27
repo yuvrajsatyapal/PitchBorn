@@ -73,6 +73,28 @@ export default function SeasonReviewPage() {
               </ul>
             ) : <p className="text-sm text-ink-2">Your relationships held steady this season.</p>}
           </Card>
+          {(r.stories.length > 0 || r.goalsDone.length > 0) && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card title="🎭 Off the pitch">
+                {r.stories.length ? (
+                  <ul className="grid gap-1.5">
+                    {r.stories.map((d, i) => (
+                      <li key={i} className="text-sm"><b>{d.title}</b> <span className="text-ink-2">— {d.outcome}</span></li>
+                    ))}
+                  </ul>
+                ) : <p className="text-sm text-ink-2">A quiet season away from the pitch.</p>}
+              </Card>
+              <Card title="🎯 Weekly goals">
+                {r.goalsDone.length ? (
+                  <ul className="grid gap-1.5">
+                    {r.goalsDone.map((x, i) => (
+                      <li key={i} className="text-sm"><b>{x.label}</b>{x.reward && <span className="text-ink-2"> · unlocked {x.reward}</span>}</li>
+                    ))}
+                  </ul>
+                ) : <p className="text-sm text-ink-2">No weekly goals completed this season.</p>}
+              </Card>
+            </div>
+          )}
         </>
       )}
     </div>

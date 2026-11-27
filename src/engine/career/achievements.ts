@@ -6,6 +6,7 @@
  * - career checks read the state as it stands (appearances, trophies, caps, awards, money).
  * Career checks are idempotent, so they run after every week, on retirement and on load (silently for old saves).
  */
+import { isDeadlineDay } from "./market";
 import type { MatchResult, PlayerLine } from "../match/engine";
 import { rivalryLevel } from "../memory/rivalry";
 import { ageOf } from "../players/generate";
@@ -13,6 +14,7 @@ import type { AchievementUnlock, Competition, Fixture, GameState } from "../type
 import { addNews, userPlayer } from "../world/helpers";
 import { feedAfterAchievement } from "./feed";
 import { bestBond, mostLinks } from "./chemistry";
+import { boardProgress } from "./board";
 
 export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
 export type AchievementGroup = "Matches" | "Milestones" | "Honours" | "Career" | "Coaching";
@@ -177,6 +179,15 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "partnership", name: "Partners in Crime", description: "Form an on-pitch partnership with a teammate.", tier: "bronze", group: "Career", icon: "🤝", career: (s) => bestBond(s) >= 60 },
   { id: "telepathic", name: "Telepathic", description: "Build a telepathic understanding (85+) with a teammate.", tier: "gold", group: "Career", icon: "🧠", career: (s) => bestBond(s) >= 85 },
   { id: "dynamic-duo", name: "Dynamic Duo", description: "Combine for 15 goals with the same teammate.", tier: "silver", group: "Career", icon: "👯", ...count(15, mostLinks) },
+  { id: "armband-race", name: "Leader of Men", description: "Win a race for the captaincy.", tier: "silver", group: "Career", icon: "🎗️", career: (s) => storyEnded(s, "captaincy", "won the armband") },
+  { id: "peacemaker", name: "Peacemaker", description: "Bring a split dressing room back together.", tier: "bronze", group: "Career", icon: "🕊️", career: (s) => storyEnded(s, "clique", "united the squad") },
+  { id: "hold-out", name: "Holding Out", description: "Go public in a contract stand-off and make the club blink.", tier: "bronze", group: "Career", icon: "📰", secret: true, career: (s) => storyEnded(s, "standoff", "the club blinked") },
+  { id: "wanted-man", name: "Wanted Man", description: "Have two clubs bid against each other for you.", tier: "bronze", group: "Career", icon: "⚔️", career: (s) => s.user.offers.some((o) => !!o.warWith) },
+  { id: "deadline-day", name: "Deadline Day", description: "Complete a transfer on deadline day.", tier: "silver", group: "Career", icon: "📺", career: (s) => s.user.transfers.some((t) => t.kind === "transfer" && t.season >= s.user.startSeason && isDeadlineDay(t.turn)) },
+  { id: "made-it", name: "Made It", description: "Start at 15 in an academy and sign your first professional contract.", tier: "bronze", group: "Career", icon: "✍️", career: (s) => { const y = s.user.youth; const c = me(s).contract; return y?.stage === "pro" && y.proDecisionSeason !== undefined && !!c && c.signed >= y.proDecisionSeason; } },
+  { id: "second-generation", name: "Second Generation", description: "Carry on the family name as the next generation.", tier: "silver", group: "Career", icon: "👨‍👦", career: (s) => (s.generation ?? 1) >= 2 },
+  { id: "dynasty", name: "Dynasty", description: "Reach a third generation of footballers in one save.", tier: "gold", group: "Career", icon: "🌳", secret: true, career: (s) => (s.generation ?? 1) >= 3 },
+  { id: "goal-setter", name: "Goal Setter", description: "Complete ten weekly goals.", tier: "silver", group: "Milestones", icon: "🎯", ...count(10, (s) => s.user.goals?.completed ?? 0) },
   { id: "legend", name: "Legend", description: "Retire with a legacy rated Legend or higher.", tier: "platinum", group: "Career", icon: "🗿", career: (s) => (s.user.legacy?.score ?? 0) >= 450 },
 
   // Coaching
@@ -184,11 +195,25 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "the-gaffer", name: "The Gaffer", description: "Become a manager.", tier: "silver", group: "Coaching", icon: "🧥", career: (s) => !!s.user.coach?.stints.some((x) => x.role === "manager") },
   { id: "academy-architect", name: "Academy Architect", description: "Bring five academy players through to first-team debuts.", tier: "silver", group: "Coaching", icon: "🎓", ...count(5, (s) => (s.user.coach?.stints ?? []).reduce((n, x) => n + x.graduates, 0)) },
   { id: "bench-silverware", name: "Silverware from the Bench", description: "Win a trophy as a manager.", tier: "gold", group: "Coaching", icon: "🏆", career: (s) => !!s.user.coach?.trophies.some((t) => t.role === "manager") },
+  { id: "board-favourite", name: "The Board's Favourite", description: "Meet every one of the board's objectives in a season as a manager.", tier: "gold", group: "Coaching", icon: "📋", career: allObjectivesMet },
   { id: "title-manager", name: "Title-Winning Manager", description: "Win a league title as a manager.", tier: "platinum", group: "Coaching", icon: "👔", secret: true, career: (s) => !!s.user.coach?.trophies.some((t) => t.role === "manager" && t.kind === "league") },
 ];
 
 const BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));
 export const achievementById = (id: string) => BY_ID.get(id);
+
+/** A finished off-pitch story of this kind that ended this way (the log keeps the last twenty). */
+function storyEnded(s: GameState, kind: string, outcome: string): boolean {
+  return (s.user.drama?.log ?? []).some((d) => d.kind === kind && d.outcome === outcome);
+}
+
+/** The board's season review has been held and every objective was met. */
+function allObjectivesMet(s: GameState): boolean {
+  const b = s.user.coach?.board;
+  if (!b || b.settled !== s.season || b.season !== s.season) return false;
+  const prog = boardProgress(s, true);
+  return prog.length > 0 && prog.every((p) => p.state === "met");
+}
 
 function debutAge(s: GameState): number {
   const p = me(s);

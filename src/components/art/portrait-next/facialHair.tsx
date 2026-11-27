@@ -192,7 +192,7 @@ export function RisingStubbleNext({ f, head, a, t, color, youth, d, uid: _uid, p
       patches.push({
         dens: 0.32 * k,
         shapes: [band],
-        dir: (p) => unit(P(-s * 0.35, 1)),
+        dir: () => unit(P(-s * 0.35, 1)),
         at: (u, v) => {
           const e = edge[Math.min(edge.length - 1, Math.floor(u * edge.length))];
           return P(e[0] - s * (1 + v * 5), e[1] - v * 0.6);

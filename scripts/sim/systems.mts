@@ -9,6 +9,10 @@
  * both set-piece duties every season. Cohorts start the way a player can: from an academy, as a late starter in the lower
  * divisions, as an established pro and as a star. Manager careers retire at once, take a manager's job in each English tier
  * and run the transfer market with a simple policy (sign for the neediest positions within budget, sell surplus veterans).
+ * The newer systems ride along: each career follows one recovery policy for its injuries (rush, plan, rest, clinic), picks a
+ * random option in every drama beat, and the "asks" half also has the agent leak interest once a window. Two more cohorts
+ * start at 15 on the youth path (half go on every trial) and as late starters in the six newer countries. Managers promote
+ * the two best academy prospects after intake day, so the board's youth objective can be met.
  * Writes data/reports/systems-<careers>x<seasons>.md and prints it. Nothing about the player is edited.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -18,10 +22,13 @@ import { Worker, isMainThread, parentPort, workerData } from "node:worker_thread
 import { generateAppearance } from "../../src/engine/appearance/generate.ts";
 import { BALANCE } from "../../src/engine/balance.ts";
 import { autopilotStep } from "../../src/engine/career/autopilot.ts";
-import { acceptCoachOffer, coaching, startCoaching } from "../../src/engine/career/coaching.ts";
+import { acceptCoachOffer, coaching, startCoaching, XP_FOR } from "../../src/engine/career/coaching.ts";
 import { bidForPlayer, managerBudget, managerNeeds, managing, marketOpen, reportsLeft, salePrice, scoutPlayer, scoutTargets, sellPlayer } from "../../src/engine/career/coachMarket.ts";
 import { buyItem, canBuy, invest, LIFESTYLE, netWorth, priceLevel, quote, weeklyUpkeep, type LifestyleKind } from "../../src/engine/career/lifestyle.ts";
 import { askForDuty, canAskForDuty, holdsDuty, setPieceState } from "../../src/engine/career/setPieces.ts";
+import { academyPlayers, promoteAcademyPlayer, wageBill, wageCap } from "../../src/engine/career/board.ts";
+import { resolveDecision } from "../../src/engine/career/events.ts";
+import { leakBlock, leakInterest } from "../../src/engine/career/market.ts";
 import { leagueCompId } from "../../src/engine/competitions/setup.ts";
 import { ageOf } from "../../src/engine/players/generate.ts";
 import { Rng } from "../../src/engine/rng.ts";
@@ -41,11 +48,21 @@ interface Cohort {
   custom?: CustomStart;
   clubs: string[];
 }
+type Recovery = "rush" | "plan" | "rest" | "clinic";
+const RECOVERIES: Recovery[] = ["rush", "plan", "rest", "clinic"];
+/** What each recovery policy picks for a serious injury, where rush/plan/rest are not on offer. */
+const SERIOUS: Record<Recovery, string> = { rush: "conservative", plan: "surgery", rest: "surgery", clinic: "clinic" };
 const COHORTS: Cohort[] = [
   { name: "academy", path: "academy", clubs: ["eng-arsenal", "eng-chelsea", "eng-man-united", "eng-aston-villa"] },
   { name: "late-starter", path: "late", clubs: ["eng-millwall", "eng-reading", "eng-stockport-county", "eng-wycombe"] },
   { name: "established", path: "custom", custom: { age: 25, overall: 79, potential: 83 }, clubs: ["eng-aston-villa", "eng-brighton", "eng-newcastle-united", "eng-west-ham-united"] },
   { name: "star", path: "custom", custom: { age: 24, overall: 85, potential: 90 }, clubs: ["eng-arsenal", "eng-liverpool", "eng-man-city", "eng-chelsea"] },
+  { name: "youth", path: "youth", clubs: ["eng-arsenal", "eng-southampton", "eng-millwall", "eng-reading"] },
+  {
+    name: "late-abroad",
+    path: "late",
+    clubs: ["bra-flamengo", "por-braga", "ned-az-alkmaar", "arg-boca-juniors", "usa-seattle-sounders", "mex-monterrey", "bra-goias", "por-chaves", "ned-nac-breda", "arg-colon", "usa-louisville-city", "mex-tigres-uanl"],
+  },
 ];
 const MANAGER_CLUBS: Record<string, string[]> = {
   "tier 1": ["eng-brighton", "eng-nottm-forest", "eng-leeds-united", "eng-sunderland"],
@@ -60,8 +77,10 @@ function arg(name: string, fallback: string): string {
   return i >= 0 ? process.argv[i + 1] : fallback;
 }
 
+const COUNTRY: Record<string, string> = { eng: "ENG", bra: "BRA", por: "POR", ned: "NED", arg: "ARG", usa: "USA", mex: "MEX" };
 function world(seed: string, clubId: string, position: Position, path: StartPath, custom?: CustomStart): GameState {
-  return createWorld({ saveName: "sim", firstName: "Sim", lastName: "Player", nationality: "ENG", birthCountry: "ENG", position, foot: "R", height: 181, look: generateAppearance(seed), clubId, path, custom, seed, countries: ["ENG"] });
+  const cc = COUNTRY[clubId.slice(0, 3)] ?? "ENG";
+  return createWorld({ saveName: "sim", firstName: "Sim", lastName: "Player", nationality: cc, birthCountry: cc, position, foot: "R", height: 181, look: generateAppearance(seed), clubId, path, custom, seed, countries: [cc] });
 }
 
 // ------------------------------------------------------------------------------------------------ player careers
@@ -92,6 +111,36 @@ interface SeasonRec {
   asked: number;
   granted: number;
   refused: number;
+  recovery: Recovery;
+  club: string;
+  ovr: number;
+  apps: number;
+  minutes: number;
+  weeksOut: number;
+  bigInjuries: number;
+  reinjuries: number;
+  dramas: number;
+  wars: number;
+  deadlineBids: number;
+  leaks: number;
+  leaksWorked: number;
+}
+interface DramaRec {
+  kind: string;
+  choice: string;
+  outcome: string;
+  cohort: string;
+}
+interface YouthRec {
+  invited: number;
+  went: number;
+  impressed: number;
+  offers: string;
+  outcome: string;
+  clubAfter: string;
+  ovr17: number;
+  minutes17: number;
+  minutes18: number;
 }
 interface PlayerResult {
   cohort: string;
@@ -104,6 +153,16 @@ interface PlayerResult {
   seasons: SeasonRec[];
   investments: { kind: string; ret: number }[];
   startups: { won: number; lost: number };
+  recovery: Recovery;
+  dramas: DramaRec[];
+  careerThreats: number;
+  injuryRetired: boolean;
+  youth?: YouthRec;
+  /** Each moderate-or-worse injury: weeks out from the choice to the return, and whether he broke down again within ten weeks. */
+  episodes: { weeksOut: number; again: boolean }[];
+  /** Weeks until the first senior appearance. */
+  firstAppWeek?: number;
+  startClub: string;
 }
 
 const ORDER: LifestyleKind[] = ["home", "car", "staff", "charity"];
@@ -135,11 +194,38 @@ function runPlayer(job: Extract<Job, { type: "player" }>, seasons: number): Play
   const { cohort, position, index } = job;
   const policy = POLICIES[index % POLICIES.length];
   const asks = index % 2 === 0;
+  const recovery = RECOVERIES[(index + POSITIONS.indexOf(position)) % RECOVERIES.length];
   const seed = `sim-systems:${cohort.name}:${position}:${index}`;
-  const s = world(seed, cohort.clubs[index % cohort.clubs.length], position, cohort.path, cohort.custom);
+  const clubId = cohort.clubs[(index * POSITIONS.length + POSITIONS.indexOf(position)) % cohort.clubs.length];
+  const s = world(seed, clubId, position, cohort.path, cohort.custom);
   const rng = Rng.fromSeed(`${seed}:pilot`);
+  const choose = Rng.fromSeed(`${seed}:choices`);
   const wage0 = s.players[s.user.playerId].contract?.wage ?? 0;
-  const res: PlayerResult = { cohort: cohort.name, position, policy, flatWeeksAtStart: wage0 ? quote(s, "flat").price / wage0 : Infinity, seasons: [], investments: [], startups: { won: 0, lost: 0 } };
+  const res: PlayerResult = {
+    cohort: cohort.name, position, policy, flatWeeksAtStart: wage0 ? quote(s, "flat").price / wage0 : Infinity, seasons: [], investments: [], startups: { won: 0, lost: 0 },
+    recovery, dramas: [], careerThreats: 0, injuryRetired: false, startClub: clubId, episodes: [],
+    youth: cohort.path === "youth" ? { invited: 0, went: 0, impressed: 0, offers: "", outcome: "none", clubAfter: "", ovr17: 0, minutes17: 0, minutes18: 0 } : undefined,
+  };
+  const goesOnTrials = index % 2 === 0;
+  let episode: { start: number; back?: number } | undefined;
+  let story: { id: string; kind: string; choice: string } | undefined;
+  let weeksOut = 0;
+  let bigInjuries = 0;
+  let reinjuries = 0;
+  let dramas = 0;
+  let wars = 0;
+  let deadlineBids = 0;
+  let leaks = 0;
+  let leaksWorked = 0;
+  let minutes0 = 0;
+  let apps0 = 0;
+  const careerApps = () => s.players[s.user.playerId].career.apps;
+  const careerMinutes = () => {
+    const pl = s.players[s.user.playerId];
+    let m = pl.history.reduce((n, h) => n + (h.season < s.season ? h.stats.minutes : 0), 0);
+    for (const k in pl.season) m += pl.season[k].minutes;
+    return m;
+  };
   let injuries = 0;
   let fitSum = 0;
   let fitN = 0;
@@ -153,6 +239,49 @@ function runPlayer(job: Extract<Job, { type: "player" }>, seasons: number): Play
   const before = new Map<string, number>();
 
   for (let t = 0; t < CAL.turnsPerSeason * seasons && !s.user.retired; t++) {
+    const logBefore = s.user.drama?.log.length ?? 0;
+    for (const d of [...s.user.decisions]) {
+      if (d.handler === "recovery") {
+        const ids = d.options.map((o) => o.id);
+        if (ids.includes("fight-on")) {
+          res.careerThreats++;
+          resolveDecision(s, d.id, "fight-on");
+          continue;
+        }
+        bigInjuries++;
+        const want = ids.includes("rush") ? recovery : SERIOUS[recovery];
+        resolveDecision(s, d.id, ids.includes(want) ? want : d.fallback);
+        if (episode && episode.back === undefined) res.episodes.push({ weeksOut: t - episode.start, again: true });
+        episode = { start: t };
+      } else if (d.handler === "drama") {
+        const opt = choose.pick(d.options).id;
+        const active = s.user.drama?.active;
+        if (active && active.stage === 0 && story?.id !== active.id) {
+          story = { id: active.id, kind: active.kind, choice: opt };
+          dramas++;
+        }
+        resolveDecision(s, d.id, opt);
+      } else if (d.handler === "youth" && res.youth) {
+        if (d.ref?.startsWith("trial:")) {
+          res.youth.invited++;
+          if (goesOnTrials) res.youth.went++;
+          resolveDecision(s, d.id, goesOnTrials ? "go" : "stay");
+          res.youth.impressed = s.user.youth?.trials.filter((x) => x.impressed).length ?? 0;
+        } else {
+          const ids = d.options.map((o) => o.id);
+          res.youth.offers = ids.map((x) => (x.startsWith("club:") ? "trial club" : x)).join(" + ");
+          // Take a trial club over the academy when one is on offer and the player went on trials; else the default.
+          const pick = goesOnTrials ? (ids.find((x) => x.startsWith("club:")) ?? d.fallback) : d.fallback;
+          res.youth.outcome = pick.startsWith("club:") ? "trial club" : pick === "home" ? "academy" : "free agent";
+          res.youth.ovr17 = overallFor(s.players[s.user.playerId].attrs, position);
+          resolveDecision(s, d.id, pick);
+        }
+      }
+    }
+    if (asks && !leakBlock(s)) {
+      leaks++;
+      if (leakInterest(s).msg?.startsWith("It worked")) leaksWorked++;
+    }
     autopilotStep(s, rng);
     if (t % 4 === 0) spend(s, policy);
     if (policy === "investor" && s.turn === CAL.seasonEnd + 2 && s.user.bank > 0) {
@@ -172,9 +301,35 @@ function runPlayer(job: Extract<Job, { type: "player" }>, seasons: number): Play
     before.clear();
     for (const h of s.user.lifestyle?.investments ?? []) before.set(h.id, h.value);
     const newsBefore = s.news.length;
+    const topBefore = s.news[0]?.id;
     advanceTurn(s);
-    const fresh = s.news.slice(newsBefore).map((n) => n.title);
+    if (s.user.retireRequested && !s.user.retired) {
+      res.injuryRetired = true;
+      retireUser(s);
+    }
+    const top = s.news.findIndex((n) => n.id === topBefore);
+    const fresh = s.news.slice(0, top < 0 ? Math.max(0, s.news.length - newsBefore) : top).map((n) => n.title);
+    void newsBefore;
     forced += fresh.filter((x) => x.includes("can't keep up the payments")).length;
+    reinjuries += fresh.filter((x) => x === "The same injury again").length;
+    wars += fresh.filter((x) => x.startsWith("⚔️ Bidding war")).length;
+    deadlineBids += fresh.filter((x) => x.startsWith("📺 Deadline-day bid")).length;
+    const log = s.user.drama?.log ?? [];
+    if (log.length > logBefore && story) {
+      for (const e of log.slice(logBefore)) res.dramas.push({ kind: e.kind, choice: story.choice, outcome: e.outcome, cohort: cohort.name });
+      story = undefined;
+    } else if (log.length > logBefore) for (const e of log.slice(logBefore)) res.dramas.push({ kind: e.kind, choice: "?", outcome: e.outcome, cohort: cohort.name });
+    if (p.injury) weeksOut++;
+    if (res.firstAppWeek === undefined && careerApps() > 0) res.firstAppWeek = t;
+    if (res.youth) {
+      const age = ageOf(p, s.season);
+      if (s.turn === CAL.seasonEnd + 1 && (age === 17 || age === 18)) {
+        const m = careerMinutes();
+        if (age === 17) res.youth.minutes17 = m - minutes0;
+        else res.youth.minutes18 = m - minutes0;
+      }
+      if (res.youth.outcome !== "none" && !res.youth.clubAfter && s.turn === CAL.seasonStart + 2) res.youth.clubAfter = p.clubId ? (p.clubId === clubId ? "academy" : "other club") : "no club";
+    }
     res.startups.won += fresh.filter((x) => x.includes("start-up stake pays off")).length;
     res.startups.lost += fresh.filter((x) => x.includes("start-up stake goes under")).length;
     for (const h of s.user.lifestyle?.investments ?? []) {
@@ -182,6 +337,16 @@ function runPlayer(job: Extract<Job, { type: "player" }>, seasons: number): Play
       if (v !== undefined && v !== h.value) res.investments.push({ kind: h.kind, ret: h.value / v - 1 });
     }
     if (!wasInjured && p.injury) injuries++;
+    if (episode) {
+      if (episode.back === undefined && !p.injury) episode.back = t;
+      else if (episode.back !== undefined && !wasInjured && p.injury) {
+        res.episodes.push({ weeksOut: episode.back - episode.start, again: true });
+        episode = undefined;
+      } else if (episode.back !== undefined && t - episode.back > 10) {
+        res.episodes.push({ weeksOut: episode.back - episode.start, again: false });
+        episode = undefined;
+      }
+    }
     if (s.turn >= CAL.seasonStart && s.turn <= CAL.seasonEnd) {
       fitSum += p.fitness;
       fitN++;
@@ -202,7 +367,12 @@ function runPlayer(job: Extract<Job, { type: "player" }>, seasons: number): Play
         burden: wage ? upkeep / wage : 0, injuries, avgFitness: fitN ? fitSum / fitN : 0, forcedSales: forced,
         pens: sp.pens - sp0.pens, pensScored: sp.pensScored - sp0.pensScored, fks: sp.fks - sp0.fks, fksScored: sp.fksScored - sp0.fksScored,
         penDuty, fkDuty, penDropped: sp.dropped.penalty === s.season, asked, granted, refused,
+        recovery, club: p.clubId ?? "", ovr: overallFor(p.attrs, p.position), apps: careerApps() - apps0, minutes: careerMinutes() - minutes0, weeksOut, bigInjuries, reinjuries,
+        dramas, wars, deadlineBids, leaks, leaksWorked,
       });
+      apps0 = careerApps();
+      minutes0 = careerMinutes();
+      weeksOut = bigInjuries = reinjuries = dramas = wars = deadlineBids = leaks = leaksWorked = 0;
       sp0 = { pens: sp.pens, pensScored: sp.pensScored, fks: sp.fks, fksScored: sp.fksScored };
       injuries = fitSum = fitN = forced = asked = granted = refused = 0;
       penDuty = fkDuty = false;
@@ -229,11 +399,23 @@ interface ManagerSeason {
   posStart?: number;
   posEnd?: number;
   expectation?: number;
+  /** Board review at the season's end: objective id → met. */
+  objectives: Record<string, boolean>;
+  ultimatum: boolean;
+  bids: number;
+  capBlocked: number;
+  /** Wage bill over the cap when the summer window opened. */
+  billShare: number;
+  promoted: number;
 }
 interface ManagerResult {
   tier: string;
   seasons: ManagerSeason[];
   sacked: number;
+  sackedInSeason: number;
+  sackedByBoard: number;
+  /** AI managers in the simulated league system: changes during the season and over the summer, per season. */
+  aiChanges: { inSeason: number; summer: number; clubs: number }[];
   unemployedSeasons: number;
   bidFails: Record<string, number>;
   saleFails: Record<string, number>;
@@ -280,9 +462,14 @@ function runManager(job: Extract<Job, { type: "manager" }>, seasons: number): Ma
   startCoaching(s);
   const c = s.user.coach;
   if (!c) throw new Error("no coach");
+  // As if he had come up through the youth and assistant jobs: after a sacking, offers are for manager jobs.
+  c.xp = Math.max(c.xp, XP_FOR.manager);
   c.offers.push({ id: "co-sim", clubId: job.clubId, role: "manager", expiresIndex: s.turnIndex + 4, note: "" });
   acceptCoachOffer(s, "co-sim");
-  const res: ManagerResult = { tier: job.tier, seasons: [], sacked: 0, unemployedSeasons: 0, bidFails: {}, saleFails: {}, avgAgeStart: avgAge(s, job.clubId), avgAgeEnd: 0 };
+  const res: ManagerResult = { tier: job.tier, seasons: [], sacked: 0, sackedInSeason: 0, sackedByBoard: 0, aiChanges: [], unemployedSeasons: 0, bidFails: {}, saleFails: {}, avgAgeStart: avgAge(s, job.clubId), avgAgeEnd: 0 };
+  const managersNow = () => new Map(Object.values(s.clubs).map((c) => [c.id, c.manager.id ?? c.manager.name]));
+  let mgrs = managersNow();
+  let ai = { inSeason: 0, summer: 0, clubs: Object.keys(s.clubs).length };
   let cur: ManagerSeason | undefined;
   let aiBefore = new Map<string, number>();
   let aiLeague = "";
@@ -290,13 +477,18 @@ function runManager(job: Extract<Job, { type: "manager" }>, seasons: number): Ma
     const club = managing(s);
     aiLeague = club?.leagueId ?? aiLeague;
     aiBefore = aiLeague ? leagueBalances(s, aiLeague, club?.id) : new Map();
-    cur = { tier: job.tier, aiBalanceChange: 0, budgetAtWindow: club ? managerBudget(s) : 0, balanceStart: club?.balance ?? 0, balanceEnd: 0, signings: 0, spent: 0, sales: 0, income: 0, squadMin: club?.squad.length ?? 0, squadMax: club?.squad.length ?? 0, expectation: club?.expectation };
+    cur = {
+      tier: job.tier, aiBalanceChange: 0, budgetAtWindow: club ? managerBudget(s) : 0, balanceStart: club?.balance ?? 0, balanceEnd: 0, signings: 0, spent: 0, sales: 0, income: 0,
+      squadMin: club?.squad.length ?? 0, squadMax: club?.squad.length ?? 0, expectation: club?.expectation, objectives: {}, ultimatum: false, bids: 0, capBlocked: 0,
+      billShare: club ? wageBill(s, club.id) / Math.max(1, wageCap(s, club)) : 0, promoted: 0,
+    };
   };
   begin();
   for (let t = 0; t < CAL.turnsPerSeason * seasons; t++) {
     const co = coaching(s);
     if (co && !co.clubId) {
-      const o = co.offers.find((x) => x.role === "manager") ?? co.offers[0];
+      // Manager jobs only: a youth or assistant role would leave the board systems untested.
+      const o = co.offers.find((x) => x.role === "manager");
       if (o) acceptCoachOffer(s, o.id);
     }
     const club = managing(s);
@@ -323,11 +515,17 @@ function runManager(job: Extract<Job, { type: "manager" }>, seasons: number): Ma
         const pick = targets.filter((x) => x.asking <= managerBudget(s)).sort((a, b) => (b.report?.high ?? b.overall) - (a.report?.high ?? a.overall))[0];
         if (!pick) continue;
         const r = bidForPlayer(s, pick.player.id);
+        cur.bids++;
+        if (r.reason?.includes("wage cap")) cur.capBlocked++;
         if (r.ok) {
           cur.signings++;
           cur.spent += pick.asking;
         } else res.bidFails[reasonKey(r.reason)] = (res.bidFails[reasonKey(r.reason)] ?? 0) + 1;
       }
+    }
+    if (club && cur && s.turn === 37) {
+      // After intake day, promote the two best academy prospects so the board's debut objective is reachable.
+      for (const pl of academyPlayers(s).sort((a, b) => overallFor(b.attrs, b.position) - overallFor(a.attrs, a.position)).slice(0, 2)) if (promoteAcademyPlayer(s, pl.id).ok) cur.promoted++;
     }
     if (club && cur) {
       cur.squadMin = Math.min(cur.squadMin, club.squad.length);
@@ -335,8 +533,36 @@ function runManager(job: Extract<Job, { type: "manager" }>, seasons: number): Ma
       if (s.turn === CAL.seasonStart + 1) cur.posStart = leaguePos(s, club.id);
     }
     const wasSacked = (c.stints.filter((x) => x.reason === "sacked").length);
+    const topBefore = s.news[0]?.id;
+    const turnBefore = s.turn;
     advanceTurn(s);
-    res.sacked += c.stints.filter((x) => x.reason === "sacked").length - wasSacked;
+    const sackedNow = c.stints.filter((x) => x.reason === "sacked").length - wasSacked;
+    res.sacked += sackedNow;
+    const top = s.news.findIndex((n) => n.id === topBefore);
+    const fresh = s.news.slice(0, top < 0 ? 0 : top);
+    if (sackedNow) {
+      if (fresh.some((n) => n.title.startsWith("🚪 Sacked") && n.body?.includes("season review"))) res.sackedByBoard += sackedNow;
+      else res.sackedInSeason += sackedNow;
+    }
+    if (cur && fresh.some((n) => n.title.startsWith("⏳ The board's ultimatum"))) cur.ultimatum = true;
+    const review = fresh.find((n) => n.title.startsWith("📋 Board review"));
+    if (cur && review?.body) {
+      const ids = ["league", "cup", "youth", "wages"];
+      review.body.split(" · ").forEach((part, i) => {
+        if (ids[i]) cur!.objectives[ids[i]] = part.startsWith("✔");
+      });
+    }
+    const now = managersNow();
+    const own = managing(s)?.id;
+    let changed = 0;
+    for (const [id, m] of now) if (id !== own && mgrs.has(id) && mgrs.get(id) !== m) changed++;
+    if (turnBefore >= CAL.seasonStart && turnBefore <= CAL.seasonEnd) ai.inSeason += changed;
+    else ai.summer += changed;
+    mgrs = now;
+    if (s.turn === 1) {
+      res.aiChanges.push(ai);
+      ai = { inSeason: 0, summer: 0, clubs: now.size };
+    }
     const after = managing(s);
     if (s.turn === CAL.seasonEnd + 1 && cur) {
       if (after) {
@@ -442,6 +668,79 @@ function summarize(players: PlayerResult[], managers: ManagerResult[], meta: { s
     return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => `${k} (${v})`).join("; ") || "none";
   };
   L.push(`Failed bids: ${tally((m) => m.bidFails)}.`, "", `Failed sales: ${tally((m) => m.saleFails)}.`, "");
+
+  L.push("## Manager board", "", row(["Tier", "Seasons", "League target met", "Cup target met", "Youth debuts met", "Wage cap met", "Ultimatums", "Sacked in season", "Sacked at the review", "Seasons with no signing", "Bids blocked by the cap", "Wage bill / cap at the window (median)", "Prospects promoted / season"]), rule(13));
+  for (const [tier, rows] of group(managers, (m) => m.tier)) {
+    const ss = rows.flatMap((m) => m.seasons);
+    const met = (k: string) => {
+      const v = ss.filter((x) => k in x.objectives);
+      return pct(v.filter((x) => x.objectives[k]).length, v.length);
+    };
+    const bids = ss.reduce((n, x) => n + x.bids, 0);
+    L.push(row([tier, ss.length, met("league"), met("cup"), met("youth"), met("wages"), pct(ss.filter((x) => x.ultimatum).length, ss.length), rows.reduce((n, m) => n + m.sackedInSeason, 0), rows.reduce((n, m) => n + m.sackedByBoard, 0), pct(ss.filter((x) => x.signings === 0).length, ss.length), pct(ss.reduce((n, x) => n + x.capBlocked, 0), bids), `${(median(ss.map((x) => x.billShare)) * 100).toFixed(0)}%`, avg(ss.map((x) => x.promoted)).toFixed(1)]));
+  }
+  const ai = managers.flatMap((m) => m.aiChanges);
+  if (ai.length) L.push("", `AI managers (English pyramid around the user's club): ${(avg(ai.map((a) => a.inSeason / a.clubs)) * 100).toFixed(1)}% of clubs change manager during a season and ${(avg(ai.map((a) => a.summer / a.clubs)) * 100).toFixed(1)}% over the summer (${ai.length} seasons).`);
+  L.push("");
+
+  const reg = seasonsAll.filter((r) => r.cohort !== "youth");
+  L.push("## Injury and recovery choices", "", "Each career follows one policy for every moderate-or-worse injury (serious ones: rush → conservative, plan and rest → surgery, clinic → clinic when affordable). Youth careers are left out.", "");
+  L.push(row(["Policy", "Careers", "Seasons", "Big injuries / season", "Weeks out per big injury", "Injured again within 10 weeks of the return", "Weeks injured / season", "Same-area re-injuries per big injury", "Apps / season", "Overall change over the run", "Career threats", "Retired through injury"]), rule(12));
+  for (const pol of RECOVERIES) {
+    const rows = reg.filter((r) => r.recovery === pol);
+    const careers = players.filter((r) => r.recovery === pol && r.cohort !== "youth");
+    const big = rows.reduce((n, r) => n + r.bigInjuries, 0);
+    const delta = careers.filter((r) => r.seasons.length >= 2).map((r) => (r.seasons.at(-1) as SeasonRec).ovr - r.seasons[0].ovr);
+    const eps = careers.flatMap((r) => r.episodes);
+    L.push(row([pol, careers.length, rows.length, avg(rows.map((r) => r.bigInjuries)).toFixed(2), `${avg(eps.map((e) => e.weeksOut)).toFixed(1)} (${eps.length})`, pct(eps.filter((e) => e.again).length, eps.length), avg(rows.map((r) => r.weeksOut)).toFixed(1), big ? (rows.reduce((n, r) => n + r.reinjuries, 0) / big).toFixed(2) : "–", avg(rows.map((r) => r.apps)).toFixed(1), avg(delta).toFixed(1), careers.reduce((n, r) => n + r.careerThreats, 0), careers.filter((r) => r.injuryRetired).length]));
+  }
+  L.push("");
+
+  const dr = players.flatMap((r) => r.dramas);
+  const proSeasons = seasonsAll.filter((r) => r.cohort !== "youth");
+  L.push("## Off-pitch drama", "", `${dr.length} stories in ${proSeasons.length} senior player-seasons: ${(dr.length / Math.max(1, proSeasons.length)).toFixed(2)} a season; ${pct(proSeasons.filter((r) => r.dramas > 0).length, proSeasons.length)} of seasons have at least one. Choices are random.`, "");
+  L.push(row(["Cohort", "Seasons", "Stories / season", "Stand-off", "Cliques", "Fall-out", "Captaincy"]), rule(7));
+  for (const [c, rows] of group(proSeasons, (r) => r.cohort)) {
+    const mine = dr.filter((d) => d.cohort === c);
+    const k = (kind: string) => mine.filter((d) => d.kind === kind).length;
+    L.push(row([c, rows.length, (mine.length / Math.max(1, rows.length)).toFixed(2), k("standoff"), k("clique"), k("fallout"), k("captaincy")]));
+  }
+  L.push("", row(["Story", "First choice", "Outcomes"]), rule(3));
+  for (const [key, rows] of group(dr, (d) => `${d.kind}|${d.choice}`).sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
+    const [kind, choice] = key.split("|");
+    L.push(row([kind, choice, group(rows, (d) => d.outcome).sort((a, b) => b[1].length - a[1].length).map(([o, xs]) => `${o} (${xs.length})`).join(", ")]));
+  }
+  L.push("");
+
+  L.push("## Transfer drama", "", row(["Cohort", "Seasons", "Bidding wars / season", "Deadline-day bids / season", "Leaks (asks careers)", "Leak → improved contract"]), rule(6));
+  for (const [c, rows] of group(seasonsAll, (r) => r.cohort)) {
+    const leaks = rows.reduce((n, r) => n + r.leaks, 0);
+    L.push(row([c, rows.length, avg(rows.map((r) => r.wars)).toFixed(2), avg(rows.map((r) => r.deadlineBids)).toFixed(2), leaks, pct(rows.reduce((n, r) => n + r.leaksWorked, 0), leaks)]));
+  }
+  L.push("");
+
+  const yr = players.filter((r) => r.youth);
+  if (yr.length) {
+    L.push("## Youth start (age 15)", "", `${yr.length} careers; half go on every trial they are offered and take a trial club over the academy when they can.`, "");
+    L.push(row(["Trials", "Careers", "Invitations", "Went", "Impressed", "Offers at 17", "Signed with", "A season later", "Overall at 17", "Senior minutes at 17", "Senior minutes at 18"]), rule(11));
+    for (const go of [true, false]) {
+      const rows = yr.filter((r) => ((r.youth as YouthRec).went > 0) === go);
+      const ys = rows.map((r) => r.youth as YouthRec);
+      const tally2 = (f: (y: YouthRec) => string) => group(ys, f).map(([k, v]) => `${k || "–"} ${v.length}`).join(", ");
+      L.push(row([go ? "went" : "stayed / none", rows.length, avg(ys.map((y) => y.invited)).toFixed(1), avg(ys.map((y) => y.went)).toFixed(1), avg(ys.map((y) => y.impressed)).toFixed(1), tally2((y) => y.offers), tally2((y) => y.outcome), tally2((y) => y.clubAfter), avg(ys.map((y) => y.ovr17)).toFixed(1), median(ys.map((y) => y.minutes17)), median(ys.map((y) => y.minutes18))]));
+    }
+    L.push("");
+  }
+
+  const late = players.filter((r) => r.cohort === "late-starter" || r.cohort === "late-abroad");
+  L.push("## Late starters: first-team football", "", row(["Start club", "Careers", "Apps season 1 (median)", "Minutes season 1 (median)", "No apps in season 1", "Apps season 2 (median)", "Weeks to the first appearance (median)"]), rule(7));
+  for (const [club, rows] of group(late, (r) => r.startClub).sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
+    const s1 = rows.map((r) => r.seasons[0]).filter(Boolean);
+    const s2 = rows.map((r) => r.seasons[1]).filter(Boolean);
+    const firsts = rows.map((r) => r.firstAppWeek ?? 999);
+    L.push(row([club, rows.length, median(s1.map((x) => x.apps)), median(s1.map((x) => x.minutes)), pct(s1.filter((x) => x.apps === 0).length, s1.length), median(s2.map((x) => x.apps)), median(firsts) === 999 ? "never" : median(firsts)]));
+  }
+  L.push("");
   return L.join("\n");
 }
 
@@ -461,11 +760,14 @@ if (!isMainThread) {
   }
 } else {
   const seeds = Number(arg("seeds", "4"));
+  // --only players|managers and --cohorts a,b narrow a run while tuning one system.
+  const only = arg("only", "");
+  const cohortFilter = arg("cohorts", "").split(",").filter(Boolean);
   const seasons = Number(arg("seasons", "5"));
   const perTier = Number(arg("managers", "4"));
   const jobs: Job[] = [
-    ...Object.entries(MANAGER_CLUBS).flatMap(([tier, clubs]) => Array.from({ length: perTier }, (_, index) => ({ type: "manager" as const, tier, clubId: clubs[index % clubs.length], index }))),
-    ...COHORTS.flatMap((cohort) => POSITIONS.flatMap((position) => Array.from({ length: seeds }, (_, index) => ({ type: "player" as const, cohort, position, index })))),
+    ...(only === "players" ? [] : Object.entries(MANAGER_CLUBS).flatMap(([tier, clubs]) => Array.from({ length: perTier }, (_, index) => ({ type: "manager" as const, tier, clubId: clubs[index % clubs.length], index })))),
+    ...(only === "managers" ? [] : COHORTS.filter((c) => !cohortFilter.length || cohortFilter.includes(c.name)).flatMap((cohort) => POSITIONS.flatMap((position) => Array.from({ length: seeds }, (_, index) => ({ type: "player" as const, cohort, position, index }))))),
   ];
   const workers = Math.min(Number(arg("workers", String(Math.max(1, availableParallelism() - 1)))), jobs.length);
   const players: PlayerResult[] = [];
@@ -495,7 +797,7 @@ if (!isMainThread) {
   );
   const report = summarize(players, managers, { seasons, seconds: (Date.now() - t0) / 1000 });
   mkdirSync(join(process.cwd(), "data", "reports"), { recursive: true });
-  writeFileSync(join(process.cwd(), "data", "reports", `systems-${players.length + managers.length}x${seasons}.md`), report);
+  if (!only && !cohortFilter.length) writeFileSync(join(process.cwd(), "data", "reports", `systems-${players.length + managers.length}x${seasons}.md`), report);
   console.log(report);
   if (errors.length) {
     console.error(errors.join("\n"));

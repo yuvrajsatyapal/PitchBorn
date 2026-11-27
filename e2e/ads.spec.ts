@@ -2,21 +2,24 @@ import { expect, test } from "@playwright/test";
 import { createCareer } from "./helpers";
 
 test.describe("advertising architecture", () => {
-  test("ad slots are labelled, never inside navigation, and never on decision screens", async ({ page }, info) => {
+  test("sponsor sections are labelled, never inside navigation, and never on decision screens", async ({ page }, info) => {
     await createCareer(page);
-    const slots = page.locator("[data-ad-slot]");
-    const count = await slots.count();
-    // Placeholder provider in E2E builds → slots render with labels.
+    const asides = page.locator('aside[aria-label="Ad / Sponsor"]:visible');
+    await expect(asides.first()).toBeVisible();
+    const count = await asides.count();
     for (let i = 0; i < count; i++) {
-      await expect(slots.nth(i)).toContainText("Ad / Sponsor");
-      expect(await slots.nth(i).evaluate((el) => !!el.closest("nav"))).toBe(false);
+      await expect(asides.nth(i)).toContainText("Ad / Sponsor");
+      expect(await asides.nth(i).evaluate((el) => !!el.closest("nav"))).toBe(false);
     }
-    if (info.project.name === "desktop") await expect(page.locator('[data-ad-slot="rail-right"]')).toBeVisible();
-    else await expect(page.locator('[data-ad-slot="rail-right"]')).toHaveCount(0);
+    // Wide screens: the four sections in a rail beside the content. Phones: one section per page, no rail.
+    if (info.project.name === "desktop") await expect(page.locator("[data-ad-section]:visible")).toHaveCount(4);
+    else await expect(page.locator("[data-ad-section]:visible")).toHaveCount(1);
     await page.goto("/play/transfers/");
-    await expect(page.locator("[data-ad-slot]")).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator("[data-ad-section]:visible")).toHaveCount(0);
     await page.goto("/play/training/");
-    await expect(page.locator("[data-ad-slot]")).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator("[data-ad-section]:visible")).toHaveCount(0);
   });
 
   test("the game works when ad requests are blocked", async ({ page, context }) => {

@@ -56,6 +56,18 @@ export const TIPS: Tip[] = [
     when: (s) => (s.user.achievements ?? []).some((a) => !a.backfilled),
   },
   {
+    id: "dash-goals", page: "dashboard", title: "Weekly goals",
+    body: "Three small goals run at a time: score in straight games, earn a big rating, keep a clean sheet. Each one unlocks boots, a kit colour or a goal celebration for the Kit Room.",
+    link: { href: "/play/goals", label: "See your goals" },
+    when: (s) => (s.user.goals?.active.length ?? 0) > 0 && s.turnIndex >= 3,
+  },
+  {
+    id: "dash-story", page: "dashboard", title: "Stories off the pitch",
+    body: "A contract stand-off, a split dressing room, a row with the manager or a race for the armband: stories play out over several weeks. The Club page shows where yours stands.",
+    link: { href: "/play/club", label: "Open the Club page" },
+    when: (s) => !!s.user.drama?.active,
+  },
+  {
     id: "match-moments", page: "match", title: "Key moments",
     body: "In a live match you choose what to do at key moments. Options that suit your strengths are likelier to come off; the risky ones pay off big when they do.",
     when: (s) => s.pending.length > 0,
@@ -63,6 +75,11 @@ export const TIPS: Tip[] = [
   {
     id: "training-intensity", page: "training", title: "Push, but not too hard",
     body: "Intense training grows attributes faster but drains fitness and raises the injury risk if you keep it up week after week. Light weeks help you recover before big games.",
+  },
+  {
+    id: "club-role", page: "club", title: "Agree a tactical role",
+    body: "Ask the manager for a role (a pressing forward, a deep-lying playmaker, an inverted full-back…). It changes where your involvement comes from in matches. Roles that fit your attributes and the club's style are easier to agree, and you can ask again every six weeks.",
+    when: (s) => !s.user.tacticalRole?.agreed && !!s.players[s.user.playerId]?.clubId,
   },
   {
     id: "club-relations", page: "club", title: "Relationships matter",

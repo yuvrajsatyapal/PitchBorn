@@ -132,6 +132,7 @@ export function leakBlock(state: GameState): string | null {
   const p = userPlayer(state);
   if (state.user.agent.id === "none") return "You need an agent to work the press.";
   if (!p.contract || !p.clubId || p.loan) return "You need a club contract for this.";
+  if (!isTransferWindow(state.turn)) return "Leaks only work while a transfer window is open.";
   if (state.user.leakedSeason === state.season && state.user.leakedWindow === windowName(state.turn)) return "Your agent already leaked interest this window.";
   const interest = state.user.offers.some((o) => o.fromClubId !== p.clubId && o.season === state.season && o.kind !== "renewal") || state.user.sagas.some((s) => !s.outcome);
   if (!interest) return "There's no interest from other clubs to leak.";

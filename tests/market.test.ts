@@ -56,4 +56,15 @@ describe("transfer rivals, deadline day and leaks", () => {
     expect(s.user.relationships.manager).toBeLessThan(before);
     expect(leakBlock(s)).toMatch(/already/);
   });
+
+  it("leaks only work while a window is open, so they can't be repeated week after week between windows", () => {
+    const s = newCareer();
+    strongUser(s);
+    s.user.agent = { ...s.user.agent, id: "a1" };
+    const me = s.players[s.user.playerId];
+    bid(s, Object.values(s.clubs).find((c) => c.id !== me.clubId)!.id);
+    s.turn = 20;
+    expect(leakBlock(s)).toMatch(/window/);
+    expect(leakInterest(s).ok).toBe(false);
+  });
 });

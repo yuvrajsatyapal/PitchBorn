@@ -11,6 +11,7 @@ import { ageOf } from "../players/generate";
 import type { GameState, MatchLogEntry } from "../types";
 import { fullName, userPlayer } from "../world/helpers";
 import { bondLabel } from "./chemistry";
+import { cosmeticDef } from "./goals";
 
 const C = BALANCE.calendar;
 
@@ -45,6 +46,10 @@ export interface SeasonReview {
   awards: string[];
   moments: { icon: string; title: string; line: string }[];
   bonds: { name: string; from: number; to: number; label: string }[];
+  /** Weekly goals completed this season and what each unlocked. */
+  goalsDone: { label: string; reward?: string }[];
+  /** Off-pitch stories that ended this season, with how they ended. */
+  stories: { title: string; outcome: string }[];
   verdict: string;
 }
 
@@ -104,6 +109,8 @@ export function seasonReview(state: GameState, season = state.season): SeasonRev
     awards: u.awards.filter((a) => a.season === season).map((a) => a.name),
     moments,
     bonds,
+    goalsDone: (u.goals?.done ?? []).filter((g) => g.season === season).map((g) => ({ label: g.label, reward: cosmeticDef(g.reward)?.name })),
+    stories: (u.drama?.log ?? []).filter((d) => d.season === season).map((d) => ({ title: d.title, outcome: d.outcome })),
     verdict,
   };
 }

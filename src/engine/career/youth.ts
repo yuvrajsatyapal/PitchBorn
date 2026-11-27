@@ -23,6 +23,8 @@ const Y = {
   trialTo: 38,
   trialChance: 0.07,
   maxTrialsPerSeason: 2,
+  /** How far below a club's level a promising 15-year-old can be and still impress on trial. */
+  trialMargin: 8,
   /** Compensation a club pays the academy for a youth player, per point of its level above 40. */
   compensationPerLevel: 12_000,
 };
@@ -78,7 +80,7 @@ function trialScore(state: GameState, clubId: string, r: Rng): number {
   const p = userPlayer(state);
   const o = overallFor(p.attrs, p.position);
   const promise = (p.hidden.potential - o) * 0.35;
-  return o + promise - (clubLevel(state.clubs[clubId].reputation) - 14) + r.normal(0, 3);
+  return o + promise - (clubLevel(state.clubs[clubId].reputation) - Y.trialMargin) + r.normal(0, 3);
 }
 
 function academyWants(state: GameState): boolean {

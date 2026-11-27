@@ -1,13 +1,17 @@
+import legacyJson from "../../data/legacy-clubs.json";
 import worldJson from "../../data/world.json";
 import type { Club, Country, Dataset, League, Stadium } from "./schema";
 
 /** Static world dataset bundled at build time. */
 export const WORLD = worldJson as Dataset;
 
-const clubById = new Map<string, Club>(WORLD.clubs.map((c) => [c.id, c]));
+/** Clubs that have left the dataset: never in a new world, but older saves still simulate them, so they stay readable. */
+const LEGACY = legacyJson as { clubs: Club[]; stadiums: Stadium[] };
+
+const clubById = new Map<string, Club>([...LEGACY.clubs, ...WORLD.clubs].map((c) => [c.id, c]));
 const leagueById = new Map<string, League>(WORLD.leagues.map((l) => [l.id, l]));
 const countryByCode = new Map<string, Country>(WORLD.countries.map((c) => [c.code, c]));
-const stadiumById = new Map<string, Stadium>(WORLD.stadiums.map((s) => [s.id, s]));
+const stadiumById = new Map<string, Stadium>([...LEGACY.stadiums, ...WORLD.stadiums].map((s) => [s.id, s]));
 
 export const REST_OF_WORLD = "row";
 

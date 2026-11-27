@@ -138,6 +138,9 @@ export function goalsWeekly(state: GameState): CareerGoal[] {
   });
   for (const g of done) {
     gs.completed++;
+    // The last few, for the season review.
+    (gs.done ??= []).push({ season: state.season, label: g.label, reward: g.reward });
+    if (gs.done.length > 30) gs.done.shift();
     const c = cosmeticsOf(state);
     const def = cosmeticDef(g.reward);
     if (def && !c.owned.includes(def.id)) c.owned.push(def.id);

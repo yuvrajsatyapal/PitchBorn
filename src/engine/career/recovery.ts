@@ -17,8 +17,8 @@ const R = {
   /** Weeks multipliers per choice. */
   weeks: { rush: 0.6, plan: 1, rest: 1.3, clinic: 0.7, surgery: 1.15, conservative: 0.75 } as Record<string, number>,
   /** Weeks of extra re-injury risk after rushing back, and how big it is. */
-  rushWindow: 6,
-  rushRisk: 2.2,
+  rushWindow: 8,
+  rushRisk: 3,
   /** Risk added for each earlier injury to the same area (applied to the overall factor through the worst area). */
   perRepeat: 0.18,
   /** Clinic price in weeks of wages, with a floor. */
@@ -63,7 +63,7 @@ export function onUserInjury(state: GameState, injury: Injury): void {
   r.areas[injury.area] = before + 1;
   const rushedHere = r.rushedUntil !== undefined && state.turnIndex <= r.rushedUntil && r.rushedArea === injury.area;
   if (rushedHere && p.injury) {
-    const extra = Math.max(1, Math.round(p.injury.totalWeeks * 0.4));
+    const extra = Math.max(1, Math.round(p.injury.totalWeeks * 0.6));
     p.injury.weeksLeft += extra;
     p.injury.totalWeeks += extra;
     addNews(state, { kind: "injury", title: "The same injury again", body: `Coming back too soon has cost you: ${extra} more week${extra === 1 ? "" : "s"} out.`, important: true });

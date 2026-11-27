@@ -408,7 +408,7 @@ describe("determinism", () => {
     const b = play(watched, () => {
       watched.userContext();
       watched.playerState("USER");
-      watched.liveStats;
+      void watched.liveStats;
       const l = watched.lineFor("USER");
       if (l) {
         statCells(l, watched.minute, true);
@@ -461,7 +461,7 @@ describe("commentary", () => {
         if (e.playerState("USER").phase === "playing") touches.push(e.lineFor("USER")?.inv?.touches ?? 0);
         const fresh = e.events.slice(seen).filter((x) => x.tag === "status" && /struggling|not seeing much/.test(x.text));
         seen = e.events.length;
-        for (const s of fresh) {
+        for (let k = 0; k < fresh.length; k++) {
           checked++;
           const len = touches.length;
           expect(touches[len - 1] - touches[len - 11]).toBeLessThanOrEqual(3);

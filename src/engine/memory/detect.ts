@@ -73,12 +73,20 @@ export function detectMatchMemory(state: GameState, fixture: Fixture, comp: Comp
   if (goals >= 5) aspect("Five or more goals", 61, "haul");
   else if (goals === 4) aspect("Four goals", 51, "haul");
   else if (goals === 3) aspect("Hat-trick", 36, "hat-trick");
-  else if (goals === 2) f.add("Brace", 16), tags.push("brace");
+  else if (goals === 2) {
+    f.add("Brace", 16);
+    tags.push("brace");
+  }
   else if (goals === 1) f.add("A goal", 6);
   if (decisive) {
     aspect("Winning goal", 10, "winner");
-    if (decisive.minute >= 90) f.add("Winner in stoppage time", 16), tags.push("late");
-    else if (decisive.minute >= 80) f.add("Late winner", 10), tags.push("late");
+    if (decisive.minute >= 90) {
+      f.add("Winner in stoppage time", 16);
+      tags.push("late");
+    } else if (decisive.minute >= 80) {
+      f.add("Late winner", 10);
+      tags.push("late");
+    }
   }
   if (outcome === "win" && maxDeficit >= 2) aspect(maxDeficit >= 3 ? "Comeback from three down" : "Comeback from two down", (maxDeficit >= 3 ? 26 : 16) * involvement, "comeback");
   else if (outcome === "draw" && maxDeficit >= 3) aspect("Rescued a draw from three down", 14 * involvement, "comeback");

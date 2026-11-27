@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { STARTER_COSMETICS, cosmeticDef } from "@/engine/career/goals";
 import type { CosmeticKind } from "@/engine/types";
 import { getKv } from "@/persistence/saves";
@@ -26,11 +26,20 @@ const CLASSIC = ["ENG", "ESP", "GER", "ITA", "FRA"];
 const AMERICAS = ["BRA", "ARG", "MEX", "USA"];
 /** Bigger worlds cost more per simulated week; the choice is fixed for the save. */
 const WORLD_SIZES = [
-  { id: "full", label: "Full world", countries: LEAGUE_COUNTRIES, hint: "Every league. Most transfer paths; weeks sim a little slower." },
-  { id: "europe", label: "Europe", countries: LEAGUE_COUNTRIES.filter((c) => !AMERICAS.includes(c)), hint: "The seven European leagues." },
+  { id: "full", label: "Full world", countries: LEAGUE_COUNTRIES, hint: "Every league. Most transfer paths; each simulated week takes longest, around a second on a phone." },
+  { id: "europe", label: "Europe", countries: LEAGUE_COUNTRIES.filter((c) => !AMERICAS.includes(c)), hint: "The seven European leagues. Quicker weeks: the default on phones and small tablets." },
   { id: "americas", label: "Americas", countries: LEAGUE_COUNTRIES.filter((c) => AMERICAS.includes(c)), hint: "Brazil, Argentina, Mexico and the US, with the Americas Cup." },
   { id: "classic", label: "Big five", countries: CLASSIC, hint: "England, Spain, Germany, Italy and France. Fastest." },
 ] as const;
+
+type WorldSize = (typeof WORLD_SIZES)[number]["id"];
+const noSubscribe = () => () => {};
+/** Phones and small tablets (touch-first or four cores or fewer) start on Europe: the full world's weeks are slow there. */
+function deviceWorld(): WorldSize {
+  const touch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  return touch || cores <= 4 ? "europe" : "full";
+}
 
 function pick<T>(xs: T[]): T {
   return xs[Math.floor(Math.random() * xs.length)];
@@ -60,7 +69,9 @@ export default function NewCareer() {
   useEffect(() => {
     void getKv<string[]>(COSMETICS_KEY, []).then((ids) => setOwnedCosmetics([...new Set([...STARTER_COSMETICS, ...(Array.isArray(ids) ? ids : [])])])).catch(() => undefined);
   }, []);
-  const [worldSize, setWorldSize] = useState<(typeof WORLD_SIZES)[number]["id"]>("full");
+  const [pickedWorld, setWorldSize] = useState<WorldSize | null>(null);
+  const deviceDefault = useSyncExternalStore(noSubscribe, deviceWorld, () => "full" as WorldSize);
+  const worldSize = pickedWorld ?? deviceDefault;
   const [difficulty, setDiff] = useState<"relaxed" | "standard" | "hardcore">("standard");
   const [err, setErr] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<ChallengePick | null>(null);

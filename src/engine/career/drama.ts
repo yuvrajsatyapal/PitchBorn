@@ -26,9 +26,13 @@ import { adjustRel } from "./relationships";
 
 const D = {
   /** Weekly chance a story starts when one is eligible. */
-  startChance: 0.07,
+  startChance: 0.025,
   /** Quiet weeks after a story ends. */
-  quiet: 10,
+  quiet: 14,
+  /** Weeks before the same kind of story can come back (cliques, the commonest, wait two seasons). */
+  repeatAfter: { standoff: 45, clique: 95, fallout: 45, captaincy: 45 } as Record<DramaKind, number>,
+  /** How often each eligible kind is picked: the rarer, bigger stories first. */
+  weight: { standoff: 3, captaincy: 3, fallout: 2, clique: 1 } as Record<DramaKind, number>,
   raceWeeks: 6,
 };
 
@@ -77,11 +81,12 @@ export function eligibleDrama(state: GameState, p: Player): DramaKind[] {
   const out: DramaKind[] = [];
   const left = p.contract ? p.contract.expires - state.season : 9;
   const talks = state.user.offers.some((o) => o.kind === "renewal" && (o.status === "terms" || o.status === "club-pending"));
-  if (p.contract && !p.loan && left <= 1 && state.turn >= 14 && state.turn <= 40 && !talks && p.reputation >= 40) out.push("standoff");
+  if (p.contract && !p.loan && left <= 1 && state.turn >= 10 && state.turn <= 42 && !talks && p.reputation >= 30) out.push("standoff");
   if (state.user.relationships.manager < 38 && p.clubId) out.push("fallout");
   if (armbandOpen(state, p) && captaincyRival(state, p)) out.push("captaincy");
   if (Object.keys(state.user.chemistry ?? {}).length >= 6 && camps(state, p)) out.push("clique");
-  return out;
+  const last = state.user.drama?.lastByKind ?? {};
+  return out.filter((k) => last[k] === undefined || state.turnIndex - (last[k] as number) >= D.repeatAfter[k]);
 }
 
 /** Weekly: start a story or play its next beat. */
@@ -103,7 +108,7 @@ export function dramaWeekly(state: GameState): void {
   const r = rng(state, "start");
   const kinds = eligibleDrama(state, p);
   if (!kinds.length || !r.chance(D.startChance)) return;
-  startDrama(state, r.pick(kinds));
+  startDrama(state, r.weighted(kinds, (k) => D.weight[k]));
 }
 
 export function startDrama(state: GameState, kind: DramaKind): DramaStory | undefined {
@@ -167,6 +172,7 @@ function end(state: GameState, outcome: string): void {
   if (!s) return;
   d.log.push({ season: state.season, kind: s.kind, title: TITLES[s.kind], outcome });
   if (d.log.length > 20) d.log.shift();
+  (d.lastByKind ??= {})[s.kind] = state.turnIndex;
   d.active = undefined;
   d.quietUntil = state.turnIndex + D.quiet;
 }

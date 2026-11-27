@@ -37,6 +37,8 @@ interface Overrides {
   colors: Record<string, [string, string]>;
   stadiums: Record<string, { name: string; capacity: number }>;
   historyAliases: Record<string, string[]>;
+  /** Editorial club size 0–3 for leagues without historical tables (unlisted: 1). */
+  standing?: Record<string, number>;
 }
 
 const readJson = <T>(p: string): T => JSON.parse(readFileSync(p, "utf8")) as T;
@@ -81,7 +83,8 @@ for (const [qid, list] of candidates) {
     log(`- excluded non-club item ${label} (${qid})`);
     continue;
   }
-  if (RESERVE_RE.test(label.trim())) {
+  // A curated assignment vouches for the club (Willem II is a first team, whatever the "II" suggests).
+  if (RESERVE_RE.test(label.trim()) && !overrides.assign[qid]) {
     log(`- excluded reserve team ${label} (${qid})`);
     continue;
   }
@@ -331,7 +334,9 @@ for (const club of clubs) {
   // Leagues added after the big five often have no historical tables in the sources; there the stadium is the best
   // signal of a club's size (Maracanã, Monumental, Bombonera), so it spreads the clubs instead of leaving them level.
   if (!results.length && !BIG_FIVE.has(club.countryCode)) {
-    prestige = ((tierBase[tier] ?? 25) + 8 + (capScore - 15) * 1.8) * (LEAGUE_FACTOR[club.countryCode] ?? 0.9);
+    // The stadium alone can't tell Santos from Mirassol: the curated standing (honours and support) moves it 3 a step, centred so a league's average stays put.
+    const standing = overrides.standing?.[club.wikidata ?? ""] ?? 1;
+    prestige = ((tierBase[tier] ?? 25) + 8 + (capScore - 15) * 1.8 + (standing - 1.5) * 3) * (LEAGUE_FACTOR[club.countryCode] ?? 0.9);
   }
   // A club in a lower tier cannot be more prestigious than the tier allows.
   const cap = tier === 1 ? 99 : tier === 2 ? 78 : 60;

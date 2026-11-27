@@ -1432,7 +1432,7 @@ export interface UserCareer {
   /** The tactical role asked of the manager at the current club (see career/roles.ts). */
   tacticalRole?: { id: string; clubId: ClubId; season: number; askedTurn: number; agreed: boolean };
   /** Weekly goals (see career/goals.ts). */
-  goals?: { active: CareerGoal[]; completed: number; drawn: number };
+  goals?: { active: CareerGoal[]; completed: number; drawn: number; done?: { season: number; label: string; reward?: string }[] };
   /** Cosmetics owned and worn: boots, a personal kit colour, a goal celebration. */
   cosmetics?: { owned: string[]; equipped: Partial<Record<CosmeticKind, string>>; newly?: string[] };
   /** Started at 15 in an academy: trials and the first professional contract (see career/youth.ts). */
@@ -1509,6 +1509,8 @@ export interface DramaState {
   log: { season: number; kind: DramaKind; title: string; outcome: string }[];
   /** Turn index before which no new story starts. */
   quietUntil: number;
+  /** Turn index each kind of story last ended: the same kind waits a season before it can come back. */
+  lastByKind?: Partial<Record<DramaKind, number>>;
 }
 
 export interface LifestyleState {
